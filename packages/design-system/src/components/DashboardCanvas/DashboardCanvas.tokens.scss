@@ -30,6 +30,11 @@
   --dashboard-canvas-drop-preview-bg: var(--color-accent-bg-subtle);
   --dashboard-canvas-drop-preview-border: var(--color-accent);
 
+  // Touch long-press lift cue (DS-15): elevation plus a slight scale, which
+  // `prefers-reduced-motion: reduce` drops.
+  --dashboard-canvas-item-lifted-shadow: var(--shadow-lg);
+  --dashboard-canvas-item-lifted-scale: 1.02;
+
   // Resize handles: 24px pointer corridor (WCAG 2.5.8) + hover glyph color.
   --dashboard-canvas-handle-hit: var(--space-6);
   --dashboard-canvas-handle-fg: var(--color-fg-subtle);

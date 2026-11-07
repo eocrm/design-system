@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { overlayStack } from '../_internal/overlay';
-import { DashboardCanvas } from './DashboardCanvas';
+import { DashboardCanvas, LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from './DashboardCanvas';
 import { applyMove, applyResize, reorderSection } from './engine';
 import type { DashboardCanvasValue } from './engine';
 
@@ -655,6 +655,177 @@ describe('DashboardCanvas pointer gestures', () => {
     expect(itemEl(container, 'a').style.getPropertyValue('--dc-row')).toBe('2 / span 1');
     fireEvent.pointerUp(root, { clientX: 175, clientY: 15, pointerId: 1 });
     expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+// DS-15: a finger must hold still LONG_PRESS_MS to pick an item up, so a
+// swipe stays a page scroll. Real scroll suppression is proven in Playwright
+// (tests/touch-dashboard-canvas.spec.ts); jsdom proves the state machine.
+describe('DashboardCanvas touch long-press (DS-15)', () => {
+  let restoreRects: () => void;
+  beforeEach(() => {
+    vi.useFakeTimers();
+    restoreRects = stubCanvasRects();
+  });
+  afterEach(() => {
+    restoreRects();
+    vi.useRealTimers();
+  });
+
+  const touch = { pointerId: 7, pointerType: 'touch', button: 0 };
+  const touchmove = (el: Element) => {
+    const event = new Event('touchmove', { bubbles: true, cancelable: true });
+    el.dispatchEvent(event);
+    return event.defaultPrevented;
+  };
+
+  function renderCanvas(itemRenderer = renderItem) {
+    const onChange = vi.fn();
+    const value = baseValue();
+    const utils = render(
+      <DashboardCanvas value={value} onChange={onChange} renderItem={itemRenderer} columns={12} />,
+    );
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    return { ...utils, onChange, value, root };
+  }
+
+  it('touch pointerdown held LONG_PRESS_MS arms the drag (data-lifted)', () => {
+    const { container, onChange, value, root } = renderCanvas();
+    const b = itemEl(container, 'b');
+    fireEvent.pointerDown(b, { ...touch, clientX: 10, clientY: 10 });
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS - 1));
+    expect(b).not.toHaveAttribute('data-lifted');
+    expect(touchmove(b)).toBe(false); // still a scroll candidate
+    act(() => vi.advanceTimersByTime(1));
+    expect(b).toHaveAttribute('data-lifted');
+    expect(touchmove(b)).toBe(true); // armed: the page must not pan
+    // Movement now feeds the ordinary drag path into the commit choke point.
+    fireEvent.pointerMove(root, { ...touch, clientX: 95, clientY: 60 });
+    fireEvent.pointerUp(root, { ...touch, clientX: 95, clientY: 60 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual(
+      applyMove(value, { kind: 'top' }, { kind: 'top' }, 'b', 2, 1, 12),
+    );
+    expect(touchmove(b)).toBe(false); // released
+  });
+
+  // The DS-15 root cause: a touch pointer is implicitly captured by its
+  // pointerdown target, so arming (root capture) fires lostpointercapture at
+  // that child, which bubbled into the root's safety net and abandoned the
+  // drag. Only the ROOT losing capture means the gesture died.
+  it('a child losing implicit touch capture does not abandon the drag', () => {
+    const { container, onChange, root } = renderCanvas();
+    const b = itemEl(container, 'b');
+    const content = screen.getByTestId('item-b');
+    fireEvent.pointerDown(content, { ...touch, clientX: 10, clientY: 10 });
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS));
+    fireEvent.lostPointerCapture(content, { ...touch });
+    expect(b).toHaveAttribute('data-lifted');
+    fireEvent.pointerMove(root, { ...touch, clientX: 95, clientY: 60 });
+    fireEvent.pointerUp(root, { ...touch, clientX: 95, clientY: 60 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('touch movement beyond slop before LONG_PRESS_MS cancels arming', () => {
+    const { container, onChange, root } = renderCanvas();
+    const b = itemEl(container, 'b');
+    fireEvent.pointerDown(b, { ...touch, clientX: 10, clientY: 10 });
+    // Within the slop: still pending.
+    fireEvent.pointerMove(root, { ...touch, clientX: 10, clientY: 10 + LONG_PRESS_SLOP_PX });
+    fireEvent.pointerMove(root, { ...touch, clientX: 10, clientY: 11 + LONG_PRESS_SLOP_PX });
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS));
+    expect(b).not.toHaveAttribute('data-lifted');
+    expect(touchmove(b)).toBe(false);
+    fireEvent.pointerMove(root, { ...touch, clientX: 95, clientY: 60 });
+    fireEvent.pointerUp(root, { ...touch, clientX: 95, clientY: 60 });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(root).not.toHaveAttribute('data-dragging');
+  });
+
+  it('a touch pointercancel before arming abandons the press', () => {
+    const { container, onChange, root } = renderCanvas();
+    const b = itemEl(container, 'b');
+    fireEvent.pointerDown(b, { ...touch, clientX: 10, clientY: 10 });
+    fireEvent.pointerCancel(b, { ...touch });
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS));
+    expect(b).not.toHaveAttribute('data-lifted');
+    fireEvent.pointerMove(root, { ...touch, clientX: 95, clientY: 60 });
+    fireEvent.pointerUp(root, { ...touch, clientX: 95, clientY: 60 });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('a lifted item released without moving drops the lift and commits nothing', () => {
+    const { container, onChange } = renderCanvas();
+    const b = itemEl(container, 'b');
+    fireEvent.pointerDown(b, { ...touch, clientX: 10, clientY: 10 });
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS));
+    expect(b).toHaveAttribute('data-lifted');
+    fireEvent.pointerUp(b, { ...touch, clientX: 10, clientY: 10 });
+    act(() => vi.runAllTimers());
+    expect(b).not.toHaveAttribute('data-lifted');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('a touch press on an interactive child never lifts the item; the child still clicks', () => {
+    const onClick = vi.fn();
+    const { container } = renderCanvas((id) => (
+      <button type="button" onClick={onClick}>
+        Configure {id}
+      </button>
+    ));
+    const b = itemEl(container, 'b');
+    const button = b.querySelector('button') as HTMLButtonElement;
+    fireEvent.pointerDown(button, { ...touch, clientX: 10, clientY: 10 });
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS * 2));
+    expect(b).not.toHaveAttribute('data-lifted');
+    expect(touchmove(button)).toBe(false);
+    fireEvent.pointerUp(button, { ...touch, clientX: 10, clientY: 10 });
+    fireEvent.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('a touch long-press on a resize handle arms a resize', () => {
+    const { container, onChange, value, root } = renderCanvas();
+    const a = itemEl(container, 'a');
+    const se = a.querySelector('[data-dc-resize="se"]') as HTMLElement;
+    fireEvent.pointerDown(se, { ...touch, clientX: 80, clientY: 96 });
+    // Before arming, a finger drag off the handle is a scroll, not a resize.
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS));
+    expect(a).toHaveAttribute('data-lifted');
+    fireEvent.pointerMove(root, { ...touch, clientX: 165, clientY: 151 });
+    fireEvent.pointerUp(root, { ...touch, clientX: 165, clientY: 151 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual(applyResize(value, { kind: 'top' }, 'a', 4, 2));
+  });
+
+  it('a touch resize swipe before arming resizes nothing', () => {
+    const { container, onChange, root } = renderCanvas();
+    const se = container.querySelector('[data-dc-item="a"] [data-dc-resize="se"]') as HTMLElement;
+    fireEvent.pointerDown(se, { ...touch, clientX: 80, clientY: 96 });
+    fireEvent.pointerMove(root, { ...touch, clientX: 165, clientY: 151 });
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS));
+    fireEvent.pointerUp(root, { ...touch, clientX: 165, clientY: 151 });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('mouse drag behaviour unchanged: no hold needed, never lifts', () => {
+    const { container, onChange, value, root } = renderCanvas();
+    const b = itemEl(container, 'b');
+    fireEvent.pointerDown(b, {
+      pointerId: 1,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: 10,
+      clientY: 10,
+    });
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS));
+    expect(b).not.toHaveAttribute('data-lifted');
+    expect(touchmove(b)).toBe(false);
+    fireEvent.pointerMove(root, { pointerId: 1, pointerType: 'mouse', clientX: 95, clientY: 60 });
+    fireEvent.pointerUp(root, { pointerId: 1, pointerType: 'mouse', clientX: 95, clientY: 60 });
+    expect(onChange.mock.calls[0][0]).toEqual(
+      applyMove(value, { kind: 'top' }, { kind: 'top' }, 'b', 2, 1, 12),
+    );
   });
 });
 

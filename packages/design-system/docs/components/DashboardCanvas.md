@@ -44,6 +44,12 @@ When NOT to use: a single ordered list (priority queue, simple reordering) — u
 
 A collapsed section's band is NOT a drop target — expand it first (no hover-to-expand). Escape or a pointer cancel mid-gesture restores the current `value` without firing `onChange`.
 
+#### Touch
+
+On a touch screen a finger **holds an item still for ~300ms to pick it up**. The item lifts (shadow plus a slight scale, no scale under `prefers-reduced-motion: reduce`; themable via `--dashboard-canvas-item-lifted-shadow` / `--dashboard-canvas-item-lifted-scale`), then follows the finger and drops exactly like a mouse drag, through the same `onChange`. Resize handles arm the same way. A swipe that moves more than a few px before the hold completes is a page scroll, never a drag, so a dashboard full of widgets still scrolls. Once an item is lifted, the page does not scroll under the finger.
+
+A finger on a control inside a widget (a button, link, input, `role="button"`, …) is that control's press: it never lifts the item, however long it's held. Pick the widget up from its non-interactive surface. Mouse and pen are unchanged: no hold, a drag arms after 5px from anywhere in the cell.
+
 #### Anti-patterns
 
 - ❌ Treating `value` as uncontrolled — passing it once with no `onChange`. Drags and resizes still preview live, but nothing persists past pointerup; the next render snaps the item back to the stale `value`.

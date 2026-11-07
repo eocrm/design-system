@@ -10,6 +10,7 @@ import clsx from 'clsx';
 import { useTranslation } from '../../i18n/useTranslation';
 import { Accordion } from '../Accordion';
 import type { CollapseBreakpoint } from '../_internal/collapse';
+import { INTERACTIVE_SELECTOR } from '../_internal/interactive';
 import { overlayStack, useFloatingSurface } from '../_internal/overlay';
 import { mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
 import {
@@ -173,6 +174,22 @@ function bottomOf(
 const DRAG_ACTIVATION_PX = 5;
 
 /**
+ * Touch pick-up (DS-15): a finger must hold an item (or a resize handle)
+ * still this long before it arms, so a swipe across a widget stays a page
+ * scroll. Exported for tests only; not public API.
+ */
+export const LONG_PRESS_MS = 300;
+/** Finger travel (px) that turns a pending touch press back into a scroll. */
+export const LONG_PRESS_SLOP_PX = 8;
+
+/**
+ * Touch-only arming phase on a move/resize press: `pending` until the
+ * LONG_PRESS_MS timer fires, then `lifted`. Absent for mouse/pen, whose
+ * presses arm by distance exactly as before.
+ */
+type TouchPhase = 'pending' | 'lifted';
+
+/**
  * Fallback row unit when `grid-auto-rows` doesn't resolve to a px length
  * (jsdom, where the square-cell `cqw` calc in `--dashboard-canvas-row` never
  * evaluates). Mirrors `--dashboard-canvas-row-stacked` (`--space-12`, 48px).
@@ -246,6 +263,7 @@ interface MoveDrag {
   cell: { x: number; y: number } | null;
   previewKey: string | null;
   preview: DashboardCanvasValue | null;
+  touch?: TouchPhase;
 }
 interface ResizeDrag {
   kind: 'resize';
@@ -261,6 +279,7 @@ interface ResizeDrag {
   lastW: number;
   lastH: number;
   preview: DashboardCanvasValue | null;
+  touch?: TouchPhase;
 }
 interface SectionDrag {
   kind: 'section';
@@ -274,6 +293,10 @@ interface SectionDrag {
   slot: number;
 }
 type DragState = MoveDrag | ResizeDrag | SectionDrag;
+
+/** A touch press that has armed: the page must not pan under the finger. */
+const isLifted = (drag: DragState | null) =>
+  drag != null && drag.kind !== 'section' && drag.touch === 'lifted';
 
 /**
  * Keyboard pick-up state (Enter/Space on a focused item). `x`/`y` track the
@@ -311,7 +334,9 @@ type LiveState =
       ghost: { left: number; top: number; width: number; height: number };
     }
   | { kind: 'resize'; id: string | number; value: DashboardCanvasValue }
-  | { kind: 'section'; id: string | number; slot: number };
+  | { kind: 'section'; id: string | number; slot: number }
+  /** A touch press past LONG_PRESS_MS that hasn't moved yet — the lift cue. */
+  | { kind: 'lift'; id: string | number };
 
 /**
  * Datadog-style 2D snap-grid dashboard: draggable, resizable items and collapsible sections on a configurable-column grid. Always controlled.
@@ -474,6 +499,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         if (dragRef.current !== drag) return;
         if (drag.kind !== 'resize' && !drag.moved) {
           dragRef.current = null;
+          // A lifted-but-unmoved touch press is showing the lift cue.
+          if (isLifted(drag)) setLive(null);
           return;
         }
         setTimeout(() => {
@@ -484,6 +511,38 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       };
       window.addEventListener('pointerup', release, true);
       window.addEventListener('pointercancel', release, true);
+    };
+
+    // Touch pick-up (DS-15). The press stays `pending` — a scroll candidate
+    // the pointer stream ignores — until the timer lifts it. Every teardown
+    // path (release, cancel, slop, Escape, overlay, readOnly) just drops
+    // dragRef, so the timer checks identity instead of being cleared.
+    // Capture moves to the root on lift (a mouse press waits for its first
+    // armed move); the touchmove blockers are what keep the page from
+    // panning once the item is up.
+    const startLongPress = (drag: MoveDrag | ResizeDrag, target: EventTarget) => {
+      drag.touch = 'pending';
+      setTimeout(() => {
+        if (dragRef.current !== drag) return;
+        drag.touch = 'lifted';
+        capturePointer(rootRef.current, drag.pointerId);
+        setLive({ kind: 'lift', id: drag.id });
+        // Touch events stay targeted at the touchstart node for the whole
+        // sequence. A cross-container preview remounts the item, detaching
+        // that node, and its touchmoves then never bubble to the root's
+        // blocker — so block at the node itself too, until the finger lifts.
+        const block = (event: Event) => {
+          if (isLifted(dragRef.current)) event.preventDefault();
+        };
+        const done = () => {
+          target.removeEventListener('touchmove', block);
+          target.removeEventListener('touchend', done);
+          target.removeEventListener('touchcancel', done);
+        };
+        target.addEventListener('touchmove', block, { passive: false });
+        target.addEventListener('touchend', done);
+        target.addEventListener('touchcancel', done);
+      }, LONG_PRESS_MS);
     };
 
     // --- gesture starts (single `editingEnabled` choke point: readOnly prop OR narrow width) ---
@@ -501,6 +560,14 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
       if (isPortalEvent(event) || underOpenOverlay()) return;
       const el = event.currentTarget;
+      const touch = event.pointerType === 'touch';
+      // A finger on a widget's own control (a Configure button) is that
+      // control's press — it never lifts the item, however long it's held.
+      // Mouse keeps its distance-armed drag from anywhere in the cell.
+      if (touch && event.target instanceof Element) {
+        const hit = event.target.closest(INTERACTIVE_SELECTOR);
+        if (hit && hit !== el && el.contains(hit)) return;
+      }
       const rect = el.getBoundingClientRect();
       const drag: MoveDrag = {
         kind: 'move',
@@ -524,6 +591,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       };
       dragRef.current = drag;
       armRelease(drag);
+      if (touch) startLongPress(drag, event.target);
       // No capture yet — capture retargets the eventual click to the root,
       // so it must wait until the drag arms (clicks pass through until then).
     };
@@ -557,8 +625,11 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       };
       dragRef.current = drag;
       armRelease(drag);
-      // Handles have no click semantics — capture immediately (on the root).
-      capturePointer(rootRef.current, event.pointerId);
+      // A finger arms by long-press like the move surface (startLongPress
+      // captures on lift); handles have no click semantics, so a mouse/pen
+      // press captures immediately (on the root).
+      if (event.pointerType === 'touch') startLongPress(drag, event.target);
+      else capturePointer(rootRef.current, event.pointerId);
     };
 
     const onHeaderPointerDown = (
@@ -593,6 +664,18 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       onPointerMoveProp?.(event);
       const drag = dragRef.current;
       if (!drag || event.pointerId !== drag.pointerId) return;
+
+      // A pending touch press is a scroll candidate: past the slop it's the
+      // page's gesture (the browser pans and pointercancels anyway), so let
+      // go of it; within the slop, wait for the long-press timer.
+      if (drag.kind !== 'section' && drag.touch === 'pending') {
+        if (
+          Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > LONG_PRESS_SLOP_PX
+        ) {
+          dragRef.current = null;
+        }
+        return;
+      }
 
       if (drag.kind === 'move') {
         if (!drag.moved) {
@@ -810,6 +893,12 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // Safety net: a normal release fires this AFTER pointerup already
       // cleared the state; still holding a drag here means the capture died
       // unexpectedly — abandon the gesture instead of leaving it stuck.
+      // Only the ROOT's capture counts (capturePointer always targets it). A
+      // touch pointer is implicitly captured by its pointerdown target, and
+      // handing capture to the root fires lostpointercapture at that child,
+      // which bubbles here — treating it as death abandoned every touch drag
+      // on its first move (DS-15).
+      if (event.target !== event.currentTarget) return;
       const drag = dragRef.current;
       if (!drag || event.pointerId !== drag.pointerId) return;
       dragRef.current = null;
@@ -1070,7 +1159,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     useEffect(() => {
       const onSelectStart = (event: Event) => {
         const d = dragRef.current;
-        if (d && (d.kind === 'resize' || d.moved)) event.preventDefault();
+        if (d && (d.kind === 'resize' || d.moved || isLifted(d))) event.preventDefault();
       };
       document.addEventListener('selectstart', onSelectStart);
       return () => document.removeEventListener('selectstart', onSelectStart);
@@ -1090,6 +1179,31 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       return () => window.removeEventListener('keydown', onKeyDown);
       // eslint-disable-next-line react-hooks/exhaustive-deps -- cancelPick is re-created per render but only calls setters + announce
     }, [dragging, pick]);
+
+    // Touch scroll suppression (DS-15). Items keep `touch-action: auto` so a
+    // swipe scrolls, and touch-action can't change mid-gesture — so once a
+    // press lifts, its touchmoves are cancelled instead, which stops the pan
+    // (and the pointercancel a pan would send). Bound on the ROOT for the
+    // whole edit-mode lifetime, not only on lift: browsers may decide at
+    // touchstart whether a touch sequence waits for page listeners, and this
+    // makes sure a non-passive one is already there. (Chromium's emulation
+    // also honours the per-target listener startLongPress adds on lift, which
+    // covers a remounted item; this root one is insurance for engines that
+    // don't.) The cost: touches that start on an editable canvas wait for the
+    // main thread. `contextmenu` is the menu a held finger would open.
+    useEffect(() => {
+      const root = rootRef.current;
+      if (!root || !editingEnabled) return undefined;
+      const block = (event: Event) => {
+        if (isLifted(dragRef.current)) event.preventDefault();
+      };
+      root.addEventListener('touchmove', block, { passive: false });
+      root.addEventListener('contextmenu', block);
+      return () => {
+        root.removeEventListener('touchmove', block);
+        root.removeEventListener('contextmenu', block);
+      };
+    }, [editingEnabled]);
 
     // JS mirror of the CSS `@container dashboard-canvas (max-width: …)`
     // stack rule for the chosen breakpoint — width alone gates editing
@@ -1166,7 +1280,11 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     // Render EXACTLY what the engine returned for the in-flight gesture —
     // never parallel geometry. Section band order only changes on commit.
     const shown =
-      live != null && live.kind !== 'section' ? live.value : pick != null ? pick.preview : value;
+      live?.kind === 'move' || live?.kind === 'resize'
+        ? live.value
+        : pick != null
+          ? pick.preview
+          : value;
     const gestures: CanvasGestures = {
       // The item/section internals only care whether editing is off, not
       // WHY — readOnly and narrow-width both render identically (no
@@ -1175,6 +1293,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       movingId: live?.kind === 'move' ? live.id : null,
       resizingId: live?.kind === 'resize' ? live.id : null,
       pickedId: pick?.id ?? null,
+      liftedId: live?.kind === 'lift' ? live.id : null,
       instructionsId,
       onMovePointerDown,
       onResizePointerDown,
