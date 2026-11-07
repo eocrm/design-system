@@ -73,6 +73,18 @@ describe('Heatmap', () => {
     expect(cell(container, 0, 0)).toHaveAttribute('data-step', '1');
   });
 
+  it('fills the plot height, and reserves the minimum grid height so it never clips', () => {
+    const layout = stubLayout(400, 80);
+    const { container } = render(<Heatmap {...base} footnote="Last 7 days" />);
+    layout.fire();
+    // (80 − 20px column-label band) / 2 rows = 30px cells.
+    expect(container.querySelector('svg')).toHaveAttribute('height', '80');
+    expect(cell(container, 1, 0).getAttribute('y')).toBe(String(30 + 1));
+    // 2 rows × 16px minimum + the label band.
+    expect(screen.getByRole('group')).toHaveStyle({ minHeight: '52px' });
+    expect(screen.getByRole('figure')).toHaveAttribute('data-footnote');
+  });
+
   it('draws a null cell as empty, not as the lowest step', () => {
     const layout = stubLayout();
     const { container } = render(<Heatmap {...base} />);

@@ -168,6 +168,14 @@ describe('heatmapBuckets / heatmapLegend', () => {
     expect(new Set(pieces).size).toBe(pieces.length);
   });
 
+  it('never prints "-0" through a prefixed formatter', () => {
+    const fmt: Fmt = (n) => '$' + n.toFixed(0);
+    const b = expectCovers([[-0.4, 0.4]], fmt);
+    const pieces = legendPieces(heatmapLegend(b, fmt));
+    expect(pieces).not.toContain('$-0');
+    expect(new Set(pieces).size).toBe(pieces.length);
+  });
+
   it('ignores nulls and non-finite values, and is null without a finite value', () => {
     expect(heatmapBuckets([[null, NaN, 1, Infinity, 2]], String)!.steps).toEqual([1, 5]);
     expect(heatmapBuckets([[null], [null, null]], String)).toBeNull();
@@ -200,6 +208,18 @@ describe('computeHeatmapLayout', () => {
   it('keeps every column label when they fit', () => {
     const l = computeHeatmapLayout({ rows, columns: ['A', 'B', 'C'], width: 600 });
     expect(l.columnLabels.map((c) => c.index)).toEqual([0, 1, 2]);
+  });
+
+  it('fills the height with cells, clamped to 16–40px', () => {
+    const fill = computeHeatmapLayout({ rows, columns: hours, width: 390, height: 240 });
+    expect(fill.height).toBeCloseTo(240);
+    expect(fill.cellHeight).toBeGreaterThan(16);
+    expect(fill.cellHeight).toBeLessThan(40);
+    const tall = computeHeatmapLayout({ rows, columns: hours, width: 390, height: 2000 });
+    expect(tall.cellHeight).toBe(40);
+    const short = computeHeatmapLayout({ rows, columns: hours, width: 390, height: 50 });
+    expect(short.cellHeight).toBe(16);
+    expect(short.height).toBeGreaterThan(50);
   });
 
   it('hit-tests a point to its cell and misses outside the grid', () => {

@@ -34,24 +34,22 @@ import { Heatmap, DashboardWidget } from '@eocrm/design-system';
 
 <!-- props:end -->
 
-- **Buckets.** Values fall into up to five colour steps with nice boundaries clamped to the data. Integer data spanning five or fewer integers (e.g. meals per hour, 0..3) gets one step per integer. Continuous values show a stepped-bar legend.
+- **Buckets.** Values fall into up to five colour steps with nice boundaries clamped to the data. Integer data spanning five or fewer integers (e.g. meals per hour, 0..3) gets one step per integer. **Legend:** integer data lists disjoint ranges ("0–1", "2–3"); continuous data shows a stepped bar with each boundary value printed once between the swatches it separates. A formatter too coarse to keep integer ranges apart (e.g. rounding to hundreds) falls back to the stepped bar.
 - **No data.** `null`, a missing or a non-finite value is "no data": outlined, announced as "No data", never confused with zero.
 - **Colour** is one sequential ramp (`--heatmap-*` tokens), not the categorical palette: lighter to darker means low to high. Value is also printed in the tooltip, announcement and data table, so colour is never the only channel.
 - **Keyboard.** Focus the grid; arrow keys move between cells, Home / End jump to the row start / end (with Ctrl or Cmd, the grid corners), Esc dismisses. **Screen readers** get a visually hidden data table (caption = `label`).
 - **Column labels** are thinned to fit the width.
 - **Empty** (no cell has a value) renders `EmptyState` with `emptyMessage`.
-- **Sizing.** Fills its parent; the parent needs a definite height.
+- **Sizing.** Fills its parent like `Chart`; the parent needs a definite height (a `DashboardWidget variant="chart"` body has one). Cells stretch to fill the height between 16 and 40 px tall; past 40 px the space is left under the grid. Below 16 px per row the figure overflows its own box instead of shrinking cells, and a clipping parent (the widget body) cuts it off, so size the widget for at least rows × 16 px plus the legend and column labels.
 
 #### When NOT to use
 
 - ❌ Values over a continuous time axis → `Chart`.
 - ❌ Two continuous measures → `ScatterChart`.
-- ❌ More than about 31 rows or 48 columns: cells become too small to hit; aggregate in the app.
-- ❌ Categories with no order where colour implies magnitude is wrong → `Chart type="bar"`.
+- ❌ Reading or comparing exact values: colour shades are read only roughly → `Chart type="bar"`.
 
 #### Anti-patterns
 
 - ❌ Passing `0` for missing data. Pass `null`.
-- ❌ Wrapping `Heatmap` in a fixed-height or scrolling div inside the widget body. The cell is the size.
 - ❌ Passing `loading` / error UI into `Heatmap`. Use `DashboardWidget loading` and an `ErrorState` child.
 - ❌ Inline `values` / `formatValue` on every render of a busy parent; layout is recomputed on identity change.

@@ -31,7 +31,8 @@ const averageGrams: (number | null)[][] = weekdays.map((_, d) =>
   hours.map((_, h) => {
     if ((d === 2 && h === 12) || (d === 5 && h >= 3 && h <= 4) || (d === 6 && h === 18))
       return null;
-    return isMealHour(h) ? Math.round(25 + rand() * 45) : Math.round(rand() * 8);
+    // One decimal: continuous values, so the legend is a stepped bar.
+    return Math.round((isMealHour(h) ? 25 + rand() * 45 : rand() * 8) * 10) / 10;
   }),
 );
 

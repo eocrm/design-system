@@ -134,8 +134,9 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   /**
    * Controlled zoomed category range (`null` = all categories). While zoomed, categories, series, markers and
    * value labels are sliced to the range, the y-axis rescales and `details` still receives original indices.
-   * A range naming an unknown category is ignored (full range shown) with a dev warning. Omit for uncontrolled:
-   * a "Zoom to selection" button appears in the header while a selection exists, "Reset zoom" while zoomed.
+   * A range naming an unknown category is ignored (full range shown) with a dev warning. The zoom buttons ("Zoom
+   * to selection" while a selection exists, "Reset zoom" while zoomed) always appear when selection is enabled;
+   * when controlled, they call `onZoomRangeChange`. Omit for uncontrolled.
    */
   zoomRange?: ChartRange | null;
   /** Initial zoomed range when uncontrolled. Default `null` (all categories). */

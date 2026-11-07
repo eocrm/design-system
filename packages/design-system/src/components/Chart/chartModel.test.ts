@@ -902,6 +902,30 @@ describe('valueLabels (DS-12b)', () => {
     expect(bar([null, 4]).valueLabels.map((v) => v.text)).toEqual(['4 g']);
   });
 
+  it('labels a zero value at the zero line', () => {
+    const l = bar([0, 4]);
+    expect(l.valueLabels.map((v) => v.text)).toEqual(['0 g', '4 g']);
+    expect(l.valueLabels[0].anchor).toBe('above');
+    const zeroY = l.marks[0].points[0]!.y;
+    expect(l.valueLabels[0].y).toBeLessThan(zeroY);
+    expect(l.valueLabels[0].y).toBeGreaterThan(zeroY - 14);
+  });
+
+  it('labels a stacked total of 0 when the stack has a value, not an all-null stack', () => {
+    const series = resolveSeries(
+      'stacked-bar',
+      [s('x', [0, 5, null]), s('y', [0, -5, null])],
+      3,
+    ).series;
+    const l = layout({
+      type: 'stacked-bar',
+      categories: ['a', 'b', 'c'],
+      series,
+      valueLabels: true,
+    });
+    expect(l.valueLabels.map((v) => v.text)).toEqual(['0', '0']);
+  });
+
   it('omits labels wider than their bar', () => {
     expect(bar([52, 48], { width: 100 }).valueLabels).toEqual([]);
   });

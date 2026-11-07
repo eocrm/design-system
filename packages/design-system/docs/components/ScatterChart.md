@@ -3,39 +3,61 @@
 Points on an x/y plane, one dot per observation, grouped in series. Use it to see how two measures relate (bowl contents vs grams eaten, with a trend line) or to plot events on a time axis, sized by magnitude (today's meals, dot area = grams). Fills a `DashboardWidget variant="chart"` body, reflows to any cell size, and ships its own legend, tooltip, keyboard inspection, data table and empty state. The app owns data, formatting, loading and errors.
 
 ```tsx
-import { ScatterChart, DashboardWidget } from '@eocrm/design-system';
+import { useMemo } from 'react';
+import { ScatterChart, DashboardWidget, type ScatterSeries } from '@eocrm/design-system';
+
+const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: 'short' });
+const formatGrams = (n: number) => `${n} g`;
+const formatTime = (ms: number) => timeFormat.format(ms);
 
 // Two measures, with a least-squares trend line
-<DashboardWidget variant="chart" title="Bowl vs eaten">
-  <ScatterChart
-    label="Bowl contents at meal start vs grams eaten"
-    series={[
+function BowlVsEaten({ meals }: { meals: Meal[] }) {
+  const series = useMemo(
+    () => [
       { key: 'meals', label: 'Meals', points: meals.map((m) => ({ x: m.bowlG, y: m.eatenG })) },
-    ]}
-    xLabel="Bowl at start"
-    yLabel="Eaten"
-    formatX={formatGrams}
-    formatY={formatGrams}
-    trendLine
-  />
-</DashboardWidget>;
+    ],
+    [meals],
+  );
+  return (
+    <DashboardWidget variant="chart" title="Bowl vs eaten">
+      <ScatterChart
+        label="Bowl contents at meal start vs grams eaten"
+        series={series}
+        xLabel="Bowl at start"
+        yLabel="Eaten"
+        formatX={formatGrams}
+        formatY={formatGrams}
+        trendLine
+      />
+    </DashboardWidget>
+  );
+}
 
 // Time axis, dot area = grams, a pinned colour per bowl and an app-computed reference
-<ScatterChart
-  label="Meals today"
-  xScale="time"
-  series={[
-    { key: 'a', label: 'Bowl A', color: 1, points: bowlA }, // { x: Date, y: cumulativeG, size: mealG }
-    { key: 'b', label: 'Bowl B', color: 2, points: bowlB },
-  ]}
-  reference={{ label: 'Usual pace', points: usualPace }}
-  xLabel="Time"
-  yLabel="Eaten so far"
-  sizeLabel="Meal"
-  formatX={(ms) => timeFormat.format(ms)}
-  formatY={formatGrams}
-  formatSize={formatGrams}
-/>;
+function MealsToday({ bowlA, bowlB, usualPace }: MealsTodayProps) {
+  const series = useMemo<ScatterSeries[]>(
+    () => [
+      { key: 'a', label: 'Bowl A', color: 1, points: bowlA }, // { x: Date, y: cumulativeG, size: mealG }
+      { key: 'b', label: 'Bowl B', color: 2, points: bowlB },
+    ],
+    [bowlA, bowlB],
+  );
+  const reference = useMemo(() => ({ label: 'Usual pace', points: usualPace }), [usualPace]);
+  return (
+    <ScatterChart
+      label="Meals today"
+      xScale="time"
+      series={series}
+      reference={reference}
+      xLabel="Time"
+      yLabel="Eaten so far"
+      sizeLabel="Meal"
+      formatX={formatTime}
+      formatY={formatGrams}
+      formatSize={formatGrams}
+    />
+  );
+}
 ```
 
 <!-- props:start -->

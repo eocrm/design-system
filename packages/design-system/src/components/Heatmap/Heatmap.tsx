@@ -18,7 +18,14 @@ import { VisuallyHidden } from '../VisuallyHidden';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useSize } from '../_internal/useSize';
 import { ChartTooltip } from '../Chart/ChartTooltip';
-import { bucketOf, computeHeatmapLayout, heatmapBuckets, heatmapLegend } from './heatmapModel';
+import { X_AXIS_HEIGHT } from '../Chart/chartModel';
+import {
+  CELL_MIN_HEIGHT,
+  bucketOf,
+  computeHeatmapLayout,
+  heatmapBuckets,
+  heatmapLegend,
+} from './heatmapModel';
 import styles from './Heatmap.module.scss';
 
 export interface HeatmapProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
@@ -101,8 +108,10 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
   const gap = useMemo(() => readPx(plotEl, '--heatmap-gap', GAP), [plotEl]);
   const layout = useMemo(
     () =>
-      buckets && size.width > 0 ? computeHeatmapLayout({ rows, columns, width: size.width }) : null,
-    [buckets, rows, columns, size.width],
+      buckets && size.width > 0
+        ? computeHeatmapLayout({ rows, columns, width: size.width, height: size.height })
+        : null,
+    [buckets, rows, columns, size.width, size.height],
   );
 
   const [active, setActive] = useState<Cell | null>(null);
@@ -200,6 +209,7 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
         aria-label={label}
         aria-labelledby={undefined}
         data-empty=""
+        data-footnote={hasFootnote || undefined}
         className={clsx(styles.root, className)}
       >
         <EmptyState title={emptyMessage || t('chart.empty')} size="sm" />
@@ -216,6 +226,7 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
       role="figure"
       aria-label={label}
       aria-labelledby={undefined}
+      data-footnote={hasFootnote || undefined}
       className={clsx(styles.root, className)}
     >
       <ul className={styles.legend} data-heatmap-legend="">
@@ -253,6 +264,8 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
       <div
         ref={setPlotEl}
         className={styles.plot}
+        // The smallest grid: a box shorter than this grows the figure past it instead of clipping cells.
+        style={{ minHeight: CELL_MIN_HEIGHT * rows.length + X_AXIS_HEIGHT }}
         role="group"
         aria-label={label}
         aria-describedby={hasFootnote ? `${hintId} ${footnoteId}` : hintId}

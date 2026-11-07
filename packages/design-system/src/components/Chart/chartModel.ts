@@ -582,9 +582,11 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     const barWidth = (bandWidth - gap * (groups - 1)) / groups;
     series.forEach((x, j) => {
       const bars = x.values.map((v, i) => {
-        if (v === null || v === 0) return null;
+        if (v === null) return null;
         const bx = categoryX[i] - bandWidth / 2 + j * (barWidth + gap);
+        // A zero gets no bar but still its label, at the zero line.
         if (labelled) addLabel(bx + barWidth / 2, y(v), v, barWidth);
+        if (v === 0) return null;
         const top = Math.min(y(v), zeroY);
         const h = Math.max(1, Math.abs(zeroY - y(v)));
         return barPath({ x: bx, y: top, width: barWidth, height: h }, v > 0 ? 'top' : 'bottom');
@@ -653,8 +655,8 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       categories.forEach((_, i) => {
         const vals = primaries.map((p) => p.values[i]).filter((v) => v !== null) as number[];
         const total = vals.reduce((a, b) => a + b, 0);
-        if (total === 0) return;
-        addLabel(categoryX[i], y(total > 0 ? posTotal[i] : negTotal[i]), total, bandWidth);
+        if (vals.length === 0) return;
+        addLabel(categoryX[i], y(total >= 0 ? posTotal[i] : negTotal[i]), total, bandWidth);
       });
   }
 

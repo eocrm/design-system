@@ -55,7 +55,7 @@ function legendFormat(formatValue: Format): Format {
   const zero = formatValue(0);
   return (v) => {
     const s = formatValue(v === 0 ? 0 : v);
-    return v < 0 && s.replace(/^[-\u2212]/, '') === zero ? zero : s;
+    return v < 0 && formatValue(-v) === zero ? zero : s;
   };
 }
 
@@ -148,8 +148,8 @@ export function heatmapLegend(b: HeatmapBuckets, formatValue: Format): HeatmapLe
   return { kind: 'scale', steps: b.steps, boundaries };
 }
 
-// ponytail: fixed cell-height clamp; cells stay square-ish without a parent height. Read tokens if themes need it.
-const CELL_MIN_HEIGHT = 16;
+// ponytail: fixed cell-height clamp; read tokens if themes need it.
+export const CELL_MIN_HEIGHT = 16;
 const CELL_MAX_HEIGHT = 40;
 
 export interface HeatmapLayout {
@@ -167,15 +167,20 @@ export interface HeatmapLayout {
   cellAt(x: number, y: number): { row: number; col: number } | null;
 }
 
-/** Cell grid filling `width`: row labels on the left, thinned column labels underneath. */
+/**
+ * Cell grid filling `width` and `height` (cells 16–40px tall; past the minimum the grid outgrows `height`): row
+ * labels on the left, thinned column labels underneath.
+ */
 export function computeHeatmapLayout({
   rows,
   columns,
   width,
+  height: boxHeight = 0,
 }: {
   rows: readonly string[];
   columns: readonly string[];
   width: number;
+  height?: number;
 }): HeatmapLayout {
   const plotX = Math.max(0, ...rows.map(estimateTextWidth)) + LABEL_GAP;
   const avail = Math.max(1, width - plotX);
@@ -184,7 +189,8 @@ export function computeHeatmapLayout({
   const roughCell = avail / Math.max(1, columns.length);
   const padRight = Math.max(0, lastHalf - roughCell / 2);
   const cellWidth = Math.max(1, (avail - padRight) / Math.max(1, columns.length));
-  const cellHeight = Math.min(CELL_MAX_HEIGHT, Math.max(CELL_MIN_HEIGHT, cellWidth));
+  const fitted = (boxHeight - X_AXIS_HEIGHT) / Math.max(1, rows.length);
+  const cellHeight = Math.max(CELL_MIN_HEIGHT, Math.min(CELL_MAX_HEIGHT, fitted));
   const plotY = 0;
   const gridBottom = plotY + cellHeight * rows.length;
   const height = gridBottom + X_AXIS_HEIGHT;
