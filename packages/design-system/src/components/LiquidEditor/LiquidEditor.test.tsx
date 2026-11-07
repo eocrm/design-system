@@ -493,3 +493,46 @@ describe('LiquidEditor — empty aria-label', () => {
     expect(screen.getByRole('combobox')).toHaveAccessibleName('Liquid template');
   });
 });
+
+describe('insert tag menu (#749)', () => {
+  const IF_ITEM = /^if Show content only when a condition is true/;
+
+  it('inserts an if block at the caret with the caret in the condition', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness initial="Hi " />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    ta.setSelectionRange(3, 3);
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    await user.click(await screen.findByRole('menuitem', { name: IF_ITEM }));
+    await waitFor(() => expect(ta.selectionStart).toBe('Hi {% if '.length));
+    expect(ta).toHaveValue('Hi {% if  %}{% endif %}');
+  });
+
+  it('wraps the selected text as the block body', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness initial="Hello" />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    ta.setSelectionRange(0, 5);
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    await user.click(await screen.findByRole('menuitem', { name: IF_ITEM }));
+    await waitFor(() => expect(ta).toHaveValue('{% if  %}Hello{% endif %}'));
+  });
+
+  it('tags prop narrows the menu', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness tags={['assign']} />);
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    expect(await screen.findAllByRole('menuitem', { name: /assign/ })).toHaveLength(1);
+    expect(screen.queryByRole('menuitem', { name: /^if/ })).toBeNull();
+  });
+
+  it('tags={[]} hides the Insert tag button', () => {
+    renderEditor(<Harness tags={[]} />);
+    expect(screen.queryByRole('button', { name: 'Insert tag' })).toBeNull();
+  });
+
+  it('Insert tag is disabled when readOnly', () => {
+    renderEditor(<Harness readOnly />);
+    expect(screen.getByRole('button', { name: 'Insert tag' })).toBeDisabled();
+  });
+});

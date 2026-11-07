@@ -69,6 +69,12 @@ export interface LiquidEditorProps {
    * bordered "Insert variable" button. Only renders when `showToolbar` is true.
    */
   toolbarActions?: ReactNode;
+  /**
+   * Liquid tags offered by the "Insert tag" toolbar menu (and `{%` autocomplete).
+   * Default: all six (`if`, `unless`, `case`, `assign`, `capture`, `comment`).
+   * `[]` hides the menu and disables `{%` autocomplete. Loop tags (`for`) are never offered.
+   */
+  tags?: LiquidTag[];
   /** Filter names offered in autocomplete after `|`. Defaults to a common Liquid set. */
   filters?: string[];
   /** Minimum visible rows. Default `4`. */

@@ -529,6 +529,17 @@ export const en: Messages = {
     optional: '(optional)',
   },
   liquidEditor: {
+    insertTag: 'Insert tag',
+    tagDescription: {
+      if: 'Show content only when a condition is true',
+      ifElse: 'Show one thing or another, depending on a condition',
+      ifElsif: 'Check several conditions in order',
+      unless: 'Show content only when a condition is false',
+      case: 'Choose content by matching a value',
+      assign: 'Store a value in a new variable',
+      capture: 'Store a block of rendered text in a variable',
+      comment: 'Leave a note that is not rendered',
+    },
     insertVariable: 'Insert variable',
     noVariables: 'No variables available',
     preview: 'Preview',
