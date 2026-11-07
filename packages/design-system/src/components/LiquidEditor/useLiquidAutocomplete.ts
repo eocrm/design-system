@@ -49,9 +49,14 @@ export function getAutocompleteContext(value: string, caret: number): Autocomple
 
   // Tag-name position: only whitespace (and an optional `-`) after `{%`.
   if (value.startsWith('{%', open) && /^-?\s*$/.test(value.slice(open + 2, wordStart))) {
-    // Inside an existing tag body (text before its `%}`) there is no tag name to complete.
+    // A word glued to the caret, or a closed tag with a body after the caret
+    // (`{% if| x %}`), has no tag name to complete. An unclosed tag (an opener
+    // or the end comes before any `%}`) is still being typed: offer tags.
+    if (QUERY_CHAR.test(value[caret] ?? '')) return null;
     const close = value.indexOf('%}', caret);
-    if (!/^\s*-?$/.test(value.slice(caret, close === -1 ? undefined : close))) return null;
+    const next = value.slice(caret).search(/\{[{%]/);
+    const closed = close !== -1 && (next === -1 || close < caret + next);
+    if (closed && !/^\s*-?$/.test(value.slice(caret, close))) return null;
     return { kind: 'tag', query, wordStart, open };
   }
 

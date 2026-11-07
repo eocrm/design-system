@@ -597,5 +597,26 @@ describe('insert tag menu (#749)', () => {
       await user.keyboard('{Enter}');
       expect(screen.getByRole('combobox')).toHaveValue('{%- if  %}{% endif %}');
     });
+
+    it('opens mid-document before other text or later tags', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness initial=" Hello {{ x }}" />);
+      const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+      ta.focus();
+      ta.setSelectionRange(0, 0);
+      await user.keyboard('{{%  i'.replace('  ', ' '));
+      await user.keyboard('{Enter}');
+      expect(ta).toHaveValue('{% if  %}{% endif %} Hello {{ x }}');
+    });
+
+    it('opens on an earlier line before a later {% endif %}', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness initial={'\nHi\n{% endif %}'} />);
+      const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+      ta.focus();
+      ta.setSelectionRange(0, 0);
+      await user.keyboard('{{% i');
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+    });
   });
 });
