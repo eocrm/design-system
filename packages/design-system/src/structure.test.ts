@@ -1896,7 +1896,9 @@ describe('touch hit areas come from the mixin', () => {
     const size = 'max(100%, var(--size-touch))';
     const centre = 'calc(50% - max(100%, var(--size-touch)) / 2)';
     expect(out).toContain('@media (pointer: coarse)');
-    expect(out).toMatch(/\.host\s*\{[^}]*position:\s*relative/);
+    // Zero specificity, so a consumer className positioning the host wins.
+    expect(out).toMatch(/:where\(\.host\)\s*\{\s*position:\s*relative;\s*\}/);
+    expect(out).not.toMatch(/(^|[\s,}])\.host\s*\{/);
     const before = out.match(/\.host::before\s*\{([^}]*)\}/)?.[1] ?? '';
     expect(before).toMatch(/position:\s*absolute/);
     expect(before).toMatch(/content:\s*""/);

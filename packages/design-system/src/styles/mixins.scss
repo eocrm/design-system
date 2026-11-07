@@ -156,12 +156,16 @@
 // Centring uses logical insets of (50% - size / 2), not translate(-50%): that
 // is direction-agnostic, so no [dir='rtl'] branch exists to get wrong for a host
 // that carries dir itself or an LTR subtree inside an RTL page.
-// Caveats: it claims the host's ::before; sets position: relative (no hosts with
-// their own positioning); an overflow: hidden host clips the area; neighbours
-// overlapping the area lose taps to this host.
+// The host's position: relative sits in a zero-specificity :where() rule, so a
+// consumer className that positions the host (absolute/fixed/sticky) wins on
+// phones too; any non-static position still contains the ::before.
+// Caveats: it claims the host's ::before; an overflow: hidden host clips the
+// area; neighbours overlapping the area lose taps to this host.
 @mixin touch-hit-area {
   @media (pointer: coarse) {
-    position: relative;
+    @at-root :where(#{&}) {
+      position: relative;
+    }
 
     &::before {
       content: '';
