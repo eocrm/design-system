@@ -24,7 +24,7 @@ import { LiveRegion } from '../LiveRegion';
 import { VisuallyHidden } from '../VisuallyHidden';
 import { Button } from '../Button';
 import { Cluster } from '../Cluster';
-import { LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from '../_internal/longPress';
+import { LONG_PRESS_MS, pastSlop } from '../_internal/longPress';
 import { rangeFromIndices, resolveRange, sliceForZoom, type ChartRange } from './chartRange';
 import {
   categoryIndexAt,
@@ -525,9 +525,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     const p = press.current;
     if (p && p.id === e.pointerId && p.touch === 'pending') {
       // Past the slop before the timer: the page's scroll, not ours.
-      if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > LONG_PRESS_SLOP_PX) press.current = null;
+      if (pastSlop(e.clientX - p.x, e.clientY - p.y)) press.current = null;
     } else if (p && p.id === e.pointerId) {
-      if (!p.dragging && Math.hypot(e.clientX - p.x, e.clientY - p.y) > LONG_PRESS_SLOP_PX) {
+      if (!p.dragging && pastSlop(e.clientX - p.x, e.clientY - p.y)) {
         p.dragging = true;
         // Keep receiving moves and the release when the pointer leaves the plot mid-drag.
         e.currentTarget.setPointerCapture?.(e.pointerId);

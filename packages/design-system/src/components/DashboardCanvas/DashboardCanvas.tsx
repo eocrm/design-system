@@ -32,7 +32,7 @@ import type {
 import { DashboardCanvasItem, sortByPosition } from './DashboardCanvasItem';
 import type { CanvasGestures, ResizeEdge } from './DashboardCanvasItem';
 import { DashboardCanvasSection } from './DashboardCanvasSection';
-import { LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from '../_internal/longPress';
+import { LONG_PRESS_MS, pastSlop } from '../_internal/longPress';
 import styles from './DashboardCanvas.module.scss';
 
 /**
@@ -669,9 +669,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // page's gesture (the browser pans and pointercancels anyway), so let
       // go of it; within the slop, wait for the long-press timer.
       if (drag.kind !== 'section' && drag.touch === 'pending') {
-        if (
-          Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > LONG_PRESS_SLOP_PX
-        ) {
+        if (pastSlop(event.clientX - drag.startX, event.clientY - drag.startY)) {
           dragRef.current = null;
         }
         return;
