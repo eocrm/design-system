@@ -71,10 +71,12 @@
 @mixin visually-hidden {
   position: absolute;
 
-  // Pin to the containing block's start: with no inset the box sits at its
-  // static position, which can lie outside a clipping scroller and extend its
-  // scroll area or the page (DS-14, DS-31).
-  inset-block-start: 0;
+  // Pin the INLINE start only: at its static inline position the box can lie
+  // past a clipping scroller's edge and widen it or the page (DS-31). The block
+  // axis stays static on purpose — pinning it to the containing block's top
+  // makes screen readers that scroll to the node being read jump the page
+  // there. A vertical escape is contained by a positioned scroller instead
+  // (Card.Body's `.scroll`, DS-14).
   inset-inline-start: 0;
   width: 1px;
   height: 1px;

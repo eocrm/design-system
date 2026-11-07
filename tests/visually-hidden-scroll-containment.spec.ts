@@ -24,8 +24,8 @@ test('DashboardCanvas cell with a Chart has no second scrollbar (DS-14)', async 
   expect(bad).toEqual([]);
 });
 
-// The mixin now pins to the containing block's start, so a focusable hidden
-// input needs a positioned tile or focusing it would scroll to the page origin.
+// The mixin pins to the containing block's inline start, so a focusable hidden
+// input needs a positioned tile or focusing it would scroll to that ancestor's edge.
 for (const route of ['date-strip', 'slot-grid']) {
   test(`${route} radio inputs are contained by their tile`, async ({ page }) => {
     await page.goto(`/components/${route}`);
