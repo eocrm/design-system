@@ -6,6 +6,7 @@ import {
   linearFit,
   nearestDot,
   resolveScatterSeries,
+  scatterSizeDomain,
   type ResolvedScatterSeries,
 } from './scatterModel';
 
@@ -213,5 +214,59 @@ describe('inspectionOrder and nearestDot', () => {
     const d = l.dots[0];
     expect(nearestDot(l, d.cx + 2, d.cy, 10)).toBe(d);
     expect(nearestDot(l, d.cx + 50, d.cy + 50, 10)).toBeNull();
+  });
+});
+
+describe('fix round 1', () => {
+  const sized = resolve([
+    { x: 0, y: 0, size: 1 },
+    { x: 10, y: 50, size: 100 },
+  ]);
+  it('keeps edge dots inside the svg', () => {
+    const l = computeScatterLayout({ ...base, xDomain: [0, 10], yDomain: [0, 50], series: sized });
+    const big = l.dots.find((d) => d.r === 12)!;
+    expect(big.cx + big.r).toBeLessThanOrEqual(base.width);
+    expect(big.cy - big.r).toBeGreaterThanOrEqual(0);
+    const small = l.dots.find((d) => d.r === 3)!;
+    expect(small.cx - small.r).toBeGreaterThanOrEqual(l.plot.x);
+  });
+  it('uses the midpoint radius for equal or single sizes', () => {
+    const eq = computeScatterLayout({
+      ...base,
+      series: resolve([
+        { x: 1, y: 1, size: 5 },
+        { x: 2, y: 2, size: 5 },
+      ]),
+    });
+    expect(eq.dots.map((d) => d.r)).toEqual([7.5, 7.5]);
+    const one = computeScatterLayout({ ...base, series: resolve([{ x: 1, y: 1, size: 5 }]) });
+    expect(one.dots[0].r).toBe(7.5);
+  });
+  it('takes the size domain from sizeDomain so hiding a series keeps radii', () => {
+    const a = resolve([{ x: 1, y: 1, size: 1 }], 'a');
+    const b = resolve([{ x: 2, y: 2, size: 100 }], 'b');
+    expect(scatterSizeDomain([...a, ...b])).toEqual([1, 100]);
+    const l = computeScatterLayout({
+      ...base,
+      series: b,
+      sizeDomain: scatterSizeDomain([...a, ...b]),
+    });
+    expect(l.dots[0].r).toBeCloseTo(12);
+  });
+  it('drops non-finite reference points', () => {
+    const l = computeScatterLayout({
+      ...base,
+      series: resolve([{ x: 1, y: 1 }]),
+      reference: {
+        label: 'r',
+        points: [
+          { x: 1, y: 1 },
+          { x: NaN, y: 2 },
+          { x: 3, y: Infinity },
+          { x: 2, y: 2 },
+        ],
+      },
+    });
+    expect(l.referencePath!.match(/[ML]/g)).toHaveLength(2);
   });
 });

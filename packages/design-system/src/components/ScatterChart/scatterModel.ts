@@ -86,7 +86,20 @@ export interface ScatterLayoutInput {
   trendLine?: boolean;
   /** Min and max dot radius for points with `size`. */
   sizeRange: [number, number];
+  /** Domain of `size` values; pass `scatterSizeDomain(allSeries)` so hiding a series doesn't resize the rest. Defaults to `series`. */
+  sizeDomain?: [number, number];
 }
+
+const validSize = (s: number | undefined): s is number => s !== undefined && Number.isFinite(s);
+
+/** Min/max `size` over all points of `series`. */
+export function scatterSizeDomain(series: readonly ResolvedScatterSeries[]): [number, number] {
+  const sizes = series.flatMap((s) => s.points.map((p) => p.size).filter(validSize));
+  return sizes.length ? [Math.min(...sizes), Math.max(...sizes)] : [0, 1];
+}
+
+/** Space kept between the dot edge and the plot's domain bounds: the 1px ring. */
+const DOT_RING = 1;
 
 const num = (x: number | Date) => (x instanceof Date ? x.getTime() : x);
 
@@ -175,7 +188,12 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     height: plotBottom - plotTop,
   };
 
-  const xr: [number, number] = [plot.x, plot.x + plot.width];
+  // Inset the pixel ranges by the largest dot so dots at the domain bounds stay inside the svg.
+  const pad =
+    (all.some((p) => validSize(p.size)) ? Math.max(input.sizeRange[1], DOT_RADIUS) : DOT_RADIUS) +
+    DOT_RING;
+  y.range([plotBottom - pad, plotTop + pad]);
+  const xr: [number, number] = [plot.x + pad, plot.x + plot.width - pad];
   const xExtent = widen(extent(all.map((p) => p.x)));
   const xd: [number, number] = input.xDomain
     ? [num(input.xDomain[0]), num(input.xDomain[1])]
@@ -205,10 +223,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     prevEnd = pos + half;
   }
 
-  const sizes = all.flatMap((p) =>
-    p.size !== undefined && Number.isFinite(p.size) ? [p.size] : [],
-  );
-  const [sMin, sMax] = extent(sizes);
+  const [sMin, sMax] = input.sizeDomain ?? scatterSizeDomain(series);
   const r = scaleSqrt().domain([sMin, sMax]).range(input.sizeRange);
   const dots: ScatterDot[] = series
     .flatMap((s) =>
@@ -218,7 +233,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
         index,
         cx: x(datum.x),
         cy: y(datum.y),
-        r: datum.size !== undefined && Number.isFinite(datum.size) ? r(datum.size) : DOT_RADIUS,
+        r: validSize(datum.size) ? r(datum.size) : DOT_RADIUS,
         datum,
       })),
     )
@@ -227,6 +242,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
   const referencePath = input.reference?.points.length
     ? input.reference.points
         .map((p) => ({ x: num(p.x), y: p.y }))
+        .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y))
         .sort((a, b) => a.x - b.x)
         .map((p, i) => `${i ? 'L' : 'M'}${x(p.x)},${y(p.y)}`)
         .join('')
