@@ -920,6 +920,10 @@ export interface Messages {
     selectedOne: (params: { category: string }) => string;
     /** Live announcement when the selection is cleared. */
     selectionCleared: string;
+    /** Zoomed range of categories: part of the plot's description and appended to the data-table caption while zoomed. */
+    zoomed: (params: { from: string; to: string }) => string;
+    /** Zoom to a single category: part of the plot's description and appended to the data-table caption while zoomed. */
+    zoomedOne: (params: { category: string }) => string;
   };
   funnelChart: {
     /** Accessible description of the focusable plot (its name is the chart label); says arrow keys inspect stages and that the data table lists every value. */

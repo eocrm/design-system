@@ -13,6 +13,8 @@ export interface ChartLegendItem {
   locked: boolean;
   parentLabel?: string;
   parentHidden: boolean;
+  /** Not a series (ScatterChart's reference line): a plain entry with no toggle. */
+  static?: boolean;
 }
 
 const swatchStyle = (slot: number) =>
@@ -21,7 +23,7 @@ const swatchStyle = (slot: number) =>
       slot === 0 ? 'var(--chart-total-comparison)' : `var(--chart-series-${slot})`,
   }) as CSSProperties;
 
-/** Internal: legend toggles. Label text stays in text ink; the swatch carries identity. */
+/** Internal: legend toggles (and plain `static` entries). Label text stays in text ink; the swatch carries identity. */
 export function ChartLegend({
   items,
   hidden,
@@ -61,6 +63,27 @@ export function ChartLegend({
     <ul className={styles.legend}>
       {shown.map((item) => {
         const on = !hidden.includes(item.key) && !item.parentHidden;
+        const content = (
+          <>
+            <span
+              className={styles.swatch}
+              data-comparison={item.comparison || undefined}
+              data-overflow={item.overflow || undefined}
+              aria-hidden="true"
+            />
+            {item.label}
+            {item.parentLabel && <VisuallyHidden>, {item.parentLabel}</VisuallyHidden>}
+          </>
+        );
+        if (item.static) {
+          return (
+            <li key={item.key} className={styles.legendEntry}>
+              <span className={styles.legendItem} data-static="" style={swatchStyle(item.slot)}>
+                {content}
+              </span>
+            </li>
+          );
+        }
         return (
           <li key={item.key} className={styles.legendEntry}>
             <button
@@ -77,14 +100,7 @@ export function ChartLegend({
               onFocus={() => onFocusKey(item.key)}
               onBlur={() => onFocusKey(null)}
             >
-              <span
-                className={styles.swatch}
-                data-comparison={item.comparison || undefined}
-                data-overflow={item.overflow || undefined}
-                aria-hidden="true"
-              />
-              {item.label}
-              {item.parentLabel && <VisuallyHidden>, {item.parentLabel}</VisuallyHidden>}
+              {content}
             </button>
           </li>
         );

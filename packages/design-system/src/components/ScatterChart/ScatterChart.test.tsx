@@ -229,7 +229,24 @@ describe('ScatterChart', () => {
     );
     layout.fire();
     expect(container.querySelector('[data-scatter-reference]')?.getAttribute('d')).toMatch(/^M/);
-    expect(screen.getByRole('button', { name: 'Recommended' })).toBeInTheDocument();
+    // Not a series: a plain legend entry, not a (pressed, disabled) toggle.
+    expect(screen.queryByRole('button', { name: 'Recommended' })).toBeNull();
+    expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toContain('Recommended');
+  });
+
+  it('has no Size column when only hidden series carry sizes', () => {
+    stubLayout();
+    render(
+      <ScatterChart
+        {...base}
+        formatSize={String}
+        hiddenSeries={['bird']}
+        series={[...base.series, { key: 'bird', label: 'Bird', points: [{ x: 3, y: 4, size: 2 }] }]}
+      />,
+    );
+    expect(
+      within(screen.getByRole('table')).queryByRole('columnheader', { name: 'Size' }),
+    ).toBeNull();
   });
 
   it('warns in dev when a point has size but formatSize is missing', () => {

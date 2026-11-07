@@ -857,7 +857,7 @@
           "type": "ChartRange | null",
           "required": false,
           "default": "",
-          "description": "Controlled zoomed category range (`null` = all categories). While zoomed, categories, series, markers and\nvalue labels are sliced to the range, the y-axis rescales and `details` still receives original indices.\nA range naming an unknown category is ignored (full range shown) with a dev warning. The zoom buttons (\"Zoom\nto selection\" while a selection exists, \"Reset zoom\" while zoomed) always appear when selection is enabled;\nwhen controlled, they call `onZoomRangeChange`. Omit for uncontrolled."
+          "description": "Controlled zoomed category range (`null` = all categories). While zoomed, categories, series, markers and\nvalue labels are sliced to the range, the y-axis rescales and `details` still receives original indices.\nA range naming an unknown category is ignored (full range shown) with a dev warning. Header buttons: \"Zoom\nto selection\" while a selection exists, and \"Reset zoom\" whenever zoomed (also without selection enabled);\nwhen controlled, they call `onZoomRangeChange`. Omit for uncontrolled."
         },
         {
           "name": "defaultZoomRange",

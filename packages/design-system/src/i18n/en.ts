@@ -487,6 +487,8 @@ export const en: Messages = {
     selected: ({ from, to }) => `Selected ${from as string} to ${to as string}`,
     selectedOne: ({ category }) => `Selected ${category as string}`,
     selectionCleared: 'Selection cleared',
+    zoomed: ({ from, to }) => `Zoomed to ${from as string}–${to as string}`,
+    zoomedOne: ({ category }) => `Zoomed to ${category as string}`,
   },
   funnelChart: {
     keyboardHint: 'Use arrow keys to inspect stages. All values are also in the data table.',

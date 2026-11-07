@@ -166,6 +166,8 @@ describe('Heatmap', () => {
     fireEvent.pointerMove(grid, { clientX: cx, clientY: cy, pointerType: 'mouse' });
     expect(tooltip()).toHaveTextContent('Mon, 07');
     expect(tooltip()).toHaveTextContent('12 g');
+    // The cell name and value only: the figure label is not repeated as the row label.
+    expect(tooltip()).not.toHaveTextContent('Meals by hour');
     fireEvent.pointerLeave(grid, { pointerType: 'mouse' });
     expect(tooltip()).toBeNull();
 

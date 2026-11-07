@@ -222,7 +222,8 @@
     text-decoration: line-through;
   }
 
-  &:disabled {
+  &:disabled,
+  &[data-static] {
     cursor: default;
   }
 

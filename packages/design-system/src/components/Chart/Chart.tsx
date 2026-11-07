@@ -134,8 +134,8 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   /**
    * Controlled zoomed category range (`null` = all categories). While zoomed, categories, series, markers and
    * value labels are sliced to the range, the y-axis rescales and `details` still receives original indices.
-   * A range naming an unknown category is ignored (full range shown) with a dev warning. The zoom buttons ("Zoom
-   * to selection" while a selection exists, "Reset zoom" while zoomed) always appear when selection is enabled;
+   * A range naming an unknown category is ignored (full range shown) with a dev warning. Header buttons: "Zoom
+   * to selection" while a selection exists, and "Reset zoom" whenever zoomed (also without selection enabled);
    * when controlled, they call `onZoomRangeChange`. Omit for uncontrolled.
    */
   zoomRange?: ChartRange | null;
@@ -277,21 +277,40 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     selection,
     loaded && resolveRange(selection, allCategories) === null,
   );
-  // Resolved against the view: a selection outside the zoomed range is simply not drawn, but still
-  // exists (Escape clears it, a plot click clears it, and it can be zoomed to).
-  const selectedIdx = selectable ? resolveRange(selection, categories) : null;
-  const hasSelection = selectable && resolveRange(selection, allCategories) !== null;
+  const selectionIdx = selectable ? resolveRange(selection, allCategories) : null;
+  const hasSelection = selectionIdx !== null;
+  // Clipped to the zoom window, in view indices. The part outside is not drawn and a click there clears,
+  // but the selection still exists (Escape clears it, and it can be zoomed to).
+  const viewFrom = zoomFrom ?? 0;
+  const clipFrom = Math.max(selectionIdx?.from ?? 0, viewFrom);
+  const clipTo = Math.min(selectionIdx?.to ?? -1, zoomTo ?? allCategories.length - 1);
+  const selectedIdx =
+    selectionIdx && clipFrom <= clipTo
+      ? { from: clipFrom - viewFrom, to: clipTo - viewFrom }
+      : null;
+  const selectedText = (r: ChartRange) =>
+    r.from === r.to
+      ? t('chart.selectedOne', { category: r.from })
+      : t('chart.selected', { from: r.from, to: r.to });
+  // Persistent zoom and selection, in the plot's description (Hard rule 10: a state the user arrives at).
+  const zoomText = !zoomIdx
+    ? ''
+    : zoomIdx.from === zoomIdx.to
+      ? t('chart.zoomedOne', { category: allCategories[zoomIdx.from] })
+      : t('chart.zoomed', { from: allCategories[zoomIdx.from], to: allCategories[zoomIdx.to] });
+  const statusText = [
+    zoomText,
+    selectionIdx &&
+      selectedText(rangeFromIndices(selectionIdx.from, selectionIdx.to, allCategories)),
+  ]
+    .filter(Boolean)
+    .map((part) => `${part}.`)
+    .join(' ');
   // Last user selection change, announced until keyboard inspection takes over the live region.
   const [selectionNote, setSelectionNote] = useState('');
   const select = (next: ChartRange | null) => {
     setSelection(next);
-    setSelectionNote(
-      next === null
-        ? t('chart.selectionCleared')
-        : next.from === next.to
-          ? t('chart.selectedOne', { category: next.from })
-          : t('chart.selected', { from: next.from, to: next.to }),
-    );
+    setSelectionNote(next === null ? t('chart.selectionCleared') : selectedText(next));
   };
 
   const [rawHidden, setHidden] = useControllableState<string[]>({
@@ -310,6 +329,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const focusKey = hoverKey ?? focusedKey;
   const hintId = useId();
+  const statusId = useId();
   const footnoteId = useId();
   const hasFootnote = footnote != null && footnote !== false && footnote !== '';
   const footnoteEl = hasFootnote && (
@@ -322,7 +342,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const empty = zoomIdx === null && isEmpty(categories, resolved.series);
 
   const [setPlotEl, size, plotEl] = useSize<HTMLDivElement>();
-  const [setRootEl, rootSize] = useSize<HTMLElement>();
+  const [setRootEl, rootSize, rootEl] = useSize<HTMLElement>();
   const [setZoomEl, zoomSize] = useSize<HTMLElement>();
   const figureRef = useMemo(
     () => mergeRefs(ref, (el: HTMLElement | null) => setRootEl(el)),
@@ -364,11 +384,17 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     setActiveSource(index === null ? null : source);
   };
   // A zoom change (ours or the consumer's) re-indexes the view: stale indices would name other categories.
-  useEffect(() => {
-    anchor.current = null;
+  // Reset during render, so no frame (tooltip, announcement) ever uses an index from the old view.
+  const zoomKey = `${zoomFrom}|${zoomTo}`;
+  const [inspectedZoomKey, setInspectedZoomKey] = useState(zoomKey);
+  if (inspectedZoomKey !== zoomKey) {
+    setInspectedZoomKey(zoomKey);
     setActive(null);
     setActiveSource(null);
-  }, [zoomFrom, zoomTo]);
+  }
+  useEffect(() => {
+    anchor.current = null;
+  }, [zoomKey]);
   const clampIndex = (i: number) => Math.max(0, Math.min(n - 1, i));
   const rangeAt = (a: number, b: number) =>
     rangeFromIndices(clampIndex(a), clampIndex(b), categories);
@@ -390,6 +416,13 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         next = n - 1;
         break;
       case 'Escape':
+        // Mid-drag, Escape cancels the gesture only: the release then commits nothing.
+        if (press.current) {
+          e.preventDefault();
+          press.current = null;
+          setDraft(null);
+          return;
+        }
         if (hasSelection) {
           e.preventDefault();
           select(null);
@@ -448,6 +481,14 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   // An unmount mid-press must not fire the lift on a detached plot.
   useEffect(() => () => clearTimeout(liftTimer.current), []);
   const [draft, setDraft] = useState<{ from: number; to: number } | null>(null);
+
+  // Reset zoom into all-null data swaps the plot for the EmptyState: keep focus in the figure.
+  const refocusAfterReset = useRef(false);
+  useEffect(() => {
+    if (!refocusAfterReset.current) return;
+    refocusAfterReset.current = false;
+    if (empty) rootEl?.focus();
+  });
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     const index = indexAt(e);
@@ -636,6 +677,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const resetZoom = () => {
     setZoom(null);
     plotEl?.focus();
+    refocusAfterReset.current = true;
   };
   const zoomButtons = (hasSelection || zoomIdx !== null) && (
     <Cluster ref={setZoomEl} gap="xs">
@@ -672,8 +714,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   if (empty) {
     return (
       <figure
+        // Focus target when "Reset zoom" lands here; not a tab stop.
+        tabIndex={-1}
         {...rest}
-        ref={ref}
+        ref={figureRef}
         role="figure"
         aria-label={label}
         aria-labelledby={undefined}
@@ -698,15 +742,13 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       data-footnote={hasFootnote || undefined}
       className={clsx(styles.root, className)}
     >
-      {/* Header row: the legend, plus the zoom buttons at the end while they apply. */}
-      {zoomButtons ? (
-        <Cluster justify="between" gap="sm">
-          {legendEl}
-          {zoomButtons}
-        </Cluster>
-      ) : (
-        legendEl
-      )}
+      {/* Header row: the legend, plus the zoom buttons at the end while they apply. One wrapper either way,
+          so the legend (and a focused legend button) is not remounted when the buttons come and go. */}
+      <Cluster justify="between" gap="sm">
+        {legendEl}
+        {zoomButtons}
+      </Cluster>
+      <VisuallyHidden id={statusId}>{statusText}</VisuallyHidden>
       <VisuallyHidden id={hintId}>
         {selectable
           ? `${t('chart.keyboardHint')} ${t('chart.rangeHint')}`
@@ -717,7 +759,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         className={styles.plot}
         role="group"
         aria-label={label}
-        aria-describedby={hasFootnote ? `${hintId} ${footnoteId}` : hintId}
+        aria-describedby={[statusText && statusId, hintId, hasFootnote && footnoteId]
+          .filter(Boolean)
+          .join(' ')}
         tabIndex={0}
         data-selectable={selectable || undefined}
         onKeyDown={onKeyDown}
@@ -918,7 +962,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       />
       <LiveRegion>{liveText}</LiveRegion>
       <ChartTable
-        caption={label}
+        caption={zoomText ? `${label}. ${zoomText}` : label}
         categoryHeader={t('chart.category')}
         noData={t('chart.noData')}
         categories={categories}

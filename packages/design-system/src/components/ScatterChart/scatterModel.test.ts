@@ -113,6 +113,20 @@ describe('time axis', () => {
       );
     }
   });
+  it('widens a single point (or a single x) to a readable window with distinct tick labels', () => {
+    const t0 = Date.UTC(2026, 0, 1, 12);
+    const l = computeScatterLayout({
+      ...base,
+      xScale: 'time',
+      formatX: (ms) => new Date(ms).toISOString().slice(11, 16),
+      series: resolve([{ x: new Date(t0), y: 3 }]),
+    });
+    const labels = l.xTicks.map((t) => t.label);
+    expect(labels.length).toBeGreaterThan(1);
+    expect(new Set(labels).size).toBe(labels.length);
+    // Ticks a readable step apart, not milliseconds around the point.
+    expect(l.xTicks[1].value - l.xTicks[0].value).toBeGreaterThanOrEqual(60_000);
+  });
 });
 
 describe('size and paint order', () => {

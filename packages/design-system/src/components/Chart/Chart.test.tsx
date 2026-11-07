@@ -1101,6 +1101,100 @@ describe('range selection and zoom', () => {
     expect(onChange).toHaveBeenLastCalledWith(null);
   });
 
+  it('describes the zoom and selection on the plot and names the zoom in the table caption', () => {
+    const layout = stubLayout();
+    render(
+      <Chart
+        {...sel}
+        zoomRange={{ from: 'c1', to: 'c3' }}
+        selectedRange={{ from: 'c3', to: 'c2' }}
+        onSelectedRangeChange={() => {}}
+      />,
+    );
+    layout.fire();
+    expect(plotOf()).toHaveAccessibleDescription(
+      'Zoomed to c1–c3. Selected c2 to c3. Use arrow keys to inspect values. All values are also in the data table. Shift+arrows select a range.',
+    );
+    expect(screen.getByRole('table', { name: 'Deals won per week. Zoomed to c1–c3' })).toBeTruthy();
+  });
+
+  it('draws the part of a selection inside the zoom window; a click there keeps it', () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const { container } = render(
+      <Chart
+        {...sel}
+        zoomRange={{ from: 'c1', to: 'c3' }}
+        selectedRange={{ from: 'c0', to: 'c2' }}
+        onSelectedRangeChange={onChange}
+      />,
+    );
+    layout.fire();
+    expect(band(container)).not.toBeNull();
+    click(container, 'c2');
+    expect(onChange).not.toHaveBeenCalled();
+    click(container, 'c3');
+    expect(onChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('Escape during a drag cancels it without committing', () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const { container } = render(
+      <Chart
+        {...sel}
+        defaultSelectedRange={{ from: 'c0', to: 'c0' }}
+        onSelectedRangeChange={onChange}
+      />,
+    );
+    layout.fire();
+    const plot = plotOf();
+    const opts = { pointerId: 1, pointerType: 'mouse', button: 0 };
+    fireEvent.pointerDown(plot, { ...opts, clientX: xOf(container, 'c1') });
+    fireEvent.pointerMove(plot, { ...opts, clientX: xOf(container, 'c3') });
+    fireEvent.keyDown(plot, { key: 'Escape' });
+    fireEvent.pointerUp(plot, { ...opts, clientX: xOf(container, 'c3') });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(band(container)).not.toBeNull();
+    expect(Number(band(container)!.getAttribute('width'))).toBeLessThan(
+      xOf(container, 'c2') - xOf(container, 'c0'),
+    );
+  });
+
+  it('a focused legend button keeps focus when the zoom buttons appear', () => {
+    const layout = stubLayout();
+    const two: ChartProps = {
+      ...sel,
+      series: [
+        { key: 'a', label: 'Alpha', values: [1, 2, 3, 4, 5] },
+        { key: 'b', label: 'Bravo', values: [1, 2, 3, 4, 5] },
+      ],
+      onSelectedRangeChange: () => {},
+    };
+    const { rerender } = render(<Chart {...two} selectedRange={null} />);
+    layout.fire();
+    const alpha = screen.getByRole('button', { name: 'Alpha' });
+    act(() => alpha.focus());
+    rerender(<Chart {...two} selectedRange={{ from: 'c1', to: 'c2' }} />);
+    expect(screen.getByRole('button', { name: 'Zoom to selection' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Alpha' })).toBe(alpha);
+    expect(alpha).toHaveFocus();
+  });
+
+  it('Reset zoom into an empty chart moves focus to the figure', async () => {
+    const layout = stubLayout();
+    render(
+      <Chart
+        {...sel}
+        series={[{ key: 'won', label: 'Deals won', values: [null, null, null, null, null] }]}
+        defaultZoomRange={{ from: 'c1', to: 'c2' }}
+      />,
+    );
+    layout.fire();
+    await userEvent.click(screen.getByRole('button', { name: 'Reset zoom' }));
+    expect(screen.getByRole('figure', { name: 'Deals won per week' })).toHaveFocus();
+  });
+
   it('compact: the legend fits into the width the zoom buttons leave', () => {
     // The stub gives every element the same width, so the zoom buttons claim the whole row.
     const layout = stubLayout(400, 100);

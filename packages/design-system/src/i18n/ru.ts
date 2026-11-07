@@ -494,6 +494,8 @@ export const ru: Messages = {
     selected: ({ from, to }) => `Выделено: ${from as string} — ${to as string}`,
     selectedOne: ({ category }) => `Выделено: ${category as string}`,
     selectionCleared: 'Выделение снято',
+    zoomed: ({ from, to }) => `Масштаб: ${from as string} — ${to as string}`,
+    zoomedOne: ({ category }) => `Масштаб: ${category as string}`,
   },
   funnelChart: {
     keyboardHint:

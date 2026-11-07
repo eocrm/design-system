@@ -342,7 +342,8 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
             ? [
                 {
                   key: 'value',
-                  label,
+                  // The title already names the cell; repeating the figure label adds nothing.
+                  label: '',
                   slot: 0,
                   comparison: false,
                   value: textOf(currentValue),

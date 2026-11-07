@@ -192,8 +192,10 @@ export function nearestDot(
 
 const extent = (values: number[]): [number, number] =>
   values.length ? [Math.min(...values), Math.max(...values)] : [0, 1];
-const widen = ([lo, hi]: [number, number]): [number, number] =>
-  lo === hi ? [lo - 1, hi + 1] : [lo, hi];
+/** A single value (one point, or every point on one x/y) spans ±`pad` so the axis keeps readable ticks. */
+const widen = ([lo, hi]: [number, number], pad = 1): [number, number] =>
+  lo === hi ? [lo - pad, hi + pad] : [lo, hi];
+const HOUR_MS = 3_600_000;
 
 export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
   const { series, width, height, formatX, formatY } = input;
@@ -225,7 +227,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     DOT_RING;
   y.range([plotBottom - pad, plotTop + pad]);
   const xr: [number, number] = [plot.x + pad, plot.x + plot.width - pad];
-  const xExtent = widen(extent(all.map((p) => p.x)));
+  const xExtent = widen(extent(all.map((p) => p.x)), input.xScale === 'time' ? HOUR_MS : 1);
   const xd: [number, number] = input.xDomain
     ? [num(input.xDomain[0]), num(input.xDomain[1])]
     : xExtent;

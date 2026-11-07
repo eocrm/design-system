@@ -78,7 +78,7 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
 const HIT_RADIUS = 24;
 const DOT_MIN = 4;
 const DOT_MAX = 16;
-/** Legend entry for `reference`: not a series, so it can't collide with a series key or be toggled. */
+/** Legend key for `reference`: not a series, so it can't collide with a series key (its entry is `static`). */
 const REFERENCE_KEY = '\0reference';
 const NO_HIDDEN: string[] = [];
 
@@ -293,6 +293,8 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
   );
 
   const hasLabels = visible.some((s) => s.points.some((p) => p.label));
+  // The table lists visible series only, so a Size column only when one of them has a size.
+  const hasSizeColumn = visible.some((s) => s.points.some((p) => hasSizeValue(p.size)));
   const liveText =
     activeSource === 'keyboard' && currentSeries && currentPoint
       ? `${currentSeries.label}: ${xLabel} ${formatX(currentPoint.x)}, ${yLabel} ${formatY(currentPoint.y)}${
@@ -304,7 +306,6 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
   const plottedVisible = visible.filter((s) => s.points.length > 0);
   const isLocked = (key: string) => plottedVisible.length === 1 && plottedVisible[0].key === key;
   const toggle = (key: string) => {
-    if (key === REFERENCE_KEY) return;
     if (hidden.includes(key)) setHidden(hidden.filter((k) => k !== key));
     else if (!isLocked(key)) setHidden([...hidden, key]);
   };
@@ -328,8 +329,9 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
             slot: 0,
             comparison: true,
             overflow: false,
-            locked: true,
+            locked: false,
             parentHidden: false,
+            static: true,
           },
         ]
       : []),
@@ -551,7 +553,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
               <th scope="col">{t('scatterChart.series')}</th>
               <th scope="col">{xLabel}</th>
               <th scope="col">{yLabel}</th>
-              {hasSize && <th scope="col">{sizeName}</th>}
+              {hasSizeColumn && <th scope="col">{sizeName}</th>}
               {hasLabels && <th scope="col">{t('scatterChart.pointLabel')}</th>}
             </tr>
           </thead>
@@ -562,7 +564,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                   <th scope="row">{s.label}</th>
                   <td>{formatX(p.x)}</td>
                   <td>{formatY(p.y)}</td>
-                  {hasSize && <td>{hasSizeValue(p.size) ? sizeText(p.size) : ''}</td>}
+                  {hasSizeColumn && <td>{hasSizeValue(p.size) ? sizeText(p.size) : ''}</td>}
                   {hasLabels && <td>{p.label ?? ''}</td>}
                 </tr>
               )),
