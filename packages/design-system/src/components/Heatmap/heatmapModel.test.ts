@@ -52,6 +52,10 @@ function expectDisjointRanges(b: HeatmapBuckets, min: number, max: number) {
   return ranges;
 }
 
+/** Every value printed in the legend: range ends and boundaries, split on the range dash. */
+const legendPieces = (l: HeatmapLegend) =>
+  l.kind === 'scale' ? l.boundaries : l.items.flatMap((e) => e.text.split('–'));
+
 const intRange = (lo: number, hi: number) => [
   Array.from({ length: hi - lo + 1 }, (_, i) => lo + i),
 ];
@@ -141,6 +145,27 @@ describe('heatmapBuckets / heatmapLegend', () => {
     expectDisjointRanges(expectCovers(intRange(3, 11)), 3, 11);
     const grams = heatmapLegend(heatmapBuckets([[0, 3, 1, 2]], String)!, (n) => `${n} g`);
     expect(texts(grams)).toEqual(['0 g', '1 g', '2 g', '3 g']);
+  });
+
+  it('falls back to the stepped bar when a coarse formatter would make integer ranges touch', () => {
+    const hundreds: Fmt = (n) => String(Math.round(n / 100) * 100);
+    const b = expectCovers(intRange(0, 1000), hundreds);
+    const pieces = legendPieces(heatmapLegend(b, hundreds));
+    expect(pieces.length).toBeGreaterThan(1);
+    expect(new Set(pieces).size).toBe(pieces.length);
+
+    const thousands: Fmt = (n) => `${Math.round(n / 1000)}k`;
+    const tiny = expectCovers(intRange(0, 10), thousands);
+    expect(tiny.steps).toEqual([3]);
+    expect(texts(heatmapLegend(tiny, thousands))).toEqual(['0k']);
+  });
+
+  it('never prints "-0" next to "0"', () => {
+    const fmt: Fmt = (n) => n.toFixed(0);
+    const b = expectCovers([[-0.4, 0.4]], fmt);
+    const pieces = legendPieces(heatmapLegend(b, fmt));
+    expect(pieces).not.toContain('-0');
+    expect(new Set(pieces).size).toBe(pieces.length);
   });
 
   it('ignores nulls and non-finite values, and is null without a finite value', () => {

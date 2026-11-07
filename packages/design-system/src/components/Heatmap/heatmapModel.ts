@@ -19,7 +19,10 @@ export interface HeatmapBuckets {
   thresholds: number[];
   /** Ramp step of each bucket. */
   steps: HeatmapStep[];
-  /** Every finite value is an integer; the legend then lists disjoint closed ranges ("0–1", "2–3"). */
+  /**
+   * Every finite value is an integer and the ranges stay distinct once formatted; the legend then lists disjoint
+   * closed ranges ("0–1", "2–3"). Otherwise it is a stepped bar.
+   */
   integer: boolean;
 }
 
@@ -42,25 +45,57 @@ const SPREAD: Record<number, HeatmapStep[]> = {
   5: [1, 2, 3, 4, 5],
 };
 
+type Format = (n: number) => string;
+
+/**
+ * `formatValue` for legend text: -0, and a negative value that rounds to zero ("-0"), print as zero does, so a
+ * legend can't show both "-0" and "0".
+ */
+function legendFormat(formatValue: Format): Format {
+  const zero = formatValue(0);
+  return (v) => {
+    const s = formatValue(v === 0 ? 0 : v);
+    return v < 0 && s.replace(/^[-\u2212]/, '') === zero ? zero : s;
+  };
+}
+
 /**
  * d3's nice ticks over [min, max] with the ends clamped to the data: at most five buckets, every boundary distinct
- * after `formatValue` (a lower tick count until both hold). Falls back to one bucket `[min, max]`.
+ * after `fmt` (a lower tick count until both hold). Falls back to one bucket `[min, max]`.
  */
-function niceEdges(min: number, max: number, formatValue: (n: number) => string): number[] {
+function niceEdges(min: number, max: number, fmt: Format): number[] {
   for (let count = MAX_BUCKETS; count >= 1; count--) {
     const ticks = scaleLinear().domain([min, max]).nice(count).ticks(count);
     if (ticks.length < 2 || ticks.length - 1 > MAX_BUCKETS) continue;
     if (ticks[0] > min || ticks[ticks.length - 1] < max) continue;
     const edges = [min, ...ticks.slice(1, -1), max];
-    if (new Set(edges.map(formatValue)).size === edges.length) return edges;
+    if (new Set(edges.map(fmt)).size === edges.length) return edges;
   }
   return [min, max];
+}
+
+/** Closed integer range of each bucket: the next starts one after this one ends; the last ends at the max. */
+function integerRanges(thresholds: number[]): [number, number][] {
+  const n = thresholds.length - 1;
+  return Array.from({ length: n }, (_, i) => [
+    thresholds[i],
+    i < n - 1 ? thresholds[i + 1] - 1 : thresholds[n],
+  ]);
+}
+
+/** Integer range labels stay apart once formatted: no "0k–0k", no "…–200" followed by "200–…". */
+function rangesReadable(thresholds: number[], fmt: Format): boolean {
+  const ranges = integerRanges(thresholds);
+  return ranges.every(
+    ([lo, hi], i) =>
+      (lo === hi || fmt(lo) !== fmt(hi)) && (i === 0 || fmt(ranges[i - 1][1]) !== fmt(lo)),
+  );
 }
 
 /** Buckets over the finite values of `values`; `null` when there is none. */
 export function heatmapBuckets(
   values: readonly (readonly (number | null)[])[],
-  formatValue: (n: number) => string,
+  formatValue: Format,
 ): HeatmapBuckets | null {
   const finite = values.flat().filter((v): v is number => v !== null && Number.isFinite(v));
   if (finite.length === 0) return null;
@@ -70,12 +105,18 @@ export function heatmapBuckets(
     if (v < min) min = v;
     if (v > max) max = v;
   }
-  const integer = finite.every(Number.isInteger);
+  const fmt = legendFormat(formatValue);
+  let integer = finite.every(Number.isInteger);
   let thresholds: number[];
   if (min === max) thresholds = [min, max];
   else if (integer && max - min + 1 <= MAX_BUCKETS)
     thresholds = [...Array.from({ length: max - min + 1 }, (_, i) => min + i), max];
-  else thresholds = niceEdges(min, max, formatValue);
+  else thresholds = niceEdges(min, max, fmt);
+  // A formatter coarser than the integer ranges would make them look overlapping: use the stepped bar instead.
+  if (integer && min !== max && !rangesReadable(thresholds, fmt)) {
+    integer = false;
+    thresholds = niceEdges(min, max, fmt);
+  }
   return { thresholds, steps: SPREAD[thresholds.length - 1], integer };
 }
 
@@ -88,26 +129,18 @@ export function bucketOf(value: number, b: HeatmapBuckets): number {
 }
 
 /** Legend for `b`: disjoint ranges for integer data, a stepped bar with boundary values otherwise. */
-export function heatmapLegend(
-  b: HeatmapBuckets,
-  formatValue: (n: number) => string,
-): HeatmapLegend {
-  const n = b.steps.length;
+export function heatmapLegend(b: HeatmapBuckets, formatValue: Format): HeatmapLegend {
+  const fmt = legendFormat(formatValue);
   if (b.integer) {
     return {
       kind: 'ranges',
-      items: b.steps.map((step, i) => {
-        const lo = b.thresholds[i];
-        // Closed ranges: the next bucket starts one after this one ends; the last ends at the max.
-        const hi = i < n - 1 ? b.thresholds[i + 1] - 1 : b.thresholds[n];
-        return {
-          step,
-          text: lo === hi ? formatValue(lo) : `${formatValue(lo)}–${formatValue(hi)}`,
-        };
-      }),
+      items: integerRanges(b.thresholds).map(([lo, hi], i) => ({
+        step: b.steps[i],
+        text: lo === hi ? fmt(lo) : `${fmt(lo)}–${fmt(hi)}`,
+      })),
     };
   }
-  const boundaries = b.thresholds.map(formatValue);
+  const boundaries = b.thresholds.map(fmt);
   // All values equal, or too close to tell apart once formatted: one swatch, one label.
   if (new Set(boundaries).size < boundaries.length) {
     return { kind: 'ranges', items: [{ step: b.steps[0], text: boundaries[0] }] };
