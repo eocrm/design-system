@@ -42,7 +42,11 @@ export interface NumberFieldProps extends Omit<
   min?: number;
   /** Upper bound. Blur / Enter clamps to it; + disables at it; End jumps to it. Omit for unbounded. */
   max?: number;
-  /** Default 1. Also sets display precision (decimals of `step`). A `step` ≤ 0 falls back to 1 (dev warning). */
+  /**
+   * Default 1. Also sets the minimum display precision (decimals of `step`); a value with more
+   * decimals shows them all (up to 10), so the field never hides the stored value. A `step` ≤ 0
+   * falls back to 1 (dev warning).
+   */
   step?: number;
   /** Field height + type scale: `"sm"` dense rows, `"md"` (default) forms, `"lg"` prominent entry. */
   size?: NumberFieldSize;
@@ -56,15 +60,29 @@ const REPEAT_INTERVAL = 60;
 // ponytail: exponent-notation steps (1e-7) read as 0 decimals; use a decimal literal.
 const decimalsOf = (n: number) => (String(n).split('.')[1] ?? '').length;
 
-/** `null` = empty, `undefined` = partial / unparseable draft (`-`, `,`). */
+/**
+ * `null` = empty, `undefined` = partial / unparseable draft (`-`, `,`) or malformed text: a
+ * second decimal separator (`12.5.3`) or a `-` anywhere but first (`1-2`). Malformed text stays
+ * in the field as typed but never fires, and blur restores the last value.
+ */
 function parse(text: string, locale: string, allowNegative: boolean): number | null | undefined {
-  if (!text.trim()) return null;
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const { decimal } = localeSeparators(locale);
+  if (trimmed.split(decimal).length > 2 || trimmed.lastIndexOf('-') > 0) return undefined;
   const draft = parseLocalAmount(text, { locale, precision: 15, allowNegative });
   const canonical = draft && draftToCanonical(draft);
   return canonical ? Number(canonical) : undefined;
 }
 
+/** Most decimals ever shown; also trims float noise (0.1 + 0.2) before counting. */
+const MAX_DECIMALS = 10;
+
+/** Shows at least `precision` decimals, and more when the value has them, so it is never hidden. */
 function format(value: number | null, locale: string, precision: number): string {
+  if (value !== null) {
+    precision = Math.max(precision, decimalsOf(Number(value.toFixed(MAX_DECIMALS))));
+  }
   const draft = value === null ? null : canonicalToDraft(value.toFixed(precision));
   return draft ? formatDraft(draft, { locale, precision, pad: true }) : '';
 }
@@ -117,6 +135,9 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
   const valueRef = useRef(value);
   valueRef.current = value;
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // The repeat interval outlives the render that started it; it steps through this ref so a
+  // hold uses the latest onChange / min / max / step.
+  const stepByRef = useRef<(delta: number) => boolean>(() => false);
 
   // External value changes show up, unless the focused draft already means that value
   // (our own live echo must not reformat what the user is typing).
@@ -148,6 +169,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     emit(next);
     return true;
   };
+  stepByRef.current = stepBy;
 
   /** Blur / Enter: clamp + snap to the step grid (anchored at `min`, else 0). */
   const commit = () => {
@@ -172,7 +194,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     if (!stepBy(delta)) return;
     timer.current = setTimeout(() => {
       timer.current = setInterval(() => {
-        if (!stepBy(delta)) stopRepeat();
+        if (!stepByRef.current(delta)) stopRepeat();
       }, REPEAT_INTERVAL);
     }, REPEAT_DELAY);
   };

@@ -165,6 +165,18 @@ describe('NumberField', () => {
       expect(vi.getTimerCount()).toBe(0);
     });
 
+    it('a hold keeps calling the latest onChange after a rerender', () => {
+      const first = vi.fn();
+      const second = vi.fn();
+      const { rerender } = render(<NumberField aria-label="Qty" value={0} onChange={first} />);
+      fireEvent.pointerDown(screen.getByRole('button', { name: 'Increase' }));
+      expect(first).toHaveBeenCalledTimes(1);
+      rerender(<NumberField aria-label="Qty" value={1} onChange={second} />);
+      act(() => void vi.advanceTimersByTime(400 + 2 * 60));
+      expect(first).toHaveBeenCalledTimes(1);
+      expect(second.mock.calls).toEqual([[2], [3]]);
+    });
+
     it('clears its timers on unmount', () => {
       const { unmount } = render(<Harness initial={0} />);
       fireEvent.pointerDown(screen.getByRole('button', { name: 'Increase' }));
@@ -316,6 +328,39 @@ describe('NumberField', () => {
     // Without clearing the typed flag, blur would snap 7 to 8 and emit it.
     expect(spy).not.toHaveBeenCalled();
     expect(input()).toHaveValue('7');
+  });
+
+  it.each([
+    ['en', '12.5.3', 12.5],
+    ['ru', '1,2,3', 1.2],
+    ['en', '1-2', 1],
+  ])('malformed %s text "%s" stays as typed but does not fire', async (locale, typed, prefix) => {
+    const spy = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider locale={locale}>
+        <Harness spy={spy} initial={null} step={0.01} />
+      </LocaleProvider>,
+    );
+    await user.type(input(), typed);
+    expect(input()).toHaveValue(typed);
+    // The valid prefix ("12.5", "1,2", "1") fires; the malformed whole must not,
+    // neither live nor on blur.
+    expect(spy).toHaveBeenLastCalledWith(prefix);
+    spy.mockClear();
+    await user.tab();
+    expect(spy).not.toHaveBeenCalled();
+    expect(input()).toHaveAttribute('aria-valuenow', String(prefix));
+  });
+
+  it.each([
+    [2.5, 1, '2.5'],
+    [1.25, 0.5, '1.25'],
+  ])('shows value %s with step %s as "%s", never hiding the stored value', (value, step, shown) => {
+    render(<NumberField aria-label="Qty" value={value} onChange={() => {}} step={step} />);
+    expect(input()).toHaveValue(shown);
+    expect(input()).toHaveAttribute('aria-valuetext', shown);
+    expect(input()).toHaveAttribute('aria-valuenow', String(value));
   });
 
   it('shows an external value change when not focused', () => {
