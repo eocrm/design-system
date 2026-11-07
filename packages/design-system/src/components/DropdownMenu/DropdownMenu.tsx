@@ -3,6 +3,7 @@ import { Trigger } from './Trigger';
 import { Content } from './Content';
 import { Item, Separator } from './Item';
 import { Group, Label } from './Group';
+import { Header } from './Header';
 import { ItemIndicator } from './ItemIndicator';
 import { CheckboxItem } from './CheckboxItem';
 import { RadioGroup, RadioItem } from './Radio';
@@ -17,6 +18,7 @@ export type {
   DropdownMenuSeparatorProps,
 } from './Item';
 export type { DropdownMenuGroupProps, DropdownMenuLabelProps } from './Group';
+export type { DropdownMenuHeaderProps } from './Header';
 export type { DropdownMenuItemIndicatorProps } from './ItemIndicator';
 export type { DropdownMenuCheckboxItemProps } from './CheckboxItem';
 export type { DropdownMenuRadioGroupProps, DropdownMenuRadioItemProps } from './Radio';
@@ -33,6 +35,7 @@ export const DropdownMenu = Object.assign(DropdownMenuRoot, {
   Separator,
   Group,
   Label,
+  Header,
   ItemIndicator,
   CheckboxItem,
   RadioGroup,
