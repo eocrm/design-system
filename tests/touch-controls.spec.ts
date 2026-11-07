@@ -66,3 +66,16 @@ for (const where of ['button', 'html'] as const) {
     expect(Math.abs(h.top + h.height / 2 - h.hostH / 2)).toBeLessThanOrEqual(1);
   });
 }
+
+test('PasswordInput md is at least 44px tall', async ({ page }) => {
+  await page.goto('/components/password-input');
+  const box = await page.getByLabel('Password', { exact: true }).first().boundingBox();
+  expect(box!.height).toBeGreaterThanOrEqual(44);
+});
+
+test('DatePicker trigger is at least 44px tall', async ({ page }) => {
+  await page.goto('/components/datepickers');
+  // The height lives on the field wrapper around the text input.
+  const wrapper = page.getByRole('textbox', { name: 'Controlled date' }).first().locator('..');
+  expect((await wrapper.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+});

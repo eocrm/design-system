@@ -64,4 +64,4 @@ Inside a `<Field>`, the label and error wiring are supplied:
 - There is deliberately no live region: `invalid` is a durable property already carried by `aria-invalid`, so announcing the outcome of a code check is the consumer's job.
 - A paste or autofill that delivers the whole code fills every box in one update; a screen reader announces only the cell focus lands on ("Digit 6 of 6"). Announce the result yourself (e.g. off `onComplete`) if silent multi-box fills would confuse your users.
 
-**Touch devices:** On touch devices (`pointer: coarse`) the `sm` cell text is 16px so iOS does not zoom on focus.
+**Touch devices:** On touch devices (`pointer: coarse`) cells are 44px square at `sm`, `md` and `lg` and `sm` text is 16px so iOS does not zoom on focus.

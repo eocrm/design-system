@@ -1,5 +1,3 @@
-import { readFileSync as readTouchTokens } from 'node:fs';
-import { resolve as resolveTouchTokens } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
@@ -358,7 +356,7 @@ describe('Button — palette `color`', () => {
 });
 
 describe('Button touch tokens (DS-35)', () => {
-  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'Button.tokens.scss'), 'utf8');
+  const scss = readFileSync(resolve(__dirname, 'Button.tokens.scss'), 'utf8');
   it('re-points --button-height-md to size-touch on coarse pointers', () => {
     expect(scss).toMatch(
       /@media \(pointer: coarse\)[\s\S]*--button-height-md:\s*var\(\-\-size\-touch\)/,

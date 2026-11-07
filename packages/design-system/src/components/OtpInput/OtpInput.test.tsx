@@ -571,3 +571,21 @@ describe('OtpInput touch tokens (DS-35)', () => {
     );
   });
 });
+
+it('re-points --otp-input-cell-size-sm to size-touch on coarse pointers', () => {
+  expect(readTouchTokens(resolveTouchTokens(__dirname, 'OtpInput.tokens.scss'), 'utf8')).toMatch(
+    /@media \(pointer: coarse\)[\s\S]*--otp-input-cell-size-sm:\s*var\(--size-touch\)/,
+  );
+});
+
+it('re-points --otp-input-cell-size-md to size-touch on coarse pointers', () => {
+  expect(readTouchTokens(resolveTouchTokens(__dirname, 'OtpInput.tokens.scss'), 'utf8')).toMatch(
+    /@media \(pointer: coarse\)[\s\S]*--otp-input-cell-size-md:\s*var\(--size-touch\)/,
+  );
+});
+
+it('re-points --otp-input-cell-size-lg to size-touch on coarse pointers', () => {
+  expect(readTouchTokens(resolveTouchTokens(__dirname, 'OtpInput.tokens.scss'), 'utf8')).toMatch(
+    /@media \(pointer: coarse\)[\s\S]*--otp-input-cell-size-lg:\s*var\(--size-touch\)/,
+  );
+});

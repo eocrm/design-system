@@ -211,3 +211,21 @@ describe('PasswordInput touch tokens (DS-35)', () => {
     );
   });
 });
+
+it('re-points --password-input-height-sm to size-touch on coarse pointers', () => {
+  expect(
+    readTouchTokens(resolveTouchTokens(__dirname, 'PasswordInput.tokens.scss'), 'utf8'),
+  ).toMatch(/@media \(pointer: coarse\)[\s\S]*--password-input-height-sm:\s*var\(--size-touch\)/);
+});
+
+it('re-points --password-input-height-md to size-touch on coarse pointers', () => {
+  expect(
+    readTouchTokens(resolveTouchTokens(__dirname, 'PasswordInput.tokens.scss'), 'utf8'),
+  ).toMatch(/@media \(pointer: coarse\)[\s\S]*--password-input-height-md:\s*var\(--size-touch\)/);
+});
+
+it('re-points --password-input-height-lg to size-touch on coarse pointers', () => {
+  expect(
+    readTouchTokens(resolveTouchTokens(__dirname, 'PasswordInput.tokens.scss'), 'utf8'),
+  ).toMatch(/@media \(pointer: coarse\)[\s\S]*--password-input-height-lg:\s*var\(--size-touch\)/);
+});

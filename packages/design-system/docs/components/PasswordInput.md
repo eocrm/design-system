@@ -44,4 +44,4 @@ Pair with `<PasswordStrengthMeter>` for the canonical signup form, and controlle
 - ❌ Wrapping it in another `<label>` outside the component — it already renders the input; an outer label nests poorly.
 - ❌ Treating the default `<PasswordStrengthMeter>` scoring as a security control — it is a UX hint; pass `score` from zxcvbn or server-side validation.
 
-**Touch devices:** On touch devices (`pointer: coarse`) the text is 16px so iOS does not zoom on focus (`--password-input-font-size-*`).
+**Touch devices:** On touch devices (`pointer: coarse`) the field is 44px tall at every size and the text is 16px so iOS does not zoom on focus (`--password-input-font-size-*`).

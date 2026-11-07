@@ -155,6 +155,9 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root {
+    --date-picker-input-height-sm: var(--size-touch);
+    --date-picker-input-height-md: var(--size-touch);
+    --date-picker-input-height-lg: var(--size-touch);
     --date-picker-input-font-size-sm: var(--font-size-lg);
     --date-picker-input-font-size-md: var(--font-size-lg);
     --date-picker-input-font-size-lg: var(--font-size-lg);

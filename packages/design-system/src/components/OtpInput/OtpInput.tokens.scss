@@ -48,6 +48,9 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root {
+    --otp-input-cell-size-sm: var(--size-touch);
+    --otp-input-cell-size-md: var(--size-touch);
+    --otp-input-cell-size-lg: var(--size-touch);
     --otp-input-font-size-sm: var(--font-size-lg);
   }
 }

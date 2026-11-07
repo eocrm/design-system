@@ -449,3 +449,9 @@ describe('ButtonGroup touch tokens (DS-35)', () => {
     );
   });
 });
+
+it('segmented xs and sm items take the touch-hit-area mixin (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.module.scss'), 'utf8');
+  expect(scss).toMatch(/\.sizeXs \{\s*@include touch-hit-area;/);
+  expect(scss).toMatch(/\.sizeSm \{\s*@include touch-hit-area;/);
+});

@@ -106,6 +106,8 @@
 // control lines up with a same-size Button. Items give back the track's
 // padding on both sides.
 .sizeXs {
+  @include touch-hit-area;
+
   height: calc(var(--button-group-item-height-xs) - 2 * var(--button-group-segmented-padding));
   padding: 0 var(--button-group-item-padding-x-xs);
   font-size: var(--button-group-item-font-size-xs);
@@ -116,6 +118,8 @@
 }
 
 .sizeSm {
+  @include touch-hit-area;
+
   height: calc(var(--button-group-item-height-sm) - 2 * var(--button-group-segmented-padding));
   padding: 0 var(--button-group-item-padding-x-sm);
   font-size: var(--button-group-item-font-size-sm);

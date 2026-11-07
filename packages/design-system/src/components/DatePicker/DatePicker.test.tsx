@@ -1168,3 +1168,21 @@ describe('DatePicker touch tokens (DS-35)', () => {
     );
   });
 });
+
+it('re-points --date-picker-input-height-sm to size-touch on coarse pointers', () => {
+  expect(readTouchTokens(resolveTouchTokens(__dirname, 'DatePicker.tokens.scss'), 'utf8')).toMatch(
+    /@media \(pointer: coarse\)[\s\S]*--date-picker-input-height-sm:\s*var\(--size-touch\)/,
+  );
+});
+
+it('re-points --date-picker-input-height-md to size-touch on coarse pointers', () => {
+  expect(readTouchTokens(resolveTouchTokens(__dirname, 'DatePicker.tokens.scss'), 'utf8')).toMatch(
+    /@media \(pointer: coarse\)[\s\S]*--date-picker-input-height-md:\s*var\(--size-touch\)/,
+  );
+});
+
+it('re-points --date-picker-input-height-lg to size-touch on coarse pointers', () => {
+  expect(readTouchTokens(resolveTouchTokens(__dirname, 'DatePicker.tokens.scss'), 'utf8')).toMatch(
+    /@media \(pointer: coarse\)[\s\S]*--date-picker-input-height-lg:\s*var\(--size-touch\)/,
+  );
+});
