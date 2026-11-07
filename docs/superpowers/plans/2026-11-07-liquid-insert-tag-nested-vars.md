@@ -13,16 +13,16 @@
 - `tags?: LiquidTag[]`, `LiquidTag = 'if' | 'unless' | 'case' | 'assign' | 'capture' | 'comment'`. Default: all six. `[]` hides the Insert tag menu and disables tag autocomplete. Loop tags (`for`, `tablerow`, `cycle`) are never offered.
 - Insert tag menu entries (order fixed; `$0` = caret, `$SEL` = selected text, removed when empty):
 
-  | id | tag | label | template |
-  |---|---|---|---|
-  | `if` | if | `if` | `{% if $0 %}$SEL{% endif %}` |
-  | `ifElse` | if | `if … else` | `{% if $0 %}$SEL{% else %}{% endif %}` |
-  | `ifElsif` | if | `if … elsif … else` | `{% if $0 %}$SEL{% elsif %}{% else %}{% endif %}` |
-  | `unless` | unless | `unless` | `{% unless $0 %}$SEL{% endunless %}` |
-  | `case` | case | `case` | `{% case $0 %}{% when "" %}$SEL{% endcase %}` |
-  | `assign` | assign | `assign` | `{% assign $0 = $SEL %}` |
-  | `capture` | capture | `capture` | `{% capture $0 %}$SEL{% endcapture %}` |
-  | `comment` | comment | `comment` | `{% comment %}$0$SEL{% endcomment %}` |
+  | id        | tag     | label               | template                                          |
+  | --------- | ------- | ------------------- | ------------------------------------------------- |
+  | `if`      | if      | `if`                | `{% if $0 %}$SEL{% endif %}`                      |
+  | `ifElse`  | if      | `if … else`         | `{% if $0 %}$SEL{% else %}{% endif %}`            |
+  | `ifElsif` | if      | `if … elsif … else` | `{% if $0 %}$SEL{% elsif %}{% else %}{% endif %}` |
+  | `unless`  | unless  | `unless`            | `{% unless $0 %}$SEL{% endunless %}`              |
+  | `case`    | case    | `case`              | `{% case $0 %}{% when "" %}$SEL{% endcase %}`     |
+  | `assign`  | assign  | `assign`            | `{% assign $0 = $SEL %}`                          |
+  | `capture` | capture | `capture`           | `{% capture $0 %}$SEL{% endcapture %}`            |
+  | `comment` | comment | `comment`           | `{% comment %}$0$SEL{% endcomment %}`             |
 
 - `{%` autocomplete: when the caret is on the first word after `{%`, suggest the allowed entries (match the `tag` keyword by prefix). Accepting replaces from the `{%` opener through the caret, plus an immediately following `\s*%}` if present, with the full snippet. After a tag word (`{% if rec`), variable autocomplete works as today.
 - Dotted codes render as a tree within each group: intermediate segment → `SubTrigger` labelled with the raw segment; leaf → `Item` labelled `label || code`; a prefix that is itself declared renders as the first `Item` inside its own sub-menu. Undotted codes render exactly as today. Autocomplete unchanged.
@@ -49,12 +49,14 @@
 ### Task 1: Snippet engine + tag catalogue
 
 **Files:**
+
 - Create: `src/components/LiquidEditor/liquidTags.ts`
 - Create: `src/components/LiquidEditor/liquidTags.test.ts`
 - Modify: `src/components/LiquidEditor/LiquidEditor.tsx` (`insertVariable` → uses `applySnippet`)
 - Modify: `src/components/LiquidEditor/types.ts`, `index.ts`, `src/index.ts` (export `LiquidTag`)
 
 **Interfaces:**
+
 - Produces:
   - `export type LiquidTag = 'if' | 'unless' | 'case' | 'assign' | 'capture' | 'comment'` (in `types.ts`, JSDoc'd)
   - `export const ALL_LIQUID_TAGS: readonly LiquidTag[]` (in `liquidTags.ts`, order as table)
@@ -69,27 +71,48 @@
 ```ts
 describe('applySnippet', () => {
   it('inserts at a collapsed caret, caret at $0', () => {
-    expect(applySnippet('ab', 1, 1, '{% if $0 %}$SEL{% endif %}')).toEqual({ value: 'a{% if  %}{% endif %}b', caret: 'a{% if '.length });
+    expect(applySnippet('ab', 1, 1, '{% if $0 %}$SEL{% endif %}')).toEqual({
+      value: 'a{% if  %}{% endif %}b',
+      caret: 'a{% if '.length,
+    });
   });
   it('wraps the selection as $SEL', () => {
-    expect(applySnippet('xHelloy', 1, 6, '{% if $0 %}$SEL{% endif %}')).toEqual({ value: 'x{% if  %}Hello{% endif %}y', caret: 'x{% if '.length });
+    expect(applySnippet('xHelloy', 1, 6, '{% if $0 %}$SEL{% endif %}')).toEqual({
+      value: 'x{% if  %}Hello{% endif %}y',
+      caret: 'x{% if '.length,
+    });
   });
   it('no $0 → caret at end of insertion', () => {
-    expect(applySnippet('ab', 1, 1, '{{ x }}')).toEqual({ value: 'a{{ x }}b', caret: 'a{{ x }}'.length });
+    expect(applySnippet('ab', 1, 1, '{{ x }}')).toEqual({
+      value: 'a{{ x }}b',
+      caret: 'a{{ x }}'.length,
+    });
   });
   it('no $SEL → selection replaced', () => {
-    expect(applySnippet('aXXb', 1, 3, '{{ x }}$0')).toEqual({ value: 'a{{ x }}b', caret: 'a{{ x }}'.length });
+    expect(applySnippet('aXXb', 1, 3, '{{ x }}$0')).toEqual({
+      value: 'a{{ x }}b',
+      caret: 'a{{ x }}'.length,
+    });
   });
   it('$0 after $SEL is offset by the selection length', () => {
-    expect(applySnippet('Hi', 0, 2, '{% comment %}$SEL$0{% endcomment %}').caret).toBe('{% comment %}Hi'.length);
+    expect(applySnippet('Hi', 0, 2, '{% comment %}$SEL$0{% endcomment %}').caret).toBe(
+      '{% comment %}Hi'.length,
+    );
   });
 });
 describe('snippetsFor', () => {
   it('keeps catalogue order and filters by tag', () => {
-    expect(snippetsFor(['case', 'if']).map((s) => s.id)).toEqual(['if', 'ifElse', 'ifElsif', 'case']);
+    expect(snippetsFor(['case', 'if']).map((s) => s.id)).toEqual([
+      'if',
+      'ifElse',
+      'ifElsif',
+      'case',
+    ]);
   });
   it('never offers loop tags', () => {
-    expect(LIQUID_TAG_SNIPPETS.some((s) => /\{%\s*(for|tablerow|cycle)\b/.test(s.template))).toBe(false);
+    expect(LIQUID_TAG_SNIPPETS.some((s) => /\{%\s*(for|tablerow|cycle)\b/.test(s.template))).toBe(
+      false,
+    );
   });
   it('catalogue covers every LiquidTag', () => {
     expect(new Set(LIQUID_TAG_SNIPPETS.map((s) => s.tag))).toEqual(new Set(ALL_LIQUID_TAGS));
@@ -106,12 +129,14 @@ describe('snippetsFor', () => {
 ### Task 2: `tags` prop + Insert tag menu
 
 **Files:**
+
 - Create: `src/components/LiquidEditor/InsertTagMenu.tsx`
 - Modify: `src/components/LiquidEditor/LiquidEditor.tsx`, `types.ts` (`tags?: LiquidTag[]` on `LiquidEditorProps`, JSDoc: default all six, `[]` hides the menu and disables `{%` autocomplete, loop tags are never offered)
 - Modify: `src/i18n/messages.ts`, `en.ts`, `ru.ts`
 - Test: `src/components/LiquidEditor/LiquidEditor.test.tsx` (new `describe('insert tag menu (#749)')`)
 
 **Interfaces:**
+
 - Consumes: `snippetsFor`, `applySnippet`, `LiquidTagSnippet` (Task 1).
 - Produces: `InsertTagMenu({ snippets: LiquidTagSnippet[]; disabled?: boolean; onInsert: (s: LiquidTagSnippet) => void })`. i18n keys under `liquidEditor`: `insertTag: string`; `tagDescription: Record<LiquidTagSnippetId, string>` (typed as an object with the 8 ids). English descriptions (exact):
   - if: "Show content only when a condition is true"
@@ -138,10 +163,12 @@ describe('snippetsFor', () => {
 ### Task 3: `{%` tag autocomplete
 
 **Files:**
+
 - Modify: `src/components/LiquidEditor/useLiquidAutocomplete.ts`, `useLiquidAutocomplete.test.tsx`, `LiquidEditor.tsx`, `AutocompleteMenu.tsx` (only if it needs to render the description for tag items — it already renders `description`)
 - Test: `useLiquidAutocomplete.test.tsx` (context), `LiquidEditor.test.tsx` (accept flow)
 
 **Interfaces:**
+
 - Consumes: `snippetsFor`, `applySnippet` (Task 1); `tags` prop (Task 2).
 - Produces:
   - `AutocompleteKind = 'variable' | 'filter' | 'tag'`
@@ -165,11 +192,13 @@ describe('snippetsFor', () => {
 ### Task 4: Variable tree + nested Insert variable menu
 
 **Files:**
+
 - Create: `src/components/LiquidEditor/variableTree.ts`, `variableTree.test.ts`
 - Modify: `src/components/LiquidEditor/InsertVariableMenu.tsx`
 - Test: `LiquidEditor.test.tsx` (new `describe('nested insert variable menu (#750)')`)
 
 **Interfaces:**
+
 - Produces:
   - `export interface VariableNode { segment: string; path: string; variable?: LiquidVariable; children: VariableNode[] }`
   - `export function buildVariableTree(vars: readonly LiquidVariable[]): VariableNode[]` — split `code` on `.`, first-seen order at every level, key children by full `path` (so equal segments under different parents never merge).
@@ -192,10 +221,12 @@ describe('snippetsFor', () => {
 ### Task 5: `DropdownMenu.Item` `textValue` (typeahead for rich items)
 
 **Files:**
+
 - Modify: `src/components/DropdownMenu/Item.tsx`, `DropdownMenu.test.tsx`, `docs/components/DropdownMenu.md`
 - Modify: `InsertVariableMenu.tsx`, `InsertTagMenu.tsx` (pass `textValue`)
 
 **Interfaces:**
+
 - Produces: `textValue?: string` on `DropdownMenuItemProps` — JSDoc: "Typeahead match string when `children` isn't a plain string. Defaults to `children` when it is a string." Registration label = `textValue ?? (typeof children === 'string' ? children : '')`.
 
 - [ ] **Step 1: Failing test** in `DropdownMenu.test.tsx`: an item with `textValue="Banana"` and children `<span>Banana</span>`; open menu, type `b` → that item is active (`aria-activedescendant`/focus, matching how existing typeahead tests assert).
@@ -207,6 +238,7 @@ describe('snippetsFor', () => {
 ### Task 6: Docs + demo
 
 **Files:**
+
 - Modify: `docs/components/LiquidEditor.md` (sections: Insert tag menu + `tags`, `{%` autocomplete, nested variables; anti-pattern: "don't add loop tags via `toolbarActions`"), then `npm run build:docs` from `packages/design-system`
 - Modify: `AI-PRIMER.md` LiquidEditor line only if the H1 summary changed
 - Modify: `packages/playground/src/pages/components/LiquidEditorDemo.tsx` — add dotted variables (`record.status.{id,name,key}`, `record.assignee.{id,name,email}`, declared `record.status`) and a section showing `tags={['if','unless','case','assign','capture','comment']}` vs a restricted `tags={['if','assign']}`.

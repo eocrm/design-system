@@ -1,6 +1,6 @@
 # `<LiquidEditor>` — Liquid template editor
 
-Liquid template editor: syntax highlighting, line-number gutter, variable-insert menu, caret autocomplete, client-side unknown-variable flagging, and a controlled preview pane. Controlled only (`value` + `onChange`). It never parses or renders Liquid — backend syntax errors arrive via `invalid`/`error`; the rendered preview arrives via `preview`/`previewStatus`.
+Liquid template editor: syntax highlighting, line-number gutter, variable-insert menu, tag-insert menu (`if`/`case`/`assign`… snippets), caret autocomplete, client-side unknown-variable flagging, and a controlled preview pane. Controlled only (`value` + `onChange`). It never parses or renders Liquid — backend syntax errors arrive via `invalid`/`error`; the rendered preview arrives via `preview`/`previewStatus`.
 
 ```tsx
 const VARS = [
@@ -72,6 +72,16 @@ const VARS = [
 <LiquidEditor value={tpl} onChange={setTpl} variables={VARS} />;
 ```
 
+**Insert tag menu + `tags`:** next to "Insert variable" the toolbar shows an "Insert tag" menu: `if`, `if … else`, `if … elsif … else`, `unless`, `case`, `assign`, `capture`, `comment`. Choosing one inserts the full block with the caret in the condition/name slot; a non-empty selection becomes the block body. `tags` filters which tags are offered (`'if' | 'unless' | 'case' | 'assign' | 'capture' | 'comment'`, default all six); `tags={[]}` hides the menu and disables `{%` autocomplete. Loop tags are never offered — a `collection` variable already inserts a `for` loop from "Insert variable".
+
+```tsx
+<LiquidEditor value={tpl} onChange={setTpl} variables={VARS} tags={['if', 'assign']} />
+```
+
+**`{%` tag autocomplete:** typing `{%` suggests the allowed tags (first word only); accepting expands the full snippet, consuming a `%}` right after the caret and keeping a `{%-` dash. It does not open inside an already-complete tag such as `{% if x %}`.
+
+**Nested variables:** dotted codes (`record.status.name`) render in "Insert variable" as nested sub-menus (`record › status › name`) within their group. A declared parent (`record.status` declared alongside `record.status.name`) is the first item inside its own sub-menu. Autocomplete still prefix-matches the full dotted code.
+
 When NOT to use: plain prose → `Textarea`; static read-only code → playground `CodeBlock`. Don't expect it to validate syntax (feed `error` from the backend) or to produce its own preview (preview is consumer-rendered).
 
 Inside a `<Field>`, the label is associated automatically (`id` / `aria-labelledby`):
@@ -83,3 +93,5 @@ Inside a `<Field>`, the label is associated automatically (`id` / `aria-labelled
 ```
 
 - ❌ Adding `margin`/positioning hoping the editor self-places — that is the parent's job (`<Stack>` / `<Cluster>` / a wrapper `className`).
+- ❌ Building a tag inserter via `toolbarActions` — the editor exposes no caret API; use the built-in "Insert tag" menu and `tags`.
+- ❌ Passing `'for'` (or other loop tags) in `tags` to offer loops — unsupported; mark the variable `collection: true` instead.

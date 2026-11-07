@@ -19,6 +19,17 @@ const VARS: LiquidVariable[] = [
   { code: 'join_date', label: 'Join date', type: 'date', group: 'Custom fields' },
 ];
 
+// Dotted codes render as nested sub-menus in "Insert variable".
+const NESTED_VARS: LiquidVariable[] = [
+  { code: 'record.status', label: 'Status', type: 'text', group: 'Record' },
+  { code: 'record.status.id', label: 'Status id', type: 'text', group: 'Record' },
+  { code: 'record.status.name', label: 'Status name', type: 'text', group: 'Record' },
+  { code: 'record.status.key', label: 'Status key', type: 'text', group: 'Record' },
+  { code: 'record.assignee.id', label: 'Assignee id', type: 'text', group: 'Record' },
+  { code: 'record.assignee.name', label: 'Assignee name', type: 'text', group: 'Record' },
+  { code: 'record.assignee.email', label: 'Assignee email', type: 'text', group: 'Record' },
+];
+
 // Stand-in for a backend render so the demo exercises the real preview contract.
 function fakeRender(template: string): string {
   const data: Record<string, string> = {
@@ -38,6 +49,9 @@ export function LiquidEditorDemo() {
   const [formula, setFormula] = useState('{{ first_name }} {{ last_name | upcase }}');
   const [withTypo, setWithTypo] = useState('{{ first_naem }}');
   const [compact, setCompact] = useState('{{ first_name | upcase }}');
+  const [nested, setNested] = useState('{{ record.status.name }}');
+  const [allTags, setAllTags] = useState('');
+  const [fewTags, setFewTags] = useState('');
 
   return (
     <DemoLayout
@@ -173,6 +187,71 @@ export function Demo() {
           showLineNumbers={false}
           minRows={2}
         />
+      </Example>
+
+      <Example
+        title="Nested (dotted) variables"
+        description="Dotted codes become nested sub-menus in Insert variable (record › status › name). The declared parent record.status is the first item in its own sub-menu."
+        code={`import { useState } from 'react';
+import { LiquidEditor, type LiquidVariable } from '@eocrm/design-system';
+
+const VARS: LiquidVariable[] = [
+  { code: 'record.status', label: 'Status', type: 'text', group: 'Record' },
+  { code: 'record.status.id', label: 'Status id', type: 'text', group: 'Record' },
+  { code: 'record.status.name', label: 'Status name', type: 'text', group: 'Record' },
+  { code: 'record.status.key', label: 'Status key', type: 'text', group: 'Record' },
+  { code: 'record.assignee.id', label: 'Assignee id', type: 'text', group: 'Record' },
+  { code: 'record.assignee.name', label: 'Assignee name', type: 'text', group: 'Record' },
+  { code: 'record.assignee.email', label: 'Assignee email', type: 'text', group: 'Record' },
+];
+
+export function Demo() {
+  const [value, setValue] = useState('{{ record.status.name }}');
+
+  return <LiquidEditor value={value} onChange={setValue} variables={VARS} />;
+}`}
+      >
+        <LiquidEditor value={nested} onChange={setNested} variables={NESTED_VARS} />
+      </Example>
+
+      <Example
+        title="Insert tag + the tags prop"
+        description="By default all six tags are offered in Insert tag and after typing {%. Pass tags to restrict them; tags={[]} hides the menu and disables {% autocomplete."
+        code={`import { useState } from 'react';
+import { LiquidEditor, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  const [a, setA] = useState('');
+  const [b, setB] = useState('');
+
+  return (
+    <Stack gap="md">
+      <LiquidEditor
+        value={a}
+        onChange={setA}
+        tags={['if', 'unless', 'case', 'assign', 'capture', 'comment']}
+      />
+      <LiquidEditor value={b} onChange={setB} tags={['if', 'assign']} />
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="md">
+          <LiquidEditor
+            value={allTags}
+            onChange={setAllTags}
+            variables={VARS}
+            tags={['if', 'unless', 'case', 'assign', 'capture', 'comment']}
+            placeholder="All six tags"
+          />
+          <LiquidEditor
+            value={fewTags}
+            onChange={setFewTags}
+            variables={VARS}
+            tags={['if', 'assign']}
+            placeholder="Only if + assign"
+          />
+        </Stack>
       </Example>
 
       <Example
