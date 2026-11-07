@@ -726,7 +726,7 @@ describe('Accordion closed content (DS-19)', () => {
   it('hides closed content from the tab order after the collapse transition', () => {
     expect(scss).toMatch(/\.content \{[^}]*visibility: hidden;/);
     expect(scss).toMatch(/visibility 0s linear var\(--transition-base\)/);
-    expect(scss).toMatch(/\.content\[data-state='open'\] \{[^}]*visibility: visible;/);
+    expect(scss).toMatch(/\.content\[data-state='open'\] \{[^}]*visibility: inherit;/);
   });
 
   it('reduced-motion reset also covers the higher-specificity open selector', () => {

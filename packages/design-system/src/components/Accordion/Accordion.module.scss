@@ -11,9 +11,15 @@
 
   // How a closed item's `.actions` render — resolved through inherited custom props
   // so the NEAREST accordion wins (a nested accordion with a different
-  // `actionsWhenClosed` is unaffected by an ancestor's). Default: visible.
+  // `actionsWhenClosed` is unaffected by an ancestor's). Default: inherit, so
+  // actions inside a closed OUTER item stay hidden — an explicit `visible` would
+  // override the `hidden` inherited from that item's content. `initial` (not
+  // `inherit`) resets the custom property per accordion, so an outer
+  // `actionsWhenClosed="hide"` value cannot leak in; `visibility: var()` of the
+  // guaranteed-invalid initial value computes as `unset`, which for the
+  // inherited `visibility` property is `inherit`.
   --accordion-actions-closed-opacity: var(--opacity-visible);
-  --accordion-actions-closed-visibility: visible;
+  --accordion-actions-closed-visibility: initial;
   --accordion-actions-closed-pointer-events: auto;
 }
 
@@ -216,7 +222,10 @@
 
 .content[data-state='open'] {
   grid-template-rows: 1fr;
-  visibility: visible;
+
+  // inherit, not visible: an open item inside a CLOSED outer item must stay
+  // hidden with it, or its controls rejoin the tab order.
+  visibility: inherit;
   transition:
     grid-template-rows var(--transition-base),
     visibility 0s;

@@ -21,3 +21,27 @@ test('closed accordion content is skipped by Tab; open content is reachable (DS-
   await page.keyboard.press('Tab');
   await expect(inner).toBeFocused();
 });
+
+test('an open inner accordion inside a closed outer item has no tabbable descendants', async ({
+  page,
+}) => {
+  await page.goto('/components/accordion');
+  const outer = page.getByTestId('nested-outer-content');
+  // Mounted, so the inner controls exist — but a closed outer item must hide them
+  // all, including the inner open content and the inner closed item's actions.
+  await expect(
+    outer.getByRole('button', { name: 'Inner action', includeHidden: true }),
+  ).toHaveCount(1);
+  const reachable = await outer.evaluate((root) =>
+    [...root.querySelectorAll<HTMLElement>('button, a[href], input, [tabindex]')]
+      .filter((el) => el.tabIndex >= 0 && getComputedStyle(el).visibility === 'visible')
+      .map((el) => el.getAttribute('aria-label') || el.textContent?.trim()),
+  );
+  expect(reachable).toEqual([]);
+
+  // Opening the outer item brings back the inner open content and the inner
+  // closed item's (default, visible) actions.
+  await page.getByRole('button', { name: 'Advanced settings', expanded: false }).last().click();
+  await expect(outer.getByRole('button', { name: 'Inner action' })).toBeVisible();
+  await expect(outer.getByRole('button', { name: 'Edit inner' })).toBeVisible();
+});
