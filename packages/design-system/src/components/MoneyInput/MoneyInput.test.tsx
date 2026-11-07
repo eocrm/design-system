@@ -67,7 +67,7 @@ describe('MoneyInput', () => {
 
   it('blur without edit does not emit', async () => {
     const onChange = vi.fn();
-    render(<Harness onChange={onChange} initial={{ amount: '12.5', currency: 'USD' }} />);
+    render(<Harness onChange={onChange} initial={{ amount: '12.5', currency: 'EUR' }} />);
     expect(amountBox().value).toBe('12.50');
     await userEvent.click(amountBox());
     await userEvent.tab();
