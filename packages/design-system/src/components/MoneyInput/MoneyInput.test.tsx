@@ -67,7 +67,7 @@ describe('MoneyInput', () => {
 
   it('blur without edit does not emit', async () => {
     const onChange = vi.fn();
-    render(<Harness onChange={onChange} initial={{ amount: '12.5', currency: 'EUR' }} />);
+    render(<Harness onChange={onChange} initial={{ amount: '12.5', currency: 'USD' }} />);
     expect(amountBox().value).toBe('12.50');
     await userEvent.click(amountBox());
     await userEvent.tab();
@@ -310,7 +310,7 @@ describe('MoneyInput', () => {
       await userEvent.type(amountBox(), '12.5');
       expect(amountBox().value).toBe('12,5');
       expect(amountBox().selectionStart).toBe(4);
-      expect(onChange).toHaveBeenLastCalledWith({ amount: '12.5', currency: 'EUR' });
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '12.5', currency: 'USD' });
     });
 
     it('de-DE dot is still the decimal for a 3-digit currency (KWD)', async () => {
@@ -336,6 +336,17 @@ describe('MoneyInput', () => {
       await userEvent.paste('$1,234.5678');
       expect(amountBox().value).toBe('1,234.56');
       expect(onChange).toHaveBeenLastCalledWith({ amount: '1234.56', currency: 'USD' });
+    });
+
+    it('es: 12,5 parses as 12.5', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="es">
+          <Harness onChange={onChange} />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), '12,5');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '12.5', currency: 'USD' });
     });
 
     it('trailing decimal is kept while focused', async () => {

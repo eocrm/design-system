@@ -409,6 +409,50 @@ describe('NumberField', () => {
   });
 });
 
+describe('NumberField locale separators and paste', () => {
+  const inLocale = (locale: string, ui: React.ReactElement) =>
+    render(<LocaleProvider locale={locale}>{ui}</LocaleProvider>);
+
+  it.each(['es', 'pl'])('%s: typing 12,5 fires 12.5', async (locale) => {
+    const spy = vi.fn();
+    inLocale(locale, <Harness spy={spy} />);
+    await userEvent.setup().type(input(), '12,5');
+    expect(spy).toHaveBeenLastCalledWith(12.5);
+  });
+
+  it('es: displays 1234.5 with a decimal comma, not 1,234,5', () => {
+    inLocale('es', <Harness initial={1234.5} step={0.1} />);
+    expect((input() as HTMLInputElement).value).toMatch(/^1\.?234,5$/);
+  });
+
+  it.each(["1'234.5", '1\u2019234.5'])('de-CH accepts group %s', async (text) => {
+    const spy = vi.fn();
+    inLocale('de-CH', <Harness spy={spy} />);
+    const user = userEvent.setup();
+    await user.click(input());
+    await user.paste(text);
+    expect(spy).toHaveBeenLastCalledWith(1234.5);
+  });
+
+  it.each(['1 234,50', '1\u00a0234,50'])('ru paste %j fires 1234.5', async (text) => {
+    const spy = vi.fn();
+    inLocale('ru', <Harness spy={spy} />);
+    const user = userEvent.setup();
+    await user.click(input());
+    await user.paste(text);
+    expect(spy).toHaveBeenLastCalledWith(1234.5);
+  });
+
+  it('en paste of $12 does not fire', async () => {
+    const spy = vi.fn();
+    inLocale('en', <Harness spy={spy} />);
+    const user = userEvent.setup();
+    await user.click(input());
+    await user.paste('$12');
+    expect(spy).not.toHaveBeenCalled();
+  });
+});
+
 describe('NumberField touch tokens (DS-35)', () => {
   const scss = readFileSync(resolve(__dirname, 'NumberField.tokens.scss'), 'utf8');
   const coarse = scss.slice(scss.indexOf('@media (pointer: coarse)'));

@@ -78,7 +78,12 @@ function parse(text: string, locale: string, allowNegative: boolean): number | n
   if (!trimmed) return null;
   const { group, decimal } = localeSeparators(locale);
   if (trimmed.lastIndexOf('-') > 0) return undefined;
-  const groups = /^\s$/.test(group) ? /[ \u00a0\u202f]/g : new RegExp(`[${group}]`, 'g');
+  // ICU versions differ on the de-CH group (U+0027 vs U+2019): accept both.
+  const groups = /^\s$/.test(group)
+    ? /[ \u00a0\u202f]/g
+    : /^['\u2019]$/.test(group)
+      ? /['\u2019]/g
+      : new RegExp(`[${group}]`, 'g');
   let body = trimmed.replace(groups, '');
   if (decimal !== '.' && group !== '.') body = body.split('.').join(decimal);
   if (body.split(decimal).length > 2) return undefined;
@@ -220,7 +225,8 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     // Numpad '.' types the decimal in comma-decimal locales (unless '.' groups there, as in de).
     let raw = e.target.value;
     if (decimal !== '.' && group !== '.') raw = raw.split('.').join(decimal);
-    const allowed = new Set([group, decimal, ...(allowNegative ? ['-'] : [])]);
+    const apos = /^['\u2019]$/.test(group) ? ["'", '\u2019'] : [];
+    const allowed = new Set([group, decimal, ...apos, ...(allowNegative ? ['-'] : [])]);
     if ([...raw].some((c) => !/[\d\s]/.test(c) && !allowed.has(c))) return;
     setText(raw);
     typed.current = true;
