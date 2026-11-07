@@ -374,8 +374,7 @@ describe('insert menu with grouped palette (#304)', () => {
     }
     render(<Controlled />);
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
-    await user.click(screen.getByRole('menuitem', { name: 'record' }));
-    await user.click(await screen.findByRole('menuitem', { name: /Associations/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Associations/ }));
     const expected = '{% for item in record.associations %}{{ item }}{% endfor %}';
     expect(onChange).toHaveBeenCalledWith(expected);
     // Caret restore after the controlled onChange runs in a requestAnimationFrame
@@ -395,8 +394,8 @@ describe('insert menu with grouped palette (#304)', () => {
     const onChange = vi.fn();
     render(<LiquidEditor value="" onChange={onChange} variables={VARS} />);
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
-    await user.click(screen.getByRole('menuitem', { name: 'event' }));
-    await user.click(await screen.findByRole('menuitem', { name: /Event type/ }));
+    // A lone dotted code is a flat top-level item, not a sub-menu.
+    await user.click(screen.getByRole('menuitem', { name: /Event type/ }));
     expect(onChange).toHaveBeenCalledWith('{{ event.type }}');
   });
 
@@ -417,7 +416,6 @@ describe('insert menu with grouped palette (#304)', () => {
     const user = userEvent.setup();
     render(<LiquidEditor value="" onChange={() => {}} variables={VARS} />);
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
-    await user.click(screen.getByRole('menuitem', { name: 'event' }));
     expect(await screen.findByText('The journal event type')).toBeInTheDocument();
   });
 
@@ -425,8 +423,7 @@ describe('insert menu with grouped palette (#304)', () => {
     const user = userEvent.setup();
     renderEditor(<Harness variables={VARS} />);
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
-    await user.click(screen.getByRole('menuitem', { name: 'record' }));
-    await user.click(await screen.findByRole('menuitem', { name: /Associations/ }));
+    await user.click(screen.getByRole('menuitem', { name: /Associations/ }));
     await screen.findByDisplayValue('{% for item in record.associations %}{{ item }}{% endfor %}');
     expect(screen.queryByText(/Unknown variable/)).not.toBeInTheDocument();
   });
@@ -699,12 +696,12 @@ describe('nested insert variable menu (#750)', () => {
     return screen.getByRole('combobox') as HTMLTextAreaElement;
   }
 
-  it('walks record › status › name and inserts the leaf', async () => {
+  it('flattens record › status into one sub-menu and inserts the leaf', async () => {
     const user = userEvent.setup();
     const ta = renderNested();
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'record' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'status' }));
+    // `record` merges into the declared `record.status`; its label is the declared one.
+    await user.click(await screen.findByRole('menuitem', { name: 'Status' }));
     await user.click(await screen.findByRole('menuitem', { name: /Status name/ }));
     await waitFor(() => expect(ta).toHaveValue('{{ record.status.name }}'));
   });
@@ -713,11 +710,11 @@ describe('nested insert variable menu (#750)', () => {
     const user = userEvent.setup();
     const ta = renderNested();
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'record' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'status' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Status' }));
     const items = await screen.findAllByRole('menuitem', { name: /^Status/ });
-    expect(items[0]).toHaveTextContent(/^Status$/);
-    await user.click(items[0]);
+    // [0] is the sub-trigger itself, [1] the declared parent inside it.
+    expect(items[1]).toHaveTextContent(/^Status$/);
+    await user.click(items[1]);
     await waitFor(() => expect(ta).toHaveValue('{{ record.status }}'));
   });
 
@@ -732,9 +729,33 @@ describe('nested insert variable menu (#750)', () => {
     const user = userEvent.setup();
     renderNested();
     screen.getByRole('button', { name: 'Insert variable' }).focus();
-    await user.keyboard('{ArrowDown}'); // opens the menu, focuses `record`
-    expect(await screen.findByRole('menuitem', { name: 'record' })).toHaveFocus();
+    await user.keyboard('{ArrowDown}'); // opens the menu, focuses the `Status` sub-trigger
+    expect(await screen.findByRole('menuitem', { name: 'Status' })).toHaveFocus();
     await user.keyboard('{ArrowRight}');
-    expect(await screen.findByRole('menuitem', { name: 'status' })).toBeVisible();
+    expect(await screen.findByRole('menuitem', { name: /Status name/ })).toBeVisible();
+  });
+
+  it('labels a branch by its joined path when no declared parent names it', async () => {
+    const user = userEvent.setup();
+    renderEditor(
+      <Harness
+        variables={[
+          { code: 'a.b.c', label: 'C' },
+          { code: 'a.b.d', label: 'D' },
+        ]}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    expect(await screen.findByRole('menuitem', { name: 'a.b' })).toBeInTheDocument();
+  });
+});
+
+describe('tags prop typing', () => {
+  const T = ['if', 'assign'] as const; // readonly tuple must be accepted (compile-time check)
+  it('accepts a readonly tags array', async () => {
+    const user = userEvent.setup();
+    renderEditor(<LiquidEditor value="" onChange={() => {}} tags={T} />);
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    expect(await screen.findByRole('menuitem', { name: /assign/ })).toBeInTheDocument();
   });
 });

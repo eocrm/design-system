@@ -30,7 +30,7 @@ const VARS = [
 | `showLineNumbers` | `boolean` | no | Show the line-number gutter. Default `true`. |
 | `showToolbar` | `boolean` | no | Show the toolbar (Insert tag and Insert variable menus). Default `true`. |
 | `toolbarActions` | `ReactNode` | no | Custom action buttons rendered in the toolbar, right-aligned just before the "Insert tag" and "Insert variable" buttons (e.g. a Docs / Help link). Pass `<Button size="sm">` elements (or a fragment of them); a `ghost` variant pairs well next to the bordered "Insert variable" button. Only renders when `showToolbar` is true. |
-| `tags` | `LiquidTag[]` | no | Liquid tags offered by the "Insert tag" toolbar menu (and `{%` autocomplete). Default: all six (`if`, `unless`, `case`, `assign`, `capture`, `comment`). `[]` hides the menu and disables `{%` autocomplete. Loop tags (`for`) are never offered. |
+| `tags` | `readonly LiquidTag[]` | no | Liquid tags offered by the "Insert tag" toolbar menu (and `{%` autocomplete). Default: all six (`if`, `unless`, `case`, `assign`, `capture`, `comment`). `[]` hides the menu and disables `{%` autocomplete. Loop tags (`for`) are never offered. |
 | `filters` | `string[]` | no | Filter names offered in autocomplete after `\|`. Defaults to a common Liquid set. |
 | `minRows` | `number` | no | Minimum visible rows. Default `4`. |
 | `maxRows` | `number` | no | Maximum visible rows before the editor scrolls internally. Default unbounded. |
@@ -72,15 +72,15 @@ const VARS = [
 <LiquidEditor value={tpl} onChange={setTpl} variables={VARS} />;
 ```
 
-**Insert tag menu + `tags`:** next to "Insert variable" the toolbar shows an "Insert tag" menu: `if`, `if … else`, `if … elsif … else`, `unless`, `case`, `assign`, `capture`, `comment`. Choosing one inserts the full block with the caret in the condition/name slot; a non-empty selection becomes the block body. `tags` filters which tags are offered (`'if' | 'unless' | 'case' | 'assign' | 'capture' | 'comment'`, default all six); `tags={[]}` hides the menu and disables `{%` autocomplete. Loop tags are never offered — a `collection` variable already inserts a `for` loop from "Insert variable".
+**Insert tag menu + `tags`:** next to "Insert variable" the toolbar shows an "Insert tag" menu: `if`, `if … else`, `if … elsif … else`, `unless`, `case`, `assign`, `capture`, `comment`. Choosing one inserts the full block with the caret in the condition/name slot (for `comment`, in the body); a non-empty selection becomes the block body (for `assign`, the value). `tags` filters which tags are offered (`'if' | 'unless' | 'case' | 'assign' | 'capture' | 'comment'`, default all six); `tags={[]}` hides the menu and disables `{%` autocomplete. Loop tags are never offered — a `collection` variable already inserts a `for` loop from "Insert variable".
 
 ```tsx
 <LiquidEditor value={tpl} onChange={setTpl} variables={VARS} tags={['if', 'assign']} />
 ```
 
-**`{%` tag autocomplete:** typing `{%` suggests the allowed tags (first word only); accepting expands the full snippet, consuming a `%}` right after the caret and keeping a `{%-` dash. It does not open inside an already-complete tag such as `{% if x %}`.
+**`{%` tag autocomplete:** typing `{%` suggests the allowed tags (first word only), including inside `{% comment %}` / `{% raw %}` bodies; accepting expands the full snippet, consuming a `%}` right after the caret and keeping a `{%-` dash. It does not open inside an already-complete tag such as `{% if x %}`.
 
-**Nested variables:** dotted codes (`record.status.name`) render in "Insert variable" as nested sub-menus (`record › status › name`) within their group. A declared parent (`record.status` declared alongside `record.status.name`) is the first item inside its own sub-menu. Autocomplete still prefix-matches the full dotted code. A dotted root whose variables sit in different `group`s appears under each group.
+**Nested variables:** dotted codes (`record.status.name`) render in "Insert variable" as nested sub-menus (`record › status › name`) within their group. Single-child chains are flattened: a node with one child and no declared variable of its own merges into it, so a lone `event.type` is a plain top-level item and `record.status.id` + `record.status.name` is one `record.status` sub-menu. A declared parent (`record.status` declared alongside `record.status.name`) is the first item inside its own sub-menu, and its human `label` (when set) names that sub-menu. Autocomplete still prefix-matches the full dotted code. A dotted root whose variables sit in different `group`s appears under each group.
 
 When NOT to use: plain prose → `Textarea`; static read-only code → playground `CodeBlock`. Don't expect it to validate syntax (feed `error` from the backend) or to produce its own preview (preview is consumer-rendered).
 

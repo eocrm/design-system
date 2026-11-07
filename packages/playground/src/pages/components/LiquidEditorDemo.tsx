@@ -191,7 +191,7 @@ export function Demo() {
 
       <Example
         title="Nested (dotted) variables"
-        description="Dotted codes become nested sub-menus in Insert variable (record › status › name). The declared parent record.status is the first item in its own sub-menu."
+        description="Dotted codes become nested sub-menus in Insert variable (record › status › name). Single-child chains flatten, and the declared parent record.status is the first item in its own sub-menu, named by its label."
         code={`import { useState } from 'react';
 import { LiquidEditor, type LiquidVariable } from '@eocrm/design-system';
 

@@ -32,7 +32,7 @@ import {
   getAutocompleteContext,
   QUERY_CHAR,
 } from './useLiquidAutocomplete';
-import type { LiquidEditorProps, LiquidTag, LiquidVariable } from './types';
+import type { LiquidEditorProps, LiquidVariable } from './types';
 import styles from './LiquidEditor.module.scss';
 
 // Keys the autocomplete menu owns while open — handled in keyDown, so key-up
@@ -48,7 +48,7 @@ function withDashes(template: string, open: boolean, close: boolean): string {
 }
 
 /**
- * Liquid template editor: highlighting, gutter, variable-insert menu, autocomplete, unknown-variable flagging and a controlled preview pane.
+ * Liquid template editor: highlighting, gutter, variable- and tag-insert menus, autocomplete, unknown-variable flagging and a controlled preview pane.
  * @see docs/components/LiquidEditor.md
  */
 export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
@@ -66,7 +66,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
       showLineNumbers = true,
       showToolbar = true,
       toolbarActions,
-      tags = ALL_LIQUID_TAGS as LiquidTag[],
+      tags = ALL_LIQUID_TAGS,
       filters = DEFAULT_LIQUID_FILTERS as string[],
       minRows = 4,
       maxRows,

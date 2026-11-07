@@ -1,4 +1,4 @@
-import { buildVariableTree } from './variableTree';
+import { buildVariableTree, collapseChains } from './variableTree';
 
 const v = (...codes: string[]) => codes.map((code) => ({ code }));
 
@@ -33,5 +33,60 @@ describe('buildVariableTree (#750)', () => {
     const all = (ns: ReturnType<typeof buildVariableTree>): string[] =>
       ns.flatMap((n) => [n.segment, ...all(n.children)]);
     expect(all(buildVariableTree(v('a..b', '.x', 'x.'))).every((s) => s !== '')).toBe(true);
+  });
+});
+
+describe('collapseChains (#750)', () => {
+  const shape = (ns: ReturnType<typeof collapseChains>): unknown[] =>
+    ns.map((n) => [n.segment, n.variable ? 'v' : '-', shape(n.children)]);
+  const run = (...codes: string[]) => collapseChains(buildVariableTree(v(...codes)));
+
+  it('a lone dotted code becomes a root leaf', () => {
+    expect(shape(run('event.type'))).toEqual([['event.type', 'v', []]]);
+  });
+
+  it('merges an undeclared single-child chain into one labelled sub-menu', () => {
+    expect(shape(run('record.status.id', 'record.status.name'))).toEqual([
+      [
+        'record.status',
+        '-',
+        [
+          ['id', 'v', []],
+          ['name', 'v', []],
+        ],
+      ],
+    ]);
+  });
+
+  it('keeps a branching parent and collapses inside it', () => {
+    expect(shape(run('record.status.id', 'record.status.name', 'record.owner'))).toEqual([
+      [
+        'record',
+        '-',
+        [
+          [
+            'status',
+            '-',
+            [
+              ['id', 'v', []],
+              ['name', 'v', []],
+            ],
+          ],
+          ['owner', 'v', []],
+        ],
+      ],
+    ]);
+  });
+
+  it('merges into a declared single child, keeping it as the sub-menu parent', () => {
+    expect(shape(run('record.status', 'record.status.name'))).toEqual([
+      ['record.status', 'v', [['name', 'v', []]]],
+    ]);
+  });
+
+  it('never merges away a declared node', () => {
+    expect(shape(run('record', 'record.status.name'))).toEqual([
+      ['record', 'v', [['status.name', 'v', []]]],
+    ]);
   });
 });

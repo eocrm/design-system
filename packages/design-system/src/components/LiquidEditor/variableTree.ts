@@ -37,3 +37,20 @@ export function buildVariableTree(vars: readonly LiquidVariable[]): VariableNode
   }
   return roots;
 }
+
+/**
+ * Display pass: a node with exactly one child and no declared variable of its
+ * own merges into that child (recursively), joining the segments with `.`.
+ * A merged chain ending in a leaf is a plain item; ending in a branch, a
+ * sub-menu labelled by the joined path. Declared nodes are never merged away.
+ */
+export function collapseChains(nodes: readonly VariableNode[]): VariableNode[] {
+  return nodes.map((node) => {
+    const children = collapseChains(node.children);
+    if (!node.variable && children.length === 1) {
+      const [child] = children;
+      return { ...child, segment: `${node.segment}.${child.segment}` };
+    }
+    return { ...node, children };
+  });
+}

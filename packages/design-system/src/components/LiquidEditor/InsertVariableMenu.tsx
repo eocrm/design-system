@@ -2,7 +2,7 @@ import { DropdownMenu } from '../DropdownMenu';
 import { Button } from '../Button';
 import { useTranslation } from '../../i18n';
 import type { LiquidVariable } from './types';
-import { buildVariableTree, type VariableNode } from './variableTree';
+import { buildVariableTree, collapseChains, type VariableNode } from './variableTree';
 import styles from './LiquidEditor.module.scss';
 
 export interface InsertVariableMenuProps {
@@ -46,14 +46,15 @@ export function InsertVariableMenu({ variables, disabled, onInsert }: InsertVari
     />
   );
 
-  // Nodes with children become sub-menus (a declared parent is the first item
-  // inside its own sub-menu); childless nodes are plain items.
+  // Single-child chains are merged first (collapseChains). Nodes with children
+  // become sub-menus (a declared parent is the first item inside its own
+  // sub-menu, and its label names the sub-menu); childless nodes are plain items.
   const renderNode = (node: VariableNode) =>
     node.children.length === 0 ? (
       node.variable && renderVariable(node.variable)
     ) : (
       <DropdownMenu.Sub key={node.path}>
-        <DropdownMenu.SubTrigger>{node.segment}</DropdownMenu.SubTrigger>
+        <DropdownMenu.SubTrigger>{node.variable?.label || node.segment}</DropdownMenu.SubTrigger>
         <DropdownMenu.SubContent>
           {node.variable && renderVariable(node.variable)}
           {node.children.map((child) => renderNode(child))}
@@ -76,7 +77,7 @@ export function InsertVariableMenu({ variables, disabled, onInsert }: InsertVari
           groups.map((group, gi) => (
             <DropdownMenu.Group key={group.name ?? `g${gi}`}>
               {group.name ? <DropdownMenu.Label>{group.name}</DropdownMenu.Label> : null}
-              {buildVariableTree(group.items).map((node) => renderNode(node))}
+              {collapseChains(buildVariableTree(group.items)).map((node) => renderNode(node))}
             </DropdownMenu.Group>
           ))
         )}

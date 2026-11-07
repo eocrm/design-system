@@ -74,7 +74,7 @@ export interface LiquidEditorProps {
    * Default: all six (`if`, `unless`, `case`, `assign`, `capture`, `comment`).
    * `[]` hides the menu and disables `{%` autocomplete. Loop tags (`for`) are never offered.
    */
-  tags?: LiquidTag[];
+  tags?: readonly LiquidTag[];
   /** Filter names offered in autocomplete after `|`. Defaults to a common Liquid set. */
   filters?: string[];
   /** Minimum visible rows. Default `4`. */
