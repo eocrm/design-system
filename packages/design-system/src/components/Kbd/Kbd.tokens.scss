@@ -1,5 +1,5 @@
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // ─── Chip surface ──────────────────────────────────────────────────────
   --kbd-bg: var(--color-bg-muted);
   --kbd-fg: var(--color-fg-muted);

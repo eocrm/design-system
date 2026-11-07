@@ -2,7 +2,7 @@
 // resolved values match the global theme; consumers can retheme by overriding
 // these custom properties.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --flow-canvas-bg: var(--color-bg-sunken);
   --flow-canvas-grid-dot: var(--color-border);
   --flow-canvas-grid-size: var(--space-4);

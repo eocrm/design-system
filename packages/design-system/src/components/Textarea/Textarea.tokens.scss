@@ -1,6 +1,6 @@
 // Textarea.tokens.scss — component-scoped tokens for <Textarea>. Mirrors Input field tokens but no height per size (textarea height comes from rows + autoGrow). Counter sits as a child below the field.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Surface
   --textarea-bg: var(--color-bg);
   --textarea-fg: var(--color-fg);
@@ -52,7 +52,7 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --textarea-font-size-sm: var(--font-size-lg);
     --textarea-font-size-md: var(--font-size-lg);
     --textarea-font-size-lg: var(--font-size-lg);

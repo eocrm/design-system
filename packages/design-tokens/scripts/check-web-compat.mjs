@@ -54,7 +54,12 @@ export function parseGeneratedWebContract(tokensScss, darkScss, componentScss = 
   // meant deleting 24 provably dead lines threw `missing selector` instead.
   const component = {
     // Component token files pair :root with a DS-21 subtree twin.
-    light: declarations(blockBody(componentScss, ':root,\n:where(:root [data-theme])')),
+    light: declarations(
+      blockBody(
+        componentScss,
+        ":root,\n:where(:root [data-theme='light'], :root [data-theme='dark'])",
+      ),
+    ),
     forcedDark: declarations(blockBody(componentScss, ":root[data-theme='dark']", true)),
     systemDark: declarations(blockBody(componentScss, ":root:not([data-theme='light'])", true)),
     subtreeDark: {},

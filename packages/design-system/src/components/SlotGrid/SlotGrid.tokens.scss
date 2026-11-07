@@ -2,7 +2,7 @@
 @use '../Button/Button.tokens';
 
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --slot-grid-group-gap: var(--space-5);
   --slot-grid-legend-gap: var(--space-2);
   --slot-grid-gap: var(--space-2);

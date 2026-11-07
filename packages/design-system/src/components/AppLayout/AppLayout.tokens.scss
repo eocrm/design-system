@@ -2,7 +2,7 @@
 @use '../_internal/collapse' as bp;
 
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Padding of the main content region — the canonical shell content gutter, so
   // a DS-only consumer gets the shell padding with no prop and no raw CSS.
   // Defaults to --space-6 (matches the playground AppShell's .content gutter).
@@ -23,7 +23,7 @@
 // the same (0,1,0) specificity as this one — whichever rule loads last wins.
 @media (max-width: bp.$collapse-md) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --app-layout-content-padding: var(--space-4);
   }
 }

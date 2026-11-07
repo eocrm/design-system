@@ -2,7 +2,7 @@
 @use '../Badge/Badge.tokens';
 
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Trigger
   --select-trigger-padding-x: var(--space-3);
   --select-trigger-fg: var(--color-fg);
@@ -145,7 +145,7 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --select-trigger-height-sm: var(--size-touch);
     --select-trigger-height-md: var(--size-touch);
     --select-trigger-height-lg: var(--size-touch);
@@ -160,7 +160,7 @@
 // Touch devices (DS-35): the chip x is 44px wide (its hit area is 44px tall).
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --select-chip-remove-min-inline-size: var(--size-touch);
   }
 }

@@ -1,6 +1,6 @@
 // Input.tokens.scss — component-scoped tokens for <Input>. Defaults preserve byte-identical visual output. Sister field components (DatePicker, DateRangePicker, Select) own their own wrappers but mirror these values.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Surface
   --input-bg: var(--color-bg);
   --input-fg: var(--color-fg);
@@ -58,7 +58,7 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --input-height-sm: var(--size-touch);
     --input-height-md: var(--size-touch);
     --input-height-lg: var(--size-touch);

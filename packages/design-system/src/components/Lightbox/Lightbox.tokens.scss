@@ -1,5 +1,5 @@
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --lightbox-scrim: var(--color-bg-overlay-strong);
   --lightbox-z: var(--z-modal);
 

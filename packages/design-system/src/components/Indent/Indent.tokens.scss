@@ -1,7 +1,7 @@
 // Component tokens for <Indent> — default to the --space-* primitives. Same
 // name→px mapping as Stack's gap, so an Indent gutter reads at the same scale.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --indent-gutter-xs: var(--space-1); // 4px
   --indent-gutter-sm: var(--space-2); // 8px
   --indent-gutter-md: var(--space-3); // 12px

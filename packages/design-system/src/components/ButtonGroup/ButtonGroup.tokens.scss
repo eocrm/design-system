@@ -1,6 +1,6 @@
 // ButtonGroup.tokens.scss — component-scoped tokens for <ButtonGroup>. Visual mode joins Button children; segmented mode owns its own pill-inset styling.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Visual mode — outer-corner radius applied to first/last children
   --button-group-radius: var(--radius-md);
 
@@ -46,7 +46,7 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --button-group-item-height-md: var(--size-touch);
     --button-group-item-height-lg: var(--size-touch);
   }

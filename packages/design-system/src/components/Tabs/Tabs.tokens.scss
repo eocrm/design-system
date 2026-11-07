@@ -2,7 +2,7 @@
 // bottom border, tab inactive vs active fg, tab hover fg, focus ring, the
 // active-tab indicator color, and the optional count pill (active vs idle).
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Tablist
   --tabs-gap: var(--space-1);
   --tabs-border-color: var(--color-border);
@@ -57,7 +57,7 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --tabs-tab-min-height: var(--size-touch);
   }
 }

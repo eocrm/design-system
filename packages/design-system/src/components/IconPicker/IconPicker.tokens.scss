@@ -1,5 +1,5 @@
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --icon-picker-trigger-size: var(--size-md);
   --icon-picker-trigger-size-sm: var(--size-sm);
   --icon-picker-trigger-size-lg: var(--size-lg);

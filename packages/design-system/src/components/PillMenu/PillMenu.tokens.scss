@@ -6,7 +6,7 @@
 @use '../DropdownMenu/DropdownMenu.tokens';
 
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --pill-menu-radius: var(--radius-md);
   --pill-menu-padding-y: var(--space-1);
   --pill-menu-padding-x: var(--space-3);

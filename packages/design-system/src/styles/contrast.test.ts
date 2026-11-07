@@ -552,8 +552,8 @@ describe.each(THEMED_ACCENTS)(
         ? [body(funnel, ":root[data-theme='dark'],\n:where(:root [data-theme='dark'])")]
         : []),
       // Component token blocks carry a DS-21 subtree twin.
-      body(funnel, ':root,\n:where(:root [data-theme])'),
-      body(chart, ':root,\n:where(:root [data-theme])'),
+      body(funnel, ":root,\n:where(:root [data-theme='light'], :root [data-theme='dark'])"),
+      body(chart, ":root,\n:where(:root [data-theme='light'], :root [data-theme='dark'])"),
       source,
     ].join('\n');
     it('stays >= 2:1 on the surface', () => {

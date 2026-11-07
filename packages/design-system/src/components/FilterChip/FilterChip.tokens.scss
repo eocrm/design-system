@@ -5,7 +5,7 @@
 // stay on palette tokens — overriding the dot color is not a chip-level
 // concern.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Chip pill
   --filter-chip-gap: var(--space-2);
   --filter-chip-padding-y: var(--space-1);
@@ -29,7 +29,7 @@
 // Touch devices (DS-35): the x is 44px wide (its hit area is 44px tall).
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --filter-chip-dismiss-min-inline-size: var(--size-touch);
   }
 }

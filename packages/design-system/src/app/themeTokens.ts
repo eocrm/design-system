@@ -55,7 +55,7 @@ const LIGHT_SELECTOR = ':root, :root:root[data-accent]';
 const DARK_SELECTOR = ":root[data-theme='dark'], :root:root[data-accent][data-theme='dark']";
 const OS_DARK_SELECTOR =
   ":root:not([data-theme='light']), :root:root[data-accent]:not([data-theme='light'])";
-// DS-21: the library re-declares tokens on any non-root `[data-theme]` element, which
+// DS-21: the library re-declares tokens on any non-root `[data-theme='light'|'dark']` element, which
 // would hide a root override inherited from <html>, so overrides follow it there.
 // Library subtree (0,2,0) / accent subtree (0,3,0) < these (0,3,0) / (0,4,0). Light
 // and dark subtree selectors never match the same element, nor <html>, so they never

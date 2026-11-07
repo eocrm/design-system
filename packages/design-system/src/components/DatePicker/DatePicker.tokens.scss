@@ -1,6 +1,6 @@
 // DatePicker.tokens.scss — component-scoped tokens shared by <DatePicker>, <DatePickerGrid>, and <InlineDatePicker>. Wrapper mirrors <Input>; grid covers cells + range bands; inline carries no extra chrome.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Wrapper — surface
   --date-picker-gap: var(--space-1);
   --date-picker-bg: var(--color-bg);
@@ -156,7 +156,7 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --date-picker-input-height-sm: var(--size-touch);
     --date-picker-input-height-md: var(--size-touch);
     --date-picker-input-height-lg: var(--size-touch);

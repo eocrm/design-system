@@ -2,7 +2,7 @@
 // row of ordered record stages. Done/current fills follow `tone`; upcoming is
 // neutral in every tone.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --stage-path-height: var(--size-md);
 
   // Horizontal depth of each chevron's tip (and of the next stage's notch).

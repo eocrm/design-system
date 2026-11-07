@@ -1,6 +1,6 @@
 // Toast.tokens.scss — Component-scoped tokens for <Toast>. Per-tone border + icon color pairs (info/success/warning/danger), plus shared shape, sizing, and viewport-stack spacing. Each token defaults to the primitive the SCSS used before this migration.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Toast card surface
   --toast-bg: var(--color-bg);
   --toast-fg: var(--color-fg);

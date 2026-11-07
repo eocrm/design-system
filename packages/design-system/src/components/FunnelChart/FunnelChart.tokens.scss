@@ -4,7 +4,7 @@
 @use '../Chart/Chart.tokens';
 
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --funnel-chart-gap: var(--space-2);
 
   // Ramp: stage i of n is ramp-color mixed (oklab) toward ramp-target by max-mix * i / (n - 1). Light:

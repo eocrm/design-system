@@ -15,7 +15,7 @@ const sourcePaths = {
   badge: 'packages/design-system/src/components/Badge/Badge.tokens.scss',
 };
 const fixturePath = 'packages/design-tokens/test/fixtures/current-web-contract.json';
-const COMPONENT_ROOT = ':root, :where(:root [data-theme])';
+const COMPONENT_ROOT = ":root, :where(:root [data-theme='light'], :root [data-theme='dark'])";
 const SCOPES = ['light', 'forcedDark', 'systemDark', 'subtreeDark', 'subtreeLight', 'forcedLight'];
 
 export async function captureWebContract() {

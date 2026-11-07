@@ -4,7 +4,7 @@
 // padding. Current-page button uses --pagination-current-* so an override can
 // retint the "selected" state without touching the accent palette globally.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Outer cluster
   --pagination-gap: var(--space-1);
 
@@ -58,7 +58,7 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --pagination-page-button-height-sm: var(--size-touch);
     --pagination-page-button-height-md: var(--size-touch);
     --pagination-page-button-height-lg: var(--size-touch);

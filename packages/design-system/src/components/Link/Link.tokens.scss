@@ -2,7 +2,7 @@
 // default (accent), muted (fg-muted -> accent on hover), subtle (fg -> accent
 // on hover). Each variant has its own fg + fg-hover pair. Icon gap is shared.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Shape + icon gap
   --link-radius: var(--radius-sm);
   --link-icon-gap: var(--space-1);
@@ -26,7 +26,13 @@
 // default links also step up in weight (the colour alone can't carry the difference).
 :root[data-accent='tealpine'],
 :root[data-accent='slate'],
-:where(:root[data-accent='tealpine'] [data-theme]),
-:where(:root[data-accent='slate'] [data-theme]) {
+:where(
+  :root[data-accent='tealpine'] [data-theme='light'],
+  :root[data-accent='tealpine'] [data-theme='dark']
+),
+:where(
+  :root[data-accent='slate'] [data-theme='light'],
+  :root[data-accent='slate'] [data-theme='dark']
+) {
   --link-font-weight-default: var(--font-weight-medium);
 }

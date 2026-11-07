@@ -1,6 +1,6 @@
 // DateRangePicker.tokens.scss — component-scoped tokens for <DateRangePicker> + <InlineDateRangePicker>. Mirrors DatePicker.tokens.scss for the wrapper but layers on its own popover/grid-pair chrome. The two child grids re-use DatePicker grid tokens since they render via <DatePickerGrid>.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Wrapper — surface
   --date-range-picker-gap: var(--space-1);
   --date-range-picker-bg: var(--color-bg);
@@ -82,7 +82,7 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --date-range-picker-input-height-sm: var(--size-touch);
     --date-range-picker-input-height-md: var(--size-touch);
     --date-range-picker-input-height-lg: var(--size-touch);

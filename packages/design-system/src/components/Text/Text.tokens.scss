@@ -4,7 +4,7 @@
 // accent / danger / success / warning). --font-family-sans is not tokenized
 // per migration rules.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Base
   --text-font-weight: var(--font-weight-regular);
   --text-line-height: var(--line-height-normal);

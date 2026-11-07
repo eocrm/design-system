@@ -2,7 +2,7 @@
 @use '../Badge/Badge.tokens';
 
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Panel surface
   --dropdown-menu-bg: var(--color-bg);
   --dropdown-menu-border-color: var(--color-border);

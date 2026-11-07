@@ -4,7 +4,7 @@
 // default line-height is tight (vs Text's normal). --font-family-sans is not
 // tokenized per migration rules.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Base
   --title-font-weight: var(--font-weight-semibold);
   --title-line-height: var(--line-height-tight);

@@ -1,7 +1,7 @@
 // Page.tokens.scss — Component-scoped tokens for <Page>. Each token
 // defaults to the primitive the SCSS used before this migration.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Gap per size variant (vertical rhythm between page sections)
   --page-gap-xs: var(--space-1);
   --page-gap-sm: var(--space-2);

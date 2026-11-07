@@ -3,7 +3,7 @@
 // the pulse animation's opacity extremes. The 1.5s pulse duration stays raw
 // since motion timings are not tokenized.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Block
   --skeleton-bg: var(--color-bg-muted);
 

@@ -167,8 +167,8 @@ test('consumer ThemeTokens overrides still win inside subtrees', async ({ page }
 
 /**
  * Components follow a subtree too: component token files pair `:root` with
- * `:where(:root [data-theme])`, so their aliases re-resolve on the subtree
- * element. Runs on a real playground route so the shipped library CSS (generated
+ * `:where(:root [data-theme='light'], :root [data-theme='dark'])`, so their
+ * aliases re-resolve on the subtree element. Runs on a real playground route so the shipped library CSS (generated
  * tokens plus component token files) is what resolves.
  */
 const COMPONENT_TOKENS = [
@@ -220,4 +220,34 @@ test('component tokens resolve like the root ladder inside subtrees', async ({ p
     expect(r.lightInDark, `light in dark, ${r.accent}`).toEqual(r.light);
     expect(r.lightInDarkInLight, `light in dark in light, ${r.accent}`).toEqual(r.light);
   }
+});
+
+// Only the library's own theme values re-theme a subtree: a third-party widget
+// that stamps its own `data-theme` (daisyUI's "cupcake") must inherit the page's
+// component tokens, not have them reset to the light base.
+test('a foreign data-theme value inherits the page theme', async ({ page }) => {
+  await page.goto('/components/funnel-chart');
+  const names = [
+    '--button-bg',
+    '--button-fg',
+    '--funnel-chart-ramp-target',
+    '--funnel-chart-ramp-max-mix',
+  ];
+  const { dark, cupcake, light } = await page.evaluate((names) => {
+    const read = (el: Element) => {
+      const style = getComputedStyle(el);
+      return Object.fromEntries(names.map((n) => [n, style.getPropertyValue(n).trim()]));
+    };
+    const html = document.documentElement;
+    html.setAttribute('data-theme', 'light');
+    const light = read(html);
+    html.setAttribute('data-theme', 'dark');
+    const widget = document.body.appendChild(document.createElement('div'));
+    widget.setAttribute('data-theme', 'cupcake');
+    return { dark: read(html), cupcake: read(widget), light };
+  }, names);
+  for (const n of names) expect(dark[n], n).not.toBe('');
+  // Guards the oracle: the ramp differs between themes, so a reset would show.
+  expect(dark['--funnel-chart-ramp-max-mix']).not.toBe(light['--funnel-chart-ramp-max-mix']);
+  expect(cupcake).toEqual(dark);
 });

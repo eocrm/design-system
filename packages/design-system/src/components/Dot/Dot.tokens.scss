@@ -1,5 +1,5 @@
 // Dot.tokens.scss — component tokens for <Dot>. Size mirrors the Badge dot.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --dot-size: var(--size-badge-dot);
 }

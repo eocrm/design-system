@@ -1,6 +1,6 @@
 // Checkbox.tokens.scss — component-scoped tokens for <Checkbox>. NOTE: --checkbox-color is a consumer-injection variable set by the React layer (palette `color` prop) — DO NOT shadow it here.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Box — shape + base surface
   --checkbox-radius: var(--radius-sm);
   --checkbox-bg: var(--color-bg);
@@ -51,7 +51,7 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --checkbox-hit-min-height: var(--size-touch);
   }
 }

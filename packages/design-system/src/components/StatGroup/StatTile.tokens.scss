@@ -1,7 +1,7 @@
 @use '../Card/Card.tokens';
 
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --stat-tile-bg: var(--color-bg-muted);
   --stat-tile-skeleton-bg: var(--color-bg-muted-hover);
   --stat-tile-radius: var(--radius-md);

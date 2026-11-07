@@ -6,7 +6,7 @@
 // surface tokens — keeping Table's tokens semantic ensures a Table theme
 // override propagates to DataTable.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Table surface
   --table-fg: var(--color-table-fg);
   --table-bg: var(--color-table-bg);
@@ -86,7 +86,7 @@
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --table-cell-link-min-height: var(--size-touch);
   }
 }

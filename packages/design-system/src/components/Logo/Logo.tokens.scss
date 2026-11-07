@@ -1,5 +1,5 @@
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Gap between the mark and the wordmark.
   --logo-gap: var(--space-2);
 

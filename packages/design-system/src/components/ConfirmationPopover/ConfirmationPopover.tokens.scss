@@ -1,6 +1,6 @@
 // ConfirmationPopover.tokens.scss — Component-scoped tokens for <ConfirmationPopover>. Each token defaults to the primitive the SCSS used before this migration. ConfirmationPopover's panel chrome is delegated to <Popover>; these tokens cover the description text and the in-flight spinner only.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Description text
   --confirmation-popover-description-font-size: var(--font-size-sm);
   --confirmation-popover-description-line-height: var(--line-height-normal);

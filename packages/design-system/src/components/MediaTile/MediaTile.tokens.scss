@@ -1,5 +1,5 @@
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --mediatile-radius-none: 0;
   --mediatile-radius-sm: var(--radius-sm);
   --mediatile-radius-md: var(--radius-md);

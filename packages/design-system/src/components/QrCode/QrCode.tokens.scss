@@ -3,7 +3,7 @@
 // a pair of aliases rather than fixed values. Symbol geometry (the 4-module
 // quiet zone, the punch side) is computed from the module count, not tokenised.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // The code itself. Swapped wholesale by `.inverted`.
   --qr-ink: var(--color-fg);
   --qr-paper: var(--color-bg);

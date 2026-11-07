@@ -1,5 +1,5 @@
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Node column / box — match it to the avatar size you pass as `node`. Default `sm`
   // (24px): comment-thread avatars are small, and it keeps the per-level reply indent
   // (node + content-gap) tight. Override `--thread-node-size` for larger nodes.

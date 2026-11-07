@@ -100,7 +100,7 @@ describe('buildThemeTokenCss', () => {
     );
   });
 
-  // DS-21: the library re-declares tokens on any non-root `[data-theme]` element
+  // DS-21: the library re-declares tokens on any non-root `[data-theme='light'|'dark']` element
   // (`:root [data-theme='x']` (0,2,0), `:root[data-accent='a'] [data-theme='x']` (0,3,0)),
   // which would hide a root-level override inherited from <html>.
   it('re-emits overrides on data-theme subtrees, out-specifying the library subtree blocks', () => {

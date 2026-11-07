@@ -1,6 +1,6 @@
 // NumberField.tokens.scss — component-scoped tokens for <NumberField>. Surface values mirror <Input>.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Surface
   --number-field-bg: var(--color-bg);
   --number-field-fg: var(--color-fg);
@@ -45,7 +45,7 @@
 // overriding these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --number-field-height-sm: var(--size-touch);
     --number-field-height-md: var(--size-touch);
     --number-field-height-lg: var(--size-touch);

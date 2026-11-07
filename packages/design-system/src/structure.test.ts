@@ -1921,12 +1921,40 @@ describe('touch hit areas come from the mixin', () => {
  * The OS-dark `:root:not([data-theme='light'])` block is root-only by design.
  */
 describe('component token blocks follow data-theme subtrees (DS-21)', () => {
+  // Only the library's own themes: a third-party `data-theme="cupcake"` must
+  // not reset component tokens inside that widget.
+  const subtrees = (prefix: string) =>
+    `:where(${prefix} [data-theme='light'], ${prefix} [data-theme='dark'])`;
   const twinOf = (selector: string) =>
-    selector === ':root'
-      ? ':where(:root [data-theme])'
-      : selector.startsWith(':root[data-theme=')
-        ? `:where(:root ${selector.slice(':root'.length)})`
-        : `:where(${selector} [data-theme])`;
+    selector.startsWith(':root[data-theme=')
+      ? `:where(:root ${selector.slice(':root'.length)})`
+      : subtrees(selector);
+  /** Split a selector list at top-level commas (not the ones inside `:where()`). */
+  const splitList = (list: string) => {
+    const out: string[] = [];
+    let depth = 0;
+    let cur = '';
+    for (const ch of list) {
+      if (ch === ',' && depth === 0) {
+        out.push(cur.trim());
+        cur = '';
+        continue;
+      }
+      if (ch === '(') depth++;
+      if (ch === ')') depth--;
+      cur += ch;
+    }
+    // Prettier may wrap a long `:where(` list across lines.
+    return [...out, cur.trim()].map((sel) => sel.replace(/\(\s+/g, '(').replace(/\s+\)/g, ')'));
+  };
+  const missingTwins = (code: string) =>
+    scssRules(stripScssComments(code)).flatMap(([selectorList]) => {
+      const selectors = splitList(selectorList);
+      return selectors
+        .filter((s) => s.startsWith(':root') && !s.startsWith(':root:not('))
+        .filter((s) => !selectors.includes(twinOf(s)))
+        .map((s) => `${s} needs ${twinOf(s)}`);
+    });
   const files = components.flatMap((name) =>
     readdirSync(join(componentsDir, name))
       .filter((f) => f.endsWith('.tokens.scss'))
@@ -1940,22 +1968,19 @@ describe('component token blocks follow data-theme subtrees (DS-21)', () => {
   });
 
   it.each(files)('%s', (_label, code) => {
-    const missing = scssRules(stripScssComments(code)).flatMap(([selectorList]) => {
-      const selectors = selectorList.split(',').map((s) => s.trim());
-      return selectors
-        .filter((s) => s.startsWith(':root') && !s.startsWith(':root:not('))
-        .filter((s) => !selectors.includes(twinOf(s)))
-        .map((s) => `${s} needs ${twinOf(s)}`);
-    });
-    expect(missing).toEqual([]);
+    expect(missingTwins(code)).toEqual([]);
   });
 
-  it('flags a block without its twin', () => {
-    const rules = scssRules(
-      stripScssComments('@media (pointer: coarse) {\n  :root { --x: 1; }\n}'),
-    );
-    expect(rules.map(([s]) => s)).toEqual([':root']);
-    expect(twinOf(':root')).toBe(':where(:root [data-theme])');
+  it('flags a block without its twin, and a twin that matches any data-theme', () => {
+    expect(missingTwins('@media (pointer: coarse) {\n  :root { --x: 1; }\n}')).toEqual([
+      `:root needs ${subtrees(':root')}`,
+    ]);
+    expect(missingTwins(':root,\n:where(:root [data-theme]) { --x: 1; }')).not.toEqual([]);
+    expect(
+      missingTwins(
+        ":root,\n:where(:root [data-theme='light'], :root [data-theme='dark']) { --x: 1; }",
+      ),
+    ).toEqual([]);
     expect(twinOf(":root[data-theme='dark']")).toBe(":where(:root [data-theme='dark'])");
   });
 });

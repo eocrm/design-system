@@ -1,6 +1,6 @@
 // Avatar.tokens.scss — Component-scoped tokens for <Avatar> and <AvatarGroup>. The name-hashed primitive palette --color-avatar-1..6 stays primitive (in tokens.scss) and the React-injected --avatar-bg inline var also stays as a runtime hook on .crop.
 :root,
-:where(:root [data-theme]) {
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Surface / shape
   --avatar-radius: var(--radius-full);
   --avatar-fg: var(--color-avatar-fg);
@@ -103,7 +103,7 @@
 
 @supports (height: 1lh) {
   :root,
-  :where(:root [data-theme]) {
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
     --avatar-size-inline: 1lh;
   }
 }
