@@ -58,7 +58,13 @@ const REPEAT_DELAY = 400;
 const REPEAT_INTERVAL = 60;
 
 /** Decimals of `n`, capped at 10 (also trims float noise like 0.1 + 0.2; exponent-safe). */
-const decimalsOf = (n: number) => (n.toFixed(10).replace(/\.?0+$/, '').split('.')[1] ?? '').length;
+const decimalsOf = (n: number) =>
+  (
+    n
+      .toFixed(10)
+      .replace(/\.?0+$/, '')
+      .split('.')[1] ?? ''
+  ).length;
 
 /**
  * `null` = empty, `undefined` = partial / unparseable draft (`-`, `,`) or malformed text: any
