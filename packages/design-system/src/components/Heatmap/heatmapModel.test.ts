@@ -1,13 +1,22 @@
 import { scaleLinear } from 'd3-scale';
 import { estimateTextWidth } from '../Chart/chartModel';
-import { bucketOf, computeHeatmapLayout, heatmapBuckets, legendEntries } from './heatmapModel';
+import {
+  bucketOf,
+  computeHeatmapLayout,
+  heatmapBuckets,
+  heatmapLegend,
+  type HeatmapBuckets,
+  type HeatmapLegend,
+} from './heatmapModel';
+
+type Fmt = (n: number) => string;
 
 const finite = (rows: (number | null)[][]) =>
   rows.flat().filter((v): v is number => v !== null && Number.isFinite(v));
 
-/** Every value lands in exactly one bucket; min in the first, max in the last. */
-function expectCovers(rows: (number | null)[][]) {
-  const b = heatmapBuckets(rows)!;
+/** Every value lands in exactly one bucket; min in the first, max in the last; the ends are the data's. */
+function expectCovers(rows: (number | null)[][], fmt: Fmt = String) {
+  const b = heatmapBuckets(rows, fmt)!;
   const vals = finite(rows);
   const n = b.steps.length;
   for (const v of vals) {
@@ -19,14 +28,35 @@ function expectCovers(rows: (number | null)[][]) {
     if (i < n - 1) expect(v).toBeLessThan(b.thresholds[i + 1]);
     else expect(v).toBeLessThanOrEqual(b.thresholds[n]);
   }
+  expect(b.thresholds[0]).toBe(Math.min(...vals));
+  expect(b.thresholds[n]).toBe(Math.max(...vals));
   expect(bucketOf(Math.min(...vals), b)).toBe(0);
   expect(bucketOf(Math.max(...vals), b)).toBe(n - 1);
   return b;
 }
 
-const unique = (xs: string[]) => new Set(xs).size === xs.length;
+const texts = (l: HeatmapLegend) => {
+  if (l.kind !== 'ranges') throw new Error(`expected ranges, got ${l.kind}`);
+  return l.items.map((e) => e.text);
+};
 
-describe('heatmapBuckets', () => {
+/** Integer legend: first starts at min, last ends at max, ranges disjoint and increasing. */
+function expectDisjointRanges(b: HeatmapBuckets, min: number, max: number) {
+  const ranges = texts(heatmapLegend(b, String)).map((s) => s.split('–').map(Number));
+  expect(ranges[0][0]).toBe(min);
+  expect(ranges[ranges.length - 1].at(-1)).toBe(max);
+  for (const r of ranges) expect(r[0]).toBeLessThanOrEqual(r[r.length - 1]);
+  for (let i = 1; i < ranges.length; i++) {
+    expect(ranges[i][0]).toBe(ranges[i - 1][ranges[i - 1].length - 1] + 1);
+  }
+  return ranges;
+}
+
+const intRange = (lo: number, hi: number) => [
+  Array.from({ length: hi - lo + 1 }, (_, i) => lo + i),
+];
+
+describe('heatmapBuckets / heatmapLegend', () => {
   it('gives small integer data one bucket per integer, spread over the ramp ends', () => {
     const b = expectCovers([
       [0, 1],
@@ -34,21 +64,22 @@ describe('heatmapBuckets', () => {
     ]);
     expect(b.integer).toBe(true);
     expect(b.steps).toEqual([1, 2, 4, 5]);
-    expect(legendEntries(b, String).map((e) => e.text)).toEqual(['0', '1', '2', '3']);
-    expect(legendEntries(b, String).map((e) => e.step)).toEqual([1, 2, 4, 5]);
+    const l = heatmapLegend(b, String);
+    expect(texts(l)).toEqual(['0', '1', '2', '3']);
+    expect(l.kind === 'ranges' && l.items.map((e) => e.step)).toEqual([1, 2, 4, 5]);
   });
 
-  it('puts all-equal values in one middle bucket', () => {
+  it('puts all-equal values in one middle bucket with one label', () => {
     const b = expectCovers([[5, 5]]);
     expect(b.steps).toEqual([3]);
-    expect(legendEntries(b, String).map((e) => e.text)).toEqual(['5']);
-    const frac = heatmapBuckets([[2.5, 2.5]])!;
+    expect(texts(heatmapLegend(b, String))).toEqual(['5']);
+    const frac = heatmapBuckets([[2.5, 2.5]], String)!;
     expect(frac.steps).toEqual([3]);
     expect(bucketOf(2.5, frac)).toBe(0);
-    expect(legendEntries(frac, String).map((e) => e.text)).toEqual(['2.5']);
+    expect(texts(heatmapLegend(frac, String))).toEqual(['2.5']);
   });
 
-  it('uses nice d3 ticks as boundaries for continuous data, at most five buckets', () => {
+  it('uses nice d3 ticks between the data ends for continuous data, at most five buckets', () => {
     const b = expectCovers([
       [0, 0.37],
       [12.5, 99.9],
@@ -57,51 +88,65 @@ describe('heatmapBuckets', () => {
     expect(b.steps.length).toBeLessThanOrEqual(5);
     expect(b.steps[0]).toBe(1);
     expect(b.steps[b.steps.length - 1]).toBe(5);
-    const lo = b.thresholds[0];
-    const hi = b.thresholds[b.thresholds.length - 1];
-    const step = b.thresholds[1] - b.thresholds[0];
-    // Each boundary is a tick d3 itself produces for the nice domain.
-    expect(b.thresholds).toEqual(
-      scaleLinear()
-        .domain([lo, hi])
-        .ticks(Math.round((hi - lo) / step)),
-    );
+    // Interior boundaries are ticks d3 itself produces for the nice domain.
+    const interior = b.thresholds.slice(1, -1);
+    const step = interior[1] - interior[0];
+    const all = scaleLinear()
+      .domain([0, 100])
+      .ticks(Math.round(100 / step));
+    for (const t of interior) expect(all).toContain(t);
+  });
+
+  it('draws continuous data as a stepped bar, each boundary printed once', () => {
+    const b = heatmapBuckets([[0, 99.9]], String)!;
+    const l = heatmapLegend(b, String);
+    expect(l.kind).toBe('scale');
+    if (l.kind !== 'scale') return;
+    expect(l.boundaries).toHaveLength(l.steps.length + 1);
+    expect(new Set(l.boundaries).size).toBe(l.boundaries.length);
+    expect(l.boundaries[0]).toBe('0');
+    expect(l.boundaries.at(-1)).toBe('99.9');
+  });
+
+  it('drops buckets until the formatted boundaries are distinct', () => {
+    const fmt: Fmt = (n) => n.toFixed(0);
+    const b = expectCovers([[0, 0.9]], fmt);
+    const l = heatmapLegend(b, fmt);
+    const labels = l.kind === 'scale' ? l.boundaries : l.items.map((e) => e.text);
+    expect(new Set(labels).size).toBe(labels.length);
+    expect(b.steps.length).toBeLessThanOrEqual(2);
+    if (l.kind === 'scale') expect(l.boundaries).toEqual(['0', '1']);
+    // Too close to tell apart at all: one bucket, step 3, one label.
+    const tight = heatmapBuckets([[0.1, 0.2]], fmt)!;
+    expect(tight.steps).toEqual([3]);
+    expect(texts(heatmapLegend(tight, fmt))).toEqual(['0']);
   });
 
   it('caps the bucket count when d3 would tick finer than five buckets', () => {
     // [0, 7] at a count of 5 ticks every 1 (eight buckets).
-    const b = expectCovers([[0, 1, 2, 3, 4, 5, 6, 7]]);
+    const b = expectCovers(intRange(0, 7));
     expect(b.steps.length).toBeLessThanOrEqual(5);
     expect(b.thresholds.every(Number.isInteger)).toBe(true);
   });
 
   it('spreads three buckets over steps 1, 3, 5 and two over 1, 5', () => {
-    expect(heatmapBuckets([[1, 2, 3]])!.steps).toEqual([1, 3, 5]);
-    expect(heatmapBuckets([[1, 2]])!.steps).toEqual([1, 5]);
+    expect(heatmapBuckets([[1, 2, 3]], String)!.steps).toEqual([1, 3, 5]);
+    expect(heatmapBuckets([[1, 2]], String)!.steps).toEqual([1, 5]);
   });
 
-  it('keeps legend texts unique and non-overlapping after formatting', () => {
-    const integerRows = [[0, 1, 2, 3, 4, 5, 6, 7]];
-    const b = heatmapBuckets(integerRows)!;
-    const texts = legendEntries(b, String).map((e) => e.text);
-    expect(unique(texts)).toBe(true);
-    // Integer buckets are closed ranges "lo–hi": each starts after the previous one ends.
-    const ranges = texts.map((s) => s.split('–').map(Number));
-    for (let i = 1; i < ranges.length; i++) {
-      expect(ranges[i][0]).toBeGreaterThan(ranges[i - 1][ranges[i - 1].length - 1]);
-    }
-    expect(ranges[0][0]).toBe(0);
-    // The last bucket ends on its nice edge, at or past the max.
-    expect(ranges[ranges.length - 1].at(-1)).toBeGreaterThanOrEqual(7);
-
-    const grams = legendEntries(heatmapBuckets([[0, 3, 1, 2]])!, (n) => `${n} g`);
-    expect(grams.map((e) => e.text)).toEqual(['0 g', '1 g', '2 g', '3 g']);
+  it('clamps integer legend ranges to the data, disjoint, never sharing an endpoint', () => {
+    const r07 = expectDisjointRanges(expectCovers(intRange(0, 7)), 0, 7);
+    expect(r07.at(-1)).toEqual([6, 7]);
+    expectDisjointRanges(expectCovers(intRange(1, 9)), 1, 9);
+    expectDisjointRanges(expectCovers(intRange(3, 11)), 3, 11);
+    const grams = heatmapLegend(heatmapBuckets([[0, 3, 1, 2]], String)!, (n) => `${n} g`);
+    expect(texts(grams)).toEqual(['0 g', '1 g', '2 g', '3 g']);
   });
 
   it('ignores nulls and non-finite values, and is null without a finite value', () => {
-    expect(heatmapBuckets([[null, NaN, 1, Infinity, 2]])!.steps).toEqual([1, 5]);
-    expect(heatmapBuckets([[null], [null, null]])).toBeNull();
-    expect(heatmapBuckets([])).toBeNull();
+    expect(heatmapBuckets([[null, NaN, 1, Infinity, 2]], String)!.steps).toEqual([1, 5]);
+    expect(heatmapBuckets([[null], [null, null]], String)).toBeNull();
+    expect(heatmapBuckets([], String)).toBeNull();
   });
 });
 

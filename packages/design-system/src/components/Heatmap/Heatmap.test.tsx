@@ -195,6 +195,50 @@ describe('Heatmap', () => {
     ).toEqual(['0 g', '1 g', '2 g', '3 g']);
   });
 
+  it('continuous data gets a stepped bar with each boundary printed once', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Heatmap
+        {...base}
+        values={[
+          [0, 12.5, 40.2],
+          [null, 77.1, 99.9],
+        ]}
+        formatValue={String}
+      />,
+    );
+    layout.fire();
+    const scale = container.querySelector('[data-heatmap-scale]')!;
+    const bounds = Array.from(scale.querySelectorAll('[data-heatmap-boundary]')).map(
+      (b) => b.textContent,
+    );
+    expect(bounds[0]).toBe('0');
+    expect(bounds.at(-1)).toBe('99.9');
+    expect(new Set(bounds).size).toBe(bounds.length);
+    expect(scale.querySelectorAll('[aria-hidden="true"]')).toHaveLength(bounds.length - 1);
+    expect(container.querySelector('[data-heatmap-legend]')).toHaveTextContent('No data');
+  });
+
+  it('ignores values outside rows × columns when bucketing', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Heatmap
+        {...base}
+        values={[
+          [0, 1, 2, 1000],
+          [3, 2, 1],
+          [500, 500, 500],
+        ]}
+      />,
+    );
+    layout.fire();
+    expect(
+      Array.from(container.querySelectorAll('[data-heatmap-legend-item]')).map(
+        (li) => li.textContent,
+      ),
+    ).toEqual(['0 g', '1 g', '2 g', '3 g']);
+  });
+
   it('shows the empty state when no cell has a finite value', () => {
     stubLayout();
     const { container } = render(

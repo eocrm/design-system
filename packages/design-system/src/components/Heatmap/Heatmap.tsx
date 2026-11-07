@@ -1,4 +1,5 @@
 import {
+  Fragment,
   forwardRef,
   useEffect,
   useId,
@@ -17,7 +18,7 @@ import { VisuallyHidden } from '../VisuallyHidden';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useSize } from '../_internal/useSize';
 import { ChartTooltip } from '../Chart/ChartTooltip';
-import { bucketOf, computeHeatmapLayout, heatmapBuckets, legendEntries } from './heatmapModel';
+import { bucketOf, computeHeatmapLayout, heatmapBuckets, heatmapLegend } from './heatmapModel';
 import styles from './Heatmap.module.scss';
 
 export interface HeatmapProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
@@ -72,9 +73,17 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
     const v = values[row]?.[col];
     return v !== null && v !== undefined && Number.isFinite(v) ? v : null;
   };
-  const buckets = useMemo(() => heatmapBuckets(values), [values]);
+  // Only the rows × columns grid is drawn, so only it sets the buckets.
+  const buckets = useMemo(
+    () =>
+      heatmapBuckets(
+        values.slice(0, rows.length).map((r) => r.slice(0, columns.length)),
+        formatValue,
+      ),
+    [values, rows.length, columns.length, formatValue],
+  );
   const hasNull = rows.some((_, r) => columns.some((_, c) => valueAt(r, c) === null));
-  const legend = buckets ? legendEntries(buckets, formatValue) : [];
+  const legend = buckets ? heatmapLegend(buckets, formatValue) : null;
   const stepOf = (v: number | null) =>
     v === null || !buckets ? null : buckets.steps[bucketOf(v, buckets)];
   const textOf = (v: number | null) => (v === null ? t('heatmap.noData') : formatValue(v));
@@ -210,12 +219,25 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
       className={clsx(styles.root, className)}
     >
       <ul className={styles.legend} data-heatmap-legend="">
-        {legend.map((entry) => (
-          <li key={entry.step} className={styles.legendItem} data-heatmap-legend-item="">
-            <span className={styles.swatch} style={swatch(entry.step)} aria-hidden="true" />
-            {entry.text}
+        {legend?.kind === 'ranges' &&
+          legend.items.map((entry) => (
+            <li key={entry.step} className={styles.legendItem} data-heatmap-legend-item="">
+              <span className={styles.swatch} style={swatch(entry.step)} aria-hidden="true" />
+              {entry.text}
+            </li>
+          ))}
+        {/* Stepped bar: each boundary value printed once, between the swatches it separates. */}
+        {legend?.kind === 'scale' && (
+          <li className={styles.legendItem} data-heatmap-scale="">
+            <span data-heatmap-boundary="">{legend.boundaries[0]}</span>
+            {legend.steps.map((step, i) => (
+              <Fragment key={step}>
+                <span className={styles.swatch} style={swatch(step)} aria-hidden="true" />
+                <span data-heatmap-boundary="">{legend.boundaries[i + 1]}</span>
+              </Fragment>
+            ))}
           </li>
-        ))}
+        )}
         {hasNull && (
           <li className={styles.legendItem} data-heatmap-legend-item="">
             <span
