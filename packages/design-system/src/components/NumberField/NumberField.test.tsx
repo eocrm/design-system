@@ -443,130 +443,36 @@ describe('NumberField locale separators and paste', () => {
   });
 
   it.each([
-    ['de', '1.5', 1.5],
-    ['es', '12.5', 12.5],
-    ['it', '12.5', 12.5],
-    ['de', '1,5', 1.5],
-    // A typed '.' then exactly 3 digits then another separator was a thousands dot.
-    ['de', '1.234,5', 1234.5],
-    // ...and the '.' that proved it is the decimal again until it is proven a group too.
-    ['de', '1.234.567.', 1234567],
-    ['es', '1.234,5', 1234.5],
-  ])('%s: typing %s fires %s', async (locale, text, expected) => {
+    // Where '.' groups, a typed '.' is ambiguous (decimal or thousands?), so it is ignored.
+    ['de', '1.5', '15', 15],
+    ['es', '12.5', '125', 125],
+    ['de', '1,5', '1,5', 1.5],
+    // Where '.' does not group (ru), a typed '.' is the decimal.
+    ['ru', '12.5', '12,5', 12.5],
+    ['en', '12.5', '12.5', 12.5],
+  ])('%s: typing %s shows %s and fires %s', async (locale, text, shown, expected) => {
     const spy = vi.fn();
     inLocale(locale, <Harness spy={spy} step={0.1} />);
-    const user = userEvent.setup();
-    await user.type(input(), text);
-    expect(spy).toHaveBeenLastCalledWith(expected);
-    await user.tab();
-    expect(input()).toHaveAttribute('aria-valuenow', String(expected));
-  });
-
-  it('de: typed thousands dots keep the caret after each rewrite', async () => {
-    inLocale('de', <Harness />);
-    const user = userEvent.setup();
-    await user.type(input(), '1.234.');
-    expect(input()).toHaveValue('1.234,');
-    expect((input() as HTMLInputElement).selectionStart).toBe(6);
-  });
-
-  it('de: typing . over the whole "1,5" leaves the decimal, never x10', async () => {
-    const spy = vi.fn();
-    inLocale('de', <Harness spy={spy} />);
-    const user = userEvent.setup();
-    await user.type(input(), '1,5');
-    spy.mockClear();
-    await user.tripleClick(input());
-    await user.keyboard('.');
-    expect(input()).toHaveValue(',');
-    expect(spy).not.toHaveBeenCalled();
-  });
-
-  it('de: typing . over a selected "," replaces it with the decimal', async () => {
-    const spy = vi.fn();
-    inLocale('de', <Harness spy={spy} />);
-    const user = userEvent.setup();
-    await user.type(input(), '1,5');
-    const el = input() as HTMLInputElement;
-    el.setSelectionRange(1, 2);
-    await user.keyboard('.');
-    expect(el).toHaveValue('1,5');
-    expect(el.selectionStart).toBe(2);
-  });
-
-  const beforeInput = (el: Element, init: InputEventInit) => {
-    const e = new InputEvent('beforeinput', {
-      bubbles: true,
-      cancelable: true,
-      inputType: 'insertText',
-      ...init,
-    });
-    act(() => {
-      el.dispatchEvent(e);
-    });
-    return e;
-  };
-
-  it('de: a mobile beforeinput "." (no keydown key) types the decimal', async () => {
-    const spy = vi.fn();
-    inLocale('de', <Harness spy={spy} />);
-    const user = userEvent.setup();
-    await user.type(input(), '1');
-    const e = beforeInput(input(), { data: '.' });
-    expect(e.defaultPrevented).toBe(true);
-    expect(input()).toHaveValue('1,');
-    await user.keyboard('5');
-    expect(spy).toHaveBeenLastCalledWith(1.5);
-  });
-
-  it('de: a "." during IME composition is left alone', async () => {
-    inLocale('de', <Harness />);
-    const user = userEvent.setup();
-    await user.type(input(), '1');
-    expect(beforeInput(input(), { data: '.', isComposing: true }).defaultPrevented).toBe(false);
-    fireEvent.compositionStart(input());
-    expect(beforeInput(input(), { data: '.' }).defaultPrevented).toBe(false);
-    fireEvent.compositionEnd(input());
-    expect(beforeInput(input(), { data: '.' }).defaultPrevented).toBe(true);
-  });
-
-  it.each([
-    // The stray 2nd decimal leaves the draft invalid; the value stays 1.24 (never 1245).
-    ['1.23{Backspace}4,5', '1,24,5', 1.24],
-    ['1.2345', '1,2345', 1.2345],
-    // A '.' after a reinterpreted group is the decimal again (never 1.234.5 = 12345).
-    ['1.234.5', '1.234,5', 1234.5],
-    ['1.234.567,8', '1.234.567,8', 1234567.8],
-    ['12.345.678,9', '12.345.678,9', 12345678.9],
-  ])('de: typing %s shows %s (%s)', async (text, shown, expected) => {
-    const spy = vi.fn();
-    inLocale('de', <Harness spy={spy} step={0.01} />);
     await userEvent.setup().type(input(), text);
     expect(input()).toHaveValue(shown);
     expect(spy).toHaveBeenLastCalledWith(expected);
   });
 
-  it('de: after a reinterpreted group, a 4th group digit is rejected', async () => {
+  it('de: keydown "." is blocked', () => {
     inLocale('de', <Harness />);
-    const user = userEvent.setup();
-    await user.type(input(), '1.234,');
-    await user.keyboard('{Backspace}5');
-    expect(input()).toHaveValue('1.234');
+    expect(fireEvent.keyDown(input(), { key: '.' })).toBe(false);
   });
 
-  it('de: a non-cancelable beforeinput "." is left to the browser', async () => {
-    inLocale('de', <Harness />);
-    await userEvent.setup().type(input(), '1');
-    const e = beforeInput(input(), { data: '.', cancelable: false });
-    expect(e.defaultPrevented).toBe(false);
-    expect(input()).toHaveValue('1');
-  });
-
-  it('de: a typed . after a decimal is ignored (no x10)', async () => {
+  it('de: an input event that only inserts "." (mobile, no cancelable beforeinput) is undone', async () => {
     const spy = vi.fn();
     inLocale('de', <Harness spy={spy} />);
-    await userEvent.setup().type(input(), '1,5.');
-    expect(spy.mock.calls).toEqual([[1], [1.5]]);
+    await userEvent.setup().type(input(), '12');
+    spy.mockClear();
+    const el = input() as HTMLInputElement;
+    fireEvent.change(el, { target: { value: '1.2', selectionStart: 2, selectionEnd: 2 } });
+    expect(el).toHaveValue('12');
+    expect(el.selectionStart).toBe(1);
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it('de: paste keeps strict parsing', async () => {

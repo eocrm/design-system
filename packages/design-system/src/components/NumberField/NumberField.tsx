@@ -1,7 +1,6 @@
 import {
   forwardRef,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -22,7 +21,6 @@ import {
   localeSeparators,
   parseLocalAmount,
 } from '../_internal/currency';
-import { useSeparatorTyping } from '../_internal/separatorTyping';
 import { mergeRefs } from '../_internal/refs';
 import styles from './NumberField.module.scss';
 
@@ -73,7 +71,7 @@ const decimalsOf = (n: number) =>
  * character the locale does not use for numbers, a second decimal separator (`12.5.3`) or a `-`
  * anywhere but first (`1-2`). Malformed text stays in the field as typed but never fires, and
  * blur restores the last value. In a locale whose decimal and group are both not `.` (ru), a
- * typed `.` (numpad) is the decimal separator.
+ * `.` is the decimal separator.
  */
 function parse(text: string, locale: string, allowNegative: boolean): number | null | undefined {
   const trimmed = text.trim();
@@ -147,7 +145,6 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
   // True once the user typed since focus; blur commits only then (stepping and plain
   // focus-blur leave the value alone). Enter always commits.
   const typed = useRef(false);
-  const caret = useRef<number | null>(null);
   const textRef = useRef(text);
   textRef.current = text;
   // Latest value for the hold-to-repeat timers (their closures would otherwise be stale).
@@ -157,11 +154,6 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
   // The repeat interval outlives the render that started it; it steps through this ref so a
   // hold uses the latest onChange / min / max / step.
   const stepByRef = useRef<(delta: number) => boolean>(() => false);
-
-  useLayoutEffect(() => {
-    if (caret.current !== null) inputRef.current?.setSelectionRange(caret.current, caret.current);
-    caret.current = null;
-  }, [text]);
 
   // External value changes show up, unless the focused draft already means that value
   // (our own live echo must not reformat what the user is typing).
@@ -229,13 +221,13 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     if (e.detail === 0) stepBy(delta);
   };
 
-  const applyText = (value: string): boolean => {
-    // Numpad '.' types the decimal in comma-decimal locales (unless '.' groups there, as in de).
+  const applyText = (value: string) => {
+    // A '.' types the decimal where '.' does not group (ru, fr); where it groups, handleChange drops it.
     let raw = value;
     if (decimal !== '.' && group !== '.') raw = raw.split('.').join(decimal);
     const apos = /^['\u2019]$/.test(group) ? ["'", '\u2019'] : [];
     const allowed = new Set([group, decimal, ...apos, ...(allowNegative ? ['-'] : [])]);
-    if ([...raw].some((c) => !/[\d\s]/.test(c) && !allowed.has(c))) return false;
+    if ([...raw].some((c) => !/[\d\s]/.test(c) && !allowed.has(c))) return;
     setText(raw);
     typed.current = true;
     const n = parse(raw, locale, allowNegative);
@@ -243,26 +235,30 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
       valueRef.current = n;
       onChange(n);
     }
-    return true;
   };
+
+  // Where '.' groups (de, es, it), a typed '.' could mean decimal or thousands: never guess,
+  // ignore it (type ','). Pasted text still goes through parse.
+  const blockDot = decimal !== '.' && group === '.';
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    applyText(e.target.value);
-  };
-
-  // A typed '.' / decimal (pasted text stays strict): see typeSeparator.
-  useSeparatorTyping(inputRef, decimal, group, (input, next, at) => {
-    if (next === textRef.current) {
+    const input = e.target;
+    const next = input.value;
+    const at = (input.selectionStart ?? next.length) - 1;
+    // keydown can't catch mobile keyboards ('Unidentified' key, non-cancelable beforeinput),
+    // so also undo a change that only inserted one '.'.
+    if (blockDot && next[at] === '.' && next.slice(0, at) + next.slice(at + 1) === text) {
+      input.value = text;
       input.setSelectionRange(at, at);
-      return true;
+      return;
     }
-    caret.current = at;
-    return applyText(next);
-  });
+    applyText(next);
+  };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     onKeyDown?.(e);
     if (e.defaultPrevented || readOnly) return;
+    if (blockDot && e.key === '.') return e.preventDefault();
     const deltas: Record<string, number> = {
       ArrowUp: step,
       ArrowDown: -step,
