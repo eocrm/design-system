@@ -198,20 +198,25 @@ jobs:
       - name: Install Chromium for the focus-ring sweep
         run: npx playwright install --with-deps chromium
 
-      # Ring COLOUR is gated in packages/design-system/src/styles/contrast.test.ts.
-      # This gates its GEOMETRY: since #505 the ring is an outline at a positive
+      # Runs the whole Playwright suite (`playwright test`, both projects in
+      # playwright.config.ts): the `chromium` project and the `touch` project
+      # (Pixel 7, tests/touch-*.spec.ts). The script keeps its historical
+      # `test:focus-geometry` name.
+      #
+      # Focus rings: COLOUR is gated in packages/design-system/src/styles/contrast.test.ts.
+      # This gates their GEOMETRY: since #505 the ring is an outline at a positive
       # offset, so a focusable flush against an overflow ancestor loses whole
       # bands, and jsdom computes no layout so the vitest suite cannot see it.
-      # Needs a real browser; there is no cheaper place to put it.
-      #
       # It covers outset rings against non-scrolling clip axes on statically
-      # rendered demo content. It does NOT open overlays, so menus, listboxes,
-      # dialogs and pickers are unswept, and it is silent on scroll extremes and
+      # rendered demo content. The static sweep does NOT open overlays (the
+      # overlays spec opens a fixed set), and it is silent on scroll extremes and
       # on ancestors that clip with a border. A green run here is not the whole
-      # class — playwright.config.ts states the scope in full. The same step
-      # also runs the touch project (Pixel 7, tests/touch-*.spec.ts), which
-      # gates the 44px coarse-pointer target floor.
-      - name: Focus-ring geometry sweep
+      # class — playwright.config.ts states the scope in full.
+      #
+      # Touch: the 44px coarse-pointer target floor and the DS-35 touch
+      # behaviours. The chromium project also hosts the other real-layout specs
+      # (theme subtrees, scroll containment, …) that jsdom cannot prove.
+      - name: Playwright geometry sweeps (focus ring + touch)
         run: npm run test:focus-geometry
 
       - name: Upload sweep report on failure

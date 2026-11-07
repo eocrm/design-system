@@ -1,7 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Focus-ring GEOMETRY only. `packages/design-system/src/styles/contrast.test.ts`
+ * `npm run test:focus-geometry` (the CI step "Playwright geometry sweeps")
+ * runs this whole config: BOTH projects below, `chromium` and `touch`. The
+ * script name is historical; the focus-ring sweep is its first resident, and
+ * the notes below are about that sweep.
+ *
+ * Focus-ring GEOMETRY. `packages/design-system/src/styles/contrast.test.ts`
  * certifies a ring's COLOUR against the page surfaces; nothing certified that
  * the ring is actually on screen. Since #505 the ring is an `outline` at a
  * positive `outline-offset`, so it sits outside the border box and any
