@@ -20,6 +20,7 @@ import {
   formatDraft,
   localeSeparators,
   parseLocalAmount,
+  typedDotIsAmbiguous,
 } from '../_internal/currency';
 import { mergeRefs } from '../_internal/refs';
 import styles from './NumberField.module.scss';
@@ -239,7 +240,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
 
   // Where '.' groups (de, es, it), a typed '.' could mean decimal or thousands: never guess,
   // ignore it (type ','). Pasted text still goes through parse.
-  const blockDot = decimal !== '.' && group === '.';
+  const blockDot = typedDotIsAmbiguous({ group, decimal });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const input = e.target;
