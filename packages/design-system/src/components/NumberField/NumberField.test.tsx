@@ -302,6 +302,22 @@ describe('NumberField', () => {
     warn.mockRestore();
   });
 
+  it('an external value that replaces a typed draft is not committed on blur', async () => {
+    const spy = vi.fn();
+    const user = userEvent.setup();
+    const { rerender } = render(<NumberField aria-label="Qty" value={1} onChange={spy} step={2} />);
+    await user.tripleClick(input());
+    await user.keyboard('3');
+    spy.mockClear();
+    // The parent overrides the draft with an off-grid value while focused.
+    rerender(<NumberField aria-label="Qty" value={7} onChange={spy} step={2} />);
+    expect(input()).toHaveValue('7');
+    await user.tab();
+    // Without clearing the typed flag, blur would snap 7 to 8 and emit it.
+    expect(spy).not.toHaveBeenCalled();
+    expect(input()).toHaveValue('7');
+  });
+
   it('shows an external value change when not focused', () => {
     const { rerender } = render(<NumberField aria-label="Qty" value={1} onChange={() => {}} />);
     rerender(<NumberField aria-label="Qty" value={42} onChange={() => {}} />);

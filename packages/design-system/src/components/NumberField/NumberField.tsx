@@ -123,6 +123,8 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
   useEffect(() => {
     const focused = document.activeElement === inputRef.current;
     if (focused && parse(textRef.current, locale, allowNegative) === value) return;
+    // The draft is gone, so a later blur must not commit (snap) the external value.
+    typed.current = false;
     setText(format(value, locale, precision));
   }, [value, locale, precision, allowNegative]);
 

@@ -82,9 +82,12 @@
     border-inline-start: var(--border-width) solid var(--number-field-button-divider);
   }
 
-  &:hover:not(:disabled) {
-    background: var(--number-field-button-bg-hover);
-    color: var(--number-field-button-fg-hover);
+  // Hover-capable pointers only: a tap would otherwise leave the tint stuck.
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--number-field-button-bg-hover);
+      color: var(--number-field-button-fg-hover);
+    }
   }
 
   &:disabled {
