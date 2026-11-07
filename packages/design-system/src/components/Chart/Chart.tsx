@@ -70,8 +70,8 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   /** X-axis buckets, already formatted by the app ("12 Jan", "W3", "Mar"). `series[].values[i]` belongs to `categories[i]`. */
   categories: string[];
   /**
-   * Series to plot, in a stable order: colour follows position (non-comparison series 1–8 get palette slots 1–8),
-   * so keep the order fixed when filtering. At most 8 primary series — fold the rest into an "Other" series in the app
+   * Series to plot, in a stable order. Colour: `color` pins a palette slot (1–8); series without it fill the
+   * remaining free slots in order, so keep the order fixed when filtering or pin `color`. Comparison series inherit their parent's colour. At most 8 primary series — fold the rest into an "Other" series in the app
    * (series 9+ still render, dashed/outlined, with a dev warning). `values` shorter than `categories` are padded
    * with gaps; `null` is a gap (lines break, bars are absent). `comparisonOf` marks a de-emphasised comparison
    * (e.g. previous period): a series key (line / bar) or `'total'` (stacked-bar / area).
