@@ -500,6 +500,7 @@ export type {
   LiquidVariable,
   LiquidPreviewStatus,
   LiquidPreviewPlacement,
+  LiquidTag,
 } from './components/LiquidEditor';
 
 export { RichTextEditor } from './components/RichTextEditor';

@@ -30,6 +30,9 @@ export interface LiquidVariable {
   collection?: boolean;
 }
 
+/** A Liquid control-flow/assignment tag the "Insert tag" menu can offer. Loop tags are intentionally excluded. */
+export type LiquidTag = 'if' | 'unless' | 'case' | 'assign' | 'capture' | 'comment';
+
 /** Drives the preview pane chrome. */
 export type LiquidPreviewStatus = 'idle' | 'loading' | 'error';
 

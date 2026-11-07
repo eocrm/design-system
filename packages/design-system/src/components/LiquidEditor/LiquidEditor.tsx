@@ -14,6 +14,7 @@ import { useTranslation } from '../../i18n';
 import { tokenize, unknownVariables } from './liquidTokenizer';
 import { getCaretCoordinates } from './caretCoordinates';
 import { DEFAULT_LIQUID_FILTERS } from './liquidFilters';
+import { applySnippet } from './liquidTags';
 import { HighlightLayer } from './HighlightLayer';
 import { AutocompleteMenu } from './AutocompleteMenu';
 import { InsertVariableMenu } from './InsertVariableMenu';
@@ -211,14 +212,13 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
         const ta = textareaRef.current;
         // Collections iterate — insert a for-loop with the caret right after
         // `{{ item }}` (the spot the user edits next: `item.name`, separators).
-        const head = variable.collection
-          ? `{% for item in ${variable.code} %}{{ item }}`
+        const template = variable.collection
+          ? `{% for item in ${variable.code} %}{{ item }}$0{% endfor %}`
           : `{{ ${variable.code} }}`;
-        const snippet = variable.collection ? `${head}{% endfor %}` : head;
         const start = ta?.selectionStart ?? value.length;
         const end = ta?.selectionEnd ?? value.length;
-        const next = value.slice(0, start) + snippet + value.slice(end);
-        commit(next, start + head.length);
+        const { value: next, caret } = applySnippet(value, start, end, template);
+        commit(next, caret);
         ta?.focus();
       },
       [value, commit],
