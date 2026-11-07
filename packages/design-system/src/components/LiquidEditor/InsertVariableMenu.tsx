@@ -95,7 +95,11 @@ interface VariableItemProps {
 /** One selectable variable row: label, optional muted description, tags. */
 function VariableItem({ variable: v, tags, onInsert }: VariableItemProps) {
   return (
-    <DropdownMenu.Item onSelect={() => onInsert(v)} shortcut={tags || undefined}>
+    <DropdownMenu.Item
+      onSelect={() => onInsert(v)}
+      shortcut={tags || undefined}
+      textValue={v.label || v.code}
+    >
       <span className={styles.menuItemMain}>
         {/* `||`, not `??`: `code` is here so a menu item always has SOMETHING
             readable, and this span is the item's only name source — `label: ''`

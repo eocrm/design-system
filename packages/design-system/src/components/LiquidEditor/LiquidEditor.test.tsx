@@ -149,6 +149,15 @@ describe('LiquidEditor', () => {
     expect(screen.getByText('Could not render preview')).toBeInTheDocument();
   });
 
+  it('insert-variable menu supports typeahead on the rich item labels', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    await screen.findByRole('menuitem', { name: /First name/ });
+    await user.keyboard('l');
+    expect(screen.getByRole('menuitem', { name: /Last name/ })).toHaveFocus();
+  });
+
   it('exposes the variable-insert menu and inserts at the end', async () => {
     const user = userEvent.setup();
     renderEditor(<Harness />);

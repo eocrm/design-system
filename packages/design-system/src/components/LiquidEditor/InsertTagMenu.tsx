@@ -29,7 +29,7 @@ export function InsertTagMenu({ snippets, disabled, onInsert }: InsertTagMenuPro
       </DropdownMenu.Trigger>
       <DropdownMenu.Content>
         {snippets.map((s) => (
-          <DropdownMenu.Item key={s.id} onSelect={() => onInsert(s)}>
+          <DropdownMenu.Item key={s.id} onSelect={() => onInsert(s)} textValue={s.label}>
             <span className={styles.menuItemMain}>
               <span>{s.label}</span>{' '}
               <span className={styles.menuItemDesc}>
