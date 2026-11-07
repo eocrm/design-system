@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import {
   Button,
+  ButtonGroup,
   Chart,
   Cluster,
   DashboardWidget,
@@ -81,6 +82,7 @@ const dailySeries: ChartSeries[] = [
 export function ChartDemo() {
   const [type, setType] = useState<ChartType>('line');
   const [loading, setLoading] = useState(false);
+  const [curve, setCurve] = useState<'smooth' | 'linear'>('smooth');
 
   return (
     <DemoLayout
@@ -95,6 +97,7 @@ export function ChartDemo() {
         code={`<DashboardWidget variant="chart" title="Deals won" loading={loading}>
   <Chart
     type="line"
+    curve="smooth" // or "linear"
     label="Deals won per week"
     categories={weeks}
     series={[
@@ -118,6 +121,15 @@ export function ChartDemo() {
                 {tp}
               </Button>
             ))}
+            <ButtonGroup
+              size="sm"
+              aria-label="Curve"
+              value={curve}
+              onValueChange={(v) => setCurve(v as 'smooth' | 'linear')}
+            >
+              <ButtonGroup.Item value="smooth">Smooth</ButtonGroup.Item>
+              <ButtonGroup.Item value="linear">Linear</ButtonGroup.Item>
+            </ButtonGroup>
             <Switch checked={loading} onChange={setLoading}>
               Loading
             </Switch>
@@ -125,6 +137,7 @@ export function ChartDemo() {
           <Cell title="Deals won" loading={loading}>
             <Chart
               type={type}
+              curve={curve}
               label="Deals won per week"
               categories={weeks}
               series={dealsSeries}

@@ -217,6 +217,24 @@ describe('Chart', () => {
   });
 });
 
+describe('curve', () => {
+  it('linear draws one straight segment per category pair', () => {
+    stubLayout();
+    const { container } = render(
+      <Chart {...base} series={[{ key: 'won', label: 'Won', values: [3, 5, 8] }]} curve="linear" />,
+    );
+    const d = container.querySelector('path[class*="line"]')!.getAttribute('d')!;
+    const pts = d
+      .slice(1)
+      .split('L')
+      .map((p) => p.split(',').map(Number));
+    const slopes = new Set(
+      pts.slice(1).map((p, i) => ((p[1] - pts[i][1]) / (p[0] - pts[i][0])).toFixed(1)),
+    );
+    expect(slopes.size).toBeLessThanOrEqual(2);
+  });
+});
+
 describe('legend', () => {
   const three: ChartProps = {
     ...base,

@@ -2,6 +2,8 @@ import {
   barPath,
   categoryIndexAt,
   computeLayout,
+  estimateTextWidth,
+  LABEL_GAP,
   fitLegend,
   isEmpty,
   layoutMarkers,
@@ -753,5 +755,75 @@ describe('markers', () => {
     );
     expect(narrow[0].label?.anchor).toBe('end');
     expect(narrow[0].label!.x).toBeLessThan(l.categoryX[3]);
+  });
+});
+
+describe('estimateTextWidth (DS-20)', () => {
+  it('measures % wider than the digits it follows', () => {
+    expect(estimateTextWidth('100%')).toBeGreaterThan(estimateTextWidth('40 g'));
+  });
+  it('gives a % y gutter room for the full label', () => {
+    const l = layout({
+      type: 'line',
+      series: resolveSeries('line', [s('a', [0, 50, 100, 80])], 4).series,
+      formatValue: (n) => `${n}%`,
+    });
+    expect(l.plot.x).toBeGreaterThanOrEqual(estimateTextWidth('100%') + LABEL_GAP);
+  });
+});
+
+describe('curve (DS-36)', () => {
+  const run = (type: 'line' | 'area', values: (number | null)[][], curve?: 'linear') =>
+    layout({
+      type,
+      curve,
+      series: resolveSeries(
+        type,
+        values.map((v, i) => s(`k${i}`, v)),
+        values[0].length,
+      ).series,
+    });
+
+  it('smooth output is unchanged without curve', () => {
+    expect(run('line', [[3, 9, 4, 8]]).marks[0].line).toMatchInlineSnapshot(
+      `"M68.25,128.4L71.95,126.02L75.65,123.03L79.35,119.5L83.05,115.49L86.75,111.06L90.45,106.27L94.15,101.17L97.85,95.83L101.55,90.3L105.25,84.64L108.95,78.92L112.65,73.2L116.35,67.52L120.05,61.96L123.75,56.57L127.45,51.41L131.15,46.55L134.85,42.03L138.55,37.92L142.25,34.28L145.95,31.17L149.65,28.65L153.35,26.77L157.05,25.6L160.75,25.2L164.45,25.6L168.15,26.76L171.85,28.62L175.55,31.1L179.25,34.14L182.95,37.68L186.65,41.65L190.35,45.98L194.05,50.61L197.75,55.47L201.45,60.5L205.15,65.62L208.85,70.78L212.55,75.9L216.25,80.93L219.95,85.79L223.65,90.42L227.35,94.75L231.05,98.72L234.75,102.26L238.45,105.3L242.15,107.78L245.85,109.64L249.55,110.8L253.25,111.2L256.95,110.93L260.65,110.15L264.35,108.9L268.05,107.22L271.75,105.15L275.45,102.72L279.15,99.98L282.85,96.97L286.55,93.72L290.25,90.28L293.95,86.69L297.65,82.98L301.35,79.2L305.05,75.38L308.75,71.57L312.45,67.8L316.15,64.12L319.85,60.55L323.55,57.16L327.25,53.96L330.95,51L334.65,48.33L338.35,45.98L342.05,43.99L345.75,42.4"`,
+    );
+  });
+  it('linear lines are straight between category values', () => {
+    const l = run('line', [[2, 10, 4, 8]], 'linear');
+    const pts = l.marks[0]
+      .line!.slice(1)
+      .split('L')
+      .map((p) => p.split(',').map(Number));
+    const cx = l.categoryX;
+    for (const [x, y] of pts) {
+      const i = Math.min(
+        2,
+        Math.max(
+          0,
+          cx.findLastIndex((c) => c <= x + 1e-9),
+        ),
+      );
+      const [, ya] = pts.find(([px]) => Math.abs(px - cx[i]) < 0.01)!;
+      const [, yb] = pts.find(([px]) => Math.abs(px - cx[i + 1]) < 0.01)!;
+      const t = (x - cx[i]) / (cx[i + 1] - cx[i]);
+      expect(y).toBeCloseTo(ya + (yb - ya) * t, 1);
+    }
+  });
+  it('linear stacked tops equal cumulative straight lines', () => {
+    const tops = smoothStack(
+      [
+        [1, 3],
+        [2, 4],
+      ],
+      4,
+      'linear',
+    );
+    expect(tops[1][0]).toEqual([3, 3.25, 3.5, 3.75, 4].map((_, s) => 3 + (7 - 3) * (s / 4)));
+  });
+  it('null gaps still split runs under linear', () => {
+    const d = run('line', [[1, null, 5, 7]], 'linear').marks[0].line!;
+    expect(d.match(/M/g)).toHaveLength(1);
+    expect(run('line', [[1, 2, null, 5, 7]], 'linear').marks[0].line!.match(/M/g)).toHaveLength(2);
   });
 });

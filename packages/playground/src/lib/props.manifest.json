@@ -745,7 +745,7 @@
           "type": "\"area\" | \"line\" | \"bar\" | \"stacked-bar\"",
           "required": true,
           "default": "",
-          "description": "Chart form. Required.\n- `'line'` — one smoothed line per series; trends over time. Comparison series dashed.\n- `'bar'` — grouped bars per category; compare a few series per bucket. Comparison bars outlined + light fill.\n- `'stacked-bar'` — bars stacked per category; parts of a total. Comparison only as `comparisonOf: 'total'` (dashed total line).\n- `'area'` — smoothed stacked areas; parts of a total over time. Same comparison rule as `stacked-bar`."
+          "description": "Chart form. Required.\n- `'line'` — one line per series (smoothed unless `curve=\"linear\"`); trends over time. Comparison series dashed.\n- `'bar'` — grouped bars per category; compare a few series per bucket. Comparison bars outlined + light fill.\n- `'stacked-bar'` — bars stacked per category; parts of a total. Comparison only as `comparisonOf: 'total'` (dashed total line).\n- `'area'` — stacked areas (smoothed unless `curve=\"linear\"`); parts of a total over time. Same comparison rule as `stacked-bar`."
         },
         {
           "name": "label",
@@ -774,6 +774,13 @@
           "required": true,
           "default": "",
           "description": "Formats a number for axis ticks, tooltip and data table (the app owns i18n and currency). Required."
+        },
+        {
+          "name": "curve",
+          "type": "\"smooth\" | \"linear\"",
+          "required": false,
+          "default": "'smooth'",
+          "description": "Line/area interpolation. `'smooth'` (default) is a monotone curve; `'linear'` draws straight segments between points."
         },
         {
           "name": "emptyMessage",
