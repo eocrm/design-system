@@ -4,7 +4,7 @@ import styles from './DropdownMenu.module.scss';
 
 /** Props for `<DropdownMenu.Header>`. Extends all standard `div` HTML attributes. */
 export interface DropdownMenuHeaderProps extends HTMLAttributes<HTMLDivElement> {
-  /** Identity content, e.g. an Avatar with a name and a muted subline. */
+  /** Identity content, e.g. an `aria-hidden` Avatar beside a name and a muted subline. */
   children: ReactNode;
 }
 

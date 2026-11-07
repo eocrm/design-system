@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef, useState, type ReactNode } from 'react';
+import axe from 'axe-core';
 import { DropdownMenu } from './DropdownMenu';
+import { Avatar } from '../Avatar';
 import { ConfirmationPopover } from '../ConfirmationPopover';
 import { addTourLayer, markTourTarget } from '../_internal/overlay/tourHold.testutil';
 
@@ -1195,12 +1197,84 @@ describe('DropdownMenu — Header', () => {
 
   it('renders children with role="none" and forwards ref', async () => {
     const user = userEvent.setup();
-    renderHeaderMenu();
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Header ref={ref} data-testid="hdr">
+            <span>Zed Account</span>
+            <span>zed@example.com</span>
+          </DropdownMenu.Header>
+          <DropdownMenu.Item onSelect={() => {}}>Profile</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
     await user.click(screen.getByRole('button', { name: 'Open' }));
     const hdr = screen.getByTestId('hdr');
+    expect(ref.current).toBe(hdr);
     expect(hdr).toHaveAttribute('role', 'none');
     expect(screen.getByText('zed@example.com')).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /Zed Account/ })).toBeNull();
+  });
+
+  // An identity header usually carries an Avatar; inside role="menu" only
+  // menu-owned roles are allowed, and Header's role="none" is transparent, so an
+  // exposed img fails axe's aria-required-children. The name text beside it
+  // carries the identity, so the documented markup hides the Avatar.
+  it('axe flags an exposed Avatar in a Header (why the docs say aria-hidden)', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Header>
+            <Avatar name="Zed Morgan" />
+          </DropdownMenu.Header>
+          <DropdownMenu.Item onSelect={() => {}}>Profile</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const results = await axe.run(screen.getByRole('menu'), {
+      runOnly: ['aria-required-children'],
+    });
+    expect(results.violations.map((v) => v.id)).toEqual(['aria-required-children']);
+  });
+
+  it('a Header with an aria-hidden Avatar passes axe inside role="menu"', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Header>
+            <Avatar
+              aria-hidden
+              name="Zed Morgan"
+              src="data:image/gif;base64,R0lGODlhAQABAAAAACw="
+            />
+            <Avatar aria-hidden name="Zed Morgan" />
+            <span>Zed Morgan</span>
+          </DropdownMenu.Header>
+          <DropdownMenu.Item onSelect={() => {}}>Profile</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const results = await axe.run(screen.getByRole('menu'), {
+      // jsdom has no layout or canvas, so contrast is unmeasurable here.
+      rules: { 'color-contrast': { enabled: false } },
+    });
+    expect(
+      results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.failureSummary)}`),
+    ).toEqual([]);
   });
 
   it('is normal case (no uppercase transform)', () => {

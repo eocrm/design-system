@@ -441,9 +441,9 @@ export function AccountMenuExample() {
       <DropdownMenu.Content align="start">
         <DropdownMenu.Header>
           <Cluster gap="sm" align="center" wrap={false}>
-            <Avatar name="Zed Morgan" />
+            <Avatar aria-hidden name="Zed Morgan" />
             <Stack gap="xs">
-              <span>Zed Morgan</span>
+              <Text weight="medium">Zed Morgan</Text>
               <Text tone="muted">zed@example.com</Text>
             </Stack>
           </Cluster>
@@ -464,9 +464,9 @@ export function AccountMenuExample() {
           <DropdownMenu.Content align="start">
             <DropdownMenu.Header>
               <Cluster gap="sm" align="center" wrap={false}>
-                <Avatar name="Zed Morgan" />
+                <Avatar aria-hidden name="Zed Morgan" />
                 <Stack gap="xs">
-                  <span>Zed Morgan</span>
+                  <Text weight="medium">Zed Morgan</Text>
                   <Text tone="muted">zed@example.com</Text>
                 </Stack>
               </Cluster>
