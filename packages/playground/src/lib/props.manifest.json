@@ -4634,7 +4634,7 @@
           "type": "(value: number | null) => void",
           "required": true,
           "default": "",
-          "description": "Fires live on every keystroke that parses to a number (unclamped), with `null` when the field\nis cleared, and on every step. Blur / Enter fires once more with the clamped, step-snapped value."
+          "description": "Fires live on every keystroke that parses to a number (unclamped), with `null` when the field\nis cleared, and on every step. Blur after typing, or Enter, fires once more with the clamped, step-snapped value."
         },
         {
           "name": "min",
@@ -4655,7 +4655,7 @@
           "type": "number",
           "required": false,
           "default": "",
-          "description": "Default 1. Also sets display precision (decimals of `step`)."
+          "description": "Default 1. Also sets display precision (decimals of `step`). A `step` ≤ 0 falls back to 1 (dev warning)."
         },
         {
           "name": "size",

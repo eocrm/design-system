@@ -1,4 +1,4 @@
-# `NumberField` — Numeric stepper field
+# `<NumberField>` — Numeric stepper field
 
 **TL;DR:** a split stepper `[ − | value | + ]` for a controlled `number | null`. Typing fires `onChange` live; blur or Enter clamps to `min` / `max` and snaps to `step`. Arrow / Page / Home / End keys and the − / + buttons step it, and holding a button repeats. The value is formatted and parsed in the active locale (`useLocale()`).
 
@@ -20,10 +20,10 @@ const [qty, setQty] = useState<number | null>(1);
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `value` | `number \| null` | yes | Controlled value. `null` = empty field. |
-| `onChange` | `(value: number \| null) => void` | yes | Fires live on every keystroke that parses to a number (unclamped), with `null` when the field is cleared, and on every step. Blur / Enter fires once more with the clamped, step-snapped value. |
+| `onChange` | `(value: number \| null) => void` | yes | Fires live on every keystroke that parses to a number (unclamped), with `null` when the field is cleared, and on every step. Blur after typing, or Enter, fires once more with the clamped, step-snapped value. |
 | `min` | `number` | no | Lower bound. Blur / Enter clamps to it; − disables at it; Home jumps to it. Omit for unbounded. |
 | `max` | `number` | no | Upper bound. Blur / Enter clamps to it; + disables at it; End jumps to it. Omit for unbounded. |
-| `step` | `number` | no | Default 1. Also sets display precision (decimals of `step`). |
+| `step` | `number` | no | Default 1. Also sets display precision (decimals of `step`). A `step` ≤ 0 falls back to 1 (dev warning). |
 | `size` | `'sm' \| 'md' \| 'lg'` | no | Field height + type scale: `"sm"` dense rows, `"md"` (default) forms, `"lg"` prominent entry. |
 | `invalid` | `boolean` | no | Error chrome + `aria-invalid="true"`. Injected by `<Field error>`. |
 | …native | | | plus native `<input>` attributes |
@@ -33,13 +33,15 @@ const [qty, setQty] = useState<number | null>(1);
 ## Behaviour
 
 - **Typing.** `onChange` fires on every keystroke whose text parses to a number, with the raw (unclamped) value; clearing the field fires `null`. Partial text (`-`, `1.`) stays in the field without firing, and `value` stays the last valid number. Letters are rejected, and so is `-` when `min ≥ 0`. In comma-decimal locales the numpad `.` types the decimal.
-- **Commit.** Blur or Enter clamps to `min` / `max`, snaps to the `step` grid (anchored at `min`, else 0) and reformats; e.g. `step={0.25}` turns `1.3` into `1.25`. A partial draft reverts to the last value. Enter does not `preventDefault`, so it still submits a surrounding form.
+- **Commit.** Blur after typing, or Enter, clamps to `min` / `max`, snaps to the `step` grid (anchored at `min`, else 0) and reformats; e.g. `step={0.25}` turns `1.3` into `1.25`. A partial draft reverts to the last value. Focusing and leaving without typing (or after only stepping) commits nothing, so an external off-grid value is left alone. Enter does not `preventDefault`, so it still submits a surrounding form.
 - **Stepping.** ArrowUp / ArrowDown move by `step`, PageUp / PageDown by `10 × step`, Home / End jump to `min` / `max` (only when set). Stepping adds to the current value without snapping to the grid, and clamps. An empty field steps from 0.
 - **Buttons.** Press steps once; holding repeats after 400 ms, then every 60 ms, until release, pointer leave, or the limit. Each button disables at its limit, and both disable when the field is `disabled` or `readOnly`. They are `tabIndex={-1}` (the arrow keys duplicate them) and named by `numberField.decrease` / `numberField.increase`.
+- **Invalid `step`.** A `step` ≤ 0 (or `NaN`) falls back to 1 with a dev-only `console.warn`.
 - **Precision.** The number of decimals in `step` is the display precision: `step={0.1}` shows `1,234.5`, `step={1}` shows `1,235`.
 - **Locale.** Group and decimal characters come from the active locale (`<LocaleProvider>`, else the browser), so `ru` shows `1 234,5` and accepts `2,5`.
 - **External `value` changes** update the text, unless the input is focused and its draft already means that value.
-- **Accessibility.** The `<input>` has `role="spinbutton"` with `aria-valuenow`, `aria-valuemin` and `aria-valuemax`. `inputMode` is `numeric` when `step` is an integer and `min ≥ 0`, else `decimal`. Works inside `<Field>`, which labels it and injects `invalid`.
+- **A parent that rejects a change** (does not apply the `onChange` value) leaves the typed text in the field until the next `value` change or blur; blur then re-commits the typed text, firing `onChange` again.
+- **Accessibility.** The `<input>` has `role="spinbutton"` with `aria-valuenow`, `aria-valuemin`, `aria-valuemax` and `aria-valuetext` (the locale-formatted value; omitted when empty, and the last value while the draft is partial). `inputMode` is `text` whenever negatives are allowed (`min` unset or < 0), because the iOS decimal keypad has no minus key; otherwise `numeric` for an integer `step` and `decimal` for a fractional one. Works inside `<Field>`, which labels it and injects `invalid`.
 - **Ref and rest props** go to the `<input>`; `className` goes to the wrapper.
 
 **Touch devices:** on `pointer: coarse` the field and each button are 44px (`--size-touch`) at every size, and the text is 16px so iOS does not zoom on focus (`--number-field-height-*`, `--number-field-button-size-*`, `--number-field-font-size-*`).

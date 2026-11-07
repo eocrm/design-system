@@ -218,13 +218,88 @@ describe('NumberField', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('picks inputMode from step and min', () => {
+  it('picks inputMode from step and min (text whenever negatives are allowed)', () => {
+    const cases: [Partial<NumberFieldProps>, string][] = [
+      [{}, 'text'],
+      [{ min: -5 }, 'text'],
+      [{ min: 0, step: 1 }, 'numeric'],
+      [{ min: 0, step: 0.5 }, 'decimal'],
+    ];
+    for (const [props, mode] of cases) {
+      const { unmount } = render(
+        <NumberField aria-label="Qty" value={1} onChange={() => {}} {...props} />,
+      );
+      expect(input()).toHaveAttribute('inputmode', mode);
+      unmount();
+    }
+  });
+
+  it('calls a consumer callback ref once, not on every rerender', () => {
+    const ref = vi.fn();
     const { rerender } = render(
-      <NumberField aria-label="Qty" value={1} onChange={() => {}} min={0} />,
+      <NumberField ref={ref} aria-label="Qty" value={1} onChange={() => {}} />,
     );
-    expect(input()).toHaveAttribute('inputmode', 'numeric');
-    rerender(<NumberField aria-label="Qty" value={1} onChange={() => {}} min={0} step={0.5} />);
-    expect(input()).toHaveAttribute('inputmode', 'decimal');
+    rerender(<NumberField ref={ref} aria-label="Qty" value={2} onChange={() => {}} />);
+    rerender(<NumberField ref={ref} aria-label="Qty" value={3} onChange={() => {}} />);
+    expect(ref).toHaveBeenCalledTimes(1);
+    expect(ref).toHaveBeenCalledWith(input());
+  });
+
+  it('exposes the formatted value as aria-valuetext, omitted when empty', () => {
+    const { group, decimal } = localeSeparators('ru');
+    const { rerender } = render(
+      <LocaleProvider locale="ru">
+        <NumberField aria-label="Qty" value={1234.5} onChange={() => {}} step={0.1} />
+      </LocaleProvider>,
+    );
+    expect(input()).toHaveAttribute('aria-valuetext', `1${group}234${decimal}5`);
+    rerender(
+      <LocaleProvider locale="ru">
+        <NumberField aria-label="Qty" value={null} onChange={() => {}} step={0.1} />
+      </LocaleProvider>,
+    );
+    expect(input()).not.toHaveAttribute('aria-valuetext');
+  });
+
+  it('keeps the last committed valuetext while the draft is partial', async () => {
+    const spy = vi.fn();
+    const user = userEvent.setup();
+    render(<Harness spy={spy} initial={5} />);
+    await user.type(input(), '-', { initialSelectionStart: 0, initialSelectionEnd: 1 });
+    expect(input()).toHaveValue('-');
+    expect(spy).not.toHaveBeenCalled();
+    expect(input()).toHaveAttribute('aria-valuetext', '5');
+  });
+
+  it('does not commit on a focus-blur without typing', async () => {
+    const spy = vi.fn();
+    const user = userEvent.setup();
+    render(<NumberField aria-label="Qty" value={1.3} onChange={spy} step={0.5} />);
+    await user.click(input());
+    await user.tab();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('does not re-snap a stepped value on blur', async () => {
+    const spy = vi.fn();
+    const user = userEvent.setup();
+    render(<Harness spy={spy} initial={5} step={2} />);
+    await user.click(input());
+    await user.keyboard('{ArrowUp}');
+    await user.tab();
+    expect(spy.mock.calls).toEqual([[7]]);
+  });
+
+  it('treats a step <= 0 as 1 and warns in dev', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const spy = vi.fn();
+    const user = userEvent.setup();
+    render(<Harness spy={spy} initial={5} step={0} />);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('step must be > 0'));
+    await user.click(input());
+    await user.keyboard('{ArrowUp}');
+    expect(spy).toHaveBeenLastCalledWith(6);
+    warn.mockRestore();
   });
 
   it('shows an external value change when not focused', () => {

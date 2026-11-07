@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -20,6 +21,7 @@ import {
   localeSeparators,
   parseLocalAmount,
 } from '../_internal/currency';
+import { mergeRefs } from '../_internal/refs';
 import styles from './NumberField.module.scss';
 
 /** NumberField size. Same height and type scale as `<Input>`. */
@@ -33,14 +35,14 @@ export interface NumberFieldProps extends Omit<
   value: number | null;
   /**
    * Fires live on every keystroke that parses to a number (unclamped), with `null` when the field
-   * is cleared, and on every step. Blur / Enter fires once more with the clamped, step-snapped value.
+   * is cleared, and on every step. Blur after typing, or Enter, fires once more with the clamped, step-snapped value.
    */
   onChange: (value: number | null) => void;
   /** Lower bound. Blur / Enter clamps to it; − disables at it; Home jumps to it. Omit for unbounded. */
   min?: number;
   /** Upper bound. Blur / Enter clamps to it; + disables at it; End jumps to it. Omit for unbounded. */
   max?: number;
-  /** Default 1. Also sets display precision (decimals of `step`). */
+  /** Default 1. Also sets display precision (decimals of `step`). A `step` ≤ 0 falls back to 1 (dev warning). */
   step?: number;
   /** Field height + type scale: `"sm"` dense rows, `"md"` (default) forms, `"lg"` prominent entry. */
   size?: NumberFieldSize;
@@ -77,7 +79,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     onChange,
     min,
     max,
-    step = 1,
+    step: stepProp = 1,
     size = 'md',
     invalid,
     disabled,
@@ -85,18 +87,30 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     className,
     onKeyDown,
     onBlur,
+    onFocus,
     ...rest
   },
   ref,
 ) {
   const t = useTranslation();
   const locale = useLocale();
+  const badStep = !(stepProp > 0);
+  const step = badStep ? 1 : stepProp;
+  useEffect(() => {
+    if (badStep && process.env.NODE_ENV !== 'production') {
+      console.warn(`<NumberField>: step must be > 0 (got ${stepProp}); using 1.`);
+    }
+  }, [badStep, stepProp]);
   const precision = decimalsOf(step);
   const allowNegative = min === undefined || min < 0;
   const { group, decimal } = localeSeparators(locale);
 
   const [text, setText] = useState(() => format(value, locale, precision));
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const mergedRef = useMemo(() => mergeRefs(ref, inputRef), [ref]);
+  // True once the user typed since focus; blur commits only then (stepping and plain
+  // focus-blur leave the value alone). Enter always commits.
+  const typed = useRef(false);
   const textRef = useRef(text);
   textRef.current = text;
   // Latest value for the hold-to-repeat timers (their closures would otherwise be stale).
@@ -116,6 +130,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
   const round = (n: number) => Number(n.toFixed(precision));
 
   const emit = (n: number | null) => {
+    typed.current = false;
     setText(format(n, locale, precision));
     if (n !== valueRef.current) {
       valueRef.current = n;
@@ -136,6 +151,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
   const commit = () => {
     if (readOnly || disabled) return;
     const n = parse(text, locale, allowNegative);
+    typed.current = false;
     if (n === undefined) return setText(format(valueRef.current, locale, precision));
     if (n === null) return emit(null);
     const base = min ?? 0;
@@ -172,6 +188,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     const allowed = new Set([group, decimal, ...(allowNegative ? ['-'] : [])]);
     if ([...raw].some((c) => !/[\d\s]/.test(c) && !allowed.has(c))) return;
     setText(raw);
+    typed.current = true;
     const n = parse(raw, locale, allowNegative);
     if (n !== undefined && n !== valueRef.current) {
       valueRef.current = n;
@@ -198,8 +215,13 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     e.preventDefault();
   };
 
+  const handleFocus = (e: FocusEvent<HTMLInputElement>) => {
+    typed.current = false;
+    onFocus?.(e);
+  };
+
   const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
-    commit();
+    if (typed.current) commit();
     onBlur?.(e);
   };
 
@@ -242,24 +264,23 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
       <input
         // {...rest} first so the spinbutton contract (role, value ARIA, handlers) wins.
         {...rest}
-        ref={(node) => {
-          inputRef.current = node;
-          if (typeof ref === 'function') ref(node);
-          else if (ref) ref.current = node;
-        }}
+        ref={mergedRef}
         type="text"
         role="spinbutton"
-        inputMode={Number.isInteger(step) && !allowNegative ? 'numeric' : 'decimal'}
+        // iOS's decimal keypad has no minus key, so a field that accepts negatives gets 'text'.
+        inputMode={allowNegative ? 'text' : Number.isInteger(step) ? 'numeric' : 'decimal'}
         autoComplete={rest.autoComplete ?? 'off'}
         aria-valuenow={value ?? undefined}
         aria-valuemin={min}
         aria-valuemax={max}
+        aria-valuetext={value === null ? undefined : format(value, locale, precision)}
         aria-invalid={invalid || undefined}
         disabled={disabled}
         readOnly={readOnly}
         value={text}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
         onBlur={handleBlur}
         className={styles.input}
       />
