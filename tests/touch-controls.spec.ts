@@ -79,3 +79,16 @@ test('DatePicker trigger is at least 44px tall', async ({ page }) => {
   const wrapper = page.getByRole('textbox', { name: 'Controlled date' }).first().locator('..');
   expect((await wrapper.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 });
+
+test('NumberField md is at least 44px tall with 44px-wide buttons', async ({ page }) => {
+  await page.goto('/components/number-field');
+  const input = page.getByRole('spinbutton', { name: 'Quantity' });
+  await expect(input).toHaveCSS('font-size', '16px');
+  expect((await input.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  const field = input.locator('..');
+  for (const name of ['Decrease', 'Increase']) {
+    const box = (await field.getByRole('button', { name }).boundingBox())!;
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  }
+});

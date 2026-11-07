@@ -45,6 +45,10 @@ export const en: Messages = {
   input: {
     suggestions: 'Suggestions',
   },
+  numberField: {
+    decrease: 'Decrease',
+    increase: 'Increase',
+  },
   passwordInput: {
     show: 'Show password',
     hide: 'Hide password',

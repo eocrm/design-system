@@ -2387,6 +2387,7 @@ describe('a component hover is a visible step from what it replaces', () => {
     'DropdownMenu/--dropdown-menu-item-bg-hover',
     'FilterChip/--filter-chip-dismiss-bg-hover',
     'Lightbox/--lightbox-control-bg-hover',
+    'NumberField/--number-field-button-bg-hover',
     'OptionsPicker/--options-picker-row-bg-hover',
     'PageHeader/--page-header-back-button-bg-hover',
     'Rail/--rail-item-bg-hover',

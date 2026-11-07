@@ -41,6 +41,7 @@ import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
 import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMeterDemo';
 import { PhoneInputDemo } from './pages/components/PhoneInputDemo';
 import { MoneyInputDemo } from './pages/components/MoneyInputDemo';
+import { NumberFieldDemo } from './pages/components/NumberFieldDemo';
 import { CurrencySelectDemo } from './pages/components/CurrencySelectDemo';
 import { PaginationDemo } from './pages/components/PaginationDemo';
 import { ProgressDemo } from './pages/components/ProgressDemo';
@@ -203,6 +204,7 @@ export default function App() {
             />
             <Route path="/components/phone-input" element={<PhoneInputDemo />} />
             <Route path="/components/money-input" element={<MoneyInputDemo />} />
+            <Route path="/components/number-field" element={<NumberFieldDemo />} />
             <Route path="/components/currency-select" element={<CurrencySelectDemo />} />
             <Route path="/components/select" element={<SelectDemo />} />
             <Route path="/components/setting-row" element={<SettingRowDemo />} />

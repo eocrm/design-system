@@ -370,6 +370,9 @@ export type { OtpInputProps, OtpInputSize, OtpInputType } from './components/Otp
 export { PasswordInput } from './components/PasswordInput';
 export type { PasswordInputProps, PasswordInputSize } from './components/PasswordInput';
 
+export { NumberField } from './components/NumberField';
+export type { NumberFieldProps, NumberFieldSize } from './components/NumberField';
+
 export { PasswordStrengthMeter } from './components/PasswordStrengthMeter';
 export type {
   PasswordStrengthMeterProps,

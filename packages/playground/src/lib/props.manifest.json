@@ -4620,6 +4620,59 @@
         }
       ]
     },
+    "NumberField": {
+      "props": [
+        {
+          "name": "value",
+          "type": "number | null",
+          "required": true,
+          "default": "",
+          "description": "Controlled value. `null` = empty field."
+        },
+        {
+          "name": "onChange",
+          "type": "(value: number | null) => void",
+          "required": true,
+          "default": "",
+          "description": "Fires live on every keystroke that parses to a number (unclamped), with `null` when the field\nis cleared, and on every step. Blur / Enter fires once more with the clamped, step-snapped value."
+        },
+        {
+          "name": "min",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Lower bound. Blur / Enter clamps to it; − disables at it; Home jumps to it. Omit for unbounded."
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Upper bound. Blur / Enter clamps to it; + disables at it; End jumps to it. Omit for unbounded."
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Default 1. Also sets display precision (decimals of `step`)."
+        },
+        {
+          "name": "size",
+          "type": "NumberFieldSize",
+          "required": false,
+          "default": "\"md\"",
+          "description": "Field height + type scale: `\"sm\"` dense rows, `\"md\"` (default) forms, `\"lg\"` prominent entry."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Error chrome + `aria-invalid=\"true\"`. Injected by `<Field error>`."
+        }
+      ]
+    },
     "OptionsPicker": {
       "props": [
         {
@@ -7401,6 +7454,7 @@
     "OtpInputSize": "\"sm\" | \"md\" | \"lg\" | \"xl\"",
     "OtpInputType": "\"numeric\" | \"alphanumeric\"",
     "PasswordInputSize": "\"sm\" | \"md\" | \"lg\"",
+    "NumberFieldSize": "\"sm\" | \"md\" | \"lg\"",
     "PasswordStrengthScore": "0 | 1 | 2 | 3 | 4",
     "CurrencyDisplay": "\"symbol\" | \"code\" | \"both\"",
     "MoneyInputSize": "\"sm\" | \"md\" | \"lg\"",
