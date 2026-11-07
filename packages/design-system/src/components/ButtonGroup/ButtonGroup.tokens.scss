@@ -47,6 +47,8 @@
 @media (pointer: coarse) {
   :root,
   :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --button-group-item-height-xs: var(--size-touch);
+    --button-group-item-height-sm: var(--size-touch);
     --button-group-item-height-md: var(--size-touch);
     --button-group-item-height-lg: var(--size-touch);
   }

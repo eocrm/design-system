@@ -450,8 +450,17 @@ describe('ButtonGroup touch tokens (DS-35)', () => {
   });
 });
 
-it('segmented xs and sm items take the touch-hit-area mixin (DS-35)', () => {
-  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.module.scss'), 'utf8');
-  expect(scss).toMatch(/\.sizeXs \{\s*@include touch-hit-area;/);
-  expect(scss).toMatch(/\.sizeSm \{\s*@include touch-hit-area;/);
+it('segmented xs and sm items are real 44px controls on touch, not overlapping hit areas (DS-35)', () => {
+  const module = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.module.scss'), 'utf8');
+  expect(module).not.toMatch(/@include touch-hit-area/);
+  // Joined visual-mode Buttons grow too, so their own hit areas cannot overlap.
+  expect(module).toMatch(/\.group\[data-mode='visual'\] \{\s*@include touch-dense-group;/);
+  const tokens = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.tokens.scss'), 'utf8');
+  for (const size of ['xs', 'sm']) {
+    expect(tokens).toMatch(
+      new RegExp(
+        `@media \\(pointer: coarse\\)[\\s\\S]*--button-group-item-height-${size}:\\s*var\\(--size-touch\\)`,
+      ),
+    );
+  }
 });

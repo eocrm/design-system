@@ -35,6 +35,8 @@
 }
 
 .actions {
+  @include touch-dense-group;
+
   display: flex;
   flex-shrink: 0;
   gap: var(--space-1);

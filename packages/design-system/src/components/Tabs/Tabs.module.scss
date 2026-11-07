@@ -355,6 +355,8 @@
 }
 
 .tabActions {
+  @include touch-dense-group;
+
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;

@@ -160,7 +160,11 @@
 // consumer className that positions the host (absolute/fixed/sticky) wins on
 // phones too; any non-static position still contains the ::before.
 // Caveats: it claims the host's ::before; an overflow: hidden host clips the
-// area; neighbours overlapping the area lose taps to this host.
+// area; neighbours overlapping the area lose taps to this host. Adjacent xs/sm
+// controls' hit areas overlap: the later sibling's ::before paints over the
+// earlier one's face and steals its taps. In toolbars, use md on touch, or space
+// them by at least the overhang ((44px - size) / 2). Library-owned dense groups
+// use `touch-dense-group` below; keep this mixin for isolated hosts only.
 @mixin touch-hit-area {
   @media (pointer: coarse) {
     @at-root :where(#{&}) {
@@ -175,5 +179,17 @@
       inline-size: max(100%, var(--size-touch));
       block-size: max(100%, var(--size-touch));
     }
+  }
+}
+
+// DS-35: a library-owned row or column of adjacent xs/sm Buttons (a toolbar, a
+// calendar header). On coarse pointers it re-points the Button height tokens to
+// --size-touch for the subtree, so each Button becomes a real 44px control; its
+// touch-hit-area ::before is max(100%, --size-touch), so it then collapses onto
+// the control's own face and can no longer cover a neighbour.
+@mixin touch-dense-group {
+  @media (pointer: coarse) {
+    --button-height-xs: var(--size-touch);
+    --button-height-sm: var(--size-touch);
   }
 }

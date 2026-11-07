@@ -7,6 +7,8 @@
 // CSS Module hash.
 
 .group[data-mode='visual'] {
+  @include touch-dense-group;
+
   display: inline-flex;
 
   // Don't stretch to fill cross-axis when placed inside a flex/grid parent
@@ -104,10 +106,10 @@
 
 // Size variants — the TRACK matches Button's --size-* height, so a segmented
 // control lines up with a same-size Button. Items give back the track's
-// padding on both sides.
+// padding on both sides. On coarse pointers every track is --size-touch
+// (ButtonGroup.tokens.scss): adjacent items are real controls, never
+// touch-hit-area hosts, whose overhangs would steal each other's taps.
 .sizeXs {
-  @include touch-hit-area;
-
   height: calc(var(--button-group-item-height-xs) - 2 * var(--button-group-segmented-padding));
   padding: 0 var(--button-group-item-padding-x-xs);
   font-size: var(--button-group-item-font-size-xs);
@@ -118,8 +120,6 @@
 }
 
 .sizeSm {
-  @include touch-hit-area;
-
   height: calc(var(--button-group-item-height-sm) - 2 * var(--button-group-segmented-padding));
   padding: 0 var(--button-group-item-padding-x-sm);
   font-size: var(--button-group-item-font-size-sm);

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, ButtonGroup, Stack } from '@eocrm/design-system';
+import { AlignCenter, AlignLeft, AlignRight } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -17,6 +18,7 @@ export function ButtonGroupDemo() {
       <SegmentedViewToggleExample />
       <SegmentedTimeframeExample />
       <SizePropagationExample />
+      <CompactSizesExample />
       <SegmentedDisabledExample />
     </DemoLayout>
   );
@@ -192,6 +194,62 @@ export function Demo() {
           Paste (md override)
         </Button>
       </ButtonGroup>
+    </Example>
+  );
+}
+
+function CompactSizesExample() {
+  const [density, setDensity] = useState('comfortable');
+  return (
+    <Example
+      title="Compact sizes (xs / sm)"
+      description="On touch devices xs and sm groups grow to 44px controls, so adjacent items never steal each other's taps."
+      code={`import { useState } from 'react';
+import { Button, ButtonGroup, Stack } from '@eocrm/design-system';
+import { AlignCenter, AlignLeft, AlignRight } from 'lucide-react';
+
+export function Demo() {
+  const [density, setDensity] = useState('comfortable');
+  return (
+    <Stack gap="sm">
+      <ButtonGroup size="sm" value={density} onValueChange={setDensity} aria-label="Density (sm)">
+        <ButtonGroup.Item value="compact">Compact</ButtonGroup.Item>
+        <ButtonGroup.Item value="comfortable">Comfortable</ButtonGroup.Item>
+      </ButtonGroup>
+      <ButtonGroup size="xs" value={density} onValueChange={setDensity} aria-label="Density (xs)">
+        <ButtonGroup.Item value="compact">Compact</ButtonGroup.Item>
+        <ButtonGroup.Item value="comfortable">Comfortable</ButtonGroup.Item>
+      </ButtonGroup>
+      <ButtonGroup size="xs" aria-label="Alignment">
+        <Button variant="secondary" iconOnly aria-label="Align left"><AlignLeft size={14} /></Button>
+        <Button variant="secondary" iconOnly aria-label="Align centre"><AlignCenter size={14} /></Button>
+        <Button variant="secondary" iconOnly aria-label="Align right"><AlignRight size={14} /></Button>
+      </ButtonGroup>
+    </Stack>
+  );
+}`}
+    >
+      <Stack gap="sm">
+        <ButtonGroup size="sm" value={density} onValueChange={setDensity} aria-label="Density (sm)">
+          <ButtonGroup.Item value="compact">Compact</ButtonGroup.Item>
+          <ButtonGroup.Item value="comfortable">Comfortable</ButtonGroup.Item>
+        </ButtonGroup>
+        <ButtonGroup size="xs" value={density} onValueChange={setDensity} aria-label="Density (xs)">
+          <ButtonGroup.Item value="compact">Compact</ButtonGroup.Item>
+          <ButtonGroup.Item value="comfortable">Comfortable</ButtonGroup.Item>
+        </ButtonGroup>
+        <ButtonGroup size="xs" aria-label="Alignment">
+          <Button variant="secondary" iconOnly aria-label="Align left">
+            <AlignLeft size={14} />
+          </Button>
+          <Button variant="secondary" iconOnly aria-label="Align centre">
+            <AlignCenter size={14} />
+          </Button>
+          <Button variant="secondary" iconOnly aria-label="Align right">
+            <AlignRight size={14} />
+          </Button>
+        </ButtonGroup>
+      </Stack>
     </Example>
   );
 }

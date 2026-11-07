@@ -273,6 +273,8 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
 }
 
 .controls {
+  @include touch-dense-group;
+
   position: absolute;
   bottom: var(--space-3);
   left: var(--space-3);
