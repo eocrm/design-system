@@ -3,7 +3,8 @@
 // Consumers can rebind any of these at a higher level
 // (`.theme-foo :root { --topbar-bg: … }`) to retheme the bar without
 // forking its module.scss.
-:root {
+:root,
+:where(:root [data-theme]) {
   // ─── Bar chrome ───────────────────────────────────────────────────────
   --topbar-height: 56px;
   --topbar-bg: var(--color-bg);

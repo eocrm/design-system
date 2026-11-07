@@ -1,5 +1,6 @@
 // Code.tokens.scss — Component-scoped tokens for <Code>. Covers the inline mono chip's surface + per-tone foreground. --font-family-mono stays primitive per the don't-tokenize list.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Surface + base typography
   --code-font-size: var(--font-size-code);
   --code-padding-x: var(--space-1);

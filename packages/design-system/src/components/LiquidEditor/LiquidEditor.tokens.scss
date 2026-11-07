@@ -1,6 +1,7 @@
 // LiquidEditor.tokens.scss — component tokens default to existing primitives so
 // dark theme works with no extra work and consumers can rebrand via AppProvider.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Editor surface
   --liquid-editor-bg: var(--color-bg);
   --liquid-editor-fg: var(--color-fg);
@@ -83,7 +84,8 @@
 // Touch devices (DS-35): 44px targets and 16px text (no iOS focus-zoom). Opt out by overriding
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
-  :root {
+  :root,
+  :where(:root [data-theme]) {
     --liquid-editor-font-size: var(--font-size-lg);
   }
 }

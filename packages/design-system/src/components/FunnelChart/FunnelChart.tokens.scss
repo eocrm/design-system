@@ -3,7 +3,8 @@
 // everything else defaults to primitives or chart tokens.
 @use '../Chart/Chart.tokens';
 
-:root {
+:root,
+:where(:root [data-theme]) {
   --funnel-chart-gap: var(--space-2);
 
   // Ramp: stage i of n is ramp-color mixed (oklab) toward ramp-target by max-mix * i / (n - 1). Light:
@@ -59,8 +60,10 @@
   --funnel-chart-row-pill-bg: var(--color-bg-muted);
 }
 
-// Dark ramp: same scopes as the generated dark.scss (forced dark, and OS dark unless forced light).
-:root[data-theme='dark'] {
+// Dark ramp: same scopes as the generated dark.scss (forced dark, and OS dark unless forced light),
+// plus a dark subtree (DS-21). The OS block stays root-only; a light subtree gets the base above.
+:root[data-theme='dark'],
+:where(:root [data-theme='dark']) {
   --funnel-chart-ramp-target: var(--color-fg);
   --funnel-chart-ramp-max-mix: 65%;
 }

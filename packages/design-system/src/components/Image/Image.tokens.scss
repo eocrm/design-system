@@ -1,4 +1,5 @@
-:root {
+:root,
+:where(:root [data-theme]) {
   // Overridable so a consumer painting Image on a non-page surface can supply a
   // ring that actually contrasts with it. Lightbox does exactly that: its
   // thumbnails sit on a scrim that is dark in BOTH themes, where the light

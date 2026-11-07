@@ -1,4 +1,5 @@
-:root {
+:root,
+:where(:root [data-theme]) {
   --dashboard-widget-compact-title-size: var(--font-size-sm);
   --dashboard-widget-compact-title-fg: var(--color-fg-muted);
   --dashboard-widget-compact-padding: var(--space-3);

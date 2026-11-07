@@ -5,7 +5,8 @@
 // See docs/superpowers/specs/2026-05-27-component-tokens-design.md
 @use '../DropdownMenu/DropdownMenu.tokens';
 
-:root {
+:root,
+:where(:root [data-theme]) {
   --pill-menu-radius: var(--radius-md);
   --pill-menu-padding-y: var(--space-1);
   --pill-menu-padding-x: var(--space-3);

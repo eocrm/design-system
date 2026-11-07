@@ -53,7 +53,10 @@ export function parseTokens(raw: string): ParsedToken[] {
   for (const rawLine of normalized.split('\n')) {
     const line = rawLine.trim();
 
-    if (line === '' || line === '{' || line === '}' || line.startsWith(':root')) {
+    // Only the first block, `:root`: the accent and DS-21 subtree blocks after it
+    // re-declare the same names and would list each token several times.
+    if (line === '}') break;
+    if (line === '' || line === '{' || line.startsWith(':root')) {
       pending = [];
       continue;
     }

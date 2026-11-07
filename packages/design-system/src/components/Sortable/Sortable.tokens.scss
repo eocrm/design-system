@@ -1,5 +1,6 @@
 // Sortable.tokens.scss — component-scoped tokens for <Sortable> (list + item + drag handle). Defaults preserve byte-identical visuals.
-:root {
+:root,
+:where(:root [data-theme]) {
   // List
   --sortable-list-gap: var(--space-2);
 

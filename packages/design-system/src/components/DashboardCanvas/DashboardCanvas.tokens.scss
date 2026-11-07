@@ -1,7 +1,8 @@
 // DashboardCanvas.tokens.scss — component-scoped tokens for <DashboardCanvas>.
 // Every token defaults to a primitive so the resolved values match the
 // global theme; consumers retheme by overriding these custom properties.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Grid geometry. `--dashboard-canvas-row` (the row unit) deliberately has
   // NO :root default: its built-in default makes cells SQUARE by deriving
   // one column's width from `--dc-cols` (stamped inline on the canvas root),

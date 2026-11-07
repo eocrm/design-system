@@ -1,5 +1,6 @@
 // DefinitionList.tokens.scss — Component-scoped tokens for <DefinitionList>. Covers the horizontal/stacked layout grid gap, dt/dd typography + insets, icon color, and per-spacing padding-block tokens. Dividers reuse the primitive --border-width (default 1px).
-:root {
+:root,
+:where(:root [data-theme]) {
   // Horizontal layout grid gap
   --definition-list-column-gap: var(--space-4);
 

@@ -1,5 +1,6 @@
 // ColorPicker.tokens.scss — component-scoped tokens for <ColorPicker>. Covers panel chrome, SV-pad indicator focus, preset swatches, and the trigger button surface. Hue-track gradient + indicator math literals stay raw in the .module.scss because they're rendering math, not theme values.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Panel — surface chrome
   --color-picker-panel-gap: var(--space-3);
   --color-picker-panel-padding: var(--space-3);
@@ -65,7 +66,8 @@
 // Touch devices (DS-35): 44px targets. Opt out by overriding
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
-  :root {
+  :root,
+  :where(:root [data-theme]) {
     --color-picker-swatch-min-size: var(--size-touch);
   }
 }

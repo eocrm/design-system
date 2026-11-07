@@ -1,5 +1,6 @@
 // EmptyState.tokens.scss — Component-scoped tokens for <EmptyState>. Covers per-size gap + padding, icon/title/description colors + sizes, and title/description line-heights. The internal 48ch description max-width literal is intentional and stays a raw value.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Size — outer gap + padding
   --empty-state-gap-sm: var(--space-2);
   --empty-state-gap-md: var(--space-3);

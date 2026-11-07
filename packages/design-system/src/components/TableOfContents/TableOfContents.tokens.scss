@@ -2,7 +2,8 @@
 // Emitted from the stable styles/tokens.scss entry (not the lazy component module), like Sticky's, which it @uses.
 @use '../Sticky/Sticky.tokens';
 
-:root {
+:root,
+:where(:root [data-theme]) {
   // Links
   --table-of-contents-link-fg: var(--color-fg-muted);
   --table-of-contents-link-fg-hover: var(--color-fg);

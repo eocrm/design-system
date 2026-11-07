@@ -1,6 +1,7 @@
 // Cluster.tokens.scss — Component-scoped tokens for <Cluster>. Each token
 // defaults to the primitive the SCSS used before this migration.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Gap per size
   --cluster-gap-xs: var(--space-1);
   --cluster-gap-sm: var(--space-2);

@@ -1,4 +1,5 @@
-:root {
+:root,
+:where(:root [data-theme]) {
   --lightbox-scrim: var(--color-bg-overlay-strong);
   --lightbox-z: var(--z-modal);
 

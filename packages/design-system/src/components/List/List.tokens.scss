@@ -1,5 +1,6 @@
 // List.tokens.scss — Component-scoped tokens for <List>. Item gap per size, marker column, bullet dot, plain-number marker and the badge number.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Row gap per `gap` size
   --list-gap-xs: var(--space-1);
   --list-gap-sm: var(--space-2);

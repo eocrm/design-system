@@ -2,7 +2,8 @@
 // (the muted block), the per-variant radii (text/circular/rectangular), and
 // the pulse animation's opacity extremes. The 1.5s pulse duration stays raw
 // since motion timings are not tokenized.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Block
   --skeleton-bg: var(--color-bg-muted);
 

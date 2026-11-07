@@ -1,4 +1,5 @@
-:root {
+:root,
+:where(:root [data-theme]) {
   // ─── Chip surface ──────────────────────────────────────────────────────
   --kbd-bg: var(--color-bg-muted);
   --kbd-fg: var(--color-fg-muted);

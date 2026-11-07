@@ -548,9 +548,12 @@ describe.each(THEMED_ACCENTS)(
     };
     // Theme blocks first: tokenValue() takes the first declaration in scope.
     const scope = [
-      ...(theme === 'dark' ? [body(funnel, ":root[data-theme='dark']")] : []),
-      body(funnel, ':root'),
-      body(chart, ':root'),
+      ...(theme === 'dark'
+        ? [body(funnel, ":root[data-theme='dark'],\n:where(:root [data-theme='dark'])")]
+        : []),
+      // Component token blocks carry a DS-21 subtree twin.
+      body(funnel, ':root,\n:where(:root [data-theme])'),
+      body(chart, ':root,\n:where(:root [data-theme])'),
       source,
     ].join('\n');
     it('stays >= 2:1 on the surface', () => {

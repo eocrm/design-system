@@ -1,7 +1,8 @@
 // Component tokens for FlowCanvas. Every token defaults to a primitive so the
 // resolved values match the global theme; consumers can retheme by overriding
 // these custom properties.
-:root {
+:root,
+:where(:root [data-theme]) {
   --flow-canvas-bg: var(--color-bg-sunken);
   --flow-canvas-grid-dot: var(--color-border);
   --flow-canvas-grid-size: var(--space-4);

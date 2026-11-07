@@ -1907,3 +1907,53 @@ describe('touch hit areas come from the mixin', () => {
     expect(out).not.toMatch(/transform|translate|\[dir/);
   });
 });
+
+/**
+ * DS-21: `data-theme` on any element. A component token block declared only at
+ * `:root` resolves its `var()` aliases against the ROOT theme (a custom
+ * property's var() is substituted where it is declared), so components inside a
+ * `data-theme` subtree would keep the page theme. Every `:root…` selector in a
+ * `*.tokens.scss` therefore needs a zero-specificity subtree twin, the coarse-
+ * pointer and other `@media`/`@supports` blocks included: without one, the base
+ * block re-declared on the subtree element would hide the inherited override.
+ * The OS-dark `:root:not([data-theme='light'])` block is root-only by design.
+ */
+describe('component token blocks follow data-theme subtrees (DS-21)', () => {
+  const twinOf = (selector: string) =>
+    selector === ':root'
+      ? ':where(:root [data-theme])'
+      : selector.startsWith(':root[data-theme=')
+        ? `:where(:root ${selector.slice(':root'.length)})`
+        : `:where(${selector} [data-theme])`;
+  const files = components.flatMap((name) =>
+    readdirSync(join(componentsDir, name))
+      .filter((f) => f.endsWith('.tokens.scss'))
+      .map((f) => [`${name}/${f}`, readFileSync(join(componentsDir, name, f), 'utf-8')] as const),
+  );
+
+  it('found the token files, including ones with coarse-pointer blocks', () => {
+    expect(files.map(([label]) => label)).toEqual(
+      expect.arrayContaining(['Button/Button.tokens.scss', 'FunnelChart/FunnelChart.tokens.scss']),
+    );
+  });
+
+  it.each(files)('%s', (_label, code) => {
+    const missing = scssRules(stripScssComments(code)).flatMap(([selectorList]) => {
+      const selectors = selectorList.split(',').map((s) => s.trim());
+      return selectors
+        .filter((s) => s.startsWith(':root') && !s.startsWith(':root:not('))
+        .filter((s) => !selectors.includes(twinOf(s)))
+        .map((s) => `${s} needs ${twinOf(s)}`);
+    });
+    expect(missing).toEqual([]);
+  });
+
+  it('flags a block without its twin', () => {
+    const rules = scssRules(
+      stripScssComments('@media (pointer: coarse) {\n  :root { --x: 1; }\n}'),
+    );
+    expect(rules.map(([s]) => s)).toEqual([':root']);
+    expect(twinOf(':root')).toBe(':where(:root [data-theme])');
+    expect(twinOf(":root[data-theme='dark']")).toBe(":where(:root [data-theme='dark'])");
+  });
+});

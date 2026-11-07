@@ -1,4 +1,5 @@
-:root {
+:root,
+:where(:root [data-theme]) {
   --masonry-gap-xs: var(--space-1);
   --masonry-gap-sm: var(--space-2);
   --masonry-gap-md: var(--space-3);

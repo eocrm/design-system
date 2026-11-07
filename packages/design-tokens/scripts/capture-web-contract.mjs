@@ -15,6 +15,7 @@ const sourcePaths = {
   badge: 'packages/design-system/src/components/Badge/Badge.tokens.scss',
 };
 const fixturePath = 'packages/design-tokens/test/fixtures/current-web-contract.json';
+const COMPONENT_ROOT = ':root, :where(:root [data-theme])';
 const SCOPES = ['light', 'forcedDark', 'systemDark', 'subtreeDark', 'subtreeLight', 'forcedLight'];
 
 export async function captureWebContract() {
@@ -32,7 +33,11 @@ export function captureWebContractFromSources(sources) {
   const contract = emptyContract();
 
   for (const source of [sources.tokens, sources.badge]) {
-    const blocks = findBlocks(source.content).filter(({ header }) => header === ':root');
+    // Component token files pair :root with a DS-21 subtree twin; the values are
+    // the :root contract either way.
+    const blocks = findBlocks(source.content).filter(({ header }) =>
+      [':root', COMPONENT_ROOT].includes(header.replace(/\s+/g, ' ')),
+    );
     if (blocks.length === 0) {
       throw new Error(`no :root token scope found in ${source.source}`);
     }

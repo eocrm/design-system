@@ -4,7 +4,8 @@
 // these at :root re-themes Button without touching globals.
 // Convention: --button-<part>-<state>. See
 // docs/superpowers/specs/2026-05-27-component-tokens-design.md
-:root {
+:root,
+:where(:root [data-theme]) {
   // Surface (primary is the base; per-variant overrides further down)
   --button-bg: var(--color-accent);
   --button-bg-hover: var(--color-accent-hover);
@@ -92,7 +93,8 @@
 // Touch devices (DS-35): 44px targets. Opt out by overriding
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
-  :root {
+  :root,
+  :where(:root [data-theme]) {
     --button-height-md: var(--size-touch);
     --button-height-lg: var(--size-touch);
   }

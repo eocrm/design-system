@@ -1,4 +1,5 @@
-:root {
+:root,
+:where(:root [data-theme]) {
   --catalog-picker-gap: var(--space-3);
   --catalog-picker-toolbar-bg: var(--color-bg);
   --catalog-picker-toolbar-bleed: var(--space-6);

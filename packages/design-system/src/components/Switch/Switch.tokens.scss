@@ -1,5 +1,6 @@
 // Switch.tokens.scss — component-scoped tokens for <Switch>. Track bg per (tone + checked state), thumb travel per size, focus ring, invalid border. Defaults preserve byte-identical visuals.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Layout
   --switch-gap: var(--space-2);
 
@@ -64,7 +65,8 @@
 // Touch devices (DS-35): 44px targets. Opt out by overriding
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
-  :root {
+  :root,
+  :where(:root [data-theme]) {
     --switch-hit-min-height: var(--size-touch);
   }
 }

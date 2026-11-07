@@ -53,21 +53,26 @@ Inline this in your app's `<head>` **before** your bundle loads. It applies the 
 
 ### Scoping a theme to part of the page
 
-`data-theme` also works on any element below `<html>`: `data-theme="dark"` gives that subtree the dark values of the global `--color-*` (and other generated) tokens, and `data-theme="light"` gives it the light ones, whatever the page theme. Nesting works both ways (light inside dark inside light), the page's `data-accent` applies inside the subtree in that subtree's theme, and `color-scheme` follows, so native controls in it match.
+`data-theme` also works on any element below `<html>`: `data-theme="dark"` re-themes that subtree dark and `data-theme="light"` re-themes it light, whatever the page theme. That covers everything inside it, components included: the global tokens, every component's tokens, the page's `data-accent` in the subtree's theme, the coarse-pointer touch sizes, and `color-scheme`, so native controls match. Nesting works both ways (light inside dark inside light), and an unattributed element follows its nearest themed ancestor.
 
 ```html
 <html data-accent="ocean" data-theme="light">
   …
-  <span data-theme="dark">
+  <div data-theme="dark">
     <svg fill="var(--color-accent-bg-subtle)">…</svg>
     <!-- the ocean accent's DARK values, inside a light page -->
-  </span>
+    <button class="…">…</button>
+    <!-- a library Button here renders dark too -->
+  </div>
 </html>
 ```
 
-- **Leave the root alone.** `<html>` keeps its own rules (forced light/dark, or the OS preference when unset); a subtree only ever overrides itself and its descendants. An unattributed subtree follows its nearest themed ancestor.
-- **`<AppProvider tokens / darkTokens>` overrides follow too.** They are re-emitted for `[data-theme]` subtrees with a higher specificity than the library's, so an override wins inside a subtree as it does on the page. A hand-written `:root { --color-accent: … }` override does **not** reach a subtree, because the subtree re-declares the token; add your own `[data-theme]` selector or use `tokens`.
-- **Use it for brand marks and illustrations, not for components.** Component tokens (`--button-*`, `--badge-*`, …) are declared at `:root` as aliases of the global tokens, and a custom property's `var()` resolves where it is declared, so they keep the page theme's values inside a subtree. Overlays that portal to `<body>` (Tooltip, Popover, menus, dialogs) also leave the subtree. Read the global tokens directly in a scoped subtree.
+- **The root keeps its own rules.** `<html>` still resolves forced light/dark, or the OS preference when unset; a subtree only ever affects itself and its descendants.
+- **Overlays follow the page theme, not the subtree.** Tooltip, Popover, DropdownMenu and other menus, and Modal/Drawer dialogs portal to `<body>`, so they render outside the subtree and take the page theme.
+- **`<AppProvider tokens / darkTokens>` overrides already work inside subtrees.** They are re-emitted for `[data-theme]` subtrees at a higher specificity than the library's.
+- **Hand-written overrides need `[data-theme]` too.** The library re-declares its tokens on every `[data-theme]` element, so a plain `:root { … }` override is hidden inside a themed subtree.
+  - **Component tokens** (`--button-*`, …): write the override as `:root, [data-theme] { … }` (examples below). The library's component blocks use the zero-specificity `:where(:root [data-theme])`, so yours wins regardless of load order.
+  - **Global tokens** (`--color-*`, …): use `<AppProvider tokens / darkTokens>`. The library's subtree blocks for these are theme- and accent-specific, so a hand-written rule would have to out-rank them in every theme and accent.
 
 ## Theming via component tokens
 
@@ -81,7 +86,9 @@ Every component defines `--<component>-<part>-<state>` CSS custom properties at 
 **Override globally (every Button in the app turns red):**
 
 ```css
-:root {
+/* `[data-theme]` too, so the override also applies inside themed subtrees. */
+:root,
+[data-theme] {
   --button-bg: red;
   --button-bg-hover: darkred;
 }
@@ -108,7 +115,7 @@ Every component defines `--<component>-<part>-<state>` CSS custom properties at 
 <Button style={{ '--button-bg': 'red' } as React.CSSProperties}>Delete</Button>
 ```
 
-A component's tokens are the `:root` block at the top of its shipped stylesheet, `dist/components/<Name>/<Name>.css` (e.g. `node_modules/@eocrm/design-system/dist/components/Button/Button.css`). They are plain `--<component>-*` custom properties, also inspectable in browser devtools on `:root`.
+A component's tokens are the `:root, :where(:root [data-theme])` block at the top of its shipped stylesheet, `dist/components/<Name>/<Name>.css` (e.g. `node_modules/@eocrm/design-system/dist/components/Button/Button.css`). They are plain `--<component>-*` custom properties, also inspectable in browser devtools on `:root`.
 
 **Deprecated:** `--color-badge-<tone>-bg/-fg` tokens are aliased to the new `--badge-bg-<tone>` / `--badge-fg-<tone>` tokens. They still work but will be removed in a future major version.
 
@@ -125,7 +132,8 @@ On coarse pointers (`@media (pointer: coarse)`) every interactive target is at l
 
 ```css
 @media (pointer: coarse) {
-  :root {
+  :root,
+  [data-theme] {
     --<component>-<token>: <desktop value>;
   }
 }

@@ -1,6 +1,7 @@
 // Chart.tokens.scss — component tokens for <Chart>. Series colours alias the
 // validated palette primitives; everything else defaults to existing primitives.
-:root {
+:root,
+:where(:root [data-theme]) {
   --chart-series-1: var(--color-chart-series-1);
   --chart-series-2: var(--color-chart-series-2);
   --chart-series-3: var(--color-chart-series-3);

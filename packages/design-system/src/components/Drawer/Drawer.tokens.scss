@@ -1,5 +1,6 @@
 // Drawer.tokens.scss — Component-scoped tokens for <Drawer>. Each token defaults to the primitive the SCSS used before this migration. Drawer shares the modal z-index stack and overlay scrim with <Modal>; per-side slide transforms and the drag-to-close routing vars (--drag-translate-x/-y, --drag-opacity, --drawer-size, --modal-depth) are internal to the SCSS and not consumer-facing tokens.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Overlay (scrim)
   --drawer-overlay-bg: var(--color-bg-overlay);
   --drawer-overlay-bg-blur: var(--color-bg-overlay-blur);

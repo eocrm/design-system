@@ -1,7 +1,8 @@
 // Link.tokens.scss — Component-scoped tokens for <Link>. Three variants:
 // default (accent), muted (fg-muted -> accent on hover), subtle (fg -> accent
 // on hover). Each variant has its own fg + fg-hover pair. Icon gap is shared.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Shape + icon gap
   --link-radius: var(--radius-sm);
   --link-icon-gap: var(--space-1);
@@ -24,6 +25,8 @@
 // Teal pine's and Slate's accents sit close to the navy body text, so their
 // default links also step up in weight (the colour alone can't carry the difference).
 :root[data-accent='tealpine'],
-:root[data-accent='slate'] {
+:root[data-accent='slate'],
+:where(:root[data-accent='tealpine'] [data-theme]),
+:where(:root[data-accent='slate'] [data-theme]) {
   --link-font-weight-default: var(--font-weight-medium);
 }

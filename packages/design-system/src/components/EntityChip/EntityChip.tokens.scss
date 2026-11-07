@@ -3,7 +3,8 @@
 // / --color-accent, see _prose.scss) so a chip and a rendered mention read as
 // the same visual object in both themes — no per-theme tuning needed since
 // the accent tokens are already theme-aware.
-:root {
+:root,
+:where(:root [data-theme]) {
   --entity-chip-bg: var(--color-accent-bg-subtle);
   --entity-chip-bg-hover: var(--color-accent-bg-subtle);
   --entity-chip-fg: var(--color-accent);

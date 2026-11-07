@@ -17,7 +17,10 @@ const read = (path: string) =>
     '',
   );
 const CSS = read('tokens.scss') + read('dark.scss');
-const NAMES = [...new Set([...CSS.matchAll(/(--[a-z0-9-]+):/g)].map((m) => m[1]!))];
+const NAMES = [
+  ...new Set([...CSS.matchAll(/(--[a-z0-9-]+):/g)].map((m) => m[1]!)),
+  '--color-link-fg',
+];
 const ACCENTS = [null, ...new Set([...CSS.matchAll(/data-accent='([a-z]+)'/g)].map((m) => m[1]!))];
 
 type Theme = 'light' | 'dark' | null;
@@ -63,10 +66,8 @@ const rootValues = async (page: Page, accent: string | null, theme: Theme) =>
 
 /**
  * `--tooltip-*` have no generated LIGHT value (`null` in tokens.json): light comes
- * from Tooltip.tokens.scss at :root, which this page does not load. Component
- * token files are :root-only, so their aliases resolve against the ROOT theme and
- * do not follow a subtree (known DS-21 limit, see docs/theming.md). Comparing them
- * here would assert a component-layer behaviour this fix does not provide.
+ * from Tooltip.tokens.scss, which this generated-CSS-only page does not load, so
+ * they are compared in the component test below instead.
  */
 const generatorOnly = (values: Record<string, string>, light: Record<string, string>) =>
   Object.fromEntries(Object.entries(values).filter(([name]) => light[name] !== ''));
@@ -156,5 +157,67 @@ test('consumer ThemeTokens overrides still win inside subtrees', async ({ page }
     const [rootDark, lightSpan] = await resolveChain(page, accent, 'dark', ['light']);
     expect(rootDark['--color-accent']).toBe('rgb(4, 5, 6)');
     expect(lightSpan['--color-accent']).toBe('rgb(1, 2, 3)');
+    // An alias of the overridden token follows it in the subtree exactly as it
+    // does on a root of that theme (an accent may pin --color-link-fg to a literal).
+    expect(darkSpan['--color-link-fg']).toBe(rootDark['--color-link-fg']);
+    expect(lightSpan['--color-link-fg']).toBe(rootLight['--color-link-fg']);
+    if (accent === null) expect(darkSpan['--color-link-fg']).toBe('rgb(4, 5, 6)');
+  }
+});
+
+/**
+ * Components follow a subtree too: component token files pair `:root` with
+ * `:where(:root [data-theme])`, so their aliases re-resolve on the subtree
+ * element. Runs on a real playground route so the shipped library CSS (generated
+ * tokens plus component token files) is what resolves.
+ */
+const COMPONENT_TOKENS = [
+  '--button-bg',
+  '--button-bg-hover',
+  '--button-fg',
+  '--badge-bg-info',
+  '--badge-fg-info',
+  '--tooltip-bg',
+  '--tooltip-fg',
+];
+
+test('component tokens resolve like the root ladder inside subtrees', async ({ page }) => {
+  await page.goto('/components/button');
+  await expect(page.getByRole('button', { name: 'Primary', exact: true }).first()).toBeVisible();
+  const results = await page.evaluate(
+    ({ accents, names }) => {
+      const html = document.documentElement;
+      const read = (el: Element) => {
+        const style = getComputedStyle(el);
+        return Object.fromEntries(names.map((n) => [n, style.getPropertyValue(n).trim()]));
+      };
+      const set = (el: Element, attr: string, value: string | null) =>
+        value ? el.setAttribute(attr, value) : el.removeAttribute(attr);
+      const outer = document.body.appendChild(document.createElement('div'));
+      const inner = outer.appendChild(document.createElement('div'));
+      return accents.map((accent) => {
+        set(html, 'data-accent', accent);
+        set(outer, 'data-theme', null);
+        set(inner, 'data-theme', null);
+        set(html, 'data-theme', 'light');
+        const light = read(html);
+        set(html, 'data-theme', 'dark');
+        const dark = read(html);
+        const lightInDark = (set(outer, 'data-theme', 'light'), read(outer));
+        set(html, 'data-theme', 'light');
+        const darkInLight = (set(outer, 'data-theme', 'dark'), read(outer));
+        const lightInDarkInLight = (set(inner, 'data-theme', 'light'), read(inner));
+        return { accent, light, dark, lightInDark, darkInLight, lightInDarkInLight };
+      });
+    },
+    { accents: ACCENTS, names: COMPONENT_TOKENS },
+  );
+  for (const r of results) {
+    expect(r.light['--button-bg'], `${r.accent}`).not.toBe('');
+    expect(r.light['--badge-bg-info'], `${r.accent}`).not.toBe('');
+    expect(r.dark['--button-bg'], `${r.accent}`).not.toBe(r.light['--button-bg']);
+    expect(r.darkInLight, `dark in light, ${r.accent}`).toEqual(r.dark);
+    expect(r.lightInDark, `light in dark, ${r.accent}`).toEqual(r.light);
+    expect(r.lightInDarkInLight, `light in dark in light, ${r.accent}`).toEqual(r.light);
   }
 });

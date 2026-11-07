@@ -1,5 +1,6 @@
 // FileUpload.tokens.scss — component-scoped tokens for <FileUpload>. Covers the drop-zone, drag-over state, and per-row item chrome (border, status icon colors).
-:root {
+:root,
+:where(:root [data-theme]) {
   // Root layout
   --file-upload-gap: var(--space-3);
 

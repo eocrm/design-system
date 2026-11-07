@@ -1,7 +1,8 @@
 // Tabs.tokens.scss — Component-scoped tokens for <Tabs>. Covers tablist
 // bottom border, tab inactive vs active fg, tab hover fg, focus ring, the
 // active-tab indicator color, and the optional count pill (active vs idle).
-:root {
+:root,
+:where(:root [data-theme]) {
   // Tablist
   --tabs-gap: var(--space-1);
   --tabs-border-color: var(--color-border);
@@ -55,7 +56,8 @@
 // Touch devices (DS-35): 44px targets. Opt out by overriding
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
-  :root {
+  :root,
+  :where(:root [data-theme]) {
     --tabs-tab-min-height: var(--size-touch);
   }
 }

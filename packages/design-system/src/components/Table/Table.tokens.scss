@@ -5,7 +5,8 @@
 // sits on top of this primitive and overrides --color-table-* via its own
 // surface tokens — keeping Table's tokens semantic ensures a Table theme
 // override propagates to DataTable.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Table surface
   --table-fg: var(--color-table-fg);
   --table-bg: var(--color-table-bg);
@@ -84,7 +85,8 @@
 // Touch devices (DS-35): 44px targets. Opt out by overriding
 // these in your own `@media (pointer: coarse)` block.
 @media (pointer: coarse) {
-  :root {
+  :root,
+  :where(:root [data-theme]) {
     --table-cell-link-min-height: var(--size-touch);
   }
 }

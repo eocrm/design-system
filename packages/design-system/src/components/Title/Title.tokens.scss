@@ -3,7 +3,8 @@
 // foregrounds. Title's default weight is semibold (vs Text's regular) and its
 // default line-height is tight (vs Text's normal). --font-family-sans is not
 // tokenized per migration rules.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Base
   --title-font-weight: var(--font-weight-semibold);
   --title-line-height: var(--line-height-tight);

@@ -1,7 +1,8 @@
 // SlotGrid.tokens.scss — component tokens. Tile colors default to Button's.
 @use '../Button/Button.tokens';
 
-:root {
+:root,
+:where(:root [data-theme]) {
   --slot-grid-group-gap: var(--space-5);
   --slot-grid-legend-gap: var(--space-2);
   --slot-grid-gap: var(--space-2);

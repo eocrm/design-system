@@ -1,4 +1,5 @@
-:root {
+:root,
+:where(:root [data-theme]) {
   --timeline-gutter: var(--size-md); // 32px node column
   --timeline-node-size: var(--size-md); // 32px fixed node box
   --timeline-row-gap: var(--space-4); // 16px between items

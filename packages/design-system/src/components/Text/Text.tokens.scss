@@ -3,7 +3,8 @@
 // semibold / bold), and per-tone foregrounds (default / muted / subtle /
 // accent / danger / success / warning). --font-family-sans is not tokenized
 // per migration rules.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Base
   --text-font-weight: var(--font-weight-regular);
   --text-line-height: var(--line-height-normal);

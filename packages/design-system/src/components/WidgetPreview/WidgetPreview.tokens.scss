@@ -1,4 +1,5 @@
-:root {
+:root,
+:where(:root [data-theme]) {
   // Decorative miniature of a widget kind (CatalogPicker previews).
   --widget-preview-bg: var(--color-bg-subtle);
   --widget-preview-radius: var(--radius-md);

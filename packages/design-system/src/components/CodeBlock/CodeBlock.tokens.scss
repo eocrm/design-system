@@ -1,5 +1,6 @@
 // CodeBlock.tokens.scss — Component-scoped tokens for <CodeBlock>. Surface, highlighted line and the eight syntax colours. `--code-*` belongs to the inline <Code> chip.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Surface
   --code-block-bg: var(--color-bg-subtle);
   --code-block-border-color: var(--color-border);

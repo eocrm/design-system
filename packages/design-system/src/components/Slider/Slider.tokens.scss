@@ -1,5 +1,6 @@
 // Slider.tokens.scss — component-scoped tokens for <Slider> (track + filled range + thumbs + tooltip + marks). Each tone (default/success/warning/danger) overrides the filled-range and filled-mark color.
-:root {
+:root,
+:where(:root [data-theme]) {
   // Orientation sizing — horizontal min-height + vertical height/min-width
   --slider-min-height-horizontal: 32px;
   --slider-height-vertical: 200px;

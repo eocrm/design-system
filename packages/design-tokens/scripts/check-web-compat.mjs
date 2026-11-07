@@ -53,7 +53,8 @@ export function parseGeneratedWebContract(tokensScss, darkScss, componentScss = 
   // was aliased the block restated `:root` verbatim; requiring the selector
   // meant deleting 24 provably dead lines threw `missing selector` instead.
   const component = {
-    light: declarations(blockBody(componentScss, ':root')),
+    // Component token files pair :root with a DS-21 subtree twin.
+    light: declarations(blockBody(componentScss, ':root,\n:where(:root [data-theme])')),
     forcedDark: declarations(blockBody(componentScss, ":root[data-theme='dark']", true)),
     systemDark: declarations(blockBody(componentScss, ":root:not([data-theme='light'])", true)),
     subtreeDark: {},
