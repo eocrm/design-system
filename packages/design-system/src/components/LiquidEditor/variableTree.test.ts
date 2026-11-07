@@ -28,4 +28,10 @@ describe('buildVariableTree (#750)', () => {
     expect(tree[0].children[0].path).toBe('record.status');
     expect(tree[1].children[0].path).toBe('event.status');
   });
+
+  it('never yields an empty display segment', () => {
+    const all = (ns: ReturnType<typeof buildVariableTree>): string[] =>
+      ns.flatMap((n) => [n.segment, ...all(n.children)]);
+    expect(all(buildVariableTree(v('a..b', '.x', 'x.'))).every((s) => s !== '')).toBe(true);
+  });
 });

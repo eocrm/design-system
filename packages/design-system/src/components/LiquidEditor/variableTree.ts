@@ -27,7 +27,8 @@ export function buildVariableTree(vars: readonly LiquidVariable[]): VariableNode
       const path = parts.slice(0, i + 1).join('.');
       node = level.find((n) => n.path === path);
       if (!node) {
-        node = { segment, path, children: [] };
+        // Empty segments (`a..b`, `.x`) would give an empty accessible name; show the path.
+        node = { segment: segment || path || v.code, path, children: [] };
         level.push(node);
       }
       level = node.children;

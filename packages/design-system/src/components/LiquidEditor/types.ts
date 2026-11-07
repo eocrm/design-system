@@ -60,11 +60,11 @@ export interface LiquidEditorProps {
   previewPlacement?: LiquidPreviewPlacement;
   /** Show the line-number gutter. Default `true`. */
   showLineNumbers?: boolean;
-  /** Show the toolbar (variable-insert menu). Default `true`. */
+  /** Show the toolbar (Insert tag and Insert variable menus). Default `true`. */
   showToolbar?: boolean;
   /**
    * Custom action buttons rendered in the toolbar, right-aligned just before the
-   * "Insert variable" button (e.g. a Docs / Help link). Pass `<Button size="sm">`
+   * "Insert tag" and "Insert variable" buttons (e.g. a Docs / Help link). Pass `<Button size="sm">`
    * elements (or a fragment of them); a `ghost` variant pairs well next to the
    * bordered "Insert variable" button. Only renders when `showToolbar` is true.
    */

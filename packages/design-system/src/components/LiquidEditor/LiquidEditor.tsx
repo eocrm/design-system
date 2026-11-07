@@ -43,6 +43,14 @@ const MENU_NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'Enter', 'Tab', 'Escape']
  * Liquid template editor: highlighting, gutter, variable-insert menu, autocomplete, unknown-variable flagging and a controlled preview pane.
  * @see docs/components/LiquidEditor.md
  */
+/** Re-applies `{%-` / `-%}` whitespace control to a snippet's opening tag. */
+function withDashes(template: string, open: boolean, close: boolean): string {
+  let t = template;
+  if (open) t = t.replace(/^\{%/, '{%-');
+  if (close) t = t.replace('%}', '-%}');
+  return t;
+}
+
 export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
   function LiquidEditor(
     {
@@ -214,13 +222,16 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
     }, []);
 
     const commit = useCallback(
-      (nextValue: string, caret: number) => {
+      (nextValue: string, caret: number, refocus = false) => {
         onChange(nextValue);
         // Restore the caret after React applies the controlled value (a
         // controlled <textarea> resets the caret to the end otherwise).
         requestAnimationFrame(() => {
           const ta = textareaRef.current;
           if (ta) {
+            // Menu inserts: DropdownMenu's closeAll() refocuses its trigger after
+            // onSelect, so take focus back here (typing/accept already own focus).
+            if (refocus) ta.focus();
             ta.setSelectionRange(caret, caret);
             refresh(nextValue, caret);
           }
@@ -235,10 +246,11 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
         const start = ta?.selectionStart ?? value.length;
         const end = ta?.selectionEnd ?? value.length;
         const { value: next, caret } = applySnippet(value, start, end, template);
-        commit(next, caret);
-        ta?.focus();
+        // Same as autocomplete accept: no listbox right after a menu insert.
+        dismissAt(next, caret);
+        commit(next, caret, true);
       },
-      [value, commit],
+      [value, commit, dismissAt],
     );
 
     const insertVariable = useCallback(
@@ -275,9 +287,11 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
               ac.context.open,
               ac.context.open,
               // Keep a `{%-` whitespace-control dash on the opener.
-              value[ac.context.open + 2] === '-'
-                ? item.snippet.template.replace(/^\{%/, '{%-')
-                : item.snippet.template,
+              withDashes(
+                item.snippet.template,
+                value[ac.context.open + 2] === '-',
+                /^\s*-%\}/.test(value.slice(replaceEnd)),
+              ),
             )
           : applyCompletion(value, replaceEnd, ac.context, item.value);
         close();

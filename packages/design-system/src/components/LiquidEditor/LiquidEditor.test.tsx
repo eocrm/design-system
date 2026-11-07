@@ -634,6 +634,59 @@ describe('insert tag menu (#749)', () => {
   });
 });
 
+describe('focus after a menu insert (final review I1)', () => {
+  it.each([
+    ['assign', /^assign /],
+    ['if', /^if Show content only when a condition is true/],
+  ])('Insert tag > %s leaves the textarea focused with no listbox', async (_n, name) => {
+    const user = userEvent.setup();
+    renderEditor(<Harness />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    await user.click(await screen.findByRole('menuitem', { name }));
+    await waitFor(() => expect(ta).toHaveFocus());
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('typing after Insert tag > if lands at the caret', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    await user.click(
+      await screen.findByRole('menuitem', {
+        name: /^if Show content only when a condition is true/,
+      }),
+    );
+    await waitFor(() => expect(ta).toHaveFocus());
+    await user.keyboard('x');
+    expect(ta).toHaveValue('{% if x %}{% endif %}');
+  });
+
+  it('Insert variable > undotted variable leaves the textarea focused', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Score/ }));
+    await waitFor(() => expect(ta).toHaveValue('{{ score }}'));
+    await waitFor(() => expect(ta).toHaveFocus());
+  });
+});
+
+describe('trailing -%} dash (final review M3)', () => {
+  it('keeps the dash on the closer when accepting a snippet', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness initial="{%- i -%}" />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    ta.focus();
+    ta.setSelectionRange(5, 5);
+    await user.keyboard('{ArrowRight}{ArrowLeft}');
+    await user.keyboard('{Enter}');
+    expect(ta).toHaveValue('{%- if  -%}{% endif %}');
+  });
+});
+
 describe('nested insert variable menu (#750)', () => {
   const NESTED = [
     { code: 'record.status', label: 'Status' },
