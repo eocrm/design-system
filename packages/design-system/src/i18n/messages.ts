@@ -949,6 +949,12 @@ export interface Messages {
     /** Header of the data table's column of point labels (`ScatterPoint.label`). */
     pointLabel: string;
   };
+  heatmap: {
+    /** Accessible description of the focusable grid (its name is the heatmap label); says arrows move by cell, Home/End within a row, Ctrl+Home/End to the corners, and that the data table lists every value. */
+    keyboardHint: string;
+    /** Text of a cell with no value (`null`): its announcement, tooltip and data-table cell, and the legend entry for empty cells ("No data"). */
+    noData: string;
+  };
   sparkline: {
     /** Accessible name of a Sparkline with data: label plus the series summary. */
     summary: (params: {

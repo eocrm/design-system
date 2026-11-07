@@ -513,6 +513,11 @@ export const ru: Messages = {
     size: 'Размер',
     pointLabel: 'Примечание',
   },
+  heatmap: {
+    keyboardHint:
+      'Используйте стрелки для перехода между ячейками, Home и End — в пределах строки, Ctrl+Home и Ctrl+End — к углам. Все значения также есть в таблице данных.',
+    noData: 'Нет данных',
+  },
   treeView: {
     loading: 'Загрузка…',
     loadError: 'Не удалось загрузить',

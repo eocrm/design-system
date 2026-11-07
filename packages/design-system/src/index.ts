@@ -915,6 +915,8 @@ export type {
   ScatterSeries,
   ScatterXScale,
 } from './components/ScatterChart';
+export { Heatmap } from './components/Heatmap';
+export type { HeatmapProps } from './components/Heatmap';
 export { Sparkline } from './components/Sparkline';
 export type { SparklineProps, SparklineType } from './components/Sparkline';
 export { TreeView } from './components/TreeView';

@@ -106,6 +106,11 @@
     "--color-fg-muted": "#5b6980",
     "--color-fg-on-overlay": "#ffffff",
     "--color-fg-subtle": "#687388",
+    "--color-heatmap-1": "#dbe9ff",
+    "--color-heatmap-2": "#aac6f2",
+    "--color-heatmap-3": "#729fe9",
+    "--color-heatmap-4": "#407adb",
+    "--color-heatmap-5": "#1957bb",
     "--color-info": "#0052cc",
     "--color-info-bg-subtle": "#ebf3ff",
     "--color-link-fg": "var(--color-accent)",
@@ -361,6 +366,11 @@
     "--color-fg-disabled": "#5a6472",
     "--color-fg-muted": "#9aa7b5",
     "--color-fg-subtle": "#8591a0",
+    "--color-heatmap-1": "#253857",
+    "--color-heatmap-2": "#33548c",
+    "--color-heatmap-3": "#4072c5",
+    "--color-heatmap-4": "#6094ea",
+    "--color-heatmap-5": "#91bcff",
     "--color-info": "#579dff",
     "--color-info-bg-subtle": "#16324f",
     "--color-palette-amber-bg": "#483919",
@@ -490,6 +500,11 @@
     "--color-fg-disabled": "#5a6472",
     "--color-fg-muted": "#9aa7b5",
     "--color-fg-subtle": "#8591a0",
+    "--color-heatmap-1": "#253857",
+    "--color-heatmap-2": "#33548c",
+    "--color-heatmap-3": "#4072c5",
+    "--color-heatmap-4": "#6094ea",
+    "--color-heatmap-5": "#91bcff",
     "--color-info": "#579dff",
     "--color-info-bg-subtle": "#16324f",
     "--color-palette-amber-bg": "#483919",
@@ -624,6 +639,11 @@
     "--color-fg-disabled": "#5a6472",
     "--color-fg-muted": "#9aa7b5",
     "--color-fg-subtle": "#8591a0",
+    "--color-heatmap-1": "#253857",
+    "--color-heatmap-2": "#33548c",
+    "--color-heatmap-3": "#4072c5",
+    "--color-heatmap-4": "#6094ea",
+    "--color-heatmap-5": "#91bcff",
     "--color-info": "#579dff",
     "--color-info-bg-subtle": "#16324f",
     "--color-link-fg": "var(--color-accent)",
@@ -778,6 +798,11 @@
     "--color-fg-disabled": "#a5adba",
     "--color-fg-muted": "#5b6980",
     "--color-fg-subtle": "#687388",
+    "--color-heatmap-1": "#dbe9ff",
+    "--color-heatmap-2": "#aac6f2",
+    "--color-heatmap-3": "#729fe9",
+    "--color-heatmap-4": "#407adb",
+    "--color-heatmap-5": "#1957bb",
     "--color-info": "#0052cc",
     "--color-info-bg-subtle": "#ebf3ff",
     "--color-link-fg": "var(--color-accent)",
@@ -1557,6 +1582,36 @@
         }
       ],
       "--color-fg-subtle": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-heatmap-1": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-heatmap-2": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-heatmap-3": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-heatmap-4": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-heatmap-5": [
         {
           "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
@@ -3082,6 +3137,36 @@
           "selector": ":root[data-theme='dark']"
         }
       ],
+      "--color-heatmap-1": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-heatmap-2": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-heatmap-3": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-heatmap-4": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-heatmap-5": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
       "--color-info": [
         {
           "source": "packages/design-tokens/generated/web/dark.scss",
@@ -3873,6 +3958,41 @@
         }
       ],
       "--color-fg-subtle": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-heatmap-1": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-heatmap-2": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-heatmap-3": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-heatmap-4": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-heatmap-5": [
         {
           "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
@@ -4762,6 +4882,36 @@
         }
       ],
       "--color-fg-subtle": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root [data-theme='dark']"
+        }
+      ],
+      "--color-heatmap-1": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root [data-theme='dark']"
+        }
+      ],
+      "--color-heatmap-2": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root [data-theme='dark']"
+        }
+      ],
+      "--color-heatmap-3": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root [data-theme='dark']"
+        }
+      ],
+      "--color-heatmap-4": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root [data-theme='dark']"
+        }
+      ],
+      "--color-heatmap-5": [
         {
           "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root [data-theme='dark']"
@@ -5676,6 +5826,36 @@
         }
       ],
       "--color-fg-subtle": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root [data-theme='light']"
+        }
+      ],
+      "--color-heatmap-1": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root [data-theme='light']"
+        }
+      ],
+      "--color-heatmap-2": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root [data-theme='light']"
+        }
+      ],
+      "--color-heatmap-3": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root [data-theme='light']"
+        }
+      ],
+      "--color-heatmap-4": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root [data-theme='light']"
+        }
+      ],
+      "--color-heatmap-5": [
         {
           "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root [data-theme='light']"

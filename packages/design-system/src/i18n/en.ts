@@ -505,6 +505,11 @@ export const en: Messages = {
     size: 'Size',
     pointLabel: 'Note',
   },
+  heatmap: {
+    keyboardHint:
+      'Use arrow keys to move between cells, Home and End within a row, Ctrl+Home and Ctrl+End to the corners. All values are also in the data table.',
+    noData: 'No data',
+  },
   treeView: {
     loading: 'Loading…',
     loadError: "Couldn't load",
