@@ -72,23 +72,35 @@ palette and marker-shape internals (extract to shared modules inside `components
 `_internal/` rather than duplicating).
 
 ```ts
-interface ScatterPoint { x: number | Date; y: number; size?: number; label?: string }
-interface ScatterSeries { key: string; label: string; points: ScatterPoint[]; color?: ChartSeriesColor }
+interface ScatterPoint {
+  x: number | Date;
+  y: number;
+  size?: number;
+  label?: string;
+}
+interface ScatterSeries {
+  key: string;
+  label: string;
+  points: ScatterPoint[];
+  color?: ChartSeriesColor;
+}
 interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
   label: string;
   series: ScatterSeries[];
-  xScale?: 'number' | 'time';            // default 'number'; 'time' expects x as Date or epoch ms
+  xScale?: 'number' | 'time'; // default 'number'; 'time' expects x as Date or epoch ms
   xDomain?: [number | Date, number | Date]; // default: data extent (nice-rounded for 'number')
-  yDomain?: [number, number];            // default: data extent incl. 0 when all ≥ 0, nice-rounded
-  xLabel: string; yLabel: string;        // axis titles; also table column headers
-  formatX: (x: number) => string;        // receives epoch ms for 'time'
+  yDomain?: [number, number]; // default: data extent incl. 0 when all ≥ 0, nice-rounded
+  xLabel: string;
+  yLabel: string; // axis titles; also table column headers
+  formatX: (x: number) => string; // receives epoch ms for 'time'
   formatY: (y: number) => string;
-  formatSize?: (s: number) => string;    // tooltip/table text for `size`; required when any point has size
-  sizeLabel?: string;                    // name for size in tooltip/table
+  formatSize?: (s: number) => string; // tooltip/table text for `size`; required when any point has size
+  sizeLabel?: string; // name for size in tooltip/table
   reference?: { label: string; points: { x: number | Date; y: number }[] }; // dashed line, app-computed
-  trendLine?: boolean;                   // least-squares line per visible series, dashed, over the series' x-extent
+  trendLine?: boolean; // least-squares line per visible series, dashed, over the series' x-extent
   emptyMessage?: ReactNode;
-  hiddenSeries?: string[]; onHiddenSeriesChange?: (keys: string[]) => void;
+  hiddenSeries?: string[];
+  onHiddenSeriesChange?: (keys: string[]) => void;
   footnote?: ReactNode;
 }
 ```
@@ -110,10 +122,12 @@ interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
 ```ts
 interface HeatmapProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
   label: string;
-  rows: string[]; columns: string[];
-  values: (number | null)[][];          // values[row][col]; null = no data
+  rows: string[];
+  columns: string[];
+  values: (number | null)[][]; // values[row][col]; null = no data
   formatValue: (n: number) => string;
-  emptyMessage?: ReactNode; footnote?: ReactNode;
+  emptyMessage?: ReactNode;
+  footnote?: ReactNode;
 }
 ```
 

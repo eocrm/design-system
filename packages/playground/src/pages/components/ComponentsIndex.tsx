@@ -356,6 +356,20 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['FunnelChart'],
   },
   {
+    to: '/components/scatter-chart',
+    name: 'ScatterChart',
+    description:
+      'Scatter plot of two measures or events on a time axis, with series colours, dot size, trend and reference lines.',
+    preview: SCHEMATICS['ScatterChart'],
+  },
+  {
+    to: '/components/heatmap',
+    name: 'Heatmap',
+    description:
+      'Rows by columns grid coloured by value in sequential steps, with a legend and a neutral no-data cell.',
+    preview: SCHEMATICS['Heatmap'],
+  },
+  {
     to: '/components/sparkline',
     name: 'Sparkline',
     description:

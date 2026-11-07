@@ -153,7 +153,9 @@
       "VisuallyHidden"
     ],
     "composedBy": [
-      "FunnelChart"
+      "FunnelChart",
+      "Heatmap",
+      "ScatterChart"
     ]
   },
   "ChatBubble": {
@@ -399,7 +401,9 @@
       "CatalogPicker",
       "Chart",
       "DataTable",
-      "FunnelChart"
+      "FunnelChart",
+      "Heatmap",
+      "ScatterChart"
     ]
   },
   "EntityChip": {
@@ -487,6 +491,17 @@
       "FormRow",
       "StatGroup"
     ]
+  },
+  "Heatmap": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Chart",
+      "EmptyState",
+      "LiveRegion",
+      "VisuallyHidden"
+    ],
+    "composedBy": []
   },
   "Highlight": {
     "tier": "primitive",
@@ -628,7 +643,9 @@
       "CodeBlock",
       "DateStrip",
       "FunnelChart",
+      "Heatmap",
       "RichTextEditor",
+      "ScatterChart",
       "TopBar",
       "TreeView"
     ]
@@ -851,6 +868,17 @@
       "Slider",
       "Stack",
       "Text"
+    ],
+    "composedBy": []
+  },
+  "ScatterChart": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Chart",
+      "EmptyState",
+      "LiveRegion",
+      "VisuallyHidden"
     ],
     "composedBy": []
   },
@@ -1148,7 +1176,9 @@
       "DashboardWidget",
       "DateStrip",
       "FunnelChart",
+      "Heatmap",
       "LiveRegion",
+      "ScatterChart",
       "StagePath",
       "StatGroup",
       "TreeView"

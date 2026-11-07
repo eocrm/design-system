@@ -158,7 +158,9 @@ const [selection, setSelection] = useState<ChartRange | null>(null);
 - ❌ More than 8 groups at once → fold the tail into an "Other" series in the app (the DS can't know whether your metric is additive).
 - ❌ Two measures with different units → two charts. There is no dual axis.
 - ❌ Stage conversion (pipeline / campaign) → `FunnelChart`.
-- ❌ Non-time categorical comparisons that need sorting, pies, scatter or zoom — not supported.
+- ❌ Two measures against each other, or events on a time axis sized by magnitude → `ScatterChart`.
+- ❌ A value per weekday × hour (two categorical dimensions) → `Heatmap`.
+- ❌ Non-time categorical comparisons that need sorting, or pies — not supported.
 
 #### Anti-patterns
 

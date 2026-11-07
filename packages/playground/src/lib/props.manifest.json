@@ -766,7 +766,7 @@
           "type": "ChartSeries[]",
           "required": true,
           "default": "",
-          "description": "Series to plot, in a stable order: colour follows position (non-comparison series 1–8 get palette slots 1–8),\nso keep the order fixed when filtering. At most 8 primary series — fold the rest into an \"Other\" series in the app\n(series 9+ still render, dashed/outlined, with a dev warning). `values` shorter than `categories` are padded\nwith gaps; `null` is a gap (lines break, bars are absent). `comparisonOf` marks a de-emphasised comparison\n(e.g. previous period): a series key (line / bar) or `'total'` (stacked-bar / area)."
+          "description": "Series to plot, in a stable order. Colour: `color` pins a palette slot (1–8); series without it fill the\nremaining free slots in order, so keep the order fixed when filtering or pin `color`. Comparison series inherit their parent's colour. At most 8 primary series — fold the rest into an \"Other\" series in the app\n(series 9+ still render, dashed/outlined, with a dev warning). `values` shorter than `categories` are padded\nwith gaps; `null` is a gap (lines break, bars are absent). `comparisonOf` marks a de-emphasised comparison\n(e.g. previous period): a series key (line / bar) or `'total'` (stacked-bar / area)."
         },
         {
           "name": "formatValue",
@@ -816,6 +816,62 @@
           "required": false,
           "default": "",
           "description": "Short note under the plot, e.g. \"3 deals in other currencies not included\" or why a comparison was omitted.\nTakes its own row (wraps, never truncates) and the plot fills the rest; also describes the plot for\nscreen readers. Shown in the empty state too, where it often explains the emptiness."
+        },
+        {
+          "name": "details",
+          "type": "((categoryIndex: number) => string[])",
+          "required": false,
+          "default": "",
+          "description": "Extra plain-text lines for a category, e.g. `['235 kcal', '5 times']`. `categoryIndex` indexes `categories`.\nShown as muted rows under the series in the tooltip, appended to the keyboard announcement and listed in a\n\"Details\" column of the data table (joined with \"; \"). Strings only; return `[]` for none."
+        },
+        {
+          "name": "valueLabels",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Print each value on its bar (`bar`, comparisons included) or the stack total above each `stacked-bar`, using\n`formatValue`. Decorative (`aria-hidden`); the data table and tooltip carry the same values. A label wider than its\nbar is omitted rather than truncated. Ignored on `line` and `area`. Default `false`."
+        },
+        {
+          "name": "selectedRange",
+          "type": "ChartRange | null",
+          "required": false,
+          "default": "",
+          "description": "Controlled selected category range (`null` = none). Passing this, `defaultSelectedRange` or\n`onSelectedRangeChange` turns selection on (`line`, `area`, `bar`, `stacked-bar`): mouse press + drag\npast 8px or a touch long-press (300ms) + slide selects, a click or tap outside the band clears,\nShift+←/→ extends from the inspected category and Escape clears. A range naming an unknown category\nis ignored with a dev warning."
+        },
+        {
+          "name": "defaultSelectedRange",
+          "type": "ChartRange | null",
+          "required": false,
+          "default": "",
+          "description": "Initial selection when uncontrolled. Default `null`. Also turns selection on."
+        },
+        {
+          "name": "onSelectedRangeChange",
+          "type": "((range: ChartRange | null) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called with the next selection (or `null` when cleared) on every user change. Also turns selection on."
+        },
+        {
+          "name": "zoomRange",
+          "type": "ChartRange | null",
+          "required": false,
+          "default": "",
+          "description": "Controlled zoomed category range (`null` = all categories). While zoomed, categories, series, markers and\nvalue labels are sliced to the range, the y-axis rescales and `details` still receives original indices.\nA range naming an unknown category is ignored (full range shown) with a dev warning. Omit for uncontrolled:\na \"Zoom to selection\" button appears in the header while a selection exists, \"Reset zoom\" while zoomed."
+        },
+        {
+          "name": "defaultZoomRange",
+          "type": "ChartRange | null",
+          "required": false,
+          "default": "",
+          "description": "Initial zoomed range when uncontrolled. Default `null` (all categories)."
+        },
+        {
+          "name": "onZoomRangeChange",
+          "type": "((range: ChartRange | null) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called with the next zoomed range (or `null` on reset) when the user clicks a zoom button."
         }
       ]
     },
@@ -3311,6 +3367,59 @@
         }
       ]
     },
+    "Heatmap": {
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Accessible name of the figure and caption of its data table, e.g. \"Meals by hour\". Required."
+        },
+        {
+          "name": "rows",
+          "type": "string[]",
+          "required": true,
+          "default": "",
+          "description": "Row labels, top to bottom, e.g. weekdays. Drawn left of the grid and heading the data-table rows. Required."
+        },
+        {
+          "name": "columns",
+          "type": "string[]",
+          "required": true,
+          "default": "",
+          "description": "Column labels, left to right, e.g. hours. Drawn under the grid (thinned to fit) and heading the data-table columns. Required."
+        },
+        {
+          "name": "values",
+          "type": "(number | null)[][]",
+          "required": true,
+          "default": "",
+          "description": "Cell values as `values[row][col]`. `null` (or a missing / non-finite value) is \"no data\": a neutral outlined\ncell, never the lowest colour step. Values fall into up to five colour buckets with nice boundaries; integer data\nspanning five or fewer integers gets one bucket per integer."
+        },
+        {
+          "name": "formatValue",
+          "type": "(n: number) => string",
+          "required": true,
+          "default": "",
+          "description": "Formats a value for the legend, tooltip, announcement and data table, e.g. `n => \\`${n} g\\``. Required."
+        },
+        {
+          "name": "emptyMessage",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "EmptyState title when no cell has a value. Default: translated \"No data for this period\"."
+        },
+        {
+          "name": "footnote",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Short note under the grid; takes its own row, also describes the grid for screen readers and stays in the empty state."
+        }
+      ]
+    },
     "Highlight": {
       "props": [
         {
@@ -5620,6 +5729,129 @@
         }
       ]
     },
+    "ScatterChart": {
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Accessible name of the figure and caption of its data table, e.g. \"Bowl vs meal size\". Required."
+        },
+        {
+          "name": "series",
+          "type": "ScatterSeries[]",
+          "required": true,
+          "default": "",
+          "description": "Point groups to plot, in a stable order. Colour: `color` pins a palette slot (1–8); series without it fill the\nremaining free slots in order. Each slot also has its own marker shape, so identity never relies on colour alone."
+        },
+        {
+          "name": "xScale",
+          "type": "ScatterXScale",
+          "required": false,
+          "default": "'number'",
+          "description": "X-axis kind. `'number'` (default): linear. `'time'`: `x` is a `Date` or epoch ms; `formatX` then receives epoch ms."
+        },
+        {
+          "name": "xDomain",
+          "type": "[number | Date, number | Date]",
+          "required": false,
+          "default": "",
+          "description": "Fixed x range. Default: the data extent (nice-rounded on a `'number'` axis). Points outside are clipped."
+        },
+        {
+          "name": "yDomain",
+          "type": "[number, number]",
+          "required": false,
+          "default": "",
+          "description": "Fixed y range. Default: the data extent, including 0 when every y ≥ 0, nice-rounded. Points outside are clipped."
+        },
+        {
+          "name": "xLabel",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Name of the x quantity, e.g. \"Bowl weight\"; drawn as the x-axis title under the ticks at the plot's end, heads the data-table column and names x in the announcement. Required."
+        },
+        {
+          "name": "yLabel",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Name of the y quantity, e.g. \"Meal size\"; drawn as the y-axis title above the plot, heads the data-table column and names y in the announcement. Required."
+        },
+        {
+          "name": "formatX",
+          "type": "(x: number) => string",
+          "required": true,
+          "default": "",
+          "description": "Formats x for ticks, tooltip, announcement and table (epoch ms on a `'time'` axis). Required."
+        },
+        {
+          "name": "formatY",
+          "type": "(y: number) => string",
+          "required": true,
+          "default": "",
+          "description": "Formats y for ticks, tooltip, announcement and table. Required."
+        },
+        {
+          "name": "formatSize",
+          "type": "((size: number) => string)",
+          "required": false,
+          "default": "",
+          "description": "Formats `size` for tooltip, announcement and table. Required when any point has `size` (dev warning otherwise)."
+        },
+        {
+          "name": "sizeLabel",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Name of `size` in the tooltip, announcement and table header, e.g. \"Calories\". Default: translated \"Size\"."
+        },
+        {
+          "name": "reference",
+          "type": "ScatterReference",
+          "required": false,
+          "default": "",
+          "description": "App-computed reference line (e.g. a recommended ratio), drawn dashed in neutral ink and listed in the legend."
+        },
+        {
+          "name": "trendLine",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Draw a dashed least-squares line per visible series over its own x-extent (series with ≥2 distinct x only). Decorative. Default `false`."
+        },
+        {
+          "name": "emptyMessage",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "EmptyState title when no series has a point. Default: translated \"No data for this period\"."
+        },
+        {
+          "name": "hiddenSeries",
+          "type": "string[]",
+          "required": false,
+          "default": "",
+          "description": "Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored; the last visible series with points can't be hidden (a set hiding all of them is ignored for those)."
+        },
+        {
+          "name": "onHiddenSeriesChange",
+          "type": "((keys: string[]) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called with the next hidden keys when the user toggles a legend item."
+        },
+        {
+          "name": "footnote",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Short note under the plot; takes its own row, also describes the plot for screen readers and stays in the empty state."
+        }
+      ]
+    },
     "Screen": {
       "props": [
         {
@@ -7572,12 +7804,16 @@
     "StatGroupVariant": "\"filled\" | \"card\"",
     "FunnelShape": "\"taper\" | \"sharp\"",
     "FunnelStage": "{ key: string; label: string; value: number; color?: FunnelSlot }",
+    "ScatterReference": "{ label: string; points: { x: number | Date; y: number; }[] }",
+    "ScatterSeries": "{ key: string; label: string; points: ScatterPoint[]; color?: ChartSeriesColor }",
+    "ScatterXScale": "\"number\" | \"time\"",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",
     "TreeViewOverflow": "{ label: string; onLoadMore?: (() => void); loading?: boolean }",
     "TreeViewView": "\"list\" | \"chart\"",
     "ChartCurve": "\"smooth\" | \"linear\"",
     "ChartMarker": "(ChartMarkerBase & { at: string; from?: undefined; to?: undefined; }) | (ChartMarkerBase & { from: string; to: string; at?: undefined; })",
-    "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string }"
+    "ChartRange": "{ from: string; to: string }",
+    "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string; color?: ChartSeriesColor }"
   }
 }

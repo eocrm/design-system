@@ -77,6 +77,8 @@ import { DashboardWidgetDemo } from './pages/components/DashboardWidgetDemo';
 import { StatGroupDemo } from './pages/components/StatGroupDemo';
 import { ChartDemo } from './pages/components/ChartDemo';
 import { FunnelChartDemo } from './pages/components/FunnelChartDemo';
+import { ScatterChartDemo } from './pages/components/ScatterChartDemo';
+import { HeatmapDemo } from './pages/components/HeatmapDemo';
 import { SparklineDemo } from './pages/components/SparklineDemo';
 import { TreeViewDemo } from './pages/components/TreeViewDemo';
 import { ThreadDemo } from './pages/components/ThreadDemo';
@@ -231,6 +233,8 @@ export default function App() {
             <Route path="/components/stat-group" element={<StatGroupDemo />} />
             <Route path="/components/chart" element={<ChartDemo />} />
             <Route path="/components/funnel-chart" element={<FunnelChartDemo />} />
+            <Route path="/components/scatter-chart" element={<ScatterChartDemo />} />
+            <Route path="/components/heatmap" element={<HeatmapDemo />} />
             <Route path="/components/sparkline" element={<SparklineDemo />} />
             <Route path="/components/tree-view" element={<TreeViewDemo />} />
             <Route path="/components/thread" element={<ThreadDemo />} />

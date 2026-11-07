@@ -37,11 +37,13 @@
 ### Task 1: Per-series colour (DS-24)
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Chart/chartModel.ts` (`ChartSeries`, `resolveSeries`)
 - Modify: `packages/design-system/src/components/Chart/index.ts`, `packages/design-system/src/index.ts` (export `ChartSeriesColor`)
 - Test: `packages/design-system/src/components/Chart/chartModel.test.ts`
 
 **Interfaces:**
+
 - Produces: `export type ChartSeriesColor = 1|2|3|4|5|6|7|8` (in `chartModel.ts`, JSDoc'd); `ChartSeries.color?: ChartSeriesColor`; `resolveSeries` assigns `slot` honouring `color`. Later tasks (ScatterChart) import `ChartSeriesColor` and a new helper `assignSlots(colors: (ChartSeriesColor | undefined)[]): { slot: number; overflow: boolean }[]` exported from `chartModel.ts`.
 
 - [ ] **Step 1: Write failing tests** in `chartModel.test.ts`:
@@ -59,6 +61,7 @@
 ### Task 2: MoneyInput ignores a typed `.` in dot-grouping locales (DS-39)
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/_internal/currency.ts` (add helper)
 - Modify: `packages/design-system/src/components/MoneyInput/MoneyInput.tsx` (keydown rule ~line 307, and the change/beforeinput path)
 - Modify: `packages/design-system/src/components/NumberField/NumberField.tsx:242` (use the helper)
@@ -66,6 +69,7 @@
 - Test: `packages/design-system/src/components/MoneyInput/MoneyInput.test.tsx`, `packages/design-system/src/components/_internal/currency.test.ts` (create if absent)
 
 **Interfaces:**
+
 - Produces: `export function typedDotIsAmbiguous(sep: { group: string; decimal: string }): boolean` — `sep.decimal !== '.' && sep.group === '.'`.
 
 - [ ] **Step 1: Failing tests.**
@@ -83,11 +87,13 @@
 ### Task 3: Tooltip detail rows (DS-12a)
 
 **Files:**
+
 - Modify: `Chart/Chart.tsx` (prop, tooltip rows, announcement, table column), `Chart/ChartTooltip.tsx`, `Chart/ChartTable.tsx`, `Chart/Chart.module.scss`
 - Modify: `src/i18n/messages.ts`, `en.ts` (`'Details'`), `ru.ts` (`'Подробности'`): key `chart.details` (JSDoc: header of the data table's details column)
 - Test: `Chart/Chart.test.tsx`
 
 **Interfaces:**
+
 - Produces: `ChartProps.details?: (categoryIndex: number) => string[]` — index is always the index into the `categories` prop as passed (Task 6 relies on this).
 
 - [ ] **Step 1: Failing tests** in `Chart.test.tsx`:
@@ -103,14 +109,16 @@
 ### Task 4: Bar value labels (DS-12b)
 
 **Files:**
+
 - Modify: `Chart/chartModel.ts` (`LayoutInput.valueLabels?: boolean`, `ChartLayout.valueLabels: ValueLabel[]`, y-domain headroom), `Chart/Chart.tsx` (prop + render), `Chart/Chart.module.scss`, `Chart/Chart.tokens.scss` (`--chart-value-label-fg: var(--color-fg-muted)`, `--chart-value-label-size: var(--font-size-xs)` or nearest existing small size token)
 - Test: `Chart/chartModel.test.ts`, `Chart/Chart.test.tsx`
 
 **Interfaces:**
+
 - Produces: `export interface ValueLabel { x: number; y: number; text: string; anchor: 'above' | 'below' }`; `ChartProps.valueLabels?: boolean`.
 
 - [ ] **Step 1: Failing tests** (`chartModel.test.ts`, via `computeLayout`):
-  - `bar`, one series `[52, 48]`, `formatValue: n => `${n} g``, width 400 → two labels `52 g`, `48 g`, each `x` equals its bar centre, `y` above bar top.
+  - `bar`, one series `[52, 48]`, `formatValue: n => `${n} g``, width 400 → two labels `52 g`, `48 g`, each `x`equals its bar centre,`y` above bar top.
   - Negative value → `anchor: 'below'`, `y` below the bar end.
   - `null` value → no label for it.
   - Narrow: width such that band < `estimateTextWidth('52 g')` → `valueLabels` empty for those bars.
@@ -126,10 +134,12 @@
 ### Task 5: Range + zoom model (DS-23, pure)
 
 **Files:**
+
 - Create: `packages/design-system/src/components/Chart/chartRange.ts`
 - Test: `packages/design-system/src/components/Chart/chartRange.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `export interface ChartRange { from: string; to: string }` (JSDoc; re-exported publicly in Task 6)
   - `resolveRange(range: ChartRange | null | undefined, categories: readonly string[]): { from: number; to: number } | null` — first-match `indexOf`; unknown → `null`; swaps so `from ≤ to`.
@@ -150,11 +160,13 @@
 ### Task 6: Range selection + zoom wiring — mouse, keyboard, zoom UI (DS-23)
 
 **Files:**
+
 - Modify: `Chart/Chart.tsx`, `Chart/Chart.module.scss`, `Chart/Chart.tokens.scss` (`--chart-selection-fill: var(--color-accent)`, `--chart-selection-opacity: 0.16`, `--chart-selection-edge: var(--color-accent)`), `Chart/index.ts`, `src/index.ts` (export type `ChartRange`)
 - Modify: i18n `messages.ts`/`en.ts`/`ru.ts` keys under `chart`: `zoomToSelection` ("Zoom to selection" / "Увеличить выделенное"), `resetZoom` ("Reset zoom" / "Сбросить масштаб"), `selected` ("Selected {from} to {to}" / "Выделено: {from} — {to}"; single category: `selectedOne` "Selected {category}" / "Выделено: {category}"), `selectionCleared` ("Selection cleared" / "Выделение снято"), and extend `keyboardHint` handling with `rangeHint` ("Shift+arrows select a range." / "Shift+стрелки выделяют диапазон.") appended to the description only when selection is enabled. Use the existing interpolation style in `messages.ts`.
 - Test: `Chart/Chart.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 5 functions; Task 3 `details` index contract.
 - Produces: `ChartProps.selectedRange?`, `defaultSelectedRange?`, `onSelectedRangeChange?`, `zoomRange?`, `defaultZoomRange?`, `onZoomRangeChange?` (all `ChartRange | null`). Selection is enabled iff `onSelectedRangeChange` or `selectedRange` or `defaultSelectedRange` is passed. Use `useControllableState` like `hiddenSeries`.
 
@@ -176,11 +188,13 @@
 ### Task 7: Range selection on touch — long-press (DS-23)
 
 **Files:**
+
 - Modify: `Chart/Chart.tsx`, `Chart/Chart.module.scss` (`-webkit-touch-callout: none; user-select: none;` on the plot only when selection enabled; `touch-action` stays `pan-y` until a long-press lifts, then the handler calls `preventDefault` on `touchmove` for that touch only)
 - Modify: `packages/playground/src/pages/components/ChartDemo.tsx` (add a "Range selection" example: bowl weight per minute, `onSelectedRangeChange` showing the chosen range in a `Text` below) — needed by the spec.
 - Test: `Chart/Chart.test.tsx` (fake timers), Create: `tests/touch-chart-range.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `LONG_PRESS_MS`, `LONG_PRESS_SLOP_PX` from DashboardCanvas.
 
 - [ ] **Step 1: Failing tests.**
@@ -198,9 +212,11 @@
 ### Task 8: ScatterChart model (DS-16, DS-17)
 
 **Files:**
+
 - Create: `packages/design-system/src/components/ScatterChart/scatterModel.ts`, `scatterModel.test.ts`
 
 **Interfaces:**
+
 - Consumes: `assignSlots`, `ChartSeriesColor`, `estimateTextWidth`, `markerShape` from `../Chart/chartModel`.
 - Produces (types also re-exported publicly in Task 9):
   - `ScatterPoint { x: number | Date; y: number; size?: number; label?: string }`, `ScatterSeries { key; label; points: ScatterPoint[]; color?: ChartSeriesColor }`, `ScatterReference { label: string; points: { x: number | Date; y: number }[] }`, `ScatterXScale = 'number' | 'time'`.
@@ -227,12 +243,14 @@
 ### Task 9: ScatterChart component (DS-16, DS-17)
 
 **Files:**
+
 - Create: `src/components/ScatterChart/ScatterChart.tsx`, `ScatterChart.module.scss`, `ScatterChart.tokens.scss` (`--scatter-dot-min`, `--scatter-dot-max` as px tokens defaulting to existing size primitives; `--scatter-trend-dash`, `--scatter-reference-color: var(--color-fg-muted)`), `ScatterChart.test.tsx`, `index.ts`
 - Modify: `src/index.ts` (component + all public types), styles index if component token files are registered centrally (follow how `Chart.tokens.scss` is wired)
 - Modify: i18n — `scatterChart.keyboardHint`, reuse `chart.empty`/`chart.noData`
 - Test: `ScatterChart.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 8 model; `ChartLegend`, `ChartTooltip`, `ChartTable` from `../Chart/…`; `useSize`, `useControllableState`, `useTranslation` as Chart does.
 - Produces: `ScatterChart` (forwardRef to the `figure`), `ScatterChartProps` exactly as in spec §4.
 
@@ -245,12 +263,14 @@
 ### Task 10: Heatmap tokens + model + component (DS-18)
 
 **Files:**
+
 - Modify: `packages/design-tokens/src/tokens.json` (`heatmap.1`…`heatmap.5`, light + dark, web `--color-heatmap-1..5`, Compose outputs following `chart.series.*`), generated outputs, contract fixture (additions only)
 - Create: `packages/design-tokens/test/heatmap-ramp.test.mjs`
 - Create: `src/components/Heatmap/heatmapModel.ts`, `heatmapModel.test.ts`, `Heatmap.tsx`, `Heatmap.module.scss`, `Heatmap.tokens.scss` (`--heatmap-step-1..5` → `--color-heatmap-1..5`, `--heatmap-empty: var(--color-bg-muted)`, `--heatmap-empty-outline: var(--color-border)`, `--heatmap-gap: 2px`→ use an existing space/border token), `Heatmap.test.tsx`, `index.ts`
 - Modify: `src/index.ts`; i18n `heatmap.keyboardHint`, `heatmap.noData` ("No data" / "Нет данных"), `heatmap.row`/`heatmap.column` only if the table needs a corner header (else reuse `chart.category`)
 
 **Interfaces:**
+
 - Produces:
   - `heatmapBuckets(values: readonly (number|null)[][]): { thresholds: number[]; steps: (1|2|3|4|5)[]; integer: boolean } | null` (null when no finite values).
   - `bucketOf(value: number, b): number` (index into `steps`).
@@ -273,7 +293,8 @@
 ### Task 11: Docs, manifest, playground wiring
 
 **Files:**
-- Create: `packages/design-system/docs/components/ScatterChart.md`, `Heatmap.md` (H1 `` # `ScatterChart` — <summary> ``, TL;DR, canonical snippet, "When NOT to use", generated props table)
+
+- Create: `packages/design-system/docs/components/ScatterChart.md`, `Heatmap.md` (H1 ``# `ScatterChart` — <summary>``, TL;DR, canonical snippet, "When NOT to use", generated props table)
 - Modify: `docs/components/Chart.md` (sections for `color`, `details`, `valueLabels`, range selection + zoom incl. gestures table; remove "zoom unsupported" note; point scatter/heatmap "not supported" lines to the new components), `AI-PRIMER.md` (index lines), `src/_meta/manifest.ts` + `scripts/generate-manifest.mjs` (`ScatterChart: 'Display'`, `Heatmap: 'Display'`), run `npm run build:manifest` and `npm run build:docs`
 - Create: `packages/playground/src/pages/components/ScatterChartDemo.tsx`, `HeatmapDemo.tsx` (Home Hub-like data: meals today on a time axis sized by grams with a usual-pace reference; bowl size vs eaten with trend; weekday × hour grams with some nulls)
 - Modify: `ChartDemo.tsx` (examples for `color`, `details` + `valueLabels`; the range example from Task 7 gets a zoom note), `packages/playground/src/App.tsx`, `src/layout/AppShell/navItems.ts`, `src/pages/components/ComponentsIndex.tsx`, `src/pages/components/overviewSchematics.tsx`, `src/pages/mockups/registry.ts` (`ComponentName` union)
