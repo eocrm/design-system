@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createRef, useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -306,4 +308,20 @@ it('announces even when it mounts already loading', async () => {
   const region = container.querySelector('[role="status"][aria-live="polite"]');
   expect(region).not.toBeNull();
   await waitFor(() => expect(region!.textContent).toBe('Saving…'));
+});
+
+describe('Switch touch tokens (DS-35)', () => {
+  const tokens = readFileSync(resolve(__dirname, 'Switch.tokens.scss'), 'utf8');
+  const mod = readFileSync(resolve(__dirname, 'Switch.module.scss'), 'utf8');
+  it('defaults --switch-hit-min-height to its desktop value', () => {
+    expect(tokens).toMatch(/--switch-hit-min-height:\s*auto;/);
+  });
+  it('re-points --switch-hit-min-height to size-touch on coarse pointers', () => {
+    expect(tokens).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--switch-hit-min-height:\s*var\(--size-touch\)/,
+    );
+  });
+  it('uses the token in the module', () => {
+    expect(mod).toContain('min-block-size: var(--switch-hit-min-height)');
+  });
 });

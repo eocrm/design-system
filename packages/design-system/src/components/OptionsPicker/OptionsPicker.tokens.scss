@@ -65,4 +65,15 @@
   // Empty state
   --options-picker-empty-padding-y: var(--space-3);
   --options-picker-empty-padding-x: var(--space-2);
+
+  // Touch target: option row min height (44px on coarse pointers)
+  --options-picker-row-min-height: auto;
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --options-picker-row-min-height: var(--size-touch);
+  }
 }

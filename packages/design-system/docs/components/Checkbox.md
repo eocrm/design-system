@@ -53,3 +53,5 @@
 - ❌ Treating `indeterminate` as a third value. It is a display flag; `checked` is still the underlying boolean.
 - ❌ Wrapping the checkbox in your own `<label>`. It is already wrapped; an outer `<label>` nests two and breaks the click contract.
 - ❌ Omitting `label` AND `aria-label`. Screen readers announce just "checkbox" with no context.
+
+**Touch devices:** On touch devices (`pointer: coarse`) the label row is at least 44px tall. Override `--checkbox-hit-min-height` in your own `@media (pointer: coarse)` block to opt out.

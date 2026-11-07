@@ -56,4 +56,15 @@
 
   // Spinner
   --switch-spin-fg: var(--color-fg-muted);
+
+  // Touch target: label wrapper min height (44px on coarse pointers)
+  --switch-hit-min-height: auto;
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --switch-hit-min-height: var(--size-touch);
+  }
 }

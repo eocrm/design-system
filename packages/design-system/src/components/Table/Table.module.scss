@@ -236,6 +236,7 @@
 // the density rules above.
 .cellLink {
   display: block;
+  min-block-size: var(--table-cell-link-min-height);
   color: inherit;
   font-weight: var(--table-cell-link-font-weight);
   text-decoration: none;

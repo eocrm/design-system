@@ -47,4 +47,15 @@
   --tabs-count-padding-x: var(--space-1);
   --tabs-count-font-size: var(--font-size-xs);
   --tabs-count-font-weight: var(--font-weight-semibold);
+
+  // Touch target: tab min height (44px on coarse pointers)
+  --tabs-tab-min-height: auto;
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --tabs-tab-min-height: var(--size-touch);
+  }
 }

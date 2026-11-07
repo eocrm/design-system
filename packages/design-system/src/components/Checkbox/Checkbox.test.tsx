@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
@@ -197,5 +199,21 @@ describe('Checkbox', () => {
     expect(input).toHaveFocus();
     expect(input.indeterminate).toBe(true);
     expect(input).not.toBeChecked();
+  });
+});
+
+describe('Checkbox touch tokens (DS-35)', () => {
+  const tokens = readFileSync(resolve(__dirname, 'Checkbox.tokens.scss'), 'utf8');
+  const mod = readFileSync(resolve(__dirname, 'Checkbox.module.scss'), 'utf8');
+  it('defaults --checkbox-hit-min-height to its desktop value', () => {
+    expect(tokens).toMatch(/--checkbox-hit-min-height:\s*auto;/);
+  });
+  it('re-points --checkbox-hit-min-height to size-touch on coarse pointers', () => {
+    expect(tokens).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--checkbox-hit-min-height:\s*var\(--size-touch\)/,
+    );
+  });
+  it('uses the token in the module', () => {
+    expect(mod).toContain('min-block-size: var(--checkbox-hit-min-height)');
   });
 });

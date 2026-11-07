@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef } from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -1362,5 +1364,21 @@ describe('async loadOptions', () => {
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0]![0]).toMatch(/loadOptions/);
     warn.mockRestore();
+  });
+});
+
+describe('OptionsPicker touch tokens (DS-35)', () => {
+  const tokens = readFileSync(resolve(__dirname, 'OptionsPicker.tokens.scss'), 'utf8');
+  const mod = readFileSync(resolve(__dirname, 'OptionsPicker.module.scss'), 'utf8');
+  it('defaults --options-picker-row-min-height to its desktop value', () => {
+    expect(tokens).toMatch(/--options-picker-row-min-height:\s*auto;/);
+  });
+  it('re-points --options-picker-row-min-height to size-touch on coarse pointers', () => {
+    expect(tokens).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--options-picker-row-min-height:\s*var\(--size-touch\)/,
+    );
+  });
+  it('uses the token in the module', () => {
+    expect(mod).toContain('min-block-size: var(--options-picker-row-min-height)');
   });
 });

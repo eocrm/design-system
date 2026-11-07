@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
@@ -291,5 +293,21 @@ describe('AgendaView', () => {
     );
     const headers = document.body.textContent ?? '';
     expect(headers).toMatch(/[Ѐ-ӿ]/);
+  });
+});
+
+describe('Calendar touch tokens (DS-35)', () => {
+  const tokens = readFileSync(resolve(__dirname, 'Calendar.tokens.scss'), 'utf8');
+  const mod = readFileSync(resolve(__dirname, 'AgendaView.module.scss'), 'utf8');
+  it('defaults --calendar-agenda-row-min-height to its desktop value', () => {
+    expect(tokens).toMatch(/--calendar-agenda-row-min-height:\s*auto;/);
+  });
+  it('re-points --calendar-agenda-row-min-height to size-touch on coarse pointers', () => {
+    expect(tokens).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--calendar-agenda-row-min-height:\s*var\(--size-touch\)/,
+    );
+  });
+  it('uses the token in the module', () => {
+    expect(mod).toContain('min-block-size: var(--calendar-agenda-row-min-height)');
   });
 });

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useEffect, useState } from 'react';
@@ -1082,5 +1084,21 @@ describe('TabItem.attrs', () => {
       'activity-tab',
     );
     expect(screen.getByRole('tab', { name: /Overview/ })).not.toHaveAttribute('data-tour');
+  });
+});
+
+describe('Tabs touch tokens (DS-35)', () => {
+  const tokens = readFileSync(resolve(__dirname, 'Tabs.tokens.scss'), 'utf8');
+  const mod = readFileSync(resolve(__dirname, 'Tabs.module.scss'), 'utf8');
+  it('defaults --tabs-tab-min-height to its desktop value', () => {
+    expect(tokens).toMatch(/--tabs-tab-min-height:\s*auto;/);
+  });
+  it('re-points --tabs-tab-min-height to size-touch on coarse pointers', () => {
+    expect(tokens).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--tabs-tab-min-height:\s*var\(--size-touch\)/,
+    );
+  });
+  it('uses the token in the module', () => {
+    expect(mod).toContain('min-block-size: var(--tabs-tab-min-height)');
   });
 });

@@ -28,6 +28,7 @@
   display: flex;
   align-items: center;
   gap: var(--options-picker-row-gap);
+  min-block-size: var(--options-picker-row-min-height);
   padding: var(--options-picker-row-padding);
   border-radius: var(--options-picker-row-radius);
   cursor: pointer;

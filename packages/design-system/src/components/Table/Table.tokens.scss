@@ -76,4 +76,15 @@
 
   // Semibold marks a whole-cell link as actionable without link-blue text.
   --table-cell-link-font-weight: var(--font-weight-semibold);
+
+  // Touch target: Table.CellLink min height (44px on coarse pointers)
+  --table-cell-link-min-height: auto;
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --table-cell-link-min-height: var(--size-touch);
+  }
 }

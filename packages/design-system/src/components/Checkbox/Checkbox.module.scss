@@ -7,6 +7,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--checkbox-gap);
+  min-block-size: var(--checkbox-hit-min-height);
   cursor: pointer;
   user-select: none;
 

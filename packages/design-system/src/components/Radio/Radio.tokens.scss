@@ -56,4 +56,15 @@
   // RadioGroup — items
   --radio-group-gap-vertical: var(--space-2);
   --radio-group-gap-horizontal: var(--space-4);
+
+  // Touch target: label wrapper min height (44px on coarse pointers)
+  --radio-hit-min-height: auto;
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --radio-hit-min-height: var(--size-touch);
+  }
 }

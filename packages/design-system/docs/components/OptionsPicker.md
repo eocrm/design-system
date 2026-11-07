@@ -121,3 +121,5 @@ OptionsPicker has no `name` attribute and no form association. Action menus (Edi
 - ❌ Multi-mode `selected` as a fresh array each render (e.g. `selected={ids.filter(…)}` inline) — a new identity resets the open panel's draft. Keep it in state or `useMemo`.
 - ❌ Async mode with `groups`, or restoring `selected` from a URL without `selectedOptions` (rows show raw ids).
 - ❌ Controlling open state without passing both `open` and `onOpenChange` — partial control breaks invariants.
+
+**Touch devices:** On touch devices (`pointer: coarse`) option rows are at least 44px tall. Override `--options-picker-row-min-height` in your own `@media (pointer: coarse)` block to opt out.

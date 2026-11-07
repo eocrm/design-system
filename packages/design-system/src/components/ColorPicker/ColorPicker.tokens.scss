@@ -57,4 +57,15 @@
 
   // Wrapper disabled
   --color-picker-opacity-disabled: var(--opacity-disabled);
+
+  // Preset swatch minimum size (44px on coarse pointers)
+  --color-picker-swatch-min-size: var(--size-sm);
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --color-picker-swatch-min-size: var(--size-touch);
+  }
 }

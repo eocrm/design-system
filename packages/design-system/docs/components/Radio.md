@@ -35,3 +35,5 @@ Inside a group (preferred): `<RadioGroup name="size" defaultValue="md" label="T-
 - ❌ Setting `checked` on a Radio inside a `<RadioGroup>` — the group's `value` already controls each child's checked state.
 - ❌ Omitting both `label` and `aria-label` — the radio is unlabelled to AT.
 - Inside a group, a Radio's `onChange` runs first, then the group's `onChange`.
+
+**Touch devices:** On touch devices (`pointer: coarse`) each radio's label row is at least 44px tall. Override `--radio-hit-min-height` in your own `@media (pointer: coarse)` block to opt out.
