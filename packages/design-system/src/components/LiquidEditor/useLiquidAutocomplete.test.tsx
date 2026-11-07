@@ -7,17 +7,17 @@ describe('getAutocompleteContext', () => {
 
   it('detects variable context inside an output tag', () => {
     const ctx = getAutocompleteContext('{{ fir', 6);
-    expect(ctx).toEqual({ kind: 'variable', query: 'fir', wordStart: 3 });
+    expect(ctx).toEqual({ kind: 'variable', query: 'fir', wordStart: 3, open: 0 });
   });
 
   it('detects filter context right after a pipe', () => {
     const ctx = getAutocompleteContext('{{ name | up', 12);
-    expect(ctx).toEqual({ kind: 'filter', query: 'up', wordStart: 10 });
+    expect(ctx).toEqual({ kind: 'filter', query: 'up', wordStart: 10, open: 0 });
   });
 
   it('detects an empty query just after the opening delimiter', () => {
     const ctx = getAutocompleteContext('{{ ', 3);
-    expect(ctx).toEqual({ kind: 'variable', query: '', wordStart: 3 });
+    expect(ctx).toEqual({ kind: 'variable', query: '', wordStart: 3, open: 0 });
   });
 
   it('returns null after the tag is closed', () => {
@@ -43,7 +43,7 @@ describe('dotted queries (#304)', () => {
   it('query spans the dotted path', () => {
     const v = '{{ event.ty';
     const ctx = getAutocompleteContext(v, v.length);
-    expect(ctx).toEqual({ kind: 'variable', query: 'event.ty', wordStart: 3 });
+    expect(ctx).toEqual({ kind: 'variable', query: 'event.ty', wordStart: 3, open: 0 });
   });
 
   it('trailing dot keeps the prefix as query', () => {
@@ -64,5 +64,19 @@ describe('dotted queries (#304)', () => {
   it('filter context after | is unaffected', () => {
     const v = '{{ x | upc';
     expect(getAutocompleteContext(v, v.length)?.kind).toBe('filter');
+  });
+});
+
+describe('tag context (#749)', () => {
+  it('detects {% tag position', () => {
+    expect(getAutocompleteContext('{% i', 4)).toEqual({
+      kind: 'tag',
+      query: 'i',
+      wordStart: 3,
+      open: 0,
+    });
+    expect(getAutocompleteContext('{%- ', 4)?.kind).toBe('tag');
+    expect(getAutocompleteContext('{% if rec', 9)?.kind).toBe('variable');
+    expect(getAutocompleteContext('{{ i', 4)?.kind).toBe('variable');
   });
 });

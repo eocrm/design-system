@@ -14,7 +14,13 @@ import { useTranslation } from '../../i18n';
 import { tokenize, unknownVariables } from './liquidTokenizer';
 import { getCaretCoordinates } from './caretCoordinates';
 import { DEFAULT_LIQUID_FILTERS } from './liquidFilters';
-import { applySnippet, snippetsFor, ALL_LIQUID_TAGS } from './liquidTags';
+import {
+  applySnippet,
+  snippetsFor,
+  ALL_LIQUID_TAGS,
+  LIQUID_TAG_SNIPPETS,
+  type LiquidTagSnippetId,
+} from './liquidTags';
 import { HighlightLayer } from './HighlightLayer';
 import { AutocompleteMenu } from './AutocompleteMenu';
 import { InsertVariableMenu } from './InsertVariableMenu';
@@ -101,13 +107,27 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
 
     const lineCount = useMemo(() => value.split('\n').length, [value]);
 
+    const tagDescriptions = useMemo(
+      () =>
+        Object.fromEntries(
+          LIQUID_TAG_SNIPPETS.map((s) => [s.id, t(`liquidEditor.tagDescription.${s.id}`)]),
+        ) as Record<LiquidTagSnippetId, string>,
+      [t],
+    );
+
     const interactive = !readOnly && !disabled;
     const {
       state: ac,
       recompute,
       move,
       close,
-    } = useLiquidAutocomplete({ variables, filters, enabled: interactive });
+    } = useLiquidAutocomplete({
+      variables,
+      filters,
+      enabled: interactive,
+      tags,
+      tagDescriptions,
+    });
 
     const [anchorRect, setAnchorRect] = useState({ top: 0, left: 0, height: 0, width: 0 });
 
@@ -247,12 +267,16 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
         // selection END — so any actively selected range is consumed by the
         // inserted suggestion, not left dangling after it.
         const replaceEnd = ta.selectionEnd ?? ta.selectionStart ?? 0;
-        const { value: next, caret: nextCaret } = applyCompletion(
-          value,
-          replaceEnd,
-          ac.context,
-          item.value,
-        );
+        // A snippet replaces the whole `{%` token; drop it first so `$SEL` is empty.
+        const tail = /^\s*-?%\}/.exec(value.slice(replaceEnd))?.[0].length ?? 0;
+        const { value: next, caret: nextCaret } = item.snippet
+          ? applySnippet(
+              value.slice(0, ac.context.open) + value.slice(replaceEnd + tail),
+              ac.context.open,
+              ac.context.open,
+              item.snippet.template,
+            )
+          : applyCompletion(value, replaceEnd, ac.context, item.value);
         close();
         // A just-completed word still matches its variable; suppress the
         // immediate reopen at the resulting caret/value until the user types more.

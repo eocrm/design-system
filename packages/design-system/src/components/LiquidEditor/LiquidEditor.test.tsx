@@ -535,4 +535,47 @@ describe('insert tag menu (#749)', () => {
     renderEditor(<Harness readOnly />);
     expect(screen.getByRole('button', { name: 'Insert tag' })).toBeDisabled();
   });
+
+  describe('{% tag autocomplete (#749)', () => {
+    it('expands the accepted snippet', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness />);
+      const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+      await user.type(ta, '{{% ca');
+      expect(screen.getByRole('option', { name: /case/ })).toBeInTheDocument();
+      await user.keyboard('{Enter}');
+      expect(ta).toHaveValue('{% case  %}{% when "" %}{% endcase %}');
+      await waitFor(() => expect(ta.selectionStart).toBe('{% case '.length));
+      expect(screen.queryByText(/unknown variable/i)).not.toBeInTheDocument();
+    });
+
+    it('consumes an existing %} tail', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness initial="{% un %}" />);
+      const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+      ta.focus();
+      ta.setSelectionRange(5, 5);
+      await user.keyboard('{ArrowRight}{ArrowLeft}');
+      await user.keyboard('{Enter}');
+      expect(ta).toHaveValue('{% unless  %}{% endunless %}');
+    });
+
+    it('is off for tags={[]} and readOnly', async () => {
+      const user = userEvent.setup();
+      const { unmount } = renderEditor(<Harness tags={[]} />);
+      await user.type(screen.getByRole('combobox'), '{{% i');
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      unmount();
+      renderEditor(<Harness readOnly initial="{% i" />);
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+
+    it('empty {% with nothing after does not throw on navigation', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness />);
+      await user.type(screen.getByRole('combobox'), '{{% ');
+      await user.keyboard('{ArrowDown}{Enter}');
+      expect(screen.getByRole('combobox')).toHaveValue('{% if  %}{% else %}{% endif %}');
+    });
+  });
 });
