@@ -1,5 +1,5 @@
 import { createRef, useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MoneyInput, type MoneyValue } from './MoneyInput';
 import { Field } from '../Field';
@@ -311,6 +311,93 @@ describe('MoneyInput', () => {
       expect(amountBox().value).toBe('12,5');
       expect(amountBox().selectionStart).toBe(4);
       expect(onChange).toHaveBeenLastCalledWith({ amount: '12.5', currency: 'EUR' });
+    });
+
+    it.each([
+      ['de-DE', '1.234,5', '1.234,5', '1234.5'],
+      ['de-DE', '1.234.567', '1.234.567', '1234567'],
+      ['es-ES', '1.234,5', '1.234,5', '1234.5'],
+      ['it-IT', '12.5', '12,5', '12.5'],
+    ])('%s: typed thousands dots "%s" show %s (%s)', async (locale, typed, shown, amount) => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale={locale}>
+          <Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), typed);
+      expect(amountBox().value).toBe(shown);
+      expect(amountBox().selectionStart).toBe(shown.length);
+      expect(onChange).toHaveBeenLastCalledWith({ amount, currency: 'EUR' });
+    });
+
+    it('de-DE KWD: a separator after a dot and 3 digits makes the dot a group', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="de-DE">
+          <Harness
+            onChange={onChange}
+            currencies={['KWD', 'EUR']}
+            initial={{ amount: null, currency: 'KWD' }}
+          />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), '1.234,5');
+      expect(amountBox().value).toBe('1.234,5');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '1234.5', currency: 'KWD' });
+    });
+
+    it('de-DE: "." over a selection is selection-aware', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="de-DE">
+          <Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), '1,5');
+      await userEvent.type(amountBox(), '.', {
+        initialSelectionStart: 1,
+        initialSelectionEnd: 2,
+      });
+      expect(amountBox().value).toBe('1,5');
+      expect(amountBox().selectionStart).toBe(2);
+      onChange.mockClear();
+      await userEvent.type(amountBox(), '.', {
+        initialSelectionStart: 0,
+        initialSelectionEnd: 3,
+      });
+      expect(amountBox().value).toBe(',');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: null, currency: 'EUR' });
+    });
+
+    it('de-DE: a mobile beforeinput "." types the decimal; composition is left alone', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="de-DE">
+          <Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), '1');
+      const fire = (init: InputEventInit) => {
+        const e = new InputEvent('beforeinput', {
+          bubbles: true,
+          cancelable: true,
+          inputType: 'insertText',
+          ...init,
+        });
+        act(() => {
+          amountBox().dispatchEvent(e);
+        });
+        return e.defaultPrevented;
+      };
+      expect(fire({ data: '.', isComposing: true })).toBe(false);
+      fireEvent.compositionStart(amountBox());
+      expect(fire({ data: '.' })).toBe(false);
+      fireEvent.compositionEnd(amountBox());
+      expect(fire({ data: '.' })).toBe(true);
+      expect(amountBox().value).toBe('1,');
+      await userEvent.type(amountBox(), '5');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '1.5', currency: 'EUR' });
     });
 
     it('de-DE dot is still the decimal for a 3-digit currency (KWD)', async () => {

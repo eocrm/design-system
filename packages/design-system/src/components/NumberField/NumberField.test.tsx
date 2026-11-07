@@ -447,11 +447,86 @@ describe('NumberField locale separators and paste', () => {
     ['es', '12.5', 12.5],
     ['it', '12.5', 12.5],
     ['de', '1,5', 1.5],
+    // A typed '.' then exactly 3 digits then another separator was a thousands dot.
+    ['de', '1.234,5', 1234.5],
+    ['de', '1.234.567', 1234567],
+    ['es', '1.234,5', 1234.5],
   ])('%s: typing %s fires %s', async (locale, text, expected) => {
     const spy = vi.fn();
-    inLocale(locale, <Harness spy={spy} />);
-    await userEvent.setup().type(input(), text);
+    inLocale(locale, <Harness spy={spy} step={0.1} />);
+    const user = userEvent.setup();
+    await user.type(input(), text);
     expect(spy).toHaveBeenLastCalledWith(expected);
+    await user.tab();
+    expect(input()).toHaveAttribute('aria-valuenow', String(expected));
+  });
+
+  it('de: typed thousands dots keep the caret after each rewrite', async () => {
+    inLocale('de', <Harness />);
+    const user = userEvent.setup();
+    await user.type(input(), '1.234.');
+    expect(input()).toHaveValue('1.234.');
+    expect((input() as HTMLInputElement).selectionStart).toBe(6);
+  });
+
+  it('de: typing . over the whole "1,5" leaves the decimal, never x10', async () => {
+    const spy = vi.fn();
+    inLocale('de', <Harness spy={spy} />);
+    const user = userEvent.setup();
+    await user.type(input(), '1,5');
+    spy.mockClear();
+    await user.tripleClick(input());
+    await user.keyboard('.');
+    expect(input()).toHaveValue(',');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('de: typing . over a selected "," replaces it with the decimal', async () => {
+    const spy = vi.fn();
+    inLocale('de', <Harness spy={spy} />);
+    const user = userEvent.setup();
+    await user.type(input(), '1,5');
+    const el = input() as HTMLInputElement;
+    el.setSelectionRange(1, 2);
+    await user.keyboard('.');
+    expect(el).toHaveValue('1,5');
+    expect(el.selectionStart).toBe(2);
+  });
+
+  const beforeInput = (el: Element, init: InputEventInit) => {
+    const e = new InputEvent('beforeinput', {
+      bubbles: true,
+      cancelable: true,
+      inputType: 'insertText',
+      ...init,
+    });
+    act(() => {
+      el.dispatchEvent(e);
+    });
+    return e;
+  };
+
+  it('de: a mobile beforeinput "." (no keydown key) types the decimal', async () => {
+    const spy = vi.fn();
+    inLocale('de', <Harness spy={spy} />);
+    const user = userEvent.setup();
+    await user.type(input(), '1');
+    const e = beforeInput(input(), { data: '.' });
+    expect(e.defaultPrevented).toBe(true);
+    expect(input()).toHaveValue('1,');
+    await user.keyboard('5');
+    expect(spy).toHaveBeenLastCalledWith(1.5);
+  });
+
+  it('de: a "." during IME composition is left alone', async () => {
+    inLocale('de', <Harness />);
+    const user = userEvent.setup();
+    await user.type(input(), '1');
+    expect(beforeInput(input(), { data: '.', isComposing: true }).defaultPrevented).toBe(false);
+    fireEvent.compositionStart(input());
+    expect(beforeInput(input(), { data: '.' }).defaultPrevented).toBe(false);
+    fireEvent.compositionEnd(input());
+    expect(beforeInput(input(), { data: '.' }).defaultPrevented).toBe(true);
   });
 
   it('de: a typed . after a decimal is ignored (no x10)', async () => {

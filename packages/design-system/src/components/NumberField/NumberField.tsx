@@ -22,6 +22,7 @@ import {
   localeSeparators,
   parseLocalAmount,
 } from '../_internal/currency';
+import { useSeparatorTyping } from '../_internal/separatorTyping';
 import { mergeRefs } from '../_internal/refs';
 import styles from './NumberField.module.scss';
 
@@ -246,19 +247,16 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => applyText(e.target.value);
 
+  // A typed '.' / decimal (pasted text stays strict): see typeSeparator.
+  useSeparatorTyping(inputRef, decimal, group, (input, next, at) => {
+    if (next === textRef.current) return input.setSelectionRange(at, at);
+    caret.current = at;
+    applyText(next);
+  });
+
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     onKeyDown?.(e);
     if (e.defaultPrevented || readOnly) return;
-    // A typed '.' (pasted text stays strict) is the decimal when '.' groups (de, es, it) and none is typed yet.
-    const input = e.currentTarget;
-    const { selectionStart: start, selectionEnd: end, value: v } = input;
-    if (e.key === '.' && decimal !== '.' && group === '.' && start !== null && end !== null) {
-      e.preventDefault();
-      if (v.includes(decimal)) return;
-      caret.current = start + 1;
-      applyText(v.slice(0, start) + decimal + v.slice(end));
-      return;
-    }
     const deltas: Record<string, number> = {
       ArrowUp: step,
       ArrowDown: -step,
