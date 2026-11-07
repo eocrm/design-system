@@ -498,6 +498,13 @@ export const en: Messages = {
     noData: '—',
     vsPrevious: 'vs previous',
   },
+  scatterChart: {
+    keyboardHint:
+      'Use arrow keys to inspect points in order of x. All values are also in the data table.',
+    series: 'Series',
+    size: 'Size',
+    pointLabel: 'Note',
+  },
   treeView: {
     loading: 'Loading…',
     loadError: "Couldn't load",

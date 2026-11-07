@@ -506,6 +506,13 @@ export const ru: Messages = {
     noData: '—',
     vsPrevious: 'к предыдущему',
   },
+  scatterChart: {
+    keyboardHint:
+      'Используйте стрелки для просмотра точек по порядку оси X. Все значения также есть в таблице данных.',
+    series: 'Ряд',
+    size: 'Размер',
+    pointLabel: 'Примечание',
+  },
   treeView: {
     loading: 'Загрузка…',
     loadError: 'Не удалось загрузить',

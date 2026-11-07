@@ -939,6 +939,16 @@ export interface Messages {
     /** Header of the vertical layout's visible step-conversion column ("vs previous"). */
     vsPrevious: string;
   };
+  scatterChart: {
+    /** Accessible description of the focusable plot (its name is the chart label); says arrow keys walk the points in order of x and that the data table lists every value. */
+    keyboardHint: string;
+    /** Header of the data table's series column. */
+    series: string;
+    /** Header of the size column and the size name in the tooltip/announcement when `sizeLabel` is not given. */
+    size: string;
+    /** Header of the data table's column of point labels (`ScatterPoint.label`). */
+    pointLabel: string;
+  };
   sparkline: {
     /** Accessible name of a Sparkline with data: label plus the series summary. */
     summary: (params: {

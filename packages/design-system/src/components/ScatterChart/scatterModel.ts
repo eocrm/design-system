@@ -12,22 +12,36 @@ import {
   type Rect,
 } from '../Chart/chartModel';
 
+/** One observation. Points with a non-finite `x` or `y` are skipped. */
 export interface ScatterPoint {
+  /** Horizontal value: a number, or a `Date` / epoch ms on a `'time'` axis. */
   x: number | Date;
+  /** Vertical value. */
   y: number;
+  /** Optional magnitude mapped to dot area (sqrt scale); needs `formatSize` on the chart. */
   size?: number;
+  /** Optional note shown in the tooltip, announcement and data table, e.g. "Big lunch". */
   label?: string;
 }
+/** A named group of points drawn in one palette colour and marker shape. */
 export interface ScatterSeries {
+  /** Stable identity, used by `hiddenSeries`. */
   key: string;
+  /** Legend, tooltip, announcement and data-table name. */
   label: string;
+  /** The points; order does not matter (the keyboard walks them by `x`). */
   points: ScatterPoint[];
+  /** Pins a palette slot (1–8); series without it fill the free slots in order. */
   color?: ChartSeriesColor;
 }
+/** An app-computed dashed line (e.g. a recommended ratio), drawn through `points` sorted by `x`. */
 export interface ScatterReference {
+  /** Legend name of the line. */
   label: string;
+  /** Points the line passes through, in data units. */
   points: { x: number | Date; y: number }[];
 }
+/** X-axis kind: `'number'` (linear) or `'time'` (x as `Date` or epoch ms). */
 export type ScatterXScale = 'number' | 'time';
 
 /** A point with finite coordinates and `x` as a number (epoch ms for a time axis). */
