@@ -107,6 +107,12 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
    * "Details" column of the data table (joined with "; "). Strings only; return `[]` for none.
    */
   details?: (categoryIndex: number) => string[];
+  /**
+   * Print each value on its bar (`bar`, comparisons included) or the stack total above each `stacked-bar`, using
+   * `formatValue`. Decorative (`aria-hidden`); the data table and tooltip carry the same values. A label wider than its
+   * bar is omitted rather than truncated. Ignored on `line` and `area`. Default `false`.
+   */
+  valueLabels?: boolean;
 }
 
 const NO_MARKERS: ChartMarker[] = [];
@@ -166,6 +172,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     markers = NO_MARKERS,
     footnote,
     details,
+    valueLabels,
     className,
     ...rest
   },
@@ -227,9 +234,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             height: size.height,
             formatValue,
             curve,
+            valueLabels,
           })
         : null,
-    [empty, size.width, size.height, type, categories, visible, formatValue, curve],
+    [empty, size.width, size.height, type, categories, visible, formatValue, curve, valueLabels],
   );
 
   const markerGeometry = useMemo(
@@ -541,6 +549,22 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 ))}
               </g>
             ))}
+            {layout.valueLabels.length > 0 && (
+              <g className={styles.valueLabels}>
+                {layout.valueLabels.map((v, i) => (
+                  <text
+                    key={i}
+                    data-value-label
+                    aria-hidden="true"
+                    x={v.x}
+                    y={v.y}
+                    textAnchor="middle"
+                  >
+                    {v.text}
+                  </text>
+                ))}
+              </g>
+            )}
             {/* Inspection markers in their own pass: a later stacked area would paint over them. */}
             {current !== null &&
               layout.marks.map(

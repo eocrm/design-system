@@ -168,6 +168,9 @@ const MARKER_LABEL_INSET = 4;
 const BAR_RADIUS = 4;
 const BAND_RATIO = 0.65;
 const PAD_TOP = 8;
+/** Value-label line height; the scale reserves it (plus `VALUE_LABEL_GAP`) beyond the tallest / lowest bar. */
+const VALUE_LABEL_HEIGHT = 14;
+const VALUE_LABEL_GAP = 2;
 const PAD_RIGHT = 8;
 const X_AXIS_HEIGHT = 20;
 const Y_TICK_SPACING = 40;
@@ -395,6 +398,14 @@ export interface SeriesMarks {
   dots: Point[];
 }
 
+/** A bar value label: `y` is the text baseline; `x` its centre. */
+export interface ValueLabel {
+  x: number;
+  y: number;
+  text: string;
+  anchor: 'above' | 'below';
+}
+
 export interface LayoutInput {
   type: ChartType;
   categories: readonly string[];
@@ -405,6 +416,8 @@ export interface LayoutInput {
   formatValue: (n: number) => string;
   /** Line/area interpolation; default `'smooth'`. */
   curve?: ChartCurve;
+  /** Label each bar (`bar`) or stack total (`stacked-bar`) with its value; ignored on line/area. */
+  valueLabels?: boolean;
 }
 
 export interface ChartLayout {
@@ -416,6 +429,8 @@ export interface ChartLayout {
   step: number;
   bandWidth: number;
   marks: SeriesMarks[];
+  /** Bar value labels; empty unless requested on a bar type. A label wider than its bar is omitted. */
+  valueLabels: ValueLabel[];
 }
 
 type StackRow = Record<string, number>;
@@ -481,7 +496,12 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   const plotTop = PAD_TOP;
   const plotBottom = Math.max(plotTop + 1, height - X_AXIS_HEIGHT);
   const tickCount = Math.max(2, Math.floor((plotBottom - plotTop) / Y_TICK_SPACING));
-  const y = scaleLinear().domain([min, max]).range([plotBottom, plotTop]).nice(tickCount);
+  const labelled = !!input.valueLabels && (type === 'bar' || type === 'stacked-bar');
+  const room = labelled ? VALUE_LABEL_HEIGHT + VALUE_LABEL_GAP : 0;
+  const y = scaleLinear()
+    .domain([min, max])
+    .range([plotBottom - (min < 0 ? room : 0), plotTop + room])
+    .nice(tickCount);
   const tickValues = y.ticks(tickCount);
   const tickLabels = tickValues.map(formatValue);
   const left = Math.max(0, ...tickLabels.map(textWidth)) + LABEL_GAP;
@@ -540,6 +560,18 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   };
 
   const marks: SeriesMarks[] = [];
+  const valueLabels: ValueLabel[] = [];
+  const addLabel = (x: number, end: number, value: number, avail: number) => {
+    const text = formatValue(value);
+    if (textWidth(text) > avail) return;
+    const above = value >= 0;
+    valueLabels.push({
+      x,
+      y: above ? end - VALUE_LABEL_GAP : end + VALUE_LABEL_GAP + VALUE_LABEL_HEIGHT,
+      text,
+      anchor: above ? 'above' : 'below',
+    });
+  };
 
   if (type === 'line') {
     for (const x of series) marks.push(lineMarks(x));
@@ -552,6 +584,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       const bars = x.values.map((v, i) => {
         if (v === null || v === 0) return null;
         const bx = categoryX[i] - bandWidth / 2 + j * (barWidth + gap);
+        if (labelled) addLabel(bx + barWidth / 2, y(v), v, barWidth);
         const top = Math.min(y(v), zeroY);
         const h = Math.max(1, Math.abs(zeroY - y(v)));
         return barPath({ x: bx, y: top, width: barWidth, height: h }, v > 0 ? 'top' : 'bottom');
@@ -616,6 +649,13 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       }
     });
     for (const c of comparisons) marks.push(lineMarks(c));
+    if (labelled)
+      categories.forEach((_, i) => {
+        const vals = primaries.map((p) => p.values[i]).filter((v) => v !== null) as number[];
+        const total = vals.reduce((a, b) => a + b, 0);
+        if (total === 0) return;
+        addLabel(categoryX[i], y(total > 0 ? posTotal[i] : negTotal[i]), total, bandWidth);
+      });
   }
 
   return {
@@ -626,6 +666,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     step,
     bandWidth,
     marks,
+    valueLabels,
   };
 }
 

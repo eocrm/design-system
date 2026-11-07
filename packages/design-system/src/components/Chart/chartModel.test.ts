@@ -869,3 +869,81 @@ describe('curve (DS-36)', () => {
     expect(run('line', [[1, 2, null, 5, 7]], 'linear').marks[0].line!.match(/M/g)).toHaveLength(2);
   });
 });
+
+describe('valueLabels (DS-12b)', () => {
+  const g = (v: string) => `${v} g`;
+  const bar = (values: (number | null)[], over: Partial<LayoutInput> = {}) =>
+    layout({
+      type: 'bar',
+      categories: ['a', 'b'],
+      series: resolveSeries('bar', [s('x', values)], 2).series,
+      formatValue: (n) => g(String(n)),
+      valueLabels: true,
+      ...over,
+    });
+
+  it('labels each bar above its top, centred on the bar', () => {
+    const l = bar([52, 48]);
+    expect(l.valueLabels.map((v) => v.text)).toEqual(['52 g', '48 g']);
+    l.valueLabels.forEach((v, i) => {
+      expect(v.x).toBeCloseTo(l.categoryX[i]);
+      expect(v.anchor).toBe('above');
+    });
+    expect(l.valueLabels[0].y).toBeLessThan(l.marks[0].points[0]!.y);
+  });
+
+  it('puts negative labels below the bar end', () => {
+    const l = bar([-5, 3]);
+    expect(l.valueLabels[0].anchor).toBe('below');
+    expect(l.valueLabels[0].y).toBeGreaterThan(l.marks[0].points[0]!.y);
+  });
+
+  it('skips null values', () => {
+    expect(bar([null, 4]).valueLabels.map((v) => v.text)).toEqual(['4 g']);
+  });
+
+  it('omits labels wider than their bar', () => {
+    expect(bar([52, 48], { width: 100 }).valueLabels).toEqual([]);
+  });
+
+  it('labels every series in grouped bars, comparisons included', () => {
+    const l = layout({
+      type: 'bar',
+      categories: ['a'],
+      series: resolveSeries('bar', [s('x', [5]), s('p', [4], 'x')], 1).series,
+      valueLabels: true,
+    });
+    expect(l.valueLabels.map((v) => v.text)).toEqual(['5', '4']);
+  });
+
+  it('labels stacked bars with the total of the visible series', () => {
+    const all = resolveSeries('stacked-bar', [s('x', [10, 20]), s('y', [5, 5])], 2).series;
+    const input = { type: 'stacked-bar' as const, categories: ['a', 'b'], valueLabels: true };
+    const l = layout({ ...input, series: all });
+    expect(l.valueLabels.map((v) => v.text)).toEqual(['15', '25']);
+    expect(l.valueLabels[0].y).toBeLessThan(l.marks[1].points[0]!.y);
+    const hidden = layout({ ...input, series: visibleSeries(all, ['y']) });
+    expect(hidden.valueLabels.map((v) => v.text)).toEqual(['10', '20']);
+  });
+
+  it('ignores line and area', () => {
+    for (const type of ['line', 'area'] as const)
+      expect(
+        layout({
+          type,
+          series: resolveSeries(type, [s('x', [1, 2, 3, 4])], 4).series,
+          valueLabels: true,
+        }).valueLabels,
+      ).toEqual([]);
+  });
+
+  it('is empty when off', () => {
+    expect(bar([52, 48], { valueLabels: false }).valueLabels).toEqual([]);
+  });
+
+  it('reserves headroom so the tallest label stays inside the plot', () => {
+    const l = bar([52, 48]);
+    const top = Math.min(...l.valueLabels.map((v) => v.y));
+    expect(top - 14).toBeGreaterThanOrEqual(l.plot.y);
+  });
+});

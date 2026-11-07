@@ -98,6 +98,12 @@
   pointer-events: none;
 }
 
+.valueLabels text {
+  fill: var(--chart-value-label-fg);
+  font-size: var(--chart-value-label-size);
+  pointer-events: none;
+}
+
 .crosshair {
   stroke: var(--chart-crosshair);
   stroke-width: 1px;

@@ -727,3 +727,31 @@ describe('details', () => {
     expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('235 kcal');
   });
 });
+
+describe('valueLabels', () => {
+  it('renders aria-hidden labels matching the tooltip value', async () => {
+    const layout = stubLayout();
+    render(
+      <Chart
+        {...base}
+        type="bar"
+        series={[{ key: 'won', label: 'Deals won', values: [3, 5, 8] }]}
+        valueLabels
+      />,
+    );
+    layout.fire();
+    const labels = document.querySelectorAll('[data-value-label]');
+    expect(Array.from(labels, (l) => l.textContent)).toEqual(['3 deals', '5 deals', '8 deals']);
+    labels.forEach((l) => expect(l).toHaveAttribute('aria-hidden', 'true'));
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('3 deals');
+  });
+
+  it('renders none by default', () => {
+    const layout = stubLayout();
+    render(<Chart {...base} type="bar" />);
+    layout.fire();
+    expect(document.querySelector('[data-value-label]')).toBeNull();
+  });
+});
