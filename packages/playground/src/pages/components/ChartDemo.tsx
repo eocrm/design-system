@@ -189,7 +189,7 @@ export function ChartDemo() {
 <Chart type="line" label="Bowl weight per minute" categories={minutes} series={bowl}
   formatValue={formatGrams} selectedRange={range} onSelectedRangeChange={setRange}
 />
-<Text size="sm" tone="muted">{range && \`Selected \${range.from} – \${range.to}\`}</Text>`}
+<Text size="sm" tone="muted">{range ? \`Selected \${range.from} – \${range.to}\` : ''}</Text>`}
       >
         <RangeSelectionExample />
       </Example>

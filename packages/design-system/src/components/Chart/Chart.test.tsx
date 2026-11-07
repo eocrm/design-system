@@ -904,6 +904,25 @@ describe('range selection and zoom', () => {
       expect(onChange).toHaveBeenCalledWith(null);
     });
 
+    it('unmounting mid-press does not fire the lift', () => {
+      const layout = stubLayout();
+      // jsdom has no setPointerCapture; a real browser throws on a detached element.
+      const capture = vi.fn();
+      Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
+        value: capture,
+        configurable: true,
+      });
+      onTestFinished(() => {
+        delete (HTMLElement.prototype as Partial<HTMLElement>).setPointerCapture;
+      });
+      const { container, unmount } = render(<Chart {...sel} onSelectedRangeChange={() => {}} />);
+      layout.fire();
+      fireEvent.pointerDown(plotOf(), { ...touch, clientX: xOf(container, 'c1') });
+      unmount();
+      expect(() => hold()).not.toThrow();
+      expect(capture).not.toHaveBeenCalled();
+    });
+
     it('cancels the lifted page scroll for its touchmoves only', () => {
       const layout = stubLayout();
       const { container } = render(<Chart {...sel} onSelectedRangeChange={() => {}} />);

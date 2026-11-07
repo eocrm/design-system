@@ -443,6 +443,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     touch?: 'pending' | 'lifted';
   };
   const press = useRef<Press | null>(null);
+  const liftTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // An unmount mid-press must not fire the lift on a detached plot.
+  useEffect(() => () => clearTimeout(liftTimer.current), []);
   const [draft, setDraft] = useState<{ from: number; to: number } | null>(null);
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -462,7 +465,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       press.current = lifting;
       const plot = e.currentTarget;
       // Every teardown just drops `press`, so the timer checks identity instead of being cleared.
-      setTimeout(() => {
+      liftTimer.current = setTimeout(() => {
         if (press.current !== lifting) return;
         lifting.touch = 'lifted';
         lifting.dragging = true;

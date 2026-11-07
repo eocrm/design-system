@@ -68,8 +68,7 @@ test('long-press then a slide selects a range without scrolling the page', async
   // the gesture and the page must not scroll.
   await touch.move(from, at(0.3, 0.05));
   await touch.move(at(0.3, 0.05), at(0.8, 0.05));
-  await page.waitForTimeout(500);
-  console.log('SCROLL', scrollBefore, await page.evaluate(() => window.scrollY));
+  await page.waitForTimeout(500); // let a pan, if any, land before measuring
   expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
   await touch.end();
   await expect(readout).toHaveText(/^Selected 08:\d\d – 08:\d\d$/);
