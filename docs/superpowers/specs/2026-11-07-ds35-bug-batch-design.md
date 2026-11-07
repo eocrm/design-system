@@ -187,3 +187,31 @@ Home Hub works around all of this in its own CSS, and the workarounds drift. The
 - The gates are green: `make test`, `make build-lib`, `make lint`, `npm run format:check` and `npm run tokens:check`.
 - The pre-push review loop is clean.
 - Released, and each eocrm task is moved to Done with the version noted.
+
+## Addendum: new `NumberField` component (approved by dpws 2026-11-07)
+
+Added to this batch at dpws's request; it ships on the same branch.
+
+- **Shape:** a split stepper, `[ − | value | + ]`. Input-styled, sizes `sm` / `md` / `lg` like Input. Touch-sized on coarse pointers per D1 and D3: 44px tall, buttons ≥44px wide, 16px text.
+- **Value:** controlled, `value: number | null`, `onChange(value: number | null)`.
+  - `onChange` fires live on every keystroke that parses; an empty field gives `null`.
+  - Partial text (`-`, `1.`) stays in the field without firing.
+  - On blur or Enter, the value is clamped to `min` / `max`, rounded to `step`'s decimals, and reformatted.
+- **Props:** `min`, `max`, `step` (default `1`).
+- **Stepping:**
+  - The buttons, ArrowUp/Down, and PageUp/Down (10× `step`) commit immediately.
+  - Home and End jump to `min` / `max` when set.
+  - Holding a button repeats after a delay.
+  - A button disables at its limit.
+- **Locale:** formatting and parsing use the active locale, reusing `components/_internal/currency` (`parseLocalAmount`, `formatDraft`, `localeSeparators`) with precision taken from `step`. `inputMode` is `decimal`, or `numeric` when `step` is an integer and `min ≥ 0`.
+- **Accessibility:**
+  - The input is `role="spinbutton"` with `aria-valuemin`, `aria-valuemax` and `aria-valuenow`.
+  - The buttons have i18n labels (`numberField.decrease` / `numberField.increase`, in en and ru), are `tabIndex={-1}`, and are labelled. The arrow keys duplicate them.
+  - Works inside `Field`. Supports `invalid`, `disabled` and `readOnly`.
+- **Not in scope:** units / prefix / suffix, currency (MoneyInput covers it), stacked chevrons, wheel stepping, scrub-to-drag.
+- **Complete per the root CLAUDE.md core invariant:**
+  - tests;
+  - a playground demo with full wiring;
+  - the `index.ts` export;
+  - `docs/components/NumberField.md` and the AI-PRIMER line;
+  - a CLUSTERS entry (`'Forms'`) in both manifest maps, plus `build:manifest`.
