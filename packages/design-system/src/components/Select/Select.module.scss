@@ -349,6 +349,11 @@
   border: 0;
   border-radius: var(--select-chip-remove-radius);
 
+  // Hit area is 44px tall but only as wide as the x: wider would cover the label.
+  --touch-hit-inline-size: 100%;
+
+  @include touch-hit-area;
+
   &:hover,
   &:focus-visible {
     color: var(--select-chip-remove-fg-hover);

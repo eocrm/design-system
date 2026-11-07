@@ -153,6 +153,11 @@
 // Caveats: it claims the host's ::before; sets position: relative (no hosts with
 // their own positioning); an overflow: hidden host clips the area; neighbours
 // overlapping the area lose taps to this host.
+// Optional host custom property --touch-hit-inline-size (default
+// max(100%, var(--size-touch))) overrides the area's inline extent and its
+// inline inset. Set it to 100% on a control whose sideways neighbours are
+// tappable (a chip's x beside its label): the area stays 44px tall but no
+// wider than the host, so it never covers the neighbour.
 @mixin touch-hit-area {
   @media (pointer: coarse) {
     position: relative;
@@ -161,8 +166,10 @@
       content: '';
       position: absolute;
       inset-block-start: calc(50% - max(100%, var(--size-touch)) / 2);
-      inset-inline-start: calc(50% - max(100%, var(--size-touch)) / 2);
-      inline-size: max(100%, var(--size-touch));
+      inset-inline-start: calc(
+        50% - var(--touch-hit-inline-size, max(100%, var(--size-touch))) / 2
+      );
+      inline-size: var(--touch-hit-inline-size, max(100%, var(--size-touch)));
       block-size: max(100%, var(--size-touch));
     }
   }

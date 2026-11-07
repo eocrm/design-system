@@ -20,6 +20,7 @@ import { Link as RouterLink } from 'react-router-dom';
 // underline — independent of variant
 <Link href="/x" underline="always">documentation</Link>          {/* running text / body copy — required, see below */}
 <Link href="/x" variant="subtle" underline="none">Acme Inc</Link> {/* brand/nav — no hover underline */}
+<Link href="/contacts/1" variant="subtle" hitArea="touch">Ada Lovelace</Link>  {/* standalone link — 44px tap target on touch screens */}
 ```
 
 <!-- props:start -->
@@ -31,6 +32,7 @@ import { Link as RouterLink } from 'react-router-dom';
 |---|---|---|---|
 | `variant` | `'default' \| 'muted' \| 'subtle'` | no | Visual variant. See `LinkVariant` for descriptions. |
 | `underline` | `'hover' \| 'always' \| 'none'` | no | Underline behavior. See `LinkUnderline` for descriptions. Default: `'hover'`. |
+| `hitArea` | `'text' \| 'touch'` | no | Touch hit area. `'touch'` grows the tap target to ≥44px on coarse pointers without changing layout; use for standalone links (list-row names, card or widget titles), leave unset for links inside running text. Default `'text'`. |
 | `children` | `ReactNode` | no |  |
 | `as` | `ElementType` | no |  |
 | …native | | | plus native attributes of the `as` element (default `<a>`) |

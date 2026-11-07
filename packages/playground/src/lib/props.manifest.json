@@ -3911,6 +3911,13 @@
           "description": "Underline behavior. See `LinkUnderline` for descriptions. Default: `'hover'`."
         },
         {
+          "name": "hitArea",
+          "type": "\"text\" | \"touch\"",
+          "required": false,
+          "default": "",
+          "description": "Touch hit area. `'touch'` grows the tap target to ≥44px on coarse pointers without changing\nlayout; use for standalone links (list-row names, card or widget titles), leave unset for\nlinks inside running text. Default `'text'`."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
@@ -4046,7 +4053,7 @@
         },
         {
           "name": "tags",
-          "type": "LiquidTag[]",
+          "type": "readonly LiquidTag[]",
           "required": false,
           "default": "",
           "description": "Liquid tags offered by the \"Insert tag\" toolbar menu (and `{%` autocomplete).\nDefault: all six (`if`, `unless`, `case`, `assign`, `capture`, `comment`).\n`[]` hides the menu and disables `{%` autocomplete. Loop tags (`for`) are never offered."

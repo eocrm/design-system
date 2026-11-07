@@ -281,3 +281,29 @@ describe('<Link> underline — compiled CSS', () => {
     }
   });
 });
+
+describe('<Link hitArea> (DS-13)', () => {
+  it('hitArea="touch" adds the touch hit-area class', () => {
+    render(
+      <Link href="/x" hitArea="touch">
+        x
+      </Link>,
+    );
+    expect(screen.getByText('x').className).toMatch(/hitAreaTouch/);
+  });
+
+  it('defaults to no hit-area class', () => {
+    render(<Link href="/x">x</Link>);
+    expect(screen.getByText('x').className).not.toMatch(/hitArea/);
+  });
+
+  it('does not leak hitArea to the DOM', () => {
+    render(
+      <Link href="/x" hitArea="touch">
+        x
+      </Link>,
+    );
+    expect(screen.getByText('x')).not.toHaveAttribute('hitArea');
+    expect(screen.getByText('x')).not.toHaveAttribute('hitarea');
+  });
+});

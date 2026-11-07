@@ -2010,3 +2010,10 @@ describe('Select touch tokens (DS-35)', () => {
     );
   });
 });
+
+it('the chip remove button takes the touch-hit-area mixin, capped to its own width (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'Select.module.scss'), 'utf8');
+  expect(scss).toMatch(
+    /\.chipRemove \{[^}]*--touch-hit-inline-size:\s*100%;[^}]*@include touch-hit-area;/,
+  );
+});

@@ -50,6 +50,11 @@
   cursor: pointer;
   color: var(--filter-chip-dismiss-fg);
 
+  // Hit area is 44px tall but only as wide as the x: wider would cover the label.
+  --touch-hit-inline-size: 100%;
+
+  @include touch-hit-area;
+
   &:hover {
     background: var(--filter-chip-dismiss-bg-hover);
     color: var(--filter-chip-dismiss-fg-hover);
