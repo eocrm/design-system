@@ -2852,6 +2852,13 @@
           "description": "Accepted file types — MIME types and/or extensions, comma-separated.\nForwarded to the native `<input accept>` attribute AND used for the\nbuilt-in `invalid-type` validation. Default: no filter.\n\nExamples:\n- `accept=\"image/*\"` — any image\n- `accept=\".csv,application/vnd.ms-excel\"` — CSV or Excel\n- `accept=\"application/pdf,image/png,image/jpeg\"` — explicit MIME list"
         },
         {
+          "name": "capture",
+          "type": "boolean | \"user\" | \"environment\"",
+          "required": false,
+          "default": "",
+          "description": "Forwarded to the file input. On mobile, `'environment'` opens the rear camera, `'user'` the front; `true` lets the browser choose."
+        },
+        {
           "name": "maxSize",
           "type": "number",
           "required": false,

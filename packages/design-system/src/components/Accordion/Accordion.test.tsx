@@ -1,6 +1,8 @@
 import { createRef, useState } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { Plus } from 'lucide-react';
 import { Accordion } from './Accordion';
 
@@ -717,3 +719,19 @@ describe('<Accordion>', () => {
 function container0OfRoot(container: HTMLElement): HTMLElement {
   return container.querySelector('[data-accordion]') as HTMLElement;
 }
+
+describe('Accordion closed content (DS-19)', () => {
+  const scss = readFileSync(resolve(__dirname, './Accordion.module.scss'), 'utf8');
+
+  it('hides closed content from the tab order after the collapse transition', () => {
+    expect(scss).toMatch(/\.content \{[^}]*visibility: hidden;/);
+    expect(scss).toMatch(/visibility 0s linear var\(--transition-base\)/);
+    expect(scss).toMatch(/\.content\[data-state='open'\] \{[^}]*visibility: visible;/);
+  });
+
+  it('keeps closed content mounted with data-state="closed"', () => {
+    render(<BasicSingle />);
+    const region = screen.getByText('A content', { selector: '*' }).closest('[role="region"]');
+    expect(region).toHaveAttribute('data-state', 'closed');
+  });
+});

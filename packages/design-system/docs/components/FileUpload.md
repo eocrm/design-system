@@ -8,6 +8,7 @@
   onFileReject={(file, reason) => toast.error(`${file.name}: ${reason}`)}
   multiple
   accept=".csv,application/vnd.ms-excel"
+  capture="environment"                          // mobile: open the rear camera
   maxSize={10 * 1024 * 1024}
   maxFiles={5}
   validator={(f) => f.name.includes(' ') ? 'No spaces in filenames' : null}
@@ -31,6 +32,7 @@
 | `onFileReject` | `((file: File, reason: FileRejectReason, message?: string) => void)` | no | Called when a file fails validation. `reason` is one of `FileRejectReason`; `message` is the custom message from `validator` (only present when reason='custom'). Use for toasts or inline error rendering. |
 | `multiple` | `boolean` | no | Allow multi-file selection. Default `false`. In single mode (default), `files` should have at most 1 entry; the dropzone hides once a file is present and re-appears after removal. |
 | `accept` | `string` | no | Accepted file types — MIME types and/or extensions, comma-separated. Forwarded to the native `<input accept>` attribute AND used for the built-in `invalid-type` validation. Default: no filter. Examples: - `accept="image/*"` — any image - `accept=".csv,application/vnd.ms-excel"` — CSV or Excel - `accept="application/pdf,image/png,image/jpeg"` — explicit MIME list |
+| `capture` | `false \| true \| 'user' \| 'environment'` | no | Forwarded to the file input. On mobile, `'environment'` opens the rear camera, `'user'` the front; `true` lets the browser choose. |
 | `maxSize` | `number` | no | Per-file size cap in bytes. Default: no limit. Files exceeding this fire `onFileReject` with reason `'too-large'`. |
 | `maxFiles` | `number` | no | Total file count cap. Only meaningful when `multiple=true`. Counts existing entries in `files` PLUS new files being added. Default: no limit. Excess files fire `onFileReject` with reason `'too-many'`. |
 | `validator` | `((file: File) => string \| null)` | no | Custom validation hook. Return `null` for valid; return a string error message for invalid (fires `onFileReject` with reason='custom', message= the returned string). Runs LAST in the validation chain (after type, size, count, duplicate checks). |

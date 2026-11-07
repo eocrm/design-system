@@ -197,7 +197,13 @@
 .content {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows var(--transition-base);
+
+  // visibility removes closed content from the tab order / a11y tree; it flips
+  // only after the collapse finishes so the animation stays visible.
+  visibility: hidden;
+  transition:
+    grid-template-rows var(--transition-base),
+    visibility 0s linear var(--transition-base);
 
   // Hint to the browser that grid-template-rows will animate, AND that this
   // subtree's layout can be isolated from siblings (it can — only the
@@ -210,6 +216,10 @@
 
 .content[data-state='open'] {
   grid-template-rows: 1fr;
+  visibility: visible;
+  transition:
+    grid-template-rows var(--transition-base),
+    visibility 0s;
 }
 
 // The grid track from .content (0fr↔1fr) drives the height. .inner is

@@ -29,7 +29,7 @@ export function Demo() {
       </Accordion.Item>
       <Accordion.Item value="faq-2">
         <Accordion.Trigger>How do I export my data?</Accordion.Trigger>
-        <Accordion.Content>Use the gear icon → Export → CSV.</Accordion.Content>
+        <Accordion.Content>Use the gear icon → Export → <Button size="sm">Export CSV</Button></Accordion.Content>
       </Accordion.Item>
       <Accordion.Item value="faq-3">
         <Accordion.Trigger>How do I invite teammates?</Accordion.Trigger>
@@ -46,7 +46,9 @@ export function Demo() {
           </Accordion.Item>
           <Accordion.Item value="faq-2">
             <Accordion.Trigger>How do I export my data?</Accordion.Trigger>
-            <Accordion.Content>Use the gear icon → Export → CSV.</Accordion.Content>
+            <Accordion.Content>
+              Use the gear icon → Export → <Button size="sm">Export CSV</Button>
+            </Accordion.Content>
           </Accordion.Item>
           <Accordion.Item value="faq-3">
             <Accordion.Trigger>How do I invite teammates?</Accordion.Trigger>
