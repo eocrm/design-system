@@ -229,3 +229,11 @@ it('re-points --password-input-height-lg to size-touch on coarse pointers', () =
     readTouchTokens(resolveTouchTokens(__dirname, 'PasswordInput.tokens.scss'), 'utf8'),
   ).toMatch(/@media \(pointer: coarse\)[\s\S]*--password-input-height-lg:\s*var\(--size-touch\)/);
 });
+
+it('the reveal Button is a real 44px control on touch, not an overhanging hit area (DS-35)', () => {
+  const module = readTouchTokens(
+    resolveTouchTokens(__dirname, 'PasswordInput.module.scss'),
+    'utf8',
+  );
+  expect(module).toMatch(/\.wrapper \{[^}]*@include touch-dense-group;/);
+});
