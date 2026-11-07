@@ -1,3 +1,5 @@
+import { readFileSync as readTouchTokens } from 'node:fs';
+import { resolve as resolveTouchTokens } from 'node:path';
 import { Field } from '../Field';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -431,5 +433,19 @@ describe('<ButtonGroup> in Field (#568)', () => {
       </Field>,
     );
     expect(container.querySelectorAll('[invalid], div[required]')).toHaveLength(0);
+  });
+});
+
+describe('ButtonGroup touch tokens (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.tokens.scss'), 'utf8');
+  it('re-points --button-group-item-height-md to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--button-group-item-height-md:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --button-group-item-height-lg to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--button-group-item-height-lg:\s*var\(\-\-size\-touch\)/,
+    );
   });
 });

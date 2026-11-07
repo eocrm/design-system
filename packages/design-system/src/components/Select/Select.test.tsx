@@ -1,3 +1,5 @@
+import { readFileSync as readTouchTokens } from 'node:fs';
+import { resolve as resolveTouchTokens } from 'node:path';
 import { act, configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import userEvent from '@testing-library/user-event';
@@ -1962,5 +1964,49 @@ describe('Select — tour hold (#684)', () => {
     markTourTarget(screen.getByRole('button', { name: 'Elsewhere' }));
     fireEvent.pointerDown(tourButton);
     expect(screen.queryByRole('listbox')).toBeNull();
+  });
+});
+
+describe('Select touch tokens (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'Select.tokens.scss'), 'utf8');
+  it('re-points --select-trigger-height-sm to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--select-trigger-height-sm:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --select-trigger-height-md to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--select-trigger-height-md:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --select-trigger-height-lg to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--select-trigger-height-lg:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --select-trigger-font-size to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--select-trigger-font-size:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --select-trigger-font-size-sm to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--select-trigger-font-size-sm:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --select-trigger-font-size-md to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--select-trigger-font-size-md:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --select-trigger-font-size-lg to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--select-trigger-font-size-lg:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --select-popover-search-font-size to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--select-popover-search-font-size:\s*var\(\-\-font\-size\-lg\)/,
+    );
   });
 });

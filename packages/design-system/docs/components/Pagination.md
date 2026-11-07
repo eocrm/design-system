@@ -42,3 +42,5 @@ const [page, setPage] = useState(1);
 ```
 
 **A11y:** the wrapper is `<nav aria-label="Pagination">` (override `aria-label` when several paginations share a page). Prev/next buttons carry `aria-label="Previous page"` / `"Next page"` with the chevron icons `aria-hidden`; ellipses are decorative `<span aria-hidden>`, not focusable.
+
+**Touch devices:** On touch devices (`pointer: coarse`) page and nav buttons are at least 44px tall and wide. Override the `--pagination-*-button-*` tokens in your own `@media (pointer: coarse)` block to opt out.

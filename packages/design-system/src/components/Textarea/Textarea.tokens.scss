@@ -46,3 +46,13 @@
   --textarea-counter-font-size: var(--font-size-sm);
   --textarea-counter-fg: var(--color-fg-muted);
 }
+
+// Touch devices (DS-35): 44px targets and 16px text (no iOS focus-zoom). Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --textarea-font-size-sm: var(--font-size-lg);
+    --textarea-font-size-md: var(--font-size-lg);
+    --textarea-font-size-lg: var(--font-size-lg);
+  }
+}

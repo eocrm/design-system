@@ -1,3 +1,5 @@
+import { readFileSync as readTouchTokens } from 'node:fs';
+import { resolve as resolveTouchTokens } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
@@ -352,5 +354,19 @@ describe('Button — palette `color`', () => {
     const button = screen.getByRole('button', { name: 'A' });
     expect(button.className).toMatch(/palette/);
     expect(button.className).not.toMatch(/secondary|selected/);
+  });
+});
+
+describe('Button touch tokens (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'Button.tokens.scss'), 'utf8');
+  it('re-points --button-height-md to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--button-height-md:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --button-height-lg to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--button-height-lg:\s*var\(\-\-size\-touch\)/,
+    );
   });
 });

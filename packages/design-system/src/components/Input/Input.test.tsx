@@ -1,3 +1,5 @@
+import { readFileSync as readTouchTokens } from 'node:fs';
+import { resolve as resolveTouchTokens } from 'node:path';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Profiler, createRef, useState, type FormEvent } from 'react';
@@ -435,5 +437,39 @@ describe('Input suggestions', () => {
     expect(onRender).toHaveBeenCalledTimes(1);
     expect(onRender.mock.calls[0]![1]).toBe('mount');
     expect(ref.current).toBeInstanceOf(HTMLInputElement);
+  });
+});
+
+describe('Input touch tokens (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'Input.tokens.scss'), 'utf8');
+  it('re-points --input-height-sm to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--input-height-sm:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --input-height-md to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--input-height-md:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --input-height-lg to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--input-height-lg:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --input-font-size-sm to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--input-font-size-sm:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --input-font-size-md to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--input-font-size-md:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --input-font-size-lg to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--input-font-size-lg:\s*var\(\-\-font\-size\-lg\)/,
+    );
   });
 });

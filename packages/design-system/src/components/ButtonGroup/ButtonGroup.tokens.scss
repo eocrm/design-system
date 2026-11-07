@@ -40,3 +40,12 @@
   --button-group-item-font-size-md: var(--font-size-md);
   --button-group-item-font-size-lg: var(--font-size-md);
 }
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --button-group-item-height-md: var(--size-touch);
+    --button-group-item-height-lg: var(--size-touch);
+  }
+}

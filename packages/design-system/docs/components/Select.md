@@ -129,3 +129,5 @@
 - For yes/no/maybe with strong defaults, use `<Tabs>` or radio buttons.
 - Embedding stale-closure logic in `loadOptions`: the fetcher runs on every debounced query, so read fresh props from a stable reference (e.g. `useCallback`) instead of capturing values that drift.
 - `triggerDisplay='summary'` collapses the active set into a comma-joined line and has no per-item remove affordance; chips do.
+
+**Touch devices:** On touch devices (`pointer: coarse`) the trigger is at least 44px tall in every size (`sm` grows too: the trigger can be an `<input>`) and its text, plus the in-panel search input, is 16px so iOS does not zoom on focus. Override the `--select-trigger-*` tokens in your own `@media (pointer: coarse)` block to opt out.

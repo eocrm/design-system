@@ -1,3 +1,5 @@
+import { readFileSync as readTouchTokens } from 'node:fs';
+import { resolve as resolveTouchTokens } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useState } from 'react';
@@ -199,5 +201,54 @@ describe('Pagination — empty aria-label', () => {
       <Pagination currentPage={1} pageCount={5} onPageChange={() => {}} aria-label="" />,
     );
     expect(container.querySelector('nav')).toHaveAttribute('aria-label', 'Pagination');
+  });
+});
+
+describe('Pagination touch tokens (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'Pagination.tokens.scss'), 'utf8');
+  it('re-points --pagination-page-button-height-sm to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--pagination-page-button-height-sm:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --pagination-page-button-height-md to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--pagination-page-button-height-md:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --pagination-page-button-height-lg to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--pagination-page-button-height-lg:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --pagination-nav-button-height-sm to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--pagination-nav-button-height-sm:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --pagination-nav-button-height-md to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--pagination-nav-button-height-md:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --pagination-nav-button-height-lg to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--pagination-nav-button-height-lg:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --pagination-page-button-min-width-sm to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--pagination-page-button-min-width-sm:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --pagination-page-button-min-width-md to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--pagination-page-button-min-width-md:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --pagination-page-button-min-width-lg to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--pagination-page-button-min-width-lg:\s*var\(\-\-size\-touch\)/,
+    );
   });
 });

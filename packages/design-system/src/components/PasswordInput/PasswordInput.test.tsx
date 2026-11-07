@@ -1,3 +1,5 @@
+import { readFileSync as readTouchTokens } from 'node:fs';
+import { resolve as resolveTouchTokens } from 'node:path';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
@@ -188,5 +190,24 @@ describe('PasswordInput', () => {
     const input = container.querySelector('input')!;
     fireEvent.keyDown(input, { key: 'a' });
     expect(handle).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PasswordInput touch tokens (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'PasswordInput.tokens.scss'), 'utf8');
+  it('re-points --password-input-font-size-sm to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--password-input-font-size-sm:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --password-input-font-size-md to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--password-input-font-size-md:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --password-input-font-size-lg to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--password-input-font-size-lg:\s*var\(\-\-font\-size\-lg\)/,
+    );
   });
 });

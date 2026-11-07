@@ -79,3 +79,11 @@
   // layer. Overridable via :root. (issue #171)
   --liquid-editor-menu-z: var(--z-overlay-floating);
 }
+
+// Touch devices (DS-35): 44px targets and 16px text (no iOS focus-zoom). Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --liquid-editor-font-size: var(--font-size-lg);
+  }
+}

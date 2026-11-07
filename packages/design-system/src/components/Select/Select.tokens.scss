@@ -138,3 +138,18 @@
   --select-listbox-anim-opacity-from: var(--opacity-hidden);
   --select-listbox-anim-opacity-to: var(--opacity-visible);
 }
+
+// Touch devices (DS-35): 44px targets and 16px text (no iOS focus-zoom). Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --select-trigger-height-sm: var(--size-touch);
+    --select-trigger-height-md: var(--size-touch);
+    --select-trigger-height-lg: var(--size-touch);
+    --select-trigger-font-size: var(--font-size-lg);
+    --select-trigger-font-size-sm: var(--font-size-lg);
+    --select-trigger-font-size-md: var(--font-size-lg);
+    --select-trigger-font-size-lg: var(--font-size-lg);
+    --select-popover-search-font-size: var(--font-size-lg);
+  }
+}

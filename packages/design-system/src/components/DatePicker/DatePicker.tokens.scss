@@ -150,3 +150,13 @@
   --date-picker-time-now-button-bg-hover: var(--color-bg-muted);
   --date-picker-time-period-column-width: 3.5rem;
 }
+
+// Touch devices (DS-35): 44px targets and 16px text (no iOS focus-zoom). Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --date-picker-input-font-size-sm: var(--font-size-lg);
+    --date-picker-input-font-size-md: var(--font-size-lg);
+    --date-picker-input-font-size-lg: var(--font-size-lg);
+  }
+}

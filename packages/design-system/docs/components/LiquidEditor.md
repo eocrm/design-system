@@ -95,3 +95,5 @@ Inside a `<Field>`, the label is associated automatically (`id` / `aria-labelled
 - ❌ Adding `margin`/positioning hoping the editor self-places — that is the parent's job (`<Stack>` / `<Cluster>` / a wrapper `className`).
 - ❌ Building a tag inserter via `toolbarActions` — the editor exposes no caret API; use the built-in "Insert tag" menu and `tags`.
 - ❌ Passing `'for'` (or other loop tags) in `tags` to offer loops — unsupported; mark the variable `collection: true` instead.
+
+**Touch devices:** On touch devices (`pointer: coarse`) the editor text is 16px so iOS does not zoom on focus; the textarea and highlight layer share the one token, so they stay glyph-aligned.

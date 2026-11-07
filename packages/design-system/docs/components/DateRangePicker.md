@@ -69,3 +69,5 @@ const [range, setRange] = useState<DateRange | null>(null);
 
 - ❌ Passing `value` without `onChange` — the picker is fully controlled when `value` is set; user input has no effect.
 - ❌ Using `defaultValue` AND `value` together — pick one.
+
+**Touch devices:** On touch devices (`pointer: coarse`) the text inputs are 16px so iOS does not zoom on focus (`--date-range-picker-input-font-size-*`).

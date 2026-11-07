@@ -88,3 +88,12 @@
   --button-fg-success: var(--color-success-fg);
   --button-ring-success: var(--ring-success);
 }
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --button-height-md: var(--size-touch);
+    --button-height-lg: var(--size-touch);
+  }
+}

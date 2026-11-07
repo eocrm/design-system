@@ -76,3 +76,13 @@
   --date-range-picker-inline-nav-bg-hover: var(--color-bg-subtle);
   --date-range-picker-inline-nav-fg-hover: var(--color-fg);
 }
+
+// Touch devices (DS-35): 44px targets and 16px text (no iOS focus-zoom). Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --date-range-picker-input-font-size-sm: var(--font-size-lg);
+    --date-range-picker-input-font-size-md: var(--font-size-lg);
+    --date-range-picker-input-font-size-lg: var(--font-size-lg);
+  }
+}

@@ -1,3 +1,5 @@
+import { readFileSync as readTouchTokens } from 'node:fs';
+import { resolve as resolveTouchTokens } from 'node:path';
 import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -262,5 +264,24 @@ describe('<Textarea>', () => {
     const textarea = screen.getByRole('textbox');
     expect(textarea).not.toHaveAttribute('autocomplete');
     expect(textarea).not.toHaveAttribute('data-1p-ignore');
+  });
+});
+
+describe('Textarea touch tokens (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'Textarea.tokens.scss'), 'utf8');
+  it('re-points --textarea-font-size-sm to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--textarea-font-size-sm:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --textarea-font-size-md to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--textarea-font-size-md:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --textarea-font-size-lg to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--textarea-font-size-lg:\s*var\(\-\-font\-size\-lg\)/,
+    );
   });
 });

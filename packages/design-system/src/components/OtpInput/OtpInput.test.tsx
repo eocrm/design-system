@@ -1,3 +1,5 @@
+import { readFileSync as readTouchTokens } from 'node:fs';
+import { resolve as resolveTouchTokens } from 'node:path';
 import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -558,5 +560,14 @@ describe('OtpInput — empty aria-label', () => {
   it('falls back to the default group name when aria-label is an empty string', () => {
     render(<OtpInput aria-label="" />);
     expect(screen.getByRole('group', { name: 'Verification code' })).toBeInTheDocument();
+  });
+});
+
+describe('OtpInput touch tokens (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'OtpInput.tokens.scss'), 'utf8');
+  it('re-points --otp-input-font-size-sm to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--otp-input-font-size-sm:\s*var\(\-\-font\-size\-lg\)/,
+    );
   });
 });

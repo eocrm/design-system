@@ -52,3 +52,19 @@
   --pagination-font-size-md: var(--font-size-md);
   --pagination-font-size-lg: var(--font-size-md);
 }
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --pagination-page-button-height-sm: var(--size-touch);
+    --pagination-page-button-height-md: var(--size-touch);
+    --pagination-page-button-height-lg: var(--size-touch);
+    --pagination-nav-button-height-sm: var(--size-touch);
+    --pagination-nav-button-height-md: var(--size-touch);
+    --pagination-nav-button-height-lg: var(--size-touch);
+    --pagination-page-button-min-width-sm: var(--size-touch);
+    --pagination-page-button-min-width-md: var(--size-touch);
+    --pagination-page-button-min-width-lg: var(--size-touch);
+  }
+}

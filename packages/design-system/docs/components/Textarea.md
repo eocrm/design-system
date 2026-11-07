@@ -57,3 +57,5 @@ import { Textarea } from '@eocrm/design-system';
 - ❌ Building your own character counter outside the component when `maxLength` / `showCount` would do it.
 
 Forwards the `<textarea>` (not the wrapper `<div>`) via ref. All native textarea attributes pass through except `size` (shadowed by the size prop) and `rows` (computed from `minRows`). It always renders a wrapper `<div>` so the optional counter has somewhere to live, unlike `<Input>`.
+
+**Touch devices:** On touch devices (`pointer: coarse`) text is 16px at every size, so iOS does not zoom on focus. Override `--textarea-font-size-*` in your own `@media (pointer: coarse)` block to opt out.

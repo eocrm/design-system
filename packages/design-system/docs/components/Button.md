@@ -105,3 +105,5 @@
 - ❌ Assuming `aria-disabled="true"` blocks activation. It preserves native focusability and pointer events; guard your handler.
 - ❌ `<Button onClick={() => (window.location.href = url)}>` for navigation: it announces as a button, with no middle-click, no open-in-new-tab and no status-bar preview. Use `<Button as="a" href={url}>`.
 - ❌ `<Button as="a">` with no `href`, for a click handler you wanted to look like a link. An anchor without one is neither focusable nor activatable; the type requires `href` whenever `as="a"`, so this does not compile.
+
+**Touch devices:** On touch devices (`pointer: coarse`) `md` and `lg` grow to 44px; `xs` and `sm` keep their visual size and gain an invisible 44px hit area (`::before`), so tap targets stay compact in dense headers. Override `--button-height-*` in your own `@media (pointer: coarse)` block to opt out. See `docs/theming.md` → Touch devices.

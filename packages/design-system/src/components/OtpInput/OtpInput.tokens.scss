@@ -43,3 +43,11 @@
   --otp-input-font-size-lg: var(--font-size-xl);
   --otp-input-font-size-xl: var(--font-size-2xl);
 }
+
+// Touch devices (DS-35): 44px targets and 16px text (no iOS focus-zoom). Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root {
+    --otp-input-font-size-sm: var(--font-size-lg);
+  }
+}

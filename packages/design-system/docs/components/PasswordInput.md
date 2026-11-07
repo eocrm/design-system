@@ -43,3 +43,5 @@ Pair with `<PasswordStrengthMeter>` for the canonical signup form, and controlle
 - ❌ `revealable={false}` plus a non-password `<Input>` next to it for "Show in plaintext" UX — use `<Input>` directly.
 - ❌ Wrapping it in another `<label>` outside the component — it already renders the input; an outer label nests poorly.
 - ❌ Treating the default `<PasswordStrengthMeter>` scoring as a security control — it is a UX hint; pass `score` from zxcvbn or server-side validation.
+
+**Touch devices:** On touch devices (`pointer: coarse`) the text is 16px so iOS does not zoom on focus (`--password-input-font-size-*`).

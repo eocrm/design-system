@@ -1,3 +1,5 @@
+import { readFileSync as readTouchTokens } from 'node:fs';
+import { resolve as resolveTouchTokens } from 'node:path';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode, useState } from 'react';
@@ -1146,4 +1148,23 @@ describe('DatePicker — tour hold (#684)', () => {
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     },
   );
+});
+
+describe('DatePicker touch tokens (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'DatePicker.tokens.scss'), 'utf8');
+  it('re-points --date-picker-input-font-size-sm to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--date-picker-input-font-size-sm:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --date-picker-input-font-size-md to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--date-picker-input-font-size-md:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
+  it('re-points --date-picker-input-font-size-lg to font-size-lg on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--date-picker-input-font-size-lg:\s*var\(\-\-font\-size\-lg\)/,
+    );
+  });
 });
