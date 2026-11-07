@@ -491,6 +491,42 @@ describe('NumberField locale separators and paste', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
+  it('de: typing "." over a selected ".2" in "1.234" is reverted', async () => {
+    const spy = vi.fn();
+    inLocale('de', <Harness spy={spy} />);
+    const user = userEvent.setup();
+    await user.click(input());
+    await user.paste('1.234');
+    spy.mockClear();
+    const el = input() as HTMLInputElement;
+    fireEvent.input(el, {
+      target: { value: '1.34', selectionStart: 2, selectionEnd: 2 },
+      inputType: 'insertText',
+      data: '.',
+    });
+    expect(el).toHaveValue('1.234');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    // Android pastes, autofill and dictation arrive as multi-char insertText: parsed like a paste.
+    ['insertText', '1.234,5', '1.234,5', 1234.5],
+    ['insertReplacementText', '1.234,5', '1.234,5', 1234.5],
+    ['historyUndo', null, '1.5', 15],
+    ['insertCompositionText', '.', '1.5', 15],
+  ])('de: %s (data %j) adding a "." is not reverted', async (inputType, data, value, expected) => {
+    const spy = vi.fn();
+    inLocale('de', <Harness spy={spy} />);
+    act(() => input().focus());
+    fireEvent.input(input(), {
+      target: { value, selectionStart: value.length, selectionEnd: value.length },
+      inputType,
+      data,
+    });
+    expect(input()).toHaveValue(value);
+    expect(spy).toHaveBeenLastCalledWith(expected);
+  });
+
   it('de: a paste producing 1.234 is accepted as 1234', async () => {
     const spy = vi.fn();
     inLocale('de', <Harness spy={spy} />);
