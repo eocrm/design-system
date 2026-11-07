@@ -822,6 +822,106 @@ describe('range selection and zoom', () => {
     expect(onChange).toHaveBeenCalledWith(null);
   });
 
+  describe('touch long-press', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+    const touch = { pointerId: 2, pointerType: 'touch' };
+    const hold = () => act(() => vi.advanceTimersByTime(300));
+
+    it('long-press then move then release selects the range', () => {
+      const layout = stubLayout();
+      const onChange = vi.fn();
+      const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+      layout.fire();
+      fireEvent.pointerDown(plotOf(), { ...touch, clientX: xOf(container, 'c1') });
+      hold();
+      fireEvent.pointerMove(plotOf(), { ...touch, clientX: xOf(container, 'c3') });
+      expect(band(container)).not.toBeNull();
+      fireEvent.pointerUp(plotOf(), { ...touch, clientX: xOf(container, 'c3') });
+      expect(onChange).toHaveBeenLastCalledWith({ from: 'c1', to: 'c3' });
+    });
+
+    it('long-press released without moving selects one category', () => {
+      const layout = stubLayout();
+      const onChange = vi.fn();
+      const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+      layout.fire();
+      const at = { ...touch, clientX: xOf(container, 'c1') };
+      fireEvent.pointerDown(plotOf(), at);
+      hold();
+      fireEvent.pointerUp(plotOf(), at);
+      expect(onChange).toHaveBeenLastCalledWith({ from: 'c1', to: 'c1' });
+    });
+
+    it('moving past the slop before the timer is a scroll: no selection, ever', () => {
+      const layout = stubLayout();
+      const onChange = vi.fn();
+      const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+      layout.fire();
+      const x = xOf(container, 'c1');
+      fireEvent.pointerDown(plotOf(), { ...touch, clientX: x, clientY: 50 });
+      act(() => vi.advanceTimersByTime(100));
+      fireEvent.pointerMove(plotOf(), { ...touch, clientX: x, clientY: 70 });
+      act(() => vi.advanceTimersByTime(1000));
+      expect(band(container)).toBeNull();
+      fireEvent.pointerUp(plotOf(), { ...touch, clientX: x, clientY: 70 });
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('a quick tap shows the tooltip and does not select', () => {
+      const layout = stubLayout();
+      const onChange = vi.fn();
+      const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+      layout.fire();
+      const at = { ...touch, clientX: xOf(container, 'c2') };
+      fireEvent.pointerDown(plotOf(), at);
+      fireEvent.pointerUp(plotOf(), at);
+      act(() => vi.advanceTimersByTime(1000));
+      expect(onChange).not.toHaveBeenCalled();
+      expect(band(container)).toBeNull();
+      expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('c2');
+    });
+
+    it('a quick tap outside the band clears the selection; inside it does not', () => {
+      const layout = stubLayout();
+      const onChange = vi.fn();
+      const { container } = render(
+        <Chart
+          {...sel}
+          selectedRange={{ from: 'c1', to: 'c2' }}
+          onSelectedRangeChange={onChange}
+        />,
+      );
+      layout.fire();
+      const tap = (c: string) => {
+        const at = { ...touch, clientX: xOf(container, c) };
+        fireEvent.pointerDown(plotOf(), at);
+        fireEvent.pointerUp(plotOf(), at);
+      };
+      tap('c1');
+      expect(onChange).not.toHaveBeenCalled();
+      tap('c4');
+      expect(onChange).toHaveBeenCalledWith(null);
+    });
+
+    it('cancels the lifted page scroll for its touchmoves only', () => {
+      const layout = stubLayout();
+      const { container } = render(<Chart {...sel} onSelectedRangeChange={() => {}} />);
+      layout.fire();
+      const touchmove = () => {
+        const e = new Event('touchmove', { bubbles: true, cancelable: true });
+        plotOf().dispatchEvent(e);
+        return e.defaultPrevented;
+      };
+      fireEvent.pointerDown(plotOf(), { ...touch, clientX: xOf(container, 'c1') });
+      expect(touchmove()).toBe(false);
+      hold();
+      expect(touchmove()).toBe(true);
+      fireEvent.pointerUp(plotOf(), { ...touch, clientX: xOf(container, 'c1') });
+      expect(touchmove()).toBe(false);
+    });
+  });
+
   it('Shift+arrows extend from the anchor; Escape clears selection, then inspection', async () => {
     const layout = stubLayout();
     const onChange = vi.fn();

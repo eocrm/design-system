@@ -24,7 +24,7 @@ import { LiveRegion } from '../LiveRegion';
 import { VisuallyHidden } from '../VisuallyHidden';
 import { Button } from '../Button';
 import { Cluster } from '../Cluster';
-import { LONG_PRESS_SLOP_PX } from '../_internal/longPress';
+import { LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from '../_internal/longPress';
 import { rangeFromIndices, resolveRange, sliceForZoom, type ChartRange } from './chartRange';
 import {
   categoryIndexAt,
@@ -122,8 +122,9 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   /**
    * Controlled selected category range (`null` = none). Passing this, `defaultSelectedRange` or
    * `onSelectedRangeChange` turns selection on (`line`, `area`, `bar`, `stacked-bar`): mouse press + drag
-   * past 8px selects, a click outside the band clears, Shift+←/→ extends from the inspected category and
-   * Escape clears. A range naming an unknown category is ignored with a dev warning.
+   * past 8px or a touch long-press (300ms) + slide selects, a click or tap outside the band clears,
+   * Shift+←/→ extends from the inspected category and Escape clears. A range naming an unknown category
+   * is ignored with a dev warning.
    */
   selectedRange?: ChartRange | null;
   /** Initial selection when uncontrolled. Default `null`. Also turns selection on. */
@@ -431,14 +432,17 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       : null;
 
   // Mouse/pen selection: a press becomes a drag once it moves past the slop; a release without one is a click.
-  // ponytail: touch (long-press) gets its own branch in onPointerDown (DS-23, Task 7).
-  const press = useRef<{
+  // Touch: the press stays `pending` (a tap or a scroll) until it holds still for LONG_PRESS_MS, then it
+  // lifts into a drag; moving past the slop first hands the gesture to the page (the browser pans).
+  type Press = {
     id: number;
     index: number;
     x: number;
     y: number;
     dragging: boolean;
-  } | null>(null);
+    touch?: 'pending' | 'lifted';
+  };
+  const press = useRef<Press | null>(null);
   const [draft, setDraft] = useState<{ from: number; to: number } | null>(null);
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -446,6 +450,26 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     if (index === null) return;
     if (selectable && (e.pointerType === 'mouse' || e.pointerType === 'pen') && e.button === 0) {
       press.current = { id: e.pointerId, index, x: e.clientX, y: e.clientY, dragging: false };
+    } else if (selectable && e.pointerType === 'touch' && !press.current) {
+      const lifting: Press = {
+        id: e.pointerId,
+        index,
+        x: e.clientX,
+        y: e.clientY,
+        dragging: false,
+        touch: 'pending',
+      };
+      press.current = lifting;
+      const plot = e.currentTarget;
+      // Every teardown just drops `press`, so the timer checks identity instead of being cleared.
+      setTimeout(() => {
+        if (press.current !== lifting) return;
+        lifting.touch = 'lifted';
+        lifting.dragging = true;
+        // Keep the moves and the release when the finger leaves the plot mid-drag.
+        plot.setPointerCapture?.(lifting.id);
+        setDraft({ from: lifting.index, to: lifting.index });
+      }, LONG_PRESS_MS);
     }
     inspect(index, 'pointer');
   };
@@ -454,7 +478,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     const index = indexAt(e);
     if (index === null) return;
     const p = press.current;
-    if (p && p.id === e.pointerId) {
+    if (p && p.id === e.pointerId && p.touch === 'pending') {
+      // Past the slop before the timer: the page's scroll, not ours.
+      if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > LONG_PRESS_SLOP_PX) press.current = null;
+    } else if (p && p.id === e.pointerId) {
       if (!p.dragging && Math.hypot(e.clientX - p.x, e.clientY - p.y) > LONG_PRESS_SLOP_PX) {
         p.dragging = true;
         // Keep receiving moves and the release when the pointer leaves the plot mid-drag.
@@ -483,6 +510,23 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     press.current = null;
     setDraft(null);
   };
+
+  // Touch scroll suppression, as in DashboardCanvas (DS-15): the plot keeps `touch-action: pan-y` so a
+  // swipe scrolls, and touch-action can't change mid-gesture, so a lifted press cancels its own
+  // touchmoves instead. Bound non-passive for as long as selection is on (a browser may decide at
+  // touchstart whether to wait for listeners). `contextmenu` is what a held finger would open.
+  useEffect(() => {
+    if (!selectable || !plotEl) return;
+    const block = (e: Event) => {
+      if (press.current?.touch === 'lifted') e.preventDefault();
+    };
+    plotEl.addEventListener('touchmove', block, { passive: false });
+    plotEl.addEventListener('contextmenu', block);
+    return () => {
+      plotEl.removeEventListener('touchmove', block);
+      plotEl.removeEventListener('contextmenu', block);
+    };
+  }, [selectable, plotEl]);
 
   const parentLabel = (s: ResolvedSeries) =>
     resolved.series.find((p) => p.key === s.comparisonOf)?.label;

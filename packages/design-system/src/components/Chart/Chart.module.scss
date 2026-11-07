@@ -43,9 +43,10 @@
     @include focus-ring(var(--chart-ring));
   }
 
-  // A drag selects categories, not the axis text under it.
+  // A drag selects categories, not the axis text under it; a long-press must not open the iOS callout.
   &[data-selectable] {
     user-select: none;
+    -webkit-touch-callout: none;
   }
 }
 
