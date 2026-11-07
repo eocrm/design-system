@@ -480,6 +480,7 @@ export const en: Messages = {
     category: 'Category',
     noData: 'No data',
     markers: 'Markers',
+    details: 'Details',
   },
   funnelChart: {
     keyboardHint: 'Use arrow keys to inspect stages. All values are also in the data table.',

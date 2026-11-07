@@ -101,6 +101,12 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
    * screen readers. Shown in the empty state too, where it often explains the emptiness.
    */
   footnote?: ReactNode;
+  /**
+   * Extra plain-text lines for a category, e.g. `['235 kcal', '5 times']`. `categoryIndex` indexes `categories`.
+   * Shown as muted rows under the series in the tooltip, appended to the keyboard announcement and listed in a
+   * "Details" column of the data table (joined with "; "). Strings only; return `[]` for none.
+   */
+  details?: (categoryIndex: number) => string[];
 }
 
 const NO_MARKERS: ChartMarker[] = [];
@@ -159,6 +165,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     onHiddenSeriesChange,
     markers = NO_MARKERS,
     footnote,
+    details,
     className,
     ...rest
   },
@@ -317,11 +324,15 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   );
 
   const notes = current === null ? [] : markerLabelsAt(resolvedMarkers.markers, current);
+  // The only call site of `details`: `current` indexes the `categories` prop.
+  const detailLines = current === null ? [] : (details?.(current) ?? []);
   const liveText =
     activeSource === 'keyboard' && current !== null
       ? `${categories[current]}: ${visible
           .map((s, i) => `${columnHeader(s)} ${rows[i].value}`)
-          .join(', ')}${notes.length ? `. ${notes.join(', ')}` : ''}`
+          .join(
+            ', ',
+          )}${notes.length ? `. ${notes.join(', ')}` : ''}${detailLines.length ? `. ${detailLines.join(', ')}` : ''}`
       : '';
   const known = hidden.filter((k) => resolved.series.some((s) => s.key === k));
   const visiblePrimaries = resolved.series.filter(
@@ -581,6 +592,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         title={current === null ? '' : categories[current]}
         rows={rows}
         notes={notes}
+        details={detailLines}
       />
       <LiveRegion>{liveText}</LiveRegion>
       <ChartTable
@@ -592,6 +604,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         formatValue={formatValue}
         markersHeader={t('chart.markers')}
         markers={resolvedMarkers.markers}
+        detailsHeader={details ? t('chart.details') : undefined}
+        detailsAt={(i) => details?.(i) ?? []}
       />
     </figure>
   );

@@ -689,3 +689,41 @@ it('inspection markers paint after every series, so a later stacked area cannot 
     expect(lastArea.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   }
 });
+
+describe('details', () => {
+  const details: ChartProps['details'] = (i) => (i === 0 ? ['235 kcal', '5 times'] : []);
+
+  it('shows detail rows in the tooltip and the announcement', async () => {
+    const layout = stubLayout();
+    render(<Chart {...base} details={details} />);
+    layout.fire();
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    const tip = document.querySelector('[data-chart-tooltip]')!;
+    expect(tip).toHaveTextContent('235 kcal');
+    expect(tip).toHaveTextContent('5 times');
+    const live = document.querySelector('[aria-live="polite"]')!;
+    await waitFor(() => expect(live).toHaveTextContent(/235 kcal, 5 times$/));
+  });
+
+  it('adds a Details column to the data table only when details is given', () => {
+    stubLayout();
+    const { rerender } = render(<Chart {...base} details={details} />);
+    const table = screen.getByRole('table');
+    expect(within(table).getByRole('columnheader', { name: 'Details' })).toBeInTheDocument();
+    const rows = within(table).getAllByRole('row');
+    expect(rows[1].lastElementChild).toHaveTextContent('235 kcal; 5 times');
+    expect(rows[2].lastElementChild).toHaveTextContent(/^$/);
+    rerender(<Chart {...base} />);
+    expect(within(table).queryByRole('columnheader', { name: 'Details' })).toBeNull();
+  });
+
+  it('keeps detail rows when every non-primary series is hidden', async () => {
+    const layout = stubLayout();
+    render(<Chart {...base} details={details} hiddenSeries={['prev']} />);
+    layout.fire();
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('235 kcal');
+  });
+});

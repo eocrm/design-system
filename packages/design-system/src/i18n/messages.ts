@@ -906,6 +906,8 @@ export interface Messages {
     noData: string;
     /** Header of the data table's marker column (labels of the annotations covering each category). */
     markers: string;
+    /** Header of the data table's details column (the strings `details` returns for each category). */
+    details: string;
   };
   funnelChart: {
     /** Accessible description of the focusable plot (its name is the chart label); says arrow keys inspect stages and that the data table lists every value. */

@@ -487,6 +487,7 @@ export const ru: Messages = {
     category: 'Категория',
     noData: 'Нет данных',
     markers: 'Отметки',
+    details: 'Подробности',
   },
   funnelChart: {
     keyboardHint:

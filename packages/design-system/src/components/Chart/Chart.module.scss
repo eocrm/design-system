@@ -282,6 +282,10 @@
   color: var(--chart-axis-fg);
 }
 
+.tooltipDetail {
+  color: var(--chart-detail-fg);
+}
+
 .tooltipValue {
   font-variant-numeric: tabular-nums;
 }
