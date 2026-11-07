@@ -22,3 +22,17 @@ test('xs Button has no hit-area pseudo-element on desktop', async ({ page }) => 
     .evaluate((n) => getComputedStyle(n, '::before').content);
   expect(content).toBe('none');
 });
+
+test('Table.CellLink grid layout keeps the block-layout desktop height and width', async ({
+  page,
+}) => {
+  await page.goto('/components/table');
+  const link = page.locator('td a[href="#"]').first();
+  const grid = (await link.boundingBox())!;
+  // Same element laid out as the pre-DS-35 `display: block`.
+  await link.evaluate((n) => ((n as HTMLElement).style.display = 'block'));
+  const block = (await link.boundingBox())!;
+  expect(grid.height).toBe(block.height);
+  expect(grid.width).toBe(block.width);
+  expect(grid.height).toBeLessThan(44);
+});

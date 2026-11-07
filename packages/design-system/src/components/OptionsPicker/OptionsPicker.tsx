@@ -904,6 +904,7 @@ function OptionRow({ option, checked, mode, rowId, focused, onToggle, color }: O
   return (
     <div
       id={rowId}
+      data-options-picker-row=""
       className={clsx(styles.row, checked && styles.rowSelected, focused && styles.rowFocused)}
       onClick={handleRowClick}
     >

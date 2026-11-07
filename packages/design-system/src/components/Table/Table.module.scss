@@ -235,7 +235,11 @@
 // Inherits the cell's text-align (block) and colour (tone). Padding comes from
 // the density rules above.
 .cellLink {
-  display: block;
+  // grid + align-content centres the text when the touch min-height exceeds
+  // it; the anonymous grid item stretches inline, so the cell's text-align
+  // (start/center/end) still positions the text.
+  display: grid;
+  align-content: center;
   min-block-size: var(--table-cell-link-min-height);
   color: inherit;
   font-weight: var(--table-cell-link-font-weight);

@@ -85,6 +85,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--tabs-tab-gap);
+  min-block-size: var(--tabs-tab-min-height);
   padding: var(--tabs-tab-padding-y) var(--tabs-tab-padding-x);
   border: none;
   background: transparent;
