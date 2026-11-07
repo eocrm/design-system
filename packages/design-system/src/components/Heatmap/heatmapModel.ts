@@ -148,17 +148,23 @@ export function heatmapLegend(b: HeatmapBuckets, formatValue: Format): HeatmapLe
   return { kind: 'scale', steps: b.steps, boundaries };
 }
 
-// ponytail: fixed cell-height clamp; read tokens if themes need it.
-export const CELL_MIN_HEIGHT = 16;
-const CELL_MAX_HEIGHT = 40;
+/** Smallest cell side; below it the grid overflows its box instead of shrinking. */
+export const CELL_MIN = 12;
 
 export interface HeatmapLayout {
   /** Top-left of the cell grid. */
   plot: { x: number; y: number };
-  cellWidth: number;
-  cellHeight: number;
-  /** Total svg height: grid plus the column-label band. */
+  /** Side of every (square) cell. */
+  cell: number;
+  /** Grid plus the column-label band. */
   height: number;
+  /**
+   * Height when only the width limits the cells: the svg's in-flow height, so a parent without a definite height
+   * sizes the plot to it (a taller svg than the grid is empty below it).
+   */
+  naturalHeight: number;
+  /** Narrowest plot that fits minimum cells. */
+  minWidth: number;
   /** Row-label anchors (text-anchor end, vertically centred). */
   rowLabels: { index: number; x: number; y: number }[];
   /** Column labels kept after thinning (text-anchor middle, baseline `y`). */
@@ -168,8 +174,9 @@ export interface HeatmapLayout {
 }
 
 /**
- * Cell grid filling `width` and `height` (cells 16–40px tall; past the minimum the grid outgrows `height`): row
- * labels on the left, thinned column labels underneath.
+ * Square cells as large as fit `width` and, when given (> 0), `height`; never under `CELL_MIN`, so a box too small
+ * gets a grid that overflows it. The grid sits at the top-left; leftover room stays empty. Row labels on the left,
+ * thinned column labels underneath.
  */
 export function computeHeatmapLayout({
   rows,
@@ -182,36 +189,37 @@ export function computeHeatmapLayout({
   width: number;
   height?: number;
 }): HeatmapLayout {
+  const nRows = Math.max(1, rows.length);
+  const nCols = Math.max(1, columns.length);
   const plotX = Math.max(0, ...rows.map(estimateTextWidth)) + LABEL_GAP;
   const avail = Math.max(1, width - plotX);
   // The last column label is centred on its cell; keep its right half inside the svg.
   const lastHalf = columns.length ? estimateTextWidth(columns[columns.length - 1]) / 2 : 0;
-  const roughCell = avail / Math.max(1, columns.length);
-  const padRight = Math.max(0, lastHalf - roughCell / 2);
-  const cellWidth = Math.max(1, (avail - padRight) / Math.max(1, columns.length));
-  const fitted = (boxHeight - X_AXIS_HEIGHT) / Math.max(1, rows.length);
-  const cellHeight = Math.max(CELL_MIN_HEIGHT, Math.min(CELL_MAX_HEIGHT, fitted));
+  const padRight = Math.max(0, lastHalf - avail / nCols / 2);
+  const widthCell = Math.max(CELL_MIN, (avail - padRight) / nCols);
+  const heightCell = boxHeight > 0 ? (boxHeight - X_AXIS_HEIGHT) / nRows : Infinity;
+  const cell = Math.max(CELL_MIN, Math.min(widthCell, heightCell));
   const plotY = 0;
-  const gridBottom = plotY + cellHeight * rows.length;
-  const height = gridBottom + X_AXIS_HEIGHT;
+  const height = plotY + cell * rows.length + X_AXIS_HEIGHT;
   return {
     plot: { x: plotX, y: plotY },
-    cellWidth,
-    cellHeight,
+    cell,
     height,
+    naturalHeight: plotY + widthCell * rows.length + X_AXIS_HEIGHT,
+    minWidth: Math.ceil(plotX + CELL_MIN * nCols + lastHalf),
     rowLabels: rows.map((_, index) => ({
       index,
       x: plotX - LABEL_GAP,
-      y: plotY + (index + 0.5) * cellHeight,
+      y: plotY + (index + 0.5) * cell,
     })),
-    columnLabels: thinLabels(columns, cellWidth).map((index) => ({
+    columnLabels: thinLabels(columns, cell).map((index) => ({
       index,
-      x: plotX + (index + 0.5) * cellWidth,
+      x: plotX + (index + 0.5) * cell,
       y: height - X_LABEL_BASELINE,
     })),
     cellAt(x, y) {
-      const col = Math.floor((x - plotX) / cellWidth);
-      const row = Math.floor((y - plotY) / cellHeight);
+      const col = Math.floor((x - plotX) / cell);
+      const row = Math.floor((y - plotY) / cell);
       if (x < plotX || y < plotY || col >= columns.length || row >= rows.length) return null;
       return { row, col };
     },

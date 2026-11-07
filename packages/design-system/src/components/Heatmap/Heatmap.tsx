@@ -20,7 +20,7 @@ import { useSize } from '../_internal/useSize';
 import { ChartTooltip } from '../Chart/ChartTooltip';
 import { X_AXIS_HEIGHT } from '../Chart/chartModel';
 import {
-  CELL_MIN_HEIGHT,
+  CELL_MIN,
   bucketOf,
   computeHeatmapLayout,
   heatmapBuckets,
@@ -187,9 +187,8 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
     else if (e.type === 'pointerdown' || activeSource === 'pointer') inspect(null, null);
   };
 
-  const anchorX =
-    current && layout ? layout.plot.x + (current.col + 0.5) * layout.cellWidth : undefined;
-  const anchorY = current && layout ? layout.plot.y + current.row * layout.cellHeight : undefined;
+  const anchorX = current && layout ? layout.plot.x + (current.col + 0.5) * layout.cell : undefined;
+  const anchorY = current && layout ? layout.plot.y + current.row * layout.cell : undefined;
   const point = useMemo(
     () => (anchorX === undefined || anchorY === undefined ? null : { x: anchorX, y: anchorY }),
     [anchorX, anchorY],
@@ -264,8 +263,8 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
       <div
         ref={setPlotEl}
         className={styles.plot}
-        // The smallest grid: a box shorter than this grows the figure past it instead of clipping cells.
-        style={{ minHeight: CELL_MIN_HEIGHT * rows.length + X_AXIS_HEIGHT }}
+        // The smallest grid: a box smaller than this grows the figure past it instead of clipping cells.
+        style={{ minHeight: CELL_MIN * rows.length + X_AXIS_HEIGHT, minWidth: layout?.minWidth }}
         role="group"
         aria-label={label}
         aria-describedby={hasFootnote ? `${hintId} ${footnoteId}` : hintId}
@@ -283,7 +282,9 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
           <svg
             className={styles.svg}
             width={size.width}
-            height={layout.height}
+            // Width-limited height, independent of the measured height: sizes a plot without a definite height
+            // without a feedback loop; the plot clips its empty lower part when the height limits the cells.
+            height={layout.naturalHeight}
             aria-hidden="true"
             focusable="false"
           >
@@ -307,10 +308,10 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
                     key={`${r}:${c}`}
                     className={step === null ? styles.empty : styles.cell}
                     style={step === null ? undefined : swatch(step)}
-                    x={layout.plot.x + c * layout.cellWidth + inset}
-                    y={layout.plot.y + r * layout.cellHeight + inset}
-                    width={Math.max(0, layout.cellWidth - gap)}
-                    height={Math.max(0, layout.cellHeight - gap)}
+                    x={layout.plot.x + c * layout.cell + inset}
+                    y={layout.plot.y + r * layout.cell + inset}
+                    width={Math.max(0, layout.cell - gap)}
+                    height={Math.max(0, layout.cell - gap)}
                     data-heatmap-cell=""
                     data-row={r}
                     data-col={c}
@@ -322,10 +323,10 @@ export const Heatmap = forwardRef<HTMLElement, HeatmapProps>(function Heatmap(
             {current && (
               <rect
                 className={styles.active}
-                x={layout.plot.x + current.col * layout.cellWidth + inset}
-                y={layout.plot.y + current.row * layout.cellHeight + inset}
-                width={Math.max(0, layout.cellWidth - gap)}
-                height={Math.max(0, layout.cellHeight - gap)}
+                x={layout.plot.x + current.col * layout.cell + inset}
+                y={layout.plot.y + current.row * layout.cell + inset}
+                width={Math.max(0, layout.cell - gap)}
+                height={Math.max(0, layout.cell - gap)}
               />
             )}
           </svg>

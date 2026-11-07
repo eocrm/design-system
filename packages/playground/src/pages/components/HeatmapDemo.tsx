@@ -57,7 +57,7 @@ export function HeatmapDemo() {
     >
       <Example
         title="Average grams by weekday and hour"
-        description="Continuous values get a stepped-bar legend. The outlined cells have no data (null), not a low value."
+        description="Continuous values get a stepped-bar legend. The outlined cells have no data (null), not a low value. Cells are always square: resize the box and the tighter of width and height sets their size; the rest stays empty."
         code={`<Heatmap
   label="Average grams eaten by weekday and hour"
   rows={weekdays} columns={hours}

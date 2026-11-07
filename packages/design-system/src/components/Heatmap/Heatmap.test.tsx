@@ -73,15 +73,32 @@ describe('Heatmap', () => {
     expect(cell(container, 0, 0)).toHaveAttribute('data-step', '1');
   });
 
-  it('fills the plot height, and reserves the minimum grid height so it never clips', () => {
-    const layout = stubLayout(400, 80);
-    const { container } = render(<Heatmap {...base} footnote="Last 7 days" />);
+  it.each([
+    ['390 wide, no definite height (24 columns)', 390, 0, 24],
+    ['short and wide: the height limits', 1200, 100, 24],
+    ['narrow and tall: the width limits', 300, 600, 3],
+  ])('cells are always square: %s', (_, width, height, nCols) => {
+    const layout = stubLayout(width, height);
+    const columns = Array.from({ length: nCols }, (_, i) => String(i).padStart(2, '0'));
+    const values = base.rows.map((_, r) => columns.map((_, c) => r + c));
+    const { container } = render(<Heatmap {...base} columns={columns} values={values} />);
     layout.fire();
-    // (80 − 20px column-label band) / 2 rows = 30px cells.
-    expect(container.querySelector('svg')).toHaveAttribute('height', '80');
-    expect(cell(container, 1, 0).getAttribute('y')).toBe(String(30 + 1));
-    // 2 rows × 16px minimum + the label band.
-    expect(screen.getByRole('group')).toHaveStyle({ minHeight: '52px' });
+    const all = [...cells(container)];
+    expect(all).toHaveLength(base.rows.length * nCols);
+    for (const c of all) expect(c.getAttribute('width')).toBe(c.getAttribute('height'));
+    const side = Number(all[0].getAttribute('width')) + 2;
+    if (height > 0 && width / nCols > height) {
+      // Height-limited: (100 − 20px label band) / 2 rows.
+      expect(side).toBeCloseTo(40);
+    }
+  });
+
+  it('reserves the minimum grid size on the plot so the grid overflows instead of clipping', () => {
+    const layout = stubLayout(400, 80);
+    render(<Heatmap {...base} footnote="Last 7 days" />);
+    layout.fire();
+    // 2 rows × 12px minimum + the label band.
+    expect(screen.getByRole('group')).toHaveStyle({ minHeight: '44px' });
     expect(screen.getByRole('figure')).toHaveAttribute('data-footnote');
   });
 

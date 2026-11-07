@@ -2,6 +2,7 @@ import { scaleLinear } from 'd3-scale';
 import { estimateTextWidth } from '../Chart/chartModel';
 import {
   bucketOf,
+  CELL_MIN,
   computeHeatmapLayout,
   heatmapBuckets,
   heatmapLegend,
@@ -191,11 +192,11 @@ describe('computeHeatmapLayout', () => {
     const l = computeHeatmapLayout({ rows, columns: hours, width: 390 });
     expect(l.plot.x).toBeGreaterThanOrEqual(estimateTextWidth('Mon'));
     // Fills the width, less room for the last label's right half.
-    const right = l.plot.x + l.cellWidth * hours.length;
+    const right = l.plot.x + l.cell * hours.length;
     expect(right).toBeLessThanOrEqual(390);
     expect(right).toBeGreaterThanOrEqual(390 - estimateTextWidth('23') / 2);
-    expect(l.cellHeight).toBeGreaterThan(0);
-    expect(l.height).toBeGreaterThanOrEqual(l.plot.y + l.cellHeight * rows.length);
+    expect(l.cell).toBeGreaterThan(0);
+    expect(l.height).toBeGreaterThanOrEqual(l.plot.y + l.cell * rows.length);
     expect(l.columnLabels.length).toBeLessThan(hours.length);
     expect(l.columnLabels[0].index).toBe(0);
     // Kept labels never overlap.
@@ -210,24 +211,38 @@ describe('computeHeatmapLayout', () => {
     expect(l.columnLabels.map((c) => c.index)).toEqual([0, 1, 2]);
   });
 
-  it('fills the height with cells, clamped to 16–40px', () => {
-    const fill = computeHeatmapLayout({ rows, columns: hours, width: 390, height: 240 });
-    expect(fill.height).toBeCloseTo(240);
-    expect(fill.cellHeight).toBeGreaterThan(16);
-    expect(fill.cellHeight).toBeLessThan(40);
-    const tall = computeHeatmapLayout({ rows, columns: hours, width: 390, height: 2000 });
-    expect(tall.cellHeight).toBe(40);
-    const short = computeHeatmapLayout({ rows, columns: hours, width: 390, height: 50 });
-    expect(short.cellHeight).toBe(16);
-    expect(short.height).toBeGreaterThan(50);
+  it('square cells: the width limits them without a height, the tighter of width and height with one', () => {
+    const side = (width: number, height?: number) =>
+      computeHeatmapLayout({ rows, columns: hours, width, height }).cell;
+    const auto = computeHeatmapLayout({ rows, columns: hours, width: 390 });
+    expect(auto.height).toBeCloseTo(auto.cell * rows.length + 20);
+    expect(auto.naturalHeight).toBeCloseTo(auto.height);
+    // A tall box: still width-limited, the leftover height stays empty.
+    expect(side(390, 1000)).toBeCloseTo(auto.cell);
+    // A short, wide box: height-limited, the leftover width stays empty.
+    const wide = computeHeatmapLayout({ rows, columns: hours, width: 1200, height: 160 });
+    expect(wide.cell).toBeCloseTo((160 - 20) / rows.length);
+    expect(wide.height).toBeCloseTo(160);
+    expect(wide.plot.x + wide.cell * hours.length).toBeLessThan(1200 / 2);
+    expect(wide.naturalHeight).toBeGreaterThan(wide.height);
+    // Never below the minimum side: the grid overflows instead.
+    expect(side(1200, 50)).toBe(CELL_MIN);
+    expect(side(100)).toBe(CELL_MIN);
+  });
+
+  it('minWidth fits minimum cells and the last column label', () => {
+    const l = computeHeatmapLayout({ rows, columns: hours, width: 100 });
+    const at = computeHeatmapLayout({ rows, columns: hours, width: l.minWidth });
+    expect(at.cell).toBeGreaterThanOrEqual(CELL_MIN);
+    expect(at.plot.x + at.cell * hours.length).toBeLessThanOrEqual(l.minWidth);
   });
 
   it('hit-tests a point to its cell and misses outside the grid', () => {
     const l = computeHeatmapLayout({ rows, columns: hours, width: 390 });
-    const cx = l.plot.x + l.cellWidth * 5.5;
-    const cy = l.plot.y + l.cellHeight * 2.5;
+    const cx = l.plot.x + l.cell * 5.5;
+    const cy = l.plot.y + l.cell * 2.5;
     expect(l.cellAt(cx, cy)).toEqual({ row: 2, col: 5 });
     expect(l.cellAt(l.plot.x - 1, cy)).toBeNull();
-    expect(l.cellAt(cx, l.plot.y + l.cellHeight * rows.length + 1)).toBeNull();
+    expect(l.cellAt(cx, l.plot.y + l.cell * rows.length + 1)).toBeNull();
   });
 });

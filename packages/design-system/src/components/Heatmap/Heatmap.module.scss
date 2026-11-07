@@ -1,8 +1,9 @@
 @use './Heatmap.tokens';
 @use '../../styles/mixins' as *;
 
-// Layout mirrors Chart: legend row, grid filling the rest, optional footnote. The grid row's minimum is the plot's
-// inline min-height (16px cells), so a box too short for it makes the figure overflow rather than clip cells.
+// Layout mirrors Chart: legend row, plot filling the rest, optional footnote. The plot clips (overflow hidden), so
+// its grid track's minimum is its inline min-height / min-width (minimum cells): a box too small makes the figure
+// overflow rather than clip cells. Without a definite height the track sizes to the svg's width-limited height.
 .root {
   display: grid;
   grid-template-rows: auto 1fr;

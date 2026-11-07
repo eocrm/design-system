@@ -40,7 +40,7 @@ import { Heatmap, DashboardWidget } from '@eocrm/design-system';
 - **Keyboard.** Focus the grid; arrow keys move between cells, Home / End jump to the row start / end (with Ctrl or Cmd, the grid corners), Esc dismisses. **Screen readers** get a visually hidden data table (caption = `label`).
 - **Column labels** are thinned to fit the width.
 - **Empty** (no cell has a value) renders `EmptyState` with `emptyMessage`.
-- **Sizing.** Fills its parent like `Chart`; the parent needs a definite height (a `DashboardWidget variant="chart"` body has one). Cells stretch to fill the height between 16 and 40 px tall; past 40 px the space is left under the grid. Below 16 px per row the figure overflows its own box instead of shrinking cells, and a clipping parent (the widget body) cuts it off, so size the widget for at least rows × 16 px plus the legend and column labels.
+- **Sizing.** Cells are always square, as large as fit: the side is the smaller of (width − row labels) / columns and, when the parent gives a definite height (a `DashboardWidget variant="chart"` body does), (height − column labels) / rows. Without a definite height only the width counts and the figure takes the height it needs. The grid sits at the top-left; leftover width or height stays empty. There is no maximum, so a few columns in a wide box without a height get large cells; give it a height to bound them. The side never goes below 12 px: a smaller box makes the figure overflow its own box (a clipping parent such as the widget body cuts it off) rather than shrink cells further.
 
 #### When NOT to use
 
