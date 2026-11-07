@@ -4035,14 +4035,21 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Show the toolbar (variable-insert menu). Default `true`."
+          "description": "Show the toolbar (Insert tag and Insert variable menus). Default `true`."
         },
         {
           "name": "toolbarActions",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Custom action buttons rendered in the toolbar, right-aligned just before the\n\"Insert variable\" button (e.g. a Docs / Help link). Pass `<Button size=\"sm\">`\nelements (or a fragment of them); a `ghost` variant pairs well next to the\nbordered \"Insert variable\" button. Only renders when `showToolbar` is true."
+          "description": "Custom action buttons rendered in the toolbar, right-aligned just before the\n\"Insert tag\" and \"Insert variable\" buttons (e.g. a Docs / Help link). Pass `<Button size=\"sm\">`\nelements (or a fragment of them); a `ghost` variant pairs well next to the\nbordered \"Insert variable\" button. Only renders when `showToolbar` is true."
+        },
+        {
+          "name": "tags",
+          "type": "LiquidTag[]",
+          "required": false,
+          "default": "",
+          "description": "Liquid tags offered by the \"Insert tag\" toolbar menu (and `{%` autocomplete).\nDefault: all six (`if`, `unless`, `case`, `assign`, `capture`, `comment`).\n`[]` hides the menu and disables `{%` autocomplete. Loop tags (`for`) are never offered."
         },
         {
           "name": "filters",
@@ -7407,6 +7414,7 @@
     "LiquidVariable": "{ code: string; label?: string; type?: string; group?: string; description?: string; collection?: boolean }",
     "LiquidPreviewStatus": "\"error\" | \"loading\" | \"idle\"",
     "LiquidPreviewPlacement": "\"right\" | \"bottom\"",
+    "LiquidTag": "\"capture\" | \"if\" | \"unless\" | \"case\" | \"assign\" | \"comment\"",
     "MentionsConfig": "{ onQuery: (query: string) => MentionItem[] | Promise<MentionItem[]>; trigger?: string }",
     "UploadConfig": "{ onUpload: (file: File) => Promise<UploadResult>; accept?: string; onUploadingChange?: ((uploading: boolean) => void) }",
     "FileEntry": "{ id: string; file: File; status: \"error\" | \"done\" | \"pending\" | \"uploading\"; progress?: number; error?: string }",

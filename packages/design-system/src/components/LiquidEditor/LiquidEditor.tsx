@@ -39,10 +39,6 @@ import styles from './LiquidEditor.module.scss';
 // must not recompute (which would reset the active suggestion).
 const MENU_NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'Enter', 'Tab', 'Escape']);
 
-/**
- * Liquid template editor: highlighting, gutter, variable-insert menu, autocomplete, unknown-variable flagging and a controlled preview pane.
- * @see docs/components/LiquidEditor.md
- */
 /** Re-applies `{%-` / `-%}` whitespace control to a snippet's opening tag. */
 function withDashes(template: string, open: boolean, close: boolean): string {
   let t = template;
@@ -51,6 +47,10 @@ function withDashes(template: string, open: boolean, close: boolean): string {
   return t;
 }
 
+/**
+ * Liquid template editor: highlighting, gutter, variable-insert menu, autocomplete, unknown-variable flagging and a controlled preview pane.
+ * @see docs/components/LiquidEditor.md
+ */
 export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
   function LiquidEditor(
     {
