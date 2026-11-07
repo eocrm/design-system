@@ -167,13 +167,13 @@ const MARK_GAP = 2;
 const MARKER_LABEL_INSET = 4;
 const BAR_RADIUS = 4;
 const BAND_RATIO = 0.65;
-const PAD_TOP = 8;
+export const PAD_TOP = 8;
 /** Value-label line height; the scale reserves it (plus `VALUE_LABEL_GAP`) beyond the tallest / lowest bar. */
 const VALUE_LABEL_HEIGHT = 14;
 const VALUE_LABEL_GAP = 2;
-const PAD_RIGHT = 8;
-const X_AXIS_HEIGHT = 20;
-const Y_TICK_SPACING = 40;
+export const PAD_RIGHT = 8;
+export const X_AXIS_HEIGHT = 20;
+export const Y_TICK_SPACING = 40;
 const LEGEND_ITEM_EXTRA = 28; // swatch + gaps around one legend item
 const LEGEND_MORE_WIDTH = 4 * 7; // "+NN"
 
