@@ -30,6 +30,9 @@ export interface LiquidVariable {
   collection?: boolean;
 }
 
+/** A Liquid control-flow/assignment tag the "Insert tag" menu can offer. Loop tags are intentionally excluded. */
+export type LiquidTag = 'if' | 'unless' | 'case' | 'assign' | 'capture' | 'comment';
+
 /** Drives the preview pane chrome. */
 export type LiquidPreviewStatus = 'idle' | 'loading' | 'error';
 
@@ -57,15 +60,21 @@ export interface LiquidEditorProps {
   previewPlacement?: LiquidPreviewPlacement;
   /** Show the line-number gutter. Default `true`. */
   showLineNumbers?: boolean;
-  /** Show the toolbar (variable-insert menu). Default `true`. */
+  /** Show the toolbar (Insert tag and Insert variable menus). Default `true`. */
   showToolbar?: boolean;
   /**
    * Custom action buttons rendered in the toolbar, right-aligned just before the
-   * "Insert variable" button (e.g. a Docs / Help link). Pass `<Button size="sm">`
+   * "Insert tag" and "Insert variable" buttons (e.g. a Docs / Help link). Pass `<Button size="sm">`
    * elements (or a fragment of them); a `ghost` variant pairs well next to the
    * bordered "Insert variable" button. Only renders when `showToolbar` is true.
    */
   toolbarActions?: ReactNode;
+  /**
+   * Liquid tags offered by the "Insert tag" toolbar menu (and `{%` autocomplete).
+   * Default: all six (`if`, `unless`, `case`, `assign`, `capture`, `comment`).
+   * `[]` hides the menu and disables `{%` autocomplete. Loop tags (`for`) are never offered.
+   */
+  tags?: readonly LiquidTag[];
   /** Filter names offered in autocomplete after `|`. Defaults to a common Liquid set. */
   filters?: string[];
   /** Minimum visible rows. Default `4`. */

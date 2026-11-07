@@ -4,4 +4,5 @@ export type {
   LiquidVariable,
   LiquidPreviewStatus,
   LiquidPreviewPlacement,
+  LiquidTag,
 } from './types';

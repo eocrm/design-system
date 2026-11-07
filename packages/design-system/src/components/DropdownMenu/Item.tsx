@@ -54,6 +54,8 @@ export interface DropdownMenuItemProps extends Omit<HTMLAttributes<HTMLDivElemen
    * The menu can be dismissed separately (Escape or outside-click).
    */
   closeOnSelect?: boolean;
+  /** Typeahead match string when `children` isn't a plain string. Defaults to `children` when it is a string. */
+  textValue?: string;
 }
 
 /**
@@ -69,6 +71,7 @@ export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function I
     meta,
     disabled = false,
     closeOnSelect = true,
+    textValue,
     className,
     children,
     onClick: consumerOnClick,
@@ -80,9 +83,8 @@ export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function I
   const itemRef = useRef<HTMLDivElement | null>(null);
   const id = useId();
 
-  // String children become the typeahead label. Non-string fall back to '';
-  // typeahead won't match those, which is acceptable.
-  const label = typeof children === 'string' ? children : '';
+  // `textValue` wins; else string children; else '' (typeahead skips it).
+  const label = textValue ?? (typeof children === 'string' ? children : '');
 
   // useLayoutEffect (not useEffect) so item registration completes BEFORE
   // Content's parent useLayoutEffect runs to set activeIndex on open.

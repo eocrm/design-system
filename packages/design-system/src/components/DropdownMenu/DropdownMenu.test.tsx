@@ -1222,6 +1222,27 @@ describe('DropdownMenu — typeahead', () => {
     expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toHaveFocus();
   });
 
+  it('`textValue` makes rich (non-string) children typeahead-matchable', async () => {
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Apple</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}} textValue="Banana">
+            <span>Banana</span>
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('b');
+    expect(screen.getByRole('menuitem', { name: 'Banana' })).toHaveFocus();
+  });
+
   it('multi-character typeahead accumulates within 500ms', async () => {
     const { user } = renderMenu();
     screen.getByRole('button', { name: 'Open' }).focus();

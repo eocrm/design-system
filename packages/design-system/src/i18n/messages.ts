@@ -6,6 +6,7 @@
 // e.g. `alert: { dismiss: string }`. Both en.ts and ru.ts must then populate
 // the new keys.
 import type { PaletteColor } from '../palette';
+import type { LiquidTagSnippetId } from '../components/LiquidEditor/liquidTags';
 
 export interface Messages {
   alert: {
@@ -1011,6 +1012,10 @@ export interface Messages {
     optional: string;
   };
   liquidEditor: {
+    /** Toolbar button label that opens the tag-insert menu. */
+    insertTag: string;
+    /** One-line description shown under each Insert tag menu item, keyed by snippet id. */
+    tagDescription: Record<LiquidTagSnippetId, string>;
     /** Toolbar button label that opens the variable-insert menu. */
     insertVariable: string;
     /** Empty-state copy when there are no variables to insert / suggest. */

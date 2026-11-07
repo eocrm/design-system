@@ -149,6 +149,15 @@ describe('LiquidEditor', () => {
     expect(screen.getByText('Could not render preview')).toBeInTheDocument();
   });
 
+  it('insert-variable menu supports typeahead on the rich item labels', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    await screen.findByRole('menuitem', { name: /First name/ });
+    await user.keyboard('l');
+    expect(screen.getByRole('menuitem', { name: /Last name/ })).toHaveFocus();
+  });
+
   it('exposes the variable-insert menu and inserts at the end', async () => {
     const user = userEvent.setup();
     renderEditor(<Harness />);
@@ -385,6 +394,7 @@ describe('insert menu with grouped palette (#304)', () => {
     const onChange = vi.fn();
     render(<LiquidEditor value="" onChange={onChange} variables={VARS} />);
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    // A lone dotted code is a flat top-level item, not a sub-menu.
     await user.click(screen.getByRole('menuitem', { name: /Event type/ }));
     expect(onChange).toHaveBeenCalledWith('{{ event.type }}');
   });
@@ -406,7 +416,7 @@ describe('insert menu with grouped palette (#304)', () => {
     const user = userEvent.setup();
     render(<LiquidEditor value="" onChange={() => {}} variables={VARS} />);
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
-    expect(screen.getByText('The journal event type')).toBeInTheDocument();
+    expect(await screen.findByText('The journal event type')).toBeInTheDocument();
   });
 
   it('does not flag its own for-loop snippet as an unknown variable', async () => {
@@ -491,5 +501,261 @@ describe('LiquidEditor — empty aria-label', () => {
   it('falls back to the default name when aria-label is an empty string', () => {
     renderEditor(<LiquidEditor value="" onChange={() => {}} aria-label="" />);
     expect(screen.getByRole('combobox')).toHaveAccessibleName('Liquid template');
+  });
+});
+
+describe('insert tag menu (#749)', () => {
+  const IF_ITEM = /^if Show content only when a condition is true/;
+
+  it('inserts an if block at the caret with the caret in the condition', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness initial="Hi " />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    ta.setSelectionRange(3, 3);
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    await user.click(await screen.findByRole('menuitem', { name: IF_ITEM }));
+    await waitFor(() => expect(ta.selectionStart).toBe('Hi {% if '.length));
+    expect(ta).toHaveValue('Hi {% if  %}{% endif %}');
+  });
+
+  it('wraps the selected text as the block body', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness initial="Hello" />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    ta.setSelectionRange(0, 5);
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    await user.click(await screen.findByRole('menuitem', { name: IF_ITEM }));
+    await waitFor(() => expect(ta).toHaveValue('{% if  %}Hello{% endif %}'));
+  });
+
+  it('tags prop narrows the menu', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness tags={['assign']} />);
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    expect(await screen.findAllByRole('menuitem', { name: /assign/ })).toHaveLength(1);
+    expect(screen.queryByRole('menuitem', { name: /^if/ })).toBeNull();
+  });
+
+  it('tags={[]} hides the Insert tag button', () => {
+    renderEditor(<Harness tags={[]} />);
+    expect(screen.queryByRole('button', { name: 'Insert tag' })).toBeNull();
+  });
+
+  it('Insert tag is disabled when readOnly', () => {
+    renderEditor(<Harness readOnly />);
+    expect(screen.getByRole('button', { name: 'Insert tag' })).toBeDisabled();
+  });
+
+  describe('{% tag autocomplete (#749)', () => {
+    it('expands the accepted snippet', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness />);
+      const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+      await user.type(ta, '{{% ca');
+      expect(screen.getByRole('option', { name: /case/ })).toBeInTheDocument();
+      await user.keyboard('{Enter}');
+      expect(ta).toHaveValue('{% case  %}{% when "" %}{% endcase %}');
+      await waitFor(() => expect(ta.selectionStart).toBe('{% case '.length));
+      expect(screen.queryByText(/unknown variable/i)).not.toBeInTheDocument();
+    });
+
+    it('consumes an existing %} tail', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness initial="{% un %}" />);
+      const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+      ta.focus();
+      ta.setSelectionRange(5, 5);
+      await user.keyboard('{ArrowRight}{ArrowLeft}');
+      await user.keyboard('{Enter}');
+      expect(ta).toHaveValue('{% unless  %}{% endunless %}');
+    });
+
+    it('is off for tags={[]} and readOnly', async () => {
+      const user = userEvent.setup();
+      const { unmount } = renderEditor(<Harness tags={[]} />);
+      await user.type(screen.getByRole('combobox'), '{{% i');
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      unmount();
+      renderEditor(<Harness readOnly initial="{% i" />);
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+
+    it('empty {% with nothing after does not throw on navigation', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness />);
+      await user.type(screen.getByRole('combobox'), '{{% ');
+      await user.keyboard('{ArrowDown}{Enter}');
+      expect(screen.getByRole('combobox')).toHaveValue('{% if  %}{% else %}{% endif %}');
+    });
+
+    it('does not hijack Enter inside an existing complete tag', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness initial="{% if x %}" />);
+      const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+      ta.focus();
+      ta.setSelectionRange(5, 5);
+      await user.keyboard('{ArrowRight}{ArrowLeft}');
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      await user.keyboard('{Enter}');
+      expect(ta).toHaveValue('{% if\n x %}');
+    });
+
+    it('keeps the whitespace-control dash', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness />);
+      await user.type(screen.getByRole('combobox'), '{{%- i');
+      await user.keyboard('{Enter}');
+      expect(screen.getByRole('combobox')).toHaveValue('{%- if  %}{% endif %}');
+    });
+
+    it('opens mid-document before other text or later tags', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness initial=" Hello {{ x }}" />);
+      const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+      ta.focus();
+      ta.setSelectionRange(0, 0);
+      await user.keyboard('{{%  i'.replace('  ', ' '));
+      await user.keyboard('{Enter}');
+      expect(ta).toHaveValue('{% if  %}{% endif %} Hello {{ x }}');
+    });
+
+    it('opens on an earlier line before a later {% endif %}', async () => {
+      const user = userEvent.setup();
+      renderEditor(<Harness initial={'\nHi\n{% endif %}'} />);
+      const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+      ta.focus();
+      ta.setSelectionRange(0, 0);
+      await user.keyboard('{{% i');
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('focus after a menu insert (final review I1)', () => {
+  it.each([
+    ['assign', /^assign /],
+    ['if', /^if Show content only when a condition is true/],
+  ])('Insert tag > %s leaves the textarea focused with no listbox', async (_n, name) => {
+    const user = userEvent.setup();
+    renderEditor(<Harness />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    await user.click(await screen.findByRole('menuitem', { name }));
+    await waitFor(() => expect(ta).toHaveFocus());
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('typing after Insert tag > if lands at the caret', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    await user.click(
+      await screen.findByRole('menuitem', {
+        name: /^if Show content only when a condition is true/,
+      }),
+    );
+    await waitFor(() => expect(ta).toHaveFocus());
+    await user.keyboard('x');
+    expect(ta).toHaveValue('{% if x %}{% endif %}');
+  });
+
+  it('Insert variable > undotted variable leaves the textarea focused', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Score/ }));
+    await waitFor(() => expect(ta).toHaveValue('{{ score }}'));
+    await waitFor(() => expect(ta).toHaveFocus());
+  });
+});
+
+describe('trailing -%} dash (final review M3)', () => {
+  it('keeps the dash on the closer when accepting a snippet', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness initial="{%- i -%}" />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    ta.focus();
+    ta.setSelectionRange(5, 5);
+    await user.keyboard('{ArrowRight}{ArrowLeft}');
+    await user.keyboard('{Enter}');
+    expect(ta).toHaveValue('{%- if  -%}{% endif %}');
+  });
+});
+
+describe('nested insert variable menu (#750)', () => {
+  const NESTED = [
+    { code: 'record.status', label: 'Status' },
+    { code: 'record.status.name', label: 'Status name' },
+    { code: 'score', label: 'Score' },
+  ];
+
+  function renderNested() {
+    renderEditor(<Harness variables={NESTED} />);
+    return screen.getByRole('combobox') as HTMLTextAreaElement;
+  }
+
+  it('flattens record › status into one sub-menu and inserts the leaf', async () => {
+    const user = userEvent.setup();
+    const ta = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    // `record` merges into the declared `record.status`; its label is the declared one.
+    await user.click(await screen.findByRole('menuitem', { name: 'Status' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Status name/ }));
+    await waitFor(() => expect(ta).toHaveValue('{{ record.status.name }}'));
+  });
+
+  it('shows a declared parent as the first item of its sub-menu', async () => {
+    const user = userEvent.setup();
+    const ta = renderNested();
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Status' }));
+    const items = await screen.findAllByRole('menuitem', { name: /^Status/ });
+    // [0] is the sub-trigger itself, [1] the declared parent inside it.
+    expect(items[1]).toHaveTextContent(/^Status$/);
+    await user.click(items[1]);
+    await waitFor(() => expect(ta).toHaveValue('{{ record.status }}'));
+  });
+
+  it('keeps undotted variables flat', async () => {
+    const user = userEvent.setup();
+    renderNested();
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    expect(await screen.findByRole('menuitem', { name: /Score/ })).toBeInTheDocument();
+  });
+
+  it('ArrowRight on a focused sub-trigger opens its sub-menu', async () => {
+    const user = userEvent.setup();
+    renderNested();
+    screen.getByRole('button', { name: 'Insert variable' }).focus();
+    await user.keyboard('{ArrowDown}'); // opens the menu, focuses the `Status` sub-trigger
+    expect(await screen.findByRole('menuitem', { name: 'Status' })).toHaveFocus();
+    await user.keyboard('{ArrowRight}');
+    expect(await screen.findByRole('menuitem', { name: /Status name/ })).toBeVisible();
+  });
+
+  it('labels a branch by its joined path when no declared parent names it', async () => {
+    const user = userEvent.setup();
+    renderEditor(
+      <Harness
+        variables={[
+          { code: 'a.b.c', label: 'C' },
+          { code: 'a.b.d', label: 'D' },
+        ]}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    expect(await screen.findByRole('menuitem', { name: 'a.b' })).toBeInTheDocument();
+  });
+});
+
+describe('tags prop typing', () => {
+  const T = ['if', 'assign'] as const; // readonly tuple must be accepted (compile-time check)
+  it('accepts a readonly tags array', async () => {
+    const user = userEvent.setup();
+    renderEditor(<LiquidEditor value="" onChange={() => {}} tags={T} />);
+    await user.click(screen.getByRole('button', { name: 'Insert tag' }));
+    expect(await screen.findByRole('menuitem', { name: /assign/ })).toBeInTheDocument();
   });
 });

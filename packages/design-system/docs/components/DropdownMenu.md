@@ -86,6 +86,7 @@
 | `meta` | `ReactNode` | no | Trailing secondary content *about the item itself* — a region code, a count, a `<Badge>`. Distinct from `shortcut`, which is a keyboard hint and is styled (and free to evolve) as one. `ReactNode`, so a Badge or Dot can go here. It is NOT `aria-hidden`, so it joins the item's accessible name ("demo RU" rather than a second identical "demo") — which is the point when the label alone is ambiguous. It is a prop, not a child, so it stays out of the typeahead label; type-to-select still matches the pure label text. Renders before `shortcut` when both are present, keeping the keyboard hint rightmost. |
 | `disabled` | `boolean` | no | Disabled items are skipped by keyboard nav, dimmed, and don't fire `onSelect` on click. |
 | `closeOnSelect` | `boolean` | no | Whether to close the menu after `onSelect` fires. Defaults to `true`. Set to `false` when this item is wrapped in a Popover/ConfirmationPopover trigger — the trigger will open its panel on this click; closing the menu would unmount the popover before the user could interact with it. The menu can be dismissed separately (Escape or outside-click). |
+| `textValue` | `string` | no | Typeahead match string when `children` isn't a plain string. Defaults to `children` when it is a string. |
 | …native | | | plus native `<div>` attributes |
 
 ### `DropdownMenuLabelProps`
@@ -169,7 +170,7 @@
 
 - Compound API: `<DropdownMenu>` is the provider; `<Trigger>` clones its single child to inject ARIA + handlers; `<Content>` portals to `document.body` and positions itself with Floating UI; `<Item>` renders a `menuitem`; `<Separator>` renders a divider.
 - Trigger child must accept a ref via `forwardRef`. `<Button>` does.
-- `<Item>` props: `onSelect` (required), `disabled`, `tone` (`'default'` | `'danger'`), `icon`, `shortcut`, `meta`, `closeOnSelect` (default `true`; set to `false` when wrapping the Item in a `<Popover.Trigger>` or `<ConfirmationPopover>` — otherwise the menu close would unmount the popover before it can render).
+- `<Item>` props: `onSelect` (required), `disabled`, `tone` (`'default'` | `'danger'`), `icon`, `shortcut`, `meta`, `textValue` (typeahead match string for rich, non-string `children`; defaults to string `children`), `closeOnSelect` (default `true`; set to `false` when wrapping the Item in a `<Popover.Trigger>` or `<ConfirmationPopover>` — otherwise the menu close would unmount the popover before it can render).
 - `<Content>` props: `side` (`'top'` | `'bottom'`, default `'bottom'`), `align` (`'start'` | `'center'` | `'end'`, default `'start'`), `sideOffset` (default `4`), `minWidth`.
 - Keyboard: Enter/Space/ArrowDown on trigger opens with first item active; ArrowUp opens with last; Arrow/Home/End navigate skipping disabled and separators; Enter/Space activates; Escape closes and returns focus to trigger; Tab closes and returns focus to trigger (then continues normal traversal); typeahead jumps to first matching label (500ms debounce).
 - Opens with a short scale-fade from the trigger side (140 ms `ease-out`). Closes instantly by design — menu close should feel like "get out of the way", not "play a transition". Respects `prefers-reduced-motion: reduce`.

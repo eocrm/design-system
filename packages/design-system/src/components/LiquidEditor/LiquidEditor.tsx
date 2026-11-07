@@ -14,9 +14,17 @@ import { useTranslation } from '../../i18n';
 import { tokenize, unknownVariables } from './liquidTokenizer';
 import { getCaretCoordinates } from './caretCoordinates';
 import { DEFAULT_LIQUID_FILTERS } from './liquidFilters';
+import {
+  applySnippet,
+  snippetsFor,
+  ALL_LIQUID_TAGS,
+  LIQUID_TAG_SNIPPETS,
+  type LiquidTagSnippetId,
+} from './liquidTags';
 import { HighlightLayer } from './HighlightLayer';
 import { AutocompleteMenu } from './AutocompleteMenu';
 import { InsertVariableMenu } from './InsertVariableMenu';
+import { InsertTagMenu } from './InsertTagMenu';
 import { PreviewPane } from './PreviewPane';
 import {
   useLiquidAutocomplete,
@@ -31,8 +39,16 @@ import styles from './LiquidEditor.module.scss';
 // must not recompute (which would reset the active suggestion).
 const MENU_NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'Enter', 'Tab', 'Escape']);
 
+/** Re-applies `{%-` / `-%}` whitespace control to a snippet's opening tag. */
+function withDashes(template: string, open: boolean, close: boolean): string {
+  let t = template;
+  if (open) t = t.replace(/^\{%/, '{%-');
+  if (close) t = t.replace('%}', '-%}');
+  return t;
+}
+
 /**
- * Liquid template editor: highlighting, gutter, variable-insert menu, autocomplete, unknown-variable flagging and a controlled preview pane.
+ * Liquid template editor: highlighting, gutter, variable- and tag-insert menus, autocomplete, unknown-variable flagging and a controlled preview pane.
  * @see docs/components/LiquidEditor.md
  */
 export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
@@ -50,6 +66,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
       showLineNumbers = true,
       showToolbar = true,
       toolbarActions,
+      tags = ALL_LIQUID_TAGS,
       filters = DEFAULT_LIQUID_FILTERS as string[],
       minRows = 4,
       maxRows,
@@ -98,13 +115,27 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
 
     const lineCount = useMemo(() => value.split('\n').length, [value]);
 
+    const tagDescriptions = useMemo(
+      () =>
+        Object.fromEntries(
+          LIQUID_TAG_SNIPPETS.map((s) => [s.id, t(`liquidEditor.tagDescription.${s.id}`)]),
+        ) as Record<LiquidTagSnippetId, string>,
+      [t],
+    );
+
     const interactive = !readOnly && !disabled;
     const {
       state: ac,
       recompute,
       move,
       close,
-    } = useLiquidAutocomplete({ variables, filters, enabled: interactive });
+    } = useLiquidAutocomplete({
+      variables,
+      filters,
+      enabled: interactive,
+      tags,
+      tagDescriptions,
+    });
 
     const [anchorRect, setAnchorRect] = useState({ top: 0, left: 0, height: 0, width: 0 });
 
@@ -191,13 +222,16 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
     }, []);
 
     const commit = useCallback(
-      (nextValue: string, caret: number) => {
+      (nextValue: string, caret: number, refocus = false) => {
         onChange(nextValue);
         // Restore the caret after React applies the controlled value (a
         // controlled <textarea> resets the caret to the end otherwise).
         requestAnimationFrame(() => {
           const ta = textareaRef.current;
           if (ta) {
+            // Menu inserts: DropdownMenu's closeAll() refocuses its trigger after
+            // onSelect, so take focus back here (typing/accept already own focus).
+            if (refocus) ta.focus();
             ta.setSelectionRange(caret, caret);
             refresh(nextValue, caret);
           }
@@ -206,23 +240,32 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
       [onChange, refresh],
     );
 
-    const insertVariable = useCallback(
-      (variable: LiquidVariable) => {
+    const insertTemplate = useCallback(
+      (template: string) => {
         const ta = textareaRef.current;
-        // Collections iterate — insert a for-loop with the caret right after
-        // `{{ item }}` (the spot the user edits next: `item.name`, separators).
-        const head = variable.collection
-          ? `{% for item in ${variable.code} %}{{ item }}`
-          : `{{ ${variable.code} }}`;
-        const snippet = variable.collection ? `${head}{% endfor %}` : head;
         const start = ta?.selectionStart ?? value.length;
         const end = ta?.selectionEnd ?? value.length;
-        const next = value.slice(0, start) + snippet + value.slice(end);
-        commit(next, start + head.length);
-        ta?.focus();
+        const { value: next, caret } = applySnippet(value, start, end, template);
+        // Same as autocomplete accept: no listbox right after a menu insert.
+        dismissAt(next, caret);
+        commit(next, caret, true);
       },
-      [value, commit],
+      [value, commit, dismissAt],
     );
+
+    const insertVariable = useCallback(
+      (variable: LiquidVariable) =>
+        // Collections iterate — insert a for-loop with the caret right after
+        // `{{ item }}` (the spot the user edits next: `item.name`, separators).
+        insertTemplate(
+          variable.collection
+            ? `{% for item in ${variable.code} %}{{ item }}$0{% endfor %}`
+            : `{{ ${variable.code} }}`,
+        ),
+      [insertTemplate],
+    );
+
+    const tagSnippets = useMemo(() => snippetsFor(tags), [tags]);
 
     // Accept a suggestion. Defaults to the keyboard-active one; pass an explicit
     // index for mouse-clicks (which target an item regardless of the active row).
@@ -236,12 +279,21 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
         // selection END — so any actively selected range is consumed by the
         // inserted suggestion, not left dangling after it.
         const replaceEnd = ta.selectionEnd ?? ta.selectionStart ?? 0;
-        const { value: next, caret: nextCaret } = applyCompletion(
-          value,
-          replaceEnd,
-          ac.context,
-          item.value,
-        );
+        // A snippet replaces the whole `{%` token; drop it first so `$SEL` is empty.
+        const tail = /^\s*-?%\}/.exec(value.slice(replaceEnd))?.[0].length ?? 0;
+        const { value: next, caret: nextCaret } = item.snippet
+          ? applySnippet(
+              value.slice(0, ac.context.open) + value.slice(replaceEnd + tail),
+              ac.context.open,
+              ac.context.open,
+              // Keep a `{%-` whitespace-control dash on the opener.
+              withDashes(
+                item.snippet.template,
+                value[ac.context.open + 2] === '-',
+                /^\s*-%\}/.test(value.slice(replaceEnd)),
+              ),
+            )
+          : applyCompletion(value, replaceEnd, ac.context, item.value);
         close();
         // A just-completed word still matches its variable; suppress the
         // immediate reopen at the resulting caret/value until the user types more.
@@ -303,6 +355,13 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
             {/* Spacer first → custom actions + Insert variable are pushed right. */}
             <span className={styles.toolbarSpacer} />
             {toolbarActions}
+            {tagSnippets.length > 0 ? (
+              <InsertTagMenu
+                snippets={tagSnippets}
+                disabled={!interactive}
+                onInsert={(s) => insertTemplate(s.template)}
+              />
+            ) : null}
             <InsertVariableMenu
               variables={variables}
               disabled={!interactive}

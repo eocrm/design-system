@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { LiquidVariable } from './types';
+import type { LiquidTag, LiquidVariable } from './types';
+import { snippetsFor, type LiquidTagSnippet, type LiquidTagSnippetId } from './liquidTags';
 
-/** Whether the caret context expects a variable name or a filter name. */
-export type AutocompleteKind = 'variable' | 'filter';
+/** Whether the caret context expects a variable name, a filter name, or a `{%` tag name. */
+export type AutocompleteKind = 'variable' | 'filter' | 'tag';
 
 export interface AutocompleteContext {
   /** Variable position (value slot) vs filter position (right after a `|`). */
@@ -11,6 +12,8 @@ export interface AutocompleteContext {
   query: string;
   /** Index in the value where the current word starts. */
   wordStart: number;
+  /** Index of the `{{` / `{%` opener this context sits in. */
+  open: number;
 }
 
 // #304: the QUERY walk includes dots so a dotted code ("event.type") matches
@@ -44,12 +47,25 @@ export function getAutocompleteContext(value: string, caret: number): Autocomple
   const query = value.slice(wordStart, caret);
   if (/[^A-Za-z0-9_.]/.test(query)) return null;
 
+  // Tag-name position: only whitespace (and an optional `-`) after `{%`.
+  if (value.startsWith('{%', open) && /^-?\s*$/.test(value.slice(open + 2, wordStart))) {
+    // A word glued to the caret, or a closed tag with a body after the caret
+    // (`{% if| x %}`), has no tag name to complete. An unclosed tag (an opener
+    // or the end comes before any `%}`) is still being typed: offer tags.
+    if (QUERY_CHAR.test(value[caret] ?? '')) return null;
+    const close = value.indexOf('%}', caret);
+    const next = value.slice(caret).search(/\{[{%]/);
+    const closed = close !== -1 && (next === -1 || close < caret + next);
+    if (closed && !/^\s*-?$/.test(value.slice(caret, close))) return null;
+    return { kind: 'tag', query, wordStart, open };
+  }
+
   // Look back (skipping spaces) for a `|` → filter context.
   let j = wordStart - 1;
   while (j > open && value[j] === ' ') j -= 1;
   const kind: AutocompleteKind = value[j] === '|' ? 'filter' : 'variable';
 
-  return { kind, query, wordStart };
+  return { kind, query, wordStart, open };
 }
 
 /**
@@ -82,6 +98,8 @@ export interface AutocompleteItem {
   description?: string;
   /** Collection flag → "list" tag (variables only). */
   collection?: boolean;
+  /** Set for `{%` tag items: accepting expands this snippet instead of inserting `value`. */
+  snippet?: LiquidTagSnippet;
 }
 
 export interface UseLiquidAutocompleteArgs {
@@ -91,6 +109,10 @@ export interface UseLiquidAutocompleteArgs {
   filters: readonly string[];
   /** Gate the menu off entirely (read-only / disabled editors). */
   enabled: boolean;
+  /** Tags offered after `{%` (`[]` disables tag autocomplete). */
+  tags: readonly LiquidTag[];
+  /** Localised description per snippet id (keeps this hook i18n-free). */
+  tagDescriptions: Record<LiquidTagSnippetId, string>;
 }
 
 export interface AutocompleteState {
@@ -112,7 +134,13 @@ export interface AutocompleteState {
  *
  * @param args Variables, filter names, and an `enabled` gate.
  */
-export function useLiquidAutocomplete({ variables, filters, enabled }: UseLiquidAutocompleteArgs) {
+export function useLiquidAutocomplete({
+  variables,
+  filters,
+  enabled,
+  tags,
+  tagDescriptions,
+}: UseLiquidAutocompleteArgs) {
   const [state, setState] = useState<AutocompleteState>({
     open: false,
     items: [],
@@ -137,6 +165,17 @@ export function useLiquidAutocomplete({ variables, filters, enabled }: UseLiquid
     [variables],
   );
 
+  const tagItems = useMemo<AutocompleteItem[]>(
+    () =>
+      snippetsFor(tags).map((snippet) => ({
+        value: snippet.id,
+        label: snippet.label,
+        description: tagDescriptions[snippet.id],
+        snippet,
+      })),
+    [tags, tagDescriptions],
+  );
+
   const recompute = useCallback(
     (value: string, caret: number) => {
       if (!enabled) {
@@ -150,16 +189,19 @@ export function useLiquidAutocomplete({ variables, filters, enabled }: UseLiquid
       }
       const q = ctx.query.toLowerCase();
       const items =
-        ctx.kind === 'filter'
-          ? filters
-              .filter((f) => f.toLowerCase().startsWith(q))
-              .map((f) => ({ value: f, label: f }))
-          : variableItems.filter(
-              (it) => it.value.toLowerCase().startsWith(q) || it.label.toLowerCase().startsWith(q),
-            );
+        ctx.kind === 'tag'
+          ? tagItems.filter((it) => it.snippet?.tag.startsWith(q))
+          : ctx.kind === 'filter'
+            ? filters
+                .filter((f) => f.toLowerCase().startsWith(q))
+                .map((f) => ({ value: f, label: f }))
+            : variableItems.filter(
+                (it) =>
+                  it.value.toLowerCase().startsWith(q) || it.label.toLowerCase().startsWith(q),
+              );
       setState({ open: items.length > 0, items, activeIndex: 0, context: ctx });
     },
-    [enabled, filters, variableItems],
+    [enabled, filters, variableItems, tagItems],
   );
 
   const move = useCallback((delta: number) => {
