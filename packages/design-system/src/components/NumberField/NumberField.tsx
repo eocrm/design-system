@@ -229,13 +229,13 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     if (e.detail === 0) stepBy(delta);
   };
 
-  const applyText = (value: string) => {
+  const applyText = (value: string): boolean => {
     // Numpad '.' types the decimal in comma-decimal locales (unless '.' groups there, as in de).
     let raw = value;
     if (decimal !== '.' && group !== '.') raw = raw.split('.').join(decimal);
     const apos = /^['\u2019]$/.test(group) ? ["'", '\u2019'] : [];
     const allowed = new Set([group, decimal, ...apos, ...(allowNegative ? ['-'] : [])]);
-    if ([...raw].some((c) => !/[\d\s]/.test(c) && !allowed.has(c))) return;
+    if ([...raw].some((c) => !/[\d\s]/.test(c) && !allowed.has(c))) return false;
     setText(raw);
     typed.current = true;
     const n = parse(raw, locale, allowNegative);
@@ -243,15 +243,21 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
       valueRef.current = n;
       onChange(n);
     }
+    return true;
   };
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => applyText(e.target.value);
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    applyText(e.target.value);
+  };
 
   // A typed '.' / decimal (pasted text stays strict): see typeSeparator.
   useSeparatorTyping(inputRef, decimal, group, (input, next, at) => {
-    if (next === textRef.current) return input.setSelectionRange(at, at);
+    if (next === textRef.current) {
+      input.setSelectionRange(at, at);
+      return true;
+    }
     caret.current = at;
-    applyText(next);
+    return applyText(next);
   });
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {

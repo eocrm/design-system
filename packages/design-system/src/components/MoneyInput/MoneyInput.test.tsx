@@ -400,6 +400,58 @@ describe('MoneyInput', () => {
       expect(onChange).toHaveBeenLastCalledWith({ amount: '1.5', currency: 'EUR' });
     });
 
+    it.each(['ru-RU', 'fr-FR', 'pl-PL', 'pt-PT'])(
+      '%s: numpad "1.234" rejects the 3rd fraction digit (no thousands rewrite)',
+      async (locale) => {
+        const onChange = vi.fn();
+        render(
+          <LocaleProvider locale={locale}>
+            <Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />
+          </LocaleProvider>,
+        );
+        await userEvent.type(amountBox(), '1.234');
+        expect(amountBox().value).toBe('1,23');
+        expect(onChange).toHaveBeenLastCalledWith({ amount: '1.23', currency: 'EUR' });
+      },
+    );
+
+    it.each([
+      ['1.23{Backspace}4,5', '1,24', '1.24'],
+      ['1.2345', '1.234', '1234'],
+      ['1.234.5', '1.234,5', '1234.5'],
+      ['1.234.567,8', '1.234.567,8', '1234567.8'],
+      ['12.345.678,9', '12.345.678,9', '12345678.9'],
+    ])('de-DE EUR: typing %s shows %s (%s)', async (typed, shown, amount) => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="de-DE">
+          <Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), typed);
+      expect(amountBox().value).toBe(shown);
+      expect(onChange).toHaveBeenLastCalledWith({ amount, currency: 'EUR' });
+    });
+
+    it('de-DE: a non-cancelable beforeinput "." is left to the browser', async () => {
+      render(
+        <LocaleProvider locale="de-DE">
+          <Harness initial={{ amount: null, currency: 'EUR' }} />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), '1');
+      const e = new InputEvent('beforeinput', {
+        bubbles: true,
+        cancelable: false,
+        inputType: 'insertText',
+        data: '.',
+      });
+      act(() => {
+        amountBox().dispatchEvent(e);
+      });
+      expect(amountBox().value).toBe('1');
+    });
+
     it('de-DE dot is still the decimal for a 3-digit currency (KWD)', async () => {
       const onChange = vi.fn();
       render(

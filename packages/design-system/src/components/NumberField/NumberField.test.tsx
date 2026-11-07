@@ -449,7 +449,8 @@ describe('NumberField locale separators and paste', () => {
     ['de', '1,5', 1.5],
     // A typed '.' then exactly 3 digits then another separator was a thousands dot.
     ['de', '1.234,5', 1234.5],
-    ['de', '1.234.567', 1234567],
+    // ...and the '.' that proved it is the decimal again until it is proven a group too.
+    ['de', '1.234.567.', 1234567],
     ['es', '1.234,5', 1234.5],
   ])('%s: typing %s fires %s', async (locale, text, expected) => {
     const spy = vi.fn();
@@ -465,7 +466,7 @@ describe('NumberField locale separators and paste', () => {
     inLocale('de', <Harness />);
     const user = userEvent.setup();
     await user.type(input(), '1.234.');
-    expect(input()).toHaveValue('1.234.');
+    expect(input()).toHaveValue('1.234,');
     expect((input() as HTMLInputElement).selectionStart).toBe(6);
   });
 
@@ -527,6 +528,38 @@ describe('NumberField locale separators and paste', () => {
     expect(beforeInput(input(), { data: '.' }).defaultPrevented).toBe(false);
     fireEvent.compositionEnd(input());
     expect(beforeInput(input(), { data: '.' }).defaultPrevented).toBe(true);
+  });
+
+  it.each([
+    // The stray 2nd decimal leaves the draft invalid; the value stays 1.24 (never 1245).
+    ['1.23{Backspace}4,5', '1,24,5', 1.24],
+    ['1.2345', '1,2345', 1.2345],
+    // A '.' after a reinterpreted group is the decimal again (never 1.234.5 = 12345).
+    ['1.234.5', '1.234,5', 1234.5],
+    ['1.234.567,8', '1.234.567,8', 1234567.8],
+    ['12.345.678,9', '12.345.678,9', 12345678.9],
+  ])('de: typing %s shows %s (%s)', async (text, shown, expected) => {
+    const spy = vi.fn();
+    inLocale('de', <Harness spy={spy} step={0.01} />);
+    await userEvent.setup().type(input(), text);
+    expect(input()).toHaveValue(shown);
+    expect(spy).toHaveBeenLastCalledWith(expected);
+  });
+
+  it('de: after a reinterpreted group, a 4th group digit is rejected', async () => {
+    inLocale('de', <Harness />);
+    const user = userEvent.setup();
+    await user.type(input(), '1.234,');
+    await user.keyboard('{Backspace}5');
+    expect(input()).toHaveValue('1.234');
+  });
+
+  it('de: a non-cancelable beforeinput "." is left to the browser', async () => {
+    inLocale('de', <Harness />);
+    await userEvent.setup().type(input(), '1');
+    const e = beforeInput(input(), { data: '.', cancelable: false });
+    expect(e.defaultPrevented).toBe(false);
+    expect(input()).toHaveValue('1');
   });
 
   it('de: a typed . after a decimal is ignored (no x10)', async () => {

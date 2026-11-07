@@ -198,7 +198,7 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   const isSignificant = (c: string) => (c >= '0' && c <= '9') || c === decimal || c === '-';
 
   // A typed '.' / decimal (numpad, any precision): see typeSeparator.
-  const converted = useSeparatorTyping(amountRef, decimal, group, (input, raw, caret) =>
+  const separator = useSeparatorTyping(amountRef, decimal, group, (input, raw, caret) =>
     applyEdit(input, raw, caret),
   );
 
@@ -206,23 +206,30 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
    * Shared edit path. Writes the DOM value + caret directly so React's controlled-value
    * reconciliation finds nothing to change and never throws the caret to the end.
    */
-  const applyEdit = (input: HTMLInputElement, raw: string, caret: number, inserted = false) => {
+  const applyEdit = (
+    input: HTMLInputElement,
+    raw: string,
+    caret: number,
+    inserted = false,
+  ): boolean => {
     const prev = text;
     const typed = !inserted && raw.length === prev.length + 1;
     const count = (str: string, c: string) => str.split(c).length - 1;
     const fracDigitsOf = (str: string) =>
       str.includes(decimal) ? str.slice(str.indexOf(decimal) + 1).replace(/\D/g, '').length : 0;
-    // A 3rd fraction digit past the precision after a typed '.' means it was a thousands dot ('1.234').
+    // Where '.' groups, a 3rd fraction digit past the precision after a typed '.' means it was a
+    // thousands dot ('1.234'); elsewhere (ru, fr) the digit is rejected below.
     if (
       typed &&
-      converted.current &&
+      separator.current.converted &&
+      group === '.' &&
       precision < 3 &&
       count(raw, decimal) === 1 &&
       fracDigitsOf(raw) === 3 &&
       /\d/.test(raw[caret - 1])
     ) {
       raw = raw.replace(decimal, group);
-      converted.current = false;
+      separator.current = { converted: false, grouped: true };
     }
     // A digit typed inside a full fraction overwrites the next digit ('12.|00' + '5' → '12.5|0').
     if (
@@ -250,7 +257,7 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
       const back = Math.max(0, caret - Math.max(0, raw.length - prev.length));
       input.value = prev;
       input.setSelectionRange(back, back);
-      return;
+      return false;
     }
     dirty.current = true;
     // `raw` is always own-locale here: pastes/drops are normalised in insertText first.
@@ -268,6 +275,7 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
     setText(next);
     const amount = draft ? draftToCanonical(draft) : null;
     if (amount !== synced.current.amount) emit(amount, currency);
+    return true;
   };
 
   /**
