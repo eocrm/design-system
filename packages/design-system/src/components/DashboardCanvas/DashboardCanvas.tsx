@@ -32,6 +32,7 @@ import type {
 import { DashboardCanvasItem, sortByPosition } from './DashboardCanvasItem';
 import type { CanvasGestures, ResizeEdge } from './DashboardCanvasItem';
 import { DashboardCanvasSection } from './DashboardCanvasSection';
+import { LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from '../_internal/longPress';
 import styles from './DashboardCanvas.module.scss';
 
 /**
@@ -172,15 +173,6 @@ function bottomOf(
  * section headers pass through untouched below it.
  */
 const DRAG_ACTIVATION_PX = 5;
-
-/**
- * Touch pick-up (DS-15): a finger must hold an item (or a resize handle)
- * still this long before it arms, so a swipe across a widget stays a page
- * scroll. Exported for tests only; not public API.
- */
-export const LONG_PRESS_MS = 300;
-/** Finger travel (px) that turns a pending touch press back into a scroll. */
-export const LONG_PRESS_SLOP_PX = 8;
 
 /**
  * Touch-only arming phase on a move/resize press: `pending` until the

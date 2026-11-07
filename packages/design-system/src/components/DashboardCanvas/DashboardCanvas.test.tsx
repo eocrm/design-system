@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { overlayStack } from '../_internal/overlay';
-import { DashboardCanvas, LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from './DashboardCanvas';
+import { DashboardCanvas } from './DashboardCanvas';
+import { LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from '../_internal/longPress';
 import { applyMove, applyResize, reorderSection } from './engine';
 import type { DashboardCanvasValue } from './engine';
 

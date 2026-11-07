@@ -919,6 +919,89 @@ describe('range selection and zoom', () => {
     expect(screen.getByRole('button', { name: 'Reset zoom' })).toBeInTheDocument();
   });
 
+  it('Shift+arrow after zooming starts a fresh range inside the zoomed view', async () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}{Shift>}{ArrowRight}{ArrowRight}{/Shift}');
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom to selection' }));
+    expect(plotOf()).toHaveFocus();
+    await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c1', to: 'c1' });
+    await waitFor(() => expect(live()).toHaveTextContent('Selected c1'));
+    expect(live()).not.toHaveTextContent('undefined');
+  });
+
+  it('Shift+arrow after a mouse selection extends from the inspected category, not the old anchor', async () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{Shift>}{ArrowRight}{/Shift}');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c0', to: 'c1' });
+    drag(container, 'c3', 'c4');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c3', to: 'c4' });
+    await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c3', to: 'c4' });
+  });
+
+  it('Escape, plot clicks and zoom act on a selection outside the zoomed view', async () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const onZoom = vi.fn();
+    const { container, rerender } = render(
+      <Chart
+        {...sel}
+        zoomRange={{ from: 'c2', to: 'c4' }}
+        onZoomRangeChange={onZoom}
+        selectedRange={{ from: 'c0', to: 'c1' }}
+        onSelectedRangeChange={onChange}
+      />,
+    );
+    layout.fire();
+    expect(band(container)).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom to selection' }));
+    expect(onZoom).toHaveBeenLastCalledWith({ from: 'c0', to: 'c1' });
+    onChange.mockClear();
+    rerender(
+      <Chart
+        {...sel}
+        zoomRange={{ from: 'c2', to: 'c4' }}
+        selectedRange={{ from: 'c0', to: 'c1' }}
+        onSelectedRangeChange={onChange}
+      />,
+    );
+    plotOf().focus();
+    await userEvent.keyboard('{Escape}');
+    expect(onChange).toHaveBeenLastCalledWith(null);
+    onChange.mockClear();
+    click(container, 'c3');
+    expect(onChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('compact: the legend fits into the width the zoom buttons leave', () => {
+    // The stub gives every element the same width, so the zoom buttons claim the whole row.
+    const layout = stubLayout(400, 100);
+    const many: ChartProps = {
+      ...sel,
+      series: ['Alpha team', 'Bravo team', 'Charlie team', 'Delta team', 'Echo team'].map(
+        (label, i) => ({ key: `s${i}`, label, values: [1, 2, 3, 4, 5] }),
+      ),
+    };
+    const legendButtons = () =>
+      screen.getAllByRole('button').filter((b) => b.hasAttribute('aria-pressed')).length;
+    const { rerender } = render(<Chart {...many} />);
+    layout.fire();
+    const without = legendButtons();
+    rerender(<Chart {...many} zoomRange={{ from: 'c1', to: 'c3' }} />);
+    layout.fire();
+    expect(screen.getByRole('button', { name: 'Reset zoom' })).toBeInTheDocument();
+    expect(legendButtons()).toBeLessThan(without);
+  });
+
   it('is off without selection props', async () => {
     const layout = stubLayout();
     const { container } = render(<Chart {...sel} />);

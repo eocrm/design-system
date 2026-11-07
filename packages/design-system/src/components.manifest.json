@@ -148,7 +148,6 @@
     "composes": [
       "Button",
       "Cluster",
-      "DashboardCanvas",
       "EmptyState",
       "LiveRegion",
       "VisuallyHidden"
@@ -278,9 +277,7 @@
       "Accordion",
       "Highlight"
     ],
-    "composedBy": [
-      "Chart"
-    ]
+    "composedBy": []
   },
   "DashboardWidget": {
     "tier": "composition",

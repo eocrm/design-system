@@ -24,7 +24,7 @@ import { LiveRegion } from '../LiveRegion';
 import { VisuallyHidden } from '../VisuallyHidden';
 import { Button } from '../Button';
 import { Cluster } from '../Cluster';
-import { LONG_PRESS_SLOP_PX } from '../DashboardCanvas/DashboardCanvas';
+import { LONG_PRESS_SLOP_PX } from '../_internal/longPress';
 import { rangeFromIndices, resolveRange, sliceForZoom, type ChartRange } from './chartRange';
 import {
   categoryIndexAt,
@@ -146,6 +146,8 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
 const NO_MARKERS: ChartMarker[] = [];
 const NO_DROPPED: string[] = [];
 const identity = (i: number) => i;
+/** The header `Cluster gap="sm"` between the legend and the zoom buttons. */
+const HEADER_GAP_PX = 8;
 
 /** Dev-only, once per distinct value: an invalid range is ignored rather than thrown. */
 function useRangeWarning(prop: string, range: ChartRange | null | undefined, invalid: boolean) {
@@ -273,8 +275,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     selection,
     loaded && resolveRange(selection, allCategories) === null,
   );
-  // Resolved against the view: a selection outside the zoomed range is simply not drawn.
+  // Resolved against the view: a selection outside the zoomed range is simply not drawn, but still
+  // exists (Escape clears it, a plot click clears it, and it can be zoomed to).
   const selectedIdx = selectable ? resolveRange(selection, categories) : null;
+  const hasSelection = selectable && resolveRange(selection, allCategories) !== null;
   // Last user selection change, announced until keyboard inspection takes over the live region.
   const [selectionNote, setSelectionNote] = useState('');
   const select = (next: ChartRange | null) => {
@@ -317,6 +321,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
 
   const [setPlotEl, size, plotEl] = useSize<HTMLDivElement>();
   const [setRootEl, rootSize] = useSize<HTMLElement>();
+  const [setZoomEl, zoomSize] = useSize<HTMLElement>();
   const figureRef = useMemo(
     () => mergeRefs(ref, (el: HTMLElement | null) => setRootEl(el)),
     [ref, setRootEl],
@@ -348,13 +353,23 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const n = categories.length;
   const current = active !== null && active < n ? active : null;
 
+  // Shift+arrow anchor: the category inspected when Shift was first used; any other key, any pointer
+  // inspection and any zoom change drops it.
+  const anchor = useRef<number | null>(null);
   const inspect = (index: number | null, source: 'pointer' | 'keyboard' | null) => {
+    if (source !== 'keyboard') anchor.current = null;
     setActive(index);
     setActiveSource(index === null ? null : source);
   };
-
-  // Shift+arrow anchor: the category inspected when Shift was first used; any other key drops it.
-  const anchor = useRef<number | null>(null);
+  // A zoom change (ours or the consumer's) re-indexes the view: stale indices would name other categories.
+  useEffect(() => {
+    anchor.current = null;
+    setActive(null);
+    setActiveSource(null);
+  }, [zoomFrom, zoomTo]);
+  const clampIndex = (i: number) => Math.max(0, Math.min(n - 1, i));
+  const rangeAt = (a: number, b: number) =>
+    rangeFromIndices(clampIndex(a), clampIndex(b), categories);
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const extending = selectable && e.shiftKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft');
     if (!extending && e.key !== 'Shift') anchor.current = null;
@@ -373,7 +388,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         next = n - 1;
         break;
       case 'Escape':
-        if (selectedIdx !== null) {
+        if (hasSelection) {
           e.preventDefault();
           select(null);
           return;
@@ -387,7 +402,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     e.preventDefault();
     if (extending && next !== null) {
       anchor.current ??= current ?? next;
-      select(rangeFromIndices(anchor.current, next, categories));
+      select(rangeAt(anchor.current, next));
     } else {
       setSelectionNote('');
     }
@@ -456,8 +471,11 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     press.current = null;
     setDraft(null);
     const index = indexAt(e) ?? p.index;
-    if (p.dragging) select(rangeFromIndices(p.index, index, categories));
-    else if (selectedIdx !== null && (index < selectedIdx.from || index > selectedIdx.to))
+    if (p.dragging) select(rangeAt(p.index, index));
+    else if (
+      hasSelection &&
+      (selectedIdx === null || index < selectedIdx.from || index > selectedIdx.to)
+    )
       select(null);
   };
 
@@ -565,22 +583,20 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     setZoom(selection);
     setSelection(null);
     setSelectionNote('');
-    inspect(null, null);
     plotEl?.focus();
   };
   const resetZoom = () => {
     setZoom(null);
-    inspect(null, null);
     plotEl?.focus();
   };
-  const zoomButtons = (selectedIdx !== null || zoomIdx !== null) && (
-    <Cluster gap="xs">
+  const zoomButtons = (hasSelection || zoomIdx !== null) && (
+    <Cluster ref={setZoomEl} gap="xs">
       {zoomIdx !== null && (
         <Button size="xs" variant="ghost" onClick={resetZoom}>
           {t('chart.resetZoom')}
         </Button>
       )}
-      {selectedIdx !== null && (
+      {hasSelection && (
         <Button size="xs" variant="ghost" onClick={zoomToSelection}>
           {t('chart.zoomToSelection')}
         </Button>
@@ -593,7 +609,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       <ChartLegend
         items={legendItems}
         hidden={hidden}
-        fitWidth={compact ? rootSize.width : undefined}
+        // Compact: the zoom buttons share the row, so the legend fits into what they leave.
+        fitWidth={
+          compact ? rootSize.width - (zoomButtons ? zoomSize.width + HEADER_GAP_PX : 0) : undefined
+        }
         onToggle={toggle}
         onHoverKey={setHoverKey}
         onFocusKey={setFocusedKey}
