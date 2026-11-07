@@ -240,6 +240,10 @@ $meta-hide-below: 48px;
   // flexible sibling beneath Header, not a consumer-positioned component.
   flex: 1 1 auto;
   overflow-y: auto;
+
+  // Containing block for visually-hidden descendants so this scroller clips them (DS-14).
+  // stylelint-disable-next-line property-disallowed-list -- containment, not layout
+  position: relative;
 }
 
 .list {

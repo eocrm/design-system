@@ -1,4 +1,6 @@
 import { createRef } from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { VisuallyHidden } from './VisuallyHidden';
 
@@ -28,5 +30,16 @@ describe('<VisuallyHidden>', () => {
     expect(el.className.split(' ').length).toBeGreaterThan(1);
     expect(el).toHaveAttribute('id', 'vh');
     expect(el).toHaveAttribute('data-x', '1');
+  });
+
+  // jsdom computes no layout, so assert the source (DS-14, DS-31): without an
+  // inset the box sits at its static position and escapes clipping scrollers.
+  it('mixin pins to the containing block start; Card.Body scroll is a containing block', () => {
+    const mixins = readFileSync(resolve(__dirname, '../../styles/mixins.scss'), 'utf8');
+    const block = mixins.slice(mixins.indexOf('@mixin visually-hidden'));
+    expect(block).toMatch(/inset-block-start:\s*0/);
+    expect(block).toMatch(/inset-inline-start:\s*0/);
+    const card = readFileSync(resolve(__dirname, '../Card/Card.module.scss'), 'utf8');
+    expect(card.slice(card.indexOf('\n.scroll {'))).toMatch(/position:\s*relative/);
   });
 });
