@@ -2,6 +2,7 @@ import { DropdownMenu } from '../DropdownMenu';
 import { Button } from '../Button';
 import { useTranslation } from '../../i18n';
 import type { LiquidVariable } from './types';
+import { buildVariableTree, type VariableNode } from './variableTree';
 import styles from './LiquidEditor.module.scss';
 
 export interface InsertVariableMenuProps {
@@ -34,6 +35,32 @@ export function InsertVariableMenu({ variables, disabled, onInsert }: InsertVari
     g.items.push(v);
   }
 
+  const renderVariable = (v: LiquidVariable) => (
+    <VariableItem
+      key={v.code}
+      variable={v}
+      tags={[v.collection ? t('liquidEditor.collectionTag') : null, v.type]
+        .filter(Boolean)
+        .join(' · ')}
+      onInsert={onInsert}
+    />
+  );
+
+  // Nodes with children become sub-menus (a declared parent is the first item
+  // inside its own sub-menu); childless nodes are plain items.
+  const renderNode = (node: VariableNode) =>
+    node.children.length === 0 ? (
+      node.variable && renderVariable(node.variable)
+    ) : (
+      <DropdownMenu.Sub key={node.path}>
+        <DropdownMenu.SubTrigger>{node.segment}</DropdownMenu.SubTrigger>
+        <DropdownMenu.SubContent>
+          {node.variable && renderVariable(node.variable)}
+          {node.children.map((child) => renderNode(child))}
+        </DropdownMenu.SubContent>
+      </DropdownMenu.Sub>
+    );
+
   return (
     <DropdownMenu>
       {/* Trigger clones its single child to inject ref + ARIA — no `asChild`. */}
@@ -49,33 +76,33 @@ export function InsertVariableMenu({ variables, disabled, onInsert }: InsertVari
           groups.map((group, gi) => (
             <DropdownMenu.Group key={group.name ?? `g${gi}`}>
               {group.name ? <DropdownMenu.Label>{group.name}</DropdownMenu.Label> : null}
-              {group.items.map((v) => {
-                const tags = [v.collection ? t('liquidEditor.collectionTag') : null, v.type]
-                  .filter(Boolean)
-                  .join(' · ');
-                return (
-                  <DropdownMenu.Item
-                    key={v.code}
-                    onSelect={() => onInsert(v)}
-                    shortcut={tags || undefined}
-                  >
-                    <span className={styles.menuItemMain}>
-                      {/* `||`, not `??`: `code` is here so a menu item always
-                          has SOMETHING readable, and this span is the item's
-                          only name source — `label: ''` would defeat it and
-                          render a blank menuitem (#535). */}
-                      <span>{v.label || v.code}</span>
-                      {v.description ? (
-                        <span className={styles.menuItemDesc}>{v.description}</span>
-                      ) : null}
-                    </span>
-                  </DropdownMenu.Item>
-                );
-              })}
+              {buildVariableTree(group.items).map((node) => renderNode(node))}
             </DropdownMenu.Group>
           ))
         )}
       </DropdownMenu.Content>
     </DropdownMenu>
+  );
+}
+
+interface VariableItemProps {
+  variable: LiquidVariable;
+  /** Pre-joined collection/type tags shown as the item's shortcut. */
+  tags: string;
+  onInsert: (variable: LiquidVariable) => void;
+}
+
+/** One selectable variable row: label, optional muted description, tags. */
+function VariableItem({ variable: v, tags, onInsert }: VariableItemProps) {
+  return (
+    <DropdownMenu.Item onSelect={() => onInsert(v)} shortcut={tags || undefined}>
+      <span className={styles.menuItemMain}>
+        {/* `||`, not `??`: `code` is here so a menu item always has SOMETHING
+            readable, and this span is the item's only name source — `label: ''`
+            would defeat it and render a blank menuitem (#535). */}
+        <span>{v.label || v.code}</span>
+        {v.description ? <span className={styles.menuItemDesc}>{v.description}</span> : null}
+      </span>
+    </DropdownMenu.Item>
   );
 }
