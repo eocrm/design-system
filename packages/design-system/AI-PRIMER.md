@@ -65,6 +65,7 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`.
 - `PasswordStrengthMeter` — 4-segment strength visualization
 - `CurrencySelect` — ISO 4217 currency picker over Select
 - `MoneyInput` — currency picker + formatted decimal-string amount (`MoneyValue`)
+- `NumberField` — numeric stepper `[ − | value | + ]`, locale-formatted `number | null`
 - `PhoneInput` — E.164 phone field with country picker
 - `OtpInput` — one-time-code field
 - `Checkbox` — checkbox with native input + custom paint

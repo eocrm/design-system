@@ -1,7 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Focus-ring GEOMETRY only. `packages/design-system/src/styles/contrast.test.ts`
+ * `npm run test:focus-geometry` (the CI step "Playwright geometry sweeps")
+ * runs this whole config: BOTH projects below, `chromium` and `touch`. The
+ * script name is historical; the focus-ring sweep is its first resident, and
+ * the notes below are about that sweep.
+ *
+ * Focus-ring GEOMETRY. `packages/design-system/src/styles/contrast.test.ts`
  * certifies a ring's COLOUR against the page surfaces; nothing certified that
  * the ring is actually on screen. Since #505 the ring is an `outline` at a
  * positive `outline-offset`, so it sits outside the border box and any
@@ -47,6 +52,11 @@ import { defineConfig, devices } from '@playwright/test';
  * - Every viewport but one. `devices['Desktop Chrome']` pins 1280x720, and
  *   overflow clipping is a responsive defect by nature.
  *
+ * The same config also hosts the touch-device geometry tests: the `touch`
+ * project (Pixel 7, coarse pointer) runs every `tests/touch-*.spec.ts` and
+ * checks the DS-35 44px target floor. `chromium` ignores those files, so each
+ * spec file runs in exactly one project.
+ *
  * Port 8090, never 8080: the playground's own dev server binds 8080
  * (`packages/playground/vite.config.ts`) and a developer usually has it running.
  * Two concurrent local runs share that one port and clobber each other's preview
@@ -65,7 +75,18 @@ export default defineConfig({
   // the playwright-report/ directory that quality.yml uploads on failure.
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: { baseURL: 'http://localhost:8090' },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      testIgnore: /touch-.*\.spec\.ts/,
+    },
+    {
+      name: 'touch',
+      use: { ...devices['Pixel 7'] },
+      testMatch: /touch-.*\.spec\.ts/,
+    },
+  ],
   webServer: {
     // Rebuilds even in CI, where `npm run build` has already run. That is a
     // wasted minute, and it is what makes this config behave identically on a

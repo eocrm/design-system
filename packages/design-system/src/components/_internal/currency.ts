@@ -52,11 +52,11 @@ export function isValidCurrency(code: string): boolean {
 }
 
 export function localeSeparators(locale: string): { group: string; decimal: string } {
-  const parts = new Intl.NumberFormat(locale).formatToParts(1234.5);
-  return {
-    group: parts.find((p) => p.type === 'group')?.value ?? ',',
-    decimal: parts.find((p) => p.type === 'decimal')?.value ?? '.',
-  };
+  // 1234567.5: es/pl don't group 4-digit numbers, so a smaller probe has no group part.
+  const parts = new Intl.NumberFormat(locale).formatToParts(1234567.5);
+  const decimal = parts.find((p) => p.type === 'decimal')?.value ?? '.';
+  const group = parts.find((p) => p.type === 'group')?.value;
+  return { group: group && group !== decimal ? group : decimal === ',' ? '.' : ',', decimal };
 }
 
 /** Space-like grouping chars allowed inside a pasted number (one kind per number). */

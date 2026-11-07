@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef, useState, type ReactNode } from 'react';
+import axe from 'axe-core';
 import { DropdownMenu } from './DropdownMenu';
+import { Avatar } from '../Avatar';
 import { ConfirmationPopover } from '../ConfirmationPopover';
 import { addTourLayer, markTourTarget } from '../_internal/overlay/tourHold.testutil';
 
@@ -1171,6 +1173,133 @@ describe('DropdownMenu — Group and Label', () => {
     await user.click(screen.getByRole('button', { name: 'Open' }));
     expect(screen.getByText('Quick actions')).toBeInTheDocument();
     expect(screen.queryByRole('group')).toBeNull();
+  });
+});
+
+describe('DropdownMenu — Header', () => {
+  function renderHeaderMenu() {
+    return render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Header data-testid="hdr">
+            <span>Zed Account</span>
+            <span>zed@example.com</span>
+          </DropdownMenu.Header>
+          <DropdownMenu.Item onSelect={() => {}}>Profile</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Zeta</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+  }
+
+  it('renders children with role="none" and forwards ref', async () => {
+    const user = userEvent.setup();
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Header ref={ref} data-testid="hdr">
+            <span>Zed Account</span>
+            <span>zed@example.com</span>
+          </DropdownMenu.Header>
+          <DropdownMenu.Item onSelect={() => {}}>Profile</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const hdr = screen.getByTestId('hdr');
+    expect(ref.current).toBe(hdr);
+    expect(hdr).toHaveAttribute('role', 'none');
+    expect(screen.getByText('zed@example.com')).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Zed Account/ })).toBeNull();
+  });
+
+  // Header is aria-hidden itself, so an exposed Avatar inside doesn't trip
+  // axe's aria-required-children in role="menu".
+  it('a Header with a plain Avatar passes axe and is aria-hidden, not overridable', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Header aria-hidden={false} data-testid="hdr">
+            <Avatar name="Zed Morgan" />
+          </DropdownMenu.Header>
+          <DropdownMenu.Item onSelect={() => {}}>Profile</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const hdr = screen.getByTestId('hdr');
+    expect(hdr).toHaveAttribute('aria-hidden', 'true');
+    expect(hdr).toHaveAttribute('role', 'none');
+    const results = await axe.run(screen.getByRole('menu'), {
+      runOnly: ['aria-required-children'],
+    });
+    expect(results.violations).toEqual([]);
+  });
+
+  it('a Header with an aria-hidden Avatar passes axe inside role="menu"', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Header>
+            <Avatar
+              aria-hidden
+              name="Zed Morgan"
+              src="data:image/gif;base64,R0lGODlhAQABAAAAACw="
+            />
+            <Avatar aria-hidden name="Zed Morgan" />
+            <span>Zed Morgan</span>
+          </DropdownMenu.Header>
+          <DropdownMenu.Item onSelect={() => {}}>Profile</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const results = await axe.run(screen.getByRole('menu'), {
+      // jsdom has no layout or canvas, so contrast is unmeasurable here.
+      rules: { 'color-contrast': { enabled: false } },
+    });
+    expect(
+      results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.failureSummary)}`),
+    ).toEqual([]);
+  });
+
+  it('is normal case (no uppercase transform)', () => {
+    const scss = readFileSync(resolve(__dirname, 'DropdownMenu.module.scss'), 'utf8');
+    const block = scss.match(/\.header\s*\{[^}]*\}/)?.[0] ?? '';
+    expect(block).not.toBe('');
+    expect(block).not.toMatch(/text-transform:\s*uppercase/);
+    expect(block).not.toMatch(/letter-spacing/);
+  });
+
+  it('ArrowDown from the trigger focuses the first menuitem, not the header', async () => {
+    const user = userEvent.setup();
+    renderHeaderMenu();
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Profile' })).toHaveFocus());
+  });
+
+  it('typeahead ignores the header text', async () => {
+    const user = userEvent.setup();
+    renderHeaderMenu();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.keyboard('z');
+    await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Zeta' })).toHaveFocus());
   });
 });
 

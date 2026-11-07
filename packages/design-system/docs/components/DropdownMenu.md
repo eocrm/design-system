@@ -66,6 +66,14 @@
 | `children` | `ReactNode` | yes | Menu items (and optionally a `<DropdownMenu.Label>`) to include in the group. |
 | …native | | | plus native `<div>` attributes |
 
+### `DropdownMenuHeaderProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | yes | Identity content, e.g. an Avatar beside a name and a muted subline. The Header is `aria-hidden`, so never put focusable content here. |
+| …native | | | plus native `<div>` attributes |
+
 ### `DropdownMenuItemIndicatorProps`
 
 <!-- prettier-ignore -->
@@ -220,6 +228,7 @@
 - `<RadioGroup>` + `<RadioItem>` — `role="radiogroup"` / `role="menuitemradio"`. Default `closeOnSelect={true}` (radio = the selection IS the action). Selected item gets the same accent-tinted-row treatment as checked CheckboxItem.
 - **Leading `icon` on `CheckboxItem` / `RadioItem`** (parity with `<Item icon>`) — pass a per-row glyph via the `icon` prop, **not** inlined into `children`. Typeahead derives its match string from the string children, so an inlined leading icon leaves the JSX whitespace `" "` as the first string child and kills first-letter type-to-select; the `icon` prop keeps the typeahead label the pure string. Mark the glyph `aria-hidden`. `icon={<Moon size={14} aria-hidden />}`.
 - `<Group>` + `<Label>` — wrap a section. Group is `role="group"` with `aria-labelledby` to the Label. Label outside Group still renders, no aria wiring.
+- `<Header>` — non-interactive identity header (Avatar + name + muted subline) at the top of an account menu. `role="none"`, normal case, not a menuitem: skipped by arrow keys and typeahead. Header is `aria-hidden` (component-owned, not overridable) and hidden from assistive tech, so the trigger's accessible name must carry the identity (e.g. `aria-label="Account: Zed (zed@example.com)"`). Avatars inside need no `aria-hidden` of their own. Header draws its own bottom divider, so don't follow it with a `<DropdownMenu.Separator>`.
 - `<Sub>` + `<SubTrigger>` + `<SubContent>` — nested menu. SubTrigger registers in the parent menu; SubContent is its own portaled panel. Opens on click, hover (100ms delay), Enter, or ArrowRight. Closes on ArrowLeft (level-only), Escape (level-only), click-outside (all levels), or selecting an item with `closeOnSelect=true` (all levels — cascading close).
 - `<ItemIndicator>` — optional slot child of CheckboxItem/RadioItem that adds a custom indicator glyph alongside the tinted-row treatment. Omit entirely when the row tint is sufficient (the common case). Detection is shallow: must be a direct child.
 - Per WAI-ARIA, mixing CheckboxItem and RadioItem in the same RadioGroup is invalid; CheckboxItems live outside RadioGroup.
@@ -285,6 +294,9 @@
 - Navigation between pages: use the sidebar or a `<Link>`. Menu items are for actions, not page transitions.
 - `CheckboxItem` for a one-off action (use `Item`) or for mutually exclusive choices (use `RadioGroup`); `RadioGroup` for an action menu or for multi-select (use `CheckboxItem`s).
 - `Group` around a single Item, as a generic layout primitive (use `<Stack>` / `<Cluster>`), or around a `RadioGroup` that needs no visible Label (`RadioGroup` already has `role="radiogroup"`).
+- A `<DropdownMenu.Separator>` straight after `Header` — Header already draws its own divider, so you get a double line.
+- Links, buttons or other focusables inside `Header`: it is `aria-hidden`, so they would be focusable but hidden (axe `aria-hidden-focus`).
+- `Header` for section headings (use `Group` + `Label`), for anything interactive (use an `Item`), or as the only place the identity appears (it is not announced; name the trigger too).
 - `Label` as a clickable item: it has no `role="menuitem"` and is not keyboard-focusable; use a disabled `Item` for a selectable header-style row. Outside a `Group` it carries no `aria-labelledby` wiring.
 - `Sub` for top-level sections (use `Group` + `Label`), beyond 2–3 nesting levels, or on touch-first surfaces — submenus rely on hover and lateral arrow keys.
 

@@ -4,6 +4,9 @@ import { stack, stackOffsetDiverging, stackOffsetNone, type Series } from 'd3-sh
 /** Chart form. `area` is always stacked. */
 export type ChartType = 'line' | 'bar' | 'stacked-bar' | 'area';
 
+/** Line/area interpolation: `smooth` is a monotone curve, `linear` straight segments. */
+export type ChartCurve = 'smooth' | 'linear';
+
 /** One plotted series. `values[i]` belongs to `categories[i]`; `null` is a gap. */
 export interface ChartSeries {
   /** Stable identity: legend toggles, `hiddenSeries` and `comparisonOf` refer to it. */
@@ -141,9 +144,8 @@ export function layoutMarkers(
 
 /** Distinct categorical colours; series past this reuse the palette with a dashed/outlined overflow style. */
 export const PALETTE_SIZE = 8;
-// ponytail: estimated glyph width at --font-size-sm (12px) instead of measuring text;
+// ponytail: estimated glyph widths at --font-size-sm (12px) instead of measuring text;
 // measure with canvas.measureText if labels clip or overlap in real fonts.
-export const CHAR_WIDTH = 7;
 export const LABEL_GAP = 8;
 /** Distance of the x-label baseline from the svg bottom edge. */
 export const X_LABEL_BASELINE = 4;
@@ -165,7 +167,7 @@ const PAD_RIGHT = 8;
 const X_AXIS_HEIGHT = 20;
 const Y_TICK_SPACING = 40;
 const LEGEND_ITEM_EXTRA = 28; // swatch + gaps around one legend item
-const LEGEND_MORE_WIDTH = 4 * CHAR_WIDTH; // "+NN"
+const LEGEND_MORE_WIDTH = 4 * 7; // "+NN"
 
 export function isStacked(type: ChartType): boolean {
   return type === 'stacked-bar' || type === 'area';
@@ -263,7 +265,21 @@ export function isEmpty(categories: readonly string[], series: readonly Resolved
   );
 }
 
-const textWidth = (text: string) => text.length * CHAR_WIDTH;
+/** Estimated pixel width of `text` at the chart's 12px font, by glyph class (digits 7, `%` 11, capitals / m / w 9, CJK 12...). */
+export function estimateTextWidth(text: string): number {
+  let w = 0;
+  for (const ch of text) {
+    if (ch === '%') w += 11;
+    else if (/[\d.,\s\u2212+-]/.test(ch)) w += 7;
+    else if (/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(ch))
+      w += 12;
+    else if (/[\p{Lu}mw]/u.test(ch)) w += 9;
+    else if (/\p{L}/u.test(ch)) w += 7;
+    else w += 9;
+  }
+  return w;
+}
+const textWidth = estimateTextWidth;
 
 /** Indices of the x labels to draw so none overlap; first always kept, last kept when it fits. */
 export function thinLabels(categories: readonly string[], step: number): number[] {
@@ -362,6 +378,8 @@ export interface LayoutInput {
   width: number;
   height: number;
   formatValue: (n: number) => string;
+  /** Line/area interpolation; default `'smooth'`. */
+  curve?: ChartCurve;
 }
 
 export interface ChartLayout {
@@ -414,11 +432,12 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   else for (const p of primaries) p.values.forEach(take);
   for (const c of comparisons) c.values.forEach(take);
 
+  const linear = input.curve === 'linear';
   const samples = Math.max(2, Math.min(MAX_SAMPLES, Math.ceil(width / Math.max(1, n) / SAMPLE_PX)));
   const smoothed = new Map(
     (type === 'line' ? series : stacked ? comparisons : []).map((x) => [
       x.key,
-      smoothLine(x.values, samples),
+      smoothLine(x.values, samples, linear),
     ]),
   );
   const areaStack =
@@ -426,6 +445,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       ? smoothStack(
           primaries.map((p) => p.values.map((v) => v ?? 0)),
           samples,
+          linear,
         )
       : null;
   // Each layer stays within its own values, but layers trading places can lift the stacked top past
@@ -600,8 +620,12 @@ const hermite = (y0: number, y1: number, m0: number, m1: number, t: number) => {
  * between points i and i+1. Passes through every point and never leaves the range of its two ends: no
  * dip before a climb, no bump after it, no negative counts, no inverted stack layers.
  */
-function smoothRun(v: readonly number[], samples: number): number[][] {
+function smoothRun(v: readonly number[], samples: number, linear = false): number[][] {
   const n = v.length;
+  if (linear)
+    return Array.from({ length: Math.max(0, n - 1) }, (_, i) =>
+      Array.from({ length: samples + 1 }, (_, s) => v[i] + ((v[i + 1] - v[i]) * s) / samples),
+    );
   const m = v.map((x, i) => {
     // Two points: full slope at both ends, so the segment is straight rather than an S.
     if (n === 2) return v[1] - v[0];
@@ -627,7 +651,11 @@ function smoothRun(v: readonly number[], samples: number): number[][] {
 }
 
 /** Smoothed segments of a series with gaps: each defined run is its own curve; `null` where a segment touches a gap. */
-function smoothLine(values: readonly (number | null)[], samples: number): (number[] | null)[] {
+function smoothLine(
+  values: readonly (number | null)[],
+  samples: number,
+  linear = false,
+): (number[] | null)[] {
   const segs: (number[] | null)[] = Array.from(
     { length: Math.max(0, values.length - 1) },
     () => null,
@@ -636,7 +664,9 @@ function smoothLine(values: readonly (number | null)[], samples: number): (numbe
     if (values[a] === null) continue;
     let b = a;
     while (b + 1 < values.length && values[b + 1] !== null) b++;
-    smoothRun(values.slice(a, b + 1) as number[], samples).forEach((seg, i) => (segs[a + i] = seg));
+    smoothRun(values.slice(a, b + 1) as number[], samples, linear).forEach(
+      (seg, i) => (segs[a + i] = seg),
+    );
     a = b;
   }
   return segs;
@@ -649,10 +679,16 @@ function smoothLine(values: readonly (number | null)[], samples: number): (numbe
  * steady whatever its neighbours do, a series that is 0 has no thickness, and with non-negative data no
  * layer turns inside out or crosses its neighbour.
  */
-export function smoothStack(layers: readonly (readonly number[])[], samples: number): number[][][] {
+export function smoothStack(
+  layers: readonly (readonly number[])[],
+  samples: number,
+  linear = false,
+): number[][][] {
   let below: number[][] | null = null;
   return layers.map((v) => {
-    const tops = smoothRun(v, samples).map((seg, i) => seg.map((h, s) => (below?.[i][s] ?? 0) + h));
+    const tops = smoothRun(v, samples, linear).map((seg, i) =>
+      seg.map((h, s) => (below?.[i][s] ?? 0) + h),
+    );
     below = tops;
     return tops;
   });

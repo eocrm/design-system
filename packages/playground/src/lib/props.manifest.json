@@ -745,7 +745,7 @@
           "type": "\"area\" | \"line\" | \"bar\" | \"stacked-bar\"",
           "required": true,
           "default": "",
-          "description": "Chart form. Required.\n- `'line'` — one smoothed line per series; trends over time. Comparison series dashed.\n- `'bar'` — grouped bars per category; compare a few series per bucket. Comparison bars outlined + light fill.\n- `'stacked-bar'` — bars stacked per category; parts of a total. Comparison only as `comparisonOf: 'total'` (dashed total line).\n- `'area'` — smoothed stacked areas; parts of a total over time. Same comparison rule as `stacked-bar`."
+          "description": "Chart form. Required.\n- `'line'` — one line per series (smoothed unless `curve=\"linear\"`); trends over time. Comparison series dashed.\n- `'bar'` — grouped bars per category; compare a few series per bucket. Comparison bars outlined + light fill.\n- `'stacked-bar'` — bars stacked per category; parts of a total. Comparison only as `comparisonOf: 'total'` (dashed total line).\n- `'area'` — stacked areas (smoothed unless `curve=\"linear\"`); parts of a total over time. Same comparison rule as `stacked-bar`."
         },
         {
           "name": "label",
@@ -774,6 +774,13 @@
           "required": true,
           "default": "",
           "description": "Formats a number for axis ticks, tooltip and data table (the app owns i18n and currency). Required."
+        },
+        {
+          "name": "curve",
+          "type": "ChartCurve",
+          "required": false,
+          "default": "'smooth'",
+          "description": "Line/area interpolation. `'smooth'` (default) is a monotone curve; `'linear'` draws straight segments between points."
         },
         {
           "name": "emptyMessage",
@@ -2852,6 +2859,13 @@
           "description": "Accepted file types — MIME types and/or extensions, comma-separated.\nForwarded to the native `<input accept>` attribute AND used for the\nbuilt-in `invalid-type` validation. Default: no filter.\n\nExamples:\n- `accept=\"image/*\"` — any image\n- `accept=\".csv,application/vnd.ms-excel\"` — CSV or Excel\n- `accept=\"application/pdf,image/png,image/jpeg\"` — explicit MIME list"
         },
         {
+          "name": "capture",
+          "type": "boolean | \"user\" | \"environment\"",
+          "required": false,
+          "default": "",
+          "description": "Forwarded to the file input. On mobile, `'environment'` opens the rear camera, `'user'` the front; `true` lets the browser choose."
+        },
+        {
           "name": "maxSize",
           "type": "number",
           "required": false,
@@ -3911,6 +3925,13 @@
           "description": "Underline behavior. See `LinkUnderline` for descriptions. Default: `'hover'`."
         },
         {
+          "name": "hitArea",
+          "type": "LinkHitArea",
+          "required": false,
+          "default": "",
+          "description": "Touch hit area. `'touch'` grows the tap target to ≥44px on coarse pointers without changing\nlayout; use for standalone links (list-row names, card or widget titles), leave unset for\nlinks inside running text. Default `'text'`."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
@@ -4046,7 +4067,7 @@
         },
         {
           "name": "tags",
-          "type": "LiquidTag[]",
+          "type": "readonly LiquidTag[]",
           "required": false,
           "default": "",
           "description": "Liquid tags offered by the \"Insert tag\" toolbar menu (and `{%` autocomplete).\nDefault: all six (`if`, `unless`, `case`, `assign`, `capture`, `comment`).\n`[]` hides the menu and disables `{%` autocomplete. Loop tags (`for`) are never offered."
@@ -4596,6 +4617,59 @@
           "required": false,
           "default": "",
           "description": "Ids of description/error elements; forwarded to the amount field (injected by `<Field>`)."
+        }
+      ]
+    },
+    "NumberField": {
+      "props": [
+        {
+          "name": "value",
+          "type": "number | null",
+          "required": true,
+          "default": "",
+          "description": "Controlled value. `null` = empty field."
+        },
+        {
+          "name": "onChange",
+          "type": "(value: number | null) => void",
+          "required": true,
+          "default": "",
+          "description": "Fires live on every keystroke that parses to a number (unclamped), with `null` when the field\nis cleared, and on every step. Blur after typing, or Enter, fires once more with the clamped, step-snapped value."
+        },
+        {
+          "name": "min",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Lower bound. Blur / Enter clamps to it; − disables at it; Home jumps to it. Omit for unbounded."
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Upper bound. Blur / Enter clamps to it; + disables at it; End jumps to it. Omit for unbounded."
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Default 1. Also sets the minimum display precision (decimals of `step`); a value with more\ndecimals shows them all (up to 10), so the field never hides the stored value. A `step` ≤ 0\nfalls back to 1 (dev warning)."
+        },
+        {
+          "name": "size",
+          "type": "NumberFieldSize",
+          "required": false,
+          "default": "\"md\"",
+          "description": "Field height + type scale: `\"sm\"` dense rows, `\"md\"` (default) forms, `\"lg\"` prominent entry."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Error chrome + `aria-invalid=\"true\"`. Injected by `<Field error>`."
         }
       ]
     },
@@ -7380,6 +7454,7 @@
     "OtpInputSize": "\"sm\" | \"md\" | \"lg\" | \"xl\"",
     "OtpInputType": "\"numeric\" | \"alphanumeric\"",
     "PasswordInputSize": "\"sm\" | \"md\" | \"lg\"",
+    "NumberFieldSize": "\"sm\" | \"md\" | \"lg\"",
     "PasswordStrengthScore": "0 | 1 | 2 | 3 | 4",
     "CurrencyDisplay": "\"symbol\" | \"code\" | \"both\"",
     "MoneyInputSize": "\"sm\" | \"md\" | \"lg\"",
@@ -7440,6 +7515,7 @@
     "DefinitionListSpacing": "\"sm\" | \"md\" | \"lg\"",
     "LinkVariant": "\"default\" | \"muted\" | \"subtle\"",
     "LinkUnderline": "\"none\" | \"always\" | \"hover\"",
+    "LinkHitArea": "\"text\" | \"touch\"",
     "AccordionVariant": "\"bordered\" | \"borderless\"",
     "AccordionSize": "\"sm\" | \"md\" | \"lg\"",
     "AccordionGap": "\"sm\" | \"md\" | \"lg\"",
@@ -7500,6 +7576,7 @@
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",
     "TreeViewOverflow": "{ label: string; onLoadMore?: (() => void); loading?: boolean }",
     "TreeViewView": "\"list\" | \"chart\"",
+    "ChartCurve": "\"smooth\" | \"linear\"",
     "ChartMarker": "(ChartMarkerBase & { at: string; from?: undefined; to?: undefined; }) | (ChartMarkerBase & { from: string; to: string; at?: undefined; })",
     "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string }"
   }

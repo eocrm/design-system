@@ -434,7 +434,7 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
         className={className}
       >
         {presets && presets.length > 0 && (
-          <Cluster gap="xs">
+          <Cluster gap="xs" className={styles.presets}>
             {presets.map((p) => (
               <Button
                 key={p.value}

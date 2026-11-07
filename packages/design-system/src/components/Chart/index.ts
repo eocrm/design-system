@@ -1,2 +1,9 @@
 export { Chart } from './Chart';
-export type { ChartMarker, ChartMarkerTone, ChartProps, ChartSeries, ChartType } from './Chart';
+export type {
+  ChartCurve,
+  ChartMarker,
+  ChartMarkerTone,
+  ChartProps,
+  ChartSeries,
+  ChartType,
+} from './Chart';

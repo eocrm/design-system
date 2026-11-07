@@ -247,6 +247,7 @@ export type {
   DropdownMenuItemTone,
   DropdownMenuGroupProps,
   DropdownMenuLabelProps,
+  DropdownMenuHeaderProps,
   DropdownMenuItemIndicatorProps,
   DropdownMenuCheckboxItemProps,
   DropdownMenuRadioGroupProps,
@@ -368,6 +369,9 @@ export type { OtpInputProps, OtpInputSize, OtpInputType } from './components/Otp
 
 export { PasswordInput } from './components/PasswordInput';
 export type { PasswordInputProps, PasswordInputSize } from './components/PasswordInput';
+
+export { NumberField } from './components/NumberField';
+export type { NumberFieldProps, NumberFieldSize } from './components/NumberField';
 
 export { PasswordStrengthMeter } from './components/PasswordStrengthMeter';
 export type {
@@ -590,7 +594,7 @@ export type {
 } from './components/DefinitionList';
 
 export { Link } from './components/Link';
-export type { LinkProps, LinkVariant, LinkUnderline } from './components/Link';
+export type { LinkProps, LinkVariant, LinkUnderline, LinkHitArea } from './components/Link';
 
 export { LinkCard } from './components/LinkCard';
 export type { LinkCardProps } from './components/LinkCard';
@@ -914,6 +918,7 @@ export type {
   TreeViewView,
 } from './components/TreeView';
 export type {
+  ChartCurve,
   ChartMarker,
   ChartMarkerTone,
   ChartProps,

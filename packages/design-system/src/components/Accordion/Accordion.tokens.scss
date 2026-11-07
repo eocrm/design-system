@@ -1,7 +1,8 @@
 // Accordion.tokens.scss — Component-scoped tokens for <Accordion>. Covers the
 // outer chrome (border, radius, bg), per-item divider, trigger surface +
 // hover/focus, indicator color + rotation, and per-size padding/font scale.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Outer chrome
   --accordion-bg: var(--color-bg);
   --accordion-border-color: var(--color-border);

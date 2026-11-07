@@ -40,6 +40,8 @@
 
 // Sizes
 .xs {
+  @include touch-hit-area;
+
   height: var(--button-height-xs);
   padding: 0 var(--button-padding-x-xs);
   font-size: var(--button-font-size-xs);
@@ -47,6 +49,8 @@
 }
 
 .sm {
+  @include touch-hit-area;
+
   height: var(--button-height-sm);
   padding: 0 var(--button-padding-x-sm);
   font-size: var(--button-font-size-sm);

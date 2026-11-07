@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parse, type Declaration, type Rule } from 'postcss';
 import { compile } from 'sass';
@@ -558,5 +559,21 @@ describe('Table', () => {
         color: `var(--table-cell-fg-${tone}-hover)`,
       });
     }
+  });
+});
+
+describe('Table touch tokens (DS-35)', () => {
+  const tokens = readFileSync(resolve(__dirname, 'Table.tokens.scss'), 'utf8');
+  const mod = readFileSync(resolve(__dirname, 'Table.module.scss'), 'utf8');
+  it('defaults --table-cell-link-min-height to its desktop value', () => {
+    expect(tokens).toMatch(/--table-cell-link-min-height:\s*auto;/);
+  });
+  it('re-points --table-cell-link-min-height to size-touch on coarse pointers', () => {
+    expect(tokens).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--table-cell-link-min-height:\s*var\(--size-touch\)/,
+    );
+  });
+  it('uses the token in the module', () => {
+    expect(mod).toContain('min-block-size: var(--table-cell-link-min-height)');
   });
 });

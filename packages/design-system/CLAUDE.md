@@ -94,6 +94,8 @@ Forbidden inside a component's `.module.scss`:
 
 These are the _parent's_ responsibility. If a CRM page needs to position a Button, it does so via its own `.module.scss` (passed via `className`) or by wrapping in `Stack`/`Cluster`.
 
+**One exception: `@include touch-hit-area`** (`src/styles/mixins.scss`, DS-35). Inside `@media (pointer: coarse)` it sets a zero-specificity `position: relative` on the host (`:where()`, so a consumer `className` position wins) and an absolutely positioned `::before` sized by `--size-touch`, so a small control inside a compact part (a chip's remove button) keeps its compact visual while its tap target reaches 44px. This is the only sanctioned `position`/inset in a component stylesheet, and only through the mixin; `structure.test.ts` fails on a hand-rolled `--size-touch` pseudo-element.
+
 ### 5. Export discipline
 
 Every public component is re-exported from `src/index.ts` with both its component and its types:

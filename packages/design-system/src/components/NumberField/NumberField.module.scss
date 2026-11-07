@@ -1,0 +1,110 @@
+@use '../../styles/mixins' as *;
+@use './NumberField.tokens';
+
+// Split stepper: [ − | value | + ]. Mirrors PasswordInput's wrapper (ring on focus-within).
+.root {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+  overflow: hidden;
+  background: var(--number-field-bg);
+  border: var(--border-width) solid var(--number-field-border-color);
+  border-radius: var(--number-field-radius);
+  transition: border-color var(--transition-fast);
+
+  &:focus-within {
+    @include focus-ring(var(--number-field-ring-focus));
+
+    border-color: var(--number-field-border-color-focus);
+  }
+}
+
+.invalid {
+  border-color: var(--number-field-border-color-invalid);
+
+  &:focus-within {
+    @include focus-ring(var(--number-field-ring-invalid));
+
+    border-color: var(--number-field-border-color-invalid);
+  }
+}
+
+.disabled {
+  background: var(--number-field-bg-disabled);
+  border-color: var(--number-field-border-color-disabled);
+  cursor: not-allowed;
+}
+
+// Rule 4 note: `flex: 1` is internal layout — the public box is .root; the input is its child.
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 var(--number-field-padding-x);
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--number-field-fg);
+
+  &::placeholder {
+    color: var(--number-field-placeholder-fg);
+  }
+
+  &:disabled {
+    color: var(--number-field-fg-disabled);
+    cursor: not-allowed;
+  }
+}
+
+.button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--number-field-button-bg);
+  border: none;
+  color: var(--number-field-button-fg);
+  cursor: pointer;
+
+  // Holding a button must not select text or open the long-press callout on touch.
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-touch-callout: none;
+
+  &:first-child {
+    border-inline-end: var(--border-width) solid var(--number-field-button-divider);
+  }
+
+  &:last-child {
+    border-inline-start: var(--border-width) solid var(--number-field-button-divider);
+  }
+
+  // Hover-capable pointers only: a tap would otherwise leave the tint stuck.
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: var(--number-field-button-bg-hover);
+      color: var(--number-field-button-fg-hover);
+    }
+  }
+
+  &:disabled {
+    color: var(--number-field-fg-disabled);
+    cursor: not-allowed;
+  }
+}
+
+@each $s in sm, md, lg {
+  .size-#{$s} {
+    .input {
+      height: var(--number-field-height-#{$s});
+      font-size: var(--number-field-font-size-#{$s});
+    }
+
+    .button {
+      inline-size: var(--number-field-button-size-#{$s});
+    }
+  }
+}

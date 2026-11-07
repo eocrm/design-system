@@ -113,3 +113,5 @@ hsvToHex({ h: 240, s: 100, v: 100 }); // '#0000FF'
 - ❌ Calling expensive work in `onChange`. Use `onChangeEnd` (one fire per gesture).
 - ❌ Wrapping a non-`forwardRef` component in `<ColorPicker.Trigger asChild>`. `<Popover.Trigger>` clones the child to inject the ref; non-forwardRef silently drops it.
 - ❌ Forgetting to wire `disabled` into the consumer's custom trigger element. The picker dims its wrapper and blocks pointer events (`pointer-events: none`), but the trigger button's own disabled visuals are the consumer's responsibility.
+
+**Touch devices:** On touch devices (`pointer: coarse`) preset swatches are at least 44px square (at 360px wide the panel still fits 4 per row). Override `--color-picker-swatch-min-size` in your own `@media (pointer: coarse)` block to opt out.

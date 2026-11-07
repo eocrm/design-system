@@ -92,3 +92,5 @@ Implements the WAI-ARIA Tabs pattern: roving `tabIndex`, arrow keys (Left/Right 
 - `orientation="vertical"` as a page sidebar / primary navigation: it is for intra-page section switching, not route changes.
 - `orientation="auto"` combined with app-owned viewport measurement: auto measures the available strip width, so let it react to the `Split`'s layout instead of duplicating breakpoint state.
 - `action` to switch views: it never sets `activeId`; if the click should select a tab, add a `TabItem`.
+
+**Touch devices:** On touch devices (`pointer: coarse`) tabs (horizontal and vertical, including the Calendar view switcher) are at least 44px tall. Override `--tabs-tab-min-height` in your own `@media (pointer: coarse)` block to opt out. An xs or sm `Button` placed in the `actions` slot grows to 44px on touch devices too (the slot is a `touch-dense-group`).

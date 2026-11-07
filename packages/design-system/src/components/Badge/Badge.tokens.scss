@@ -1,5 +1,6 @@
 // Badge.tokens.scss — React-owned component tokens for <Badge>.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --badge-bg-danger: var(--color-tone-danger-bg);
   --badge-bg-info: var(--color-tone-info-bg);
   --badge-bg-neutral: var(--color-tone-neutral-bg);

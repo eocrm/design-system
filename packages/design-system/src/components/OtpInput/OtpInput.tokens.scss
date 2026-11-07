@@ -3,7 +3,8 @@
 // same-size Input or Button without visual drift.
 @use '../Input/Input.tokens';
 
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Group
   --otp-input-gap: var(--space-2);
 
@@ -42,4 +43,16 @@
   --otp-input-font-size-md: var(--font-size-lg);
   --otp-input-font-size-lg: var(--font-size-xl);
   --otp-input-font-size-xl: var(--font-size-2xl);
+}
+
+// Touch devices (DS-35): 44px targets and 16px text (no iOS focus-zoom). Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root,
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --otp-input-cell-size-sm: var(--size-touch);
+    --otp-input-cell-size-md: var(--size-touch);
+    --otp-input-cell-size-lg: var(--size-touch);
+    --otp-input-font-size-sm: var(--font-size-lg);
+  }
 }

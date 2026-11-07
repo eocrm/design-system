@@ -1,5 +1,6 @@
 // CursorPagination.tokens.scss — Component-scoped tokens for <CursorPagination>. Covers the outer row gap and the prev/next button surface, hover/active backgrounds, disabled fg, plus per-size height + horizontal padding + font-size.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Row layout
   --cursor-pagination-gap: var(--space-2);
 

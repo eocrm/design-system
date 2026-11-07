@@ -1,7 +1,8 @@
 // DropdownMenu.tokens.scss — Component-scoped tokens for <DropdownMenu>. Each token defaults to the primitive the SCSS used before this migration. Covers the floating panel surface, per-item hover/checked/danger states, separator, group label, indicator, and submenu trigger.
 @use '../Badge/Badge.tokens';
 
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Panel surface
   --dropdown-menu-bg: var(--color-bg);
   --dropdown-menu-border-color: var(--color-border);
@@ -75,6 +76,11 @@
   --dropdown-menu-label-font-weight: var(--font-weight-semibold);
   --dropdown-menu-label-letter-spacing: var(--letter-spacing-caps);
   --dropdown-menu-label-fg: var(--color-fg-subtle);
+
+  // Identity header
+  --dropdown-menu-header-padding-y: var(--space-2);
+  --dropdown-menu-header-padding-x: var(--space-3);
+  --dropdown-menu-header-divider-color: var(--dropdown-menu-separator-color);
 
   // Indicator slot
   --dropdown-menu-indicator-size: var(--size-dropdown-indicator);

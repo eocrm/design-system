@@ -1,5 +1,6 @@
 // Alert.tokens.scss — Component-scoped tokens for <Alert>. Per-tone bg/fg/icon/border-color pairs for info/success/warning/danger, plus shared shape and typography defaults. Each token defaults to the primitive the SCSS used before this migration.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Shared shape + typography
   --alert-bg: var(--color-bg);
   --alert-fg: var(--color-fg);

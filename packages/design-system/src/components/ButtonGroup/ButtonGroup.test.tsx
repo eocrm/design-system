@@ -1,3 +1,5 @@
+import { readFileSync as readTouchTokens } from 'node:fs';
+import { resolve as resolveTouchTokens } from 'node:path';
 import { Field } from '../Field';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -432,4 +434,33 @@ describe('<ButtonGroup> in Field (#568)', () => {
     );
     expect(container.querySelectorAll('[invalid], div[required]')).toHaveLength(0);
   });
+});
+
+describe('ButtonGroup touch tokens (DS-35)', () => {
+  const scss = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.tokens.scss'), 'utf8');
+  it('re-points --button-group-item-height-md to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--button-group-item-height-md:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --button-group-item-height-lg to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--button-group-item-height-lg:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+});
+
+it('segmented xs and sm items are real 44px controls on touch, not overlapping hit areas (DS-35)', () => {
+  const module = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.module.scss'), 'utf8');
+  expect(module).not.toMatch(/@include touch-hit-area/);
+  // Joined visual-mode Buttons grow too, so their own hit areas cannot overlap.
+  expect(module).toMatch(/\.group\[data-mode='visual'\] \{\s*@include touch-dense-group;/);
+  const tokens = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.tokens.scss'), 'utf8');
+  for (const size of ['xs', 'sm']) {
+    expect(tokens).toMatch(
+      new RegExp(
+        `@media \\(pointer: coarse\\)[\\s\\S]*--button-group-item-height-${size}:\\s*var\\(--size-touch\\)`,
+      ),
+    );
+  }
 });

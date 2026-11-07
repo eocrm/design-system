@@ -5,6 +5,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--switch-gap);
+  min-block-size: var(--switch-hit-min-height);
   cursor: pointer;
   user-select: none;
 

@@ -3,7 +3,8 @@
 // Banner.tokens.scss — Component-scoped tokens for <Banner>: the full-width
 // app/system message bar mounted in AppLayout's `banner` / `contextBanner`
 // slots. Per-tone tinted background + rule/icon colour, shared shape and type.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --banner-fg: var(--color-fg);
   --banner-padding-y: var(--space-2);
 

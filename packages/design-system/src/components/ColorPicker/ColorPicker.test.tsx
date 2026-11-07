@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useState } from 'react';
@@ -927,5 +928,24 @@ describe('ColorPicker — popover dialog name and description (#595)', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Brand accent' }));
     expect(screen.getByRole('dialog')).toHaveAccessibleName('Brand accent');
+  });
+});
+
+describe('ColorPicker touch tokens (DS-35)', () => {
+  const tokens = readFileSync(resolve(__dirname, 'ColorPicker.tokens.scss'), 'utf8');
+  const mod = readFileSync(resolve(__dirname, 'ColorPicker.module.scss'), 'utf8');
+  it('defaults --color-picker-swatch-min-size to its desktop value', () => {
+    expect(tokens).toMatch(/--color-picker-swatch-min-size:\s*var\(--size-sm\);/);
+  });
+  it('re-points --color-picker-swatch-min-size to size-touch on coarse pointers', () => {
+    expect(tokens).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--color-picker-swatch-min-size:\s*var\(--size-touch\)/,
+    );
+  });
+  it('uses the token in the module', () => {
+    expect(mod).toContain('minmax(var(--color-picker-swatch-min-size), 1fr)');
+  });
+  it('has no raw 24px in the module', () => {
+    expect(mod).not.toMatch(/24px/);
   });
 });

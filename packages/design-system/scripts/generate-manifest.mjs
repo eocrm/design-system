@@ -63,6 +63,7 @@ const CLUSTERS = {
   PasswordStrengthMeter: 'Forms',
   CurrencySelect: 'Forms',
   MoneyInput: 'Forms',
+  NumberField: 'Forms',
   PhoneInput: 'Forms',
   Radio: 'Forms',
   OptionsPicker: 'Forms',

@@ -338,6 +338,17 @@ describe('MoneyInput', () => {
       expect(onChange).toHaveBeenLastCalledWith({ amount: '1234.56', currency: 'USD' });
     });
 
+    it('es: 12,5 parses as 12.5', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="es">
+          <Harness onChange={onChange} />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), '12,5');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '12.5', currency: 'USD' });
+    });
+
     it('trailing decimal is kept while focused', async () => {
       const onChange = vi.fn();
       render(<Harness onChange={onChange} />);

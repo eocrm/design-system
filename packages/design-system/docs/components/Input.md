@@ -52,3 +52,5 @@ Free text plus suggestions — e.g. a workspace slug prefilled with the last one
 - ↓/↑ move the highlight (wraps; nothing highlighted at first). Enter on a highlight or a click fills the value and fires `onChange` exactly like typing (controlled and uncontrolled). Enter with no highlight stays native (submits the form). Esc, Tab and blur close without changing the value.
 - The popup matches the input's width, flips when there's no room below and scrolls past `--input-suggestions-max-height`.
 - ❌ A fixed set of allowed values → `Select` (or `Select creatable`). ❌ Async / loaded results, groups or rich rows → `Select` with `loadOptions`, or `TopBar.Search`. ❌ Re-adding a native `<datalist>` — it looks different per browser and `Input` turns browser autocomplete off.
+
+**Touch devices:** On touch devices (`pointer: coarse`) every size is 44px tall and uses 16px text, so iOS does not zoom on focus. `sm` grows too (a bare `<input>` cannot host a hit-area pseudo-element). Override `--input-height-*` / `--input-font-size-*` in your own `@media (pointer: coarse)` block to opt out.

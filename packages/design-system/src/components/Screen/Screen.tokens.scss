@@ -2,7 +2,8 @@
 // block-fill min-height, and the three backdrops. Backdrop gradients reference
 // color primitives for their stops (geometry percentages are not tokenized
 // values); custom-property declarations are exempt from declaration-strict-value.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --screen-padding: var(--space-6);
   --screen-block-min-height: 60vh;
 

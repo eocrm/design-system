@@ -354,3 +354,17 @@ describe('Button — palette `color`', () => {
     expect(button.className).not.toMatch(/secondary|selected/);
   });
 });
+
+describe('Button touch tokens (DS-35)', () => {
+  const scss = readFileSync(resolve(__dirname, 'Button.tokens.scss'), 'utf8');
+  it('re-points --button-height-md to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--button-height-md:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+  it('re-points --button-height-lg to size-touch on coarse pointers', () => {
+    expect(scss).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--button-height-lg:\s*var\(\-\-size\-touch\)/,
+    );
+  });
+});

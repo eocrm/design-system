@@ -4,7 +4,8 @@
 @use '../TopBar/TopBar.tokens';
 @use '../AppLayout/AppLayout.tokens';
 
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --sticky-top-xs: var(--space-1);
   --sticky-top-sm: var(--space-2);
   --sticky-top-md: var(--space-3);

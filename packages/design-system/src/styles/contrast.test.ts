@@ -548,9 +548,12 @@ describe.each(THEMED_ACCENTS)(
     };
     // Theme blocks first: tokenValue() takes the first declaration in scope.
     const scope = [
-      ...(theme === 'dark' ? [body(funnel, ":root[data-theme='dark']")] : []),
-      body(funnel, ':root'),
-      body(chart, ':root'),
+      ...(theme === 'dark'
+        ? [body(funnel, ":root[data-theme='dark'],\n:where(:root [data-theme='dark'])")]
+        : []),
+      // Component token blocks carry a DS-21 subtree twin.
+      body(funnel, ":root,\n:where(:root [data-theme='light'], :root [data-theme='dark'])"),
+      body(chart, ":root,\n:where(:root [data-theme='light'], :root [data-theme='dark'])"),
       source,
     ].join('\n');
     it('stays >= 2:1 on the surface', () => {
@@ -2384,6 +2387,7 @@ describe('a component hover is a visible step from what it replaces', () => {
     'DropdownMenu/--dropdown-menu-item-bg-hover',
     'FilterChip/--filter-chip-dismiss-bg-hover',
     'Lightbox/--lightbox-control-bg-hover',
+    'NumberField/--number-field-button-bg-hover',
     'OptionsPicker/--options-picker-row-bg-hover',
     'PageHeader/--page-header-back-button-bg-hover',
     'Rail/--rail-item-bg-hover',

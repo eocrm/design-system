@@ -1,7 +1,8 @@
 // DashboardCanvas.tokens.scss — component-scoped tokens for <DashboardCanvas>.
 // Every token defaults to a primitive so the resolved values match the
 // global theme; consumers retheme by overriding these custom properties.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Grid geometry. `--dashboard-canvas-row` (the row unit) deliberately has
   // NO :root default: its built-in default makes cells SQUARE by deriving
   // one column's width from `--dc-cols` (stamped inline on the canvas root),
@@ -29,6 +30,11 @@
   --dashboard-canvas-item-shadow-dragging: var(--shadow-lg);
   --dashboard-canvas-drop-preview-bg: var(--color-accent-bg-subtle);
   --dashboard-canvas-drop-preview-border: var(--color-accent);
+
+  // Touch long-press lift cue (DS-15): elevation plus a slight scale, which
+  // `prefers-reduced-motion: reduce` drops.
+  --dashboard-canvas-item-lifted-shadow: var(--shadow-lg);
+  --dashboard-canvas-item-lifted-scale: 1.02;
 
   // Resize handles: 24px pointer corridor (WCAG 2.5.8) + hover glyph color.
   --dashboard-canvas-handle-hit: var(--space-6);

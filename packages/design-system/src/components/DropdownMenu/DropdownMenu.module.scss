@@ -206,6 +206,13 @@
   user-select: none;
 }
 
+// Identity header (e.g. account menu): normal case, divided from the items below.
+.header {
+  padding: var(--dropdown-menu-header-padding-y) var(--dropdown-menu-header-padding-x);
+  border-bottom: var(--border-width) solid var(--dropdown-menu-header-divider-color);
+  user-select: none;
+}
+
 // Optional indicator slot rendered when a custom <ItemIndicator> is provided
 // as a direct child of CheckboxItem/RadioItem. The default checked state has
 // no glyph (the row's tinted background + left accent IS the indicator).

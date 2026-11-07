@@ -1,5 +1,6 @@
 // Modal.tokens.scss — Component-scoped tokens for <Modal>. Each token defaults to the primitive the SCSS used before this migration. Note: Modal.module.scss also declares internal routing vars (--modal-pad, --modal-title-size, --modal-width, --modal-depth) that are set/consumed within the SCSS; those are NOT consumer-facing tokens and stay in the module.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Overlay (scrim)
   --modal-overlay-bg: var(--color-bg-overlay);
   --modal-overlay-bg-blur: var(--color-bg-overlay-blur);

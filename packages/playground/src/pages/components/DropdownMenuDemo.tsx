@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pin, Type, Calendar, Ruler } from 'lucide-react';
-import { Badge } from '@eocrm/design-system';
+import { Avatar, Badge, Text } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
@@ -423,6 +423,58 @@ export function ViewSettingsExample() {
 }`}
       >
         <ViewSettingsExample />
+      </Example>
+
+      <Example
+        title="Account menu (Header)"
+        description="A non-interactive identity header: Avatar, name, muted subline. Normal case, unlike Label. The Header is hidden from assistive tech, so the trigger's aria-label must carry the identity."
+        code={`import { Avatar, Button, Cluster, DropdownMenu, Stack, Text } from '@eocrm/design-system';
+
+export function AccountMenuExample() {
+  return (
+    <DropdownMenu>
+      <DropdownMenu.Trigger>
+        <Button variant="secondary" aria-label="Account: Zed Morgan (zed@example.com)">
+          Account ▾
+        </Button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content align="start">
+        <DropdownMenu.Header>
+          <Cluster gap="sm" align="center" wrap={false}>
+            <Avatar name="Zed Morgan" />
+            <Stack gap="xs">
+              <Text weight="medium">Zed Morgan</Text>
+              <Text tone="muted">zed@example.com</Text>
+            </Stack>
+          </Cluster>
+        </DropdownMenu.Header>
+        <DropdownMenu.Item onSelect={() => {}}>Profile</DropdownMenu.Item>
+        <DropdownMenu.Item onSelect={() => {}}>Sign out</DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu>
+  );
+}`}
+      >
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <Button variant="secondary" aria-label="Account: Zed Morgan (zed@example.com)">
+              Account ▾
+            </Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content align="start">
+            <DropdownMenu.Header>
+              <Cluster gap="sm" align="center" wrap={false}>
+                <Avatar name="Zed Morgan" />
+                <Stack gap="xs">
+                  <Text weight="medium">Zed Morgan</Text>
+                  <Text tone="muted">zed@example.com</Text>
+                </Stack>
+              </Cluster>
+            </DropdownMenu.Header>
+            <DropdownMenu.Item onSelect={() => {}}>Profile</DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => {}}>Sign out</DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu>
       </Example>
 
       <Example

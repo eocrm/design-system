@@ -1,6 +1,7 @@
 // LiquidEditor.tokens.scss — component tokens default to existing primitives so
 // dark theme works with no extra work and consumers can rebrand via AppProvider.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Editor surface
   --liquid-editor-bg: var(--color-bg);
   --liquid-editor-fg: var(--color-fg);
@@ -78,4 +79,13 @@
   // the editor's own InsertVariableMenu (a DropdownMenu) — not the lower popover
   // layer. Overridable via :root. (issue #171)
   --liquid-editor-menu-z: var(--z-overlay-floating);
+}
+
+// Touch devices (DS-35): 44px targets and 16px text (no iOS focus-zoom). Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root,
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --liquid-editor-font-size: var(--font-size-lg);
+  }
 }

@@ -24,6 +24,7 @@ import {
 } from '@floating-ui/react-dom';
 import { chain, mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
 import { overlayStack, useFloatingSurface } from '../_internal/overlay';
+import { INTERACTIVE_SELECTOR } from '../_internal/interactive';
 import styles from './Tooltip.module.scss';
 
 /** Which side of the trigger the tooltip prefers. Floating UI auto-flips if it doesn't fit. */
@@ -75,12 +76,6 @@ export interface TooltipProps {
   defaultOpen?: boolean;
 }
 
-// A tap on (or inside) one of these performs an action, so it must never be
-// hijacked to toggle a tooltip (#567). Ancestors count too: a Badge inside a
-// row link navigates.
-const INTERACTIVE =
-  'a[href], button, input, select, textarea, summary, label, audio[controls], video[controls], [contenteditable="true"], [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="switch"], [role="tab"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="combobox"], [role="slider"], [role="spinbutton"], [role="treeitem"], [role="gridcell"]';
-
 /**
  * A finger. Pens are left on the hover path: most hover, and a contact-only
  * pen fires pointerleave right after pointerup, which would snap a
@@ -90,8 +85,11 @@ function isTap(e: { pointerType: string }): boolean {
   return e.pointerType === 'touch';
 }
 
+// A tap on (or inside) an interactive element performs an action, so it must
+// never be hijacked to toggle a tooltip (#567). Ancestors count too: a Badge
+// inside a row link navigates.
 function isInteractiveTarget(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest(INTERACTIVE) !== null;
+  return target instanceof Element && target.closest(INTERACTIVE_SELECTOR) !== null;
 }
 
 /** Default hover/focus open delay (ms). Exported for tests only; not public API. */

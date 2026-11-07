@@ -51,6 +51,30 @@ Inline this in your app's `<head>` **before** your bundle loads. It applies the 
 </script>
 ```
 
+### Scoping a theme to part of the page
+
+`data-theme` also works on any element below `<html>`: `data-theme="dark"` re-themes that subtree dark and `data-theme="light"` re-themes it light, whatever the page theme. Only those two values re-theme; any other value (a third-party widget's own `data-theme="cupcake"`, say) is ignored, and that element follows the page theme. That covers everything inside it, components included: the global tokens, every component's tokens, the page's `data-accent` in the subtree's theme, the coarse-pointer touch sizes, and `color-scheme`, so native controls match. Nesting works both ways (light inside dark inside light), and an unattributed element follows its nearest themed ancestor.
+
+```html
+<html data-accent="ocean" data-theme="light">
+  …
+  <div data-theme="dark">
+    <svg fill="var(--color-accent-bg-subtle)">…</svg>
+    <!-- the ocean accent's DARK values, inside a light page -->
+    <button class="…">…</button>
+    <!-- a library Button here renders dark too -->
+  </div>
+</html>
+```
+
+- **The root keeps its own rules.** `<html>` still resolves forced light/dark, or the OS preference when unset; a subtree only ever affects itself and its descendants.
+- **Each themed subtree costs a style recalculation** of every token on its element. Fine for a few subtrees; don't stamp `data-theme` on hundreds of list rows.
+- **Overlays follow the page theme, not the subtree.** Tooltip, Popover, DropdownMenu and other menus, and Modal/Drawer dialogs portal to `<body>`, so they render outside the subtree and take the page theme.
+- **`<AppProvider tokens / darkTokens>` overrides already work inside subtrees.** They are re-emitted for `[data-theme='light']` / `[data-theme='dark']` subtrees at a higher specificity than the library's.
+- **Hand-written overrides need the theme selectors too.** The library re-declares its tokens on every `[data-theme='light']` / `[data-theme='dark']` element, so a plain `:root { … }` override is hidden inside a themed subtree.
+  - **Component tokens** (`--button-*`, …): write the override as `:root, [data-theme='light'], [data-theme='dark'] { … }` (examples below), or pass it to `<AppProvider tokens>`. The library's component blocks use the zero-specificity `:where(:root [data-theme='light'], :root [data-theme='dark'])`, so yours wins regardless of load order.
+  - **Global tokens** (`--color-*`, …): use `<AppProvider tokens / darkTokens>`. The library's subtree blocks for these are theme- and accent-specific, so a hand-written rule would have to out-rank them in every theme and accent.
+
 ## Theming via component tokens
 
 Every component defines `--<component>-<part>-<state>` CSS custom properties at `:root` (in the shipped CSS), and its styles reference those tokens instead of the global primitives. This lets consumers re-theme one component without affecting others.
@@ -63,7 +87,10 @@ Every component defines `--<component>-<part>-<state>` CSS custom properties at 
 **Override globally (every Button in the app turns red):**
 
 ```css
-:root {
+/* The theme selectors too, so the override also applies inside themed subtrees. */
+:root,
+[data-theme='light'],
+[data-theme='dark'] {
   --button-bg: red;
   --button-bg-hover: darkred;
 }
@@ -84,12 +111,36 @@ Every component defines `--<component>-<part>-<state>` CSS custom properties at 
 </div>
 ```
 
+An ancestor-scoped override like `.danger-zone` does not reach components below a nested `[data-theme='light']` or `[data-theme='dark']` element, which re-declares the component tokens. Put such an override on the themed element itself, or inside it.
+
 **Override per-instance (one Button, inline):**
 
 ```tsx
 <Button style={{ '--button-bg': 'red' } as React.CSSProperties}>Delete</Button>
 ```
 
-A component's tokens are the `:root` block at the top of its shipped stylesheet, `dist/components/<Name>/<Name>.css` (e.g. `node_modules/@eocrm/design-system/dist/components/Button/Button.css`). They are plain `--<component>-*` custom properties, also inspectable in browser devtools on `:root`.
+A component's tokens are the `:root, :where(:root [data-theme='light'], :root [data-theme='dark'])` block at the top of its shipped stylesheet, `dist/components/<Name>/<Name>.css` (e.g. `node_modules/@eocrm/design-system/dist/components/Button/Button.css`). They are plain `--<component>-*` custom properties, also inspectable in browser devtools on `:root`.
 
 **Deprecated:** `--color-badge-<tone>-bg/-fg` tokens are aliased to the new `--badge-bg-<tone>` / `--badge-fg-<tone>` tokens. They still work but will be removed in a future major version.
+
+## Touch devices
+
+On coarse pointers (`@media (pointer: coarse)`) every interactive target is at least `--size-touch` (44px). Fine pointers (mouse, trackpad) are unchanged.
+
+- **Per-component tokens.** Components raise their own size tokens inside a `@media (pointer: coarse)` block in their `*.tokens.scss`, so the touch size is just another token value you can read and override.
+- **`--size-touch`.** The shared 44px floor, a semantic token on `:root`.
+- **Hit-area pattern.** Small controls inside compact parts (a chip's remove button) keep their compact look. The `touch-hit-area` mixin adds an invisible `::before` of at least `--size-touch` square, centred on the control with direction-agnostic logical insets, so the tap target is 44px without changing the visual. The mixin claims the host's `::before` and gives the host a zero-specificity `position: relative`, so a position you set through `className` (absolute, fixed, sticky) still wins and still contains the hit area. Don't use it on a host that already styles `::before`; an `overflow: hidden` host clips the hit area; and neighbours overlapping the area lose taps to this host. Adjacent xs/sm controls' hit areas overlap; in toolbars, use md on touch, or space them by at least the overhang (`(44px - height) / 2`). The library's own dense groups (toolbars, headers, joined and segmented ButtonGroups) grow their controls to 44px on touch instead, and keep the hit area only for isolated hosts (a Drawer close, a chip's ×, `Link hitArea="touch"`).
+- **`touch-dense-group`.** The mixin behind those dense groups: on coarse pointers it re-points `--button-height-xs` and `--button-height-sm` to `--size-touch` for the group's subtree, so each Button is a real 44px control and its hit area collapses onto its own face. Because it sets the tokens on the group itself, your own `:root` coarse override of `--button-height-xs/sm` does not apply inside these groups; override on the group's element instead.
+- **16px text on iOS.** Text inputs use at least 16px on coarse pointers; iOS Safari zooms the page on focus into anything smaller.
+
+**Opting out.** Override the component's token in your own `@media (pointer: coarse)` block, loaded after the library CSS:
+
+```css
+@media (pointer: coarse) {
+  :root,
+  [data-theme='light'],
+  [data-theme='dark'] {
+    --<component>-<token>: <desktop value>;
+  }
+}
+```

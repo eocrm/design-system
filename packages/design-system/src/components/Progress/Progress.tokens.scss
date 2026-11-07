@@ -2,7 +2,8 @@
 // gap, track bg + radius, fill bg per tone, fill radius, per-size track
 // heights (literal px), and the label typography. The width transition
 // stays primitive since --motion-* is not tokenized.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Cluster
   --progress-gap: var(--space-2);
 

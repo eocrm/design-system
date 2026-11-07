@@ -1,6 +1,7 @@
 // Grid.tokens.scss — Component-scoped tokens for <Grid>. Each token
 // defaults to the primitive the SCSS used before this migration.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Gap per size
   --grid-gap-xs: var(--space-1);
   --grid-gap-sm: var(--space-2);

@@ -1,5 +1,6 @@
 // DataTable.tokens.scss — Component-scoped tokens for <DataTable>, its <HeaderCell>, and <ColumnVisibilityTrigger>. Mirrors the structural-selector hierarchy (header / pinned / pinned-row tints + the doubled-class expanded-detail row). The Table-primitive surface tokens (--color-table-*) are kept primitive — DataTable references them by their semantic name so a Table theme override still reaches DataTable.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // ── Root + cell defaults ─────────────────────────────────────────────────
   --data-table-clickable-row-radius: var(--radius-sm);
 

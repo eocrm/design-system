@@ -1,7 +1,8 @@
 // StagePath.tokens.scss — Component-scoped tokens for <StagePath>: the chevron
 // row of ordered record stages. Done/current fills follow `tone`; upcoming is
 // neutral in every tone.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --stage-path-height: var(--size-md);
 
   // Horizontal depth of each chevron's tip (and of the next stage's notch).

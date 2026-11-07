@@ -174,6 +174,8 @@
 }
 
 .tail {
+  @include touch-dense-group;
+
   display: flex;
   align-items: center;
   gap: var(--toast-tail-gap);

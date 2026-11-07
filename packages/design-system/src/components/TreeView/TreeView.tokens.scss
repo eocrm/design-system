@@ -1,5 +1,6 @@
 // TreeView.tokens.scss — component tokens for <TreeView>; all default to primitives.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --tree-view-row-height: var(--space-8);
   --tree-view-gap: var(--space-2);
   --tree-view-indent: var(--space-4);

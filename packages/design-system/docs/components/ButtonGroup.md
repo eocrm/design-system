@@ -76,3 +76,5 @@
 - ❌ Multi-select via clever workarounds. Compose Checkboxes for that.
 
 **See also:** `<Tabs>` for routing-style content switching, `<Radio>` for vertical radio lists.
+
+**Touch devices:** On touch devices (`pointer: coarse`) segmented `md` and `lg` tracks grow to 44px, so items are at least 44px tall. In visual mode the joined Buttons follow Button's touch sizing. `xs` and `sm` tracks grow to 44px too, and so do the joined Buttons of an `xs`/`sm` visual group: adjacent items are real 44px controls, because invisible hit areas on neighbours would overlap and steal each other's taps.

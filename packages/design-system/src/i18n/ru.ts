@@ -46,6 +46,10 @@ export const ru: Messages = {
   input: {
     suggestions: 'Подсказки',
   },
+  numberField: {
+    decrease: 'Уменьшить',
+    increase: 'Увеличить',
+  },
   passwordInput: {
     show: 'Показать пароль',
     hide: 'Скрыть пароль',

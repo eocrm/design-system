@@ -50,6 +50,11 @@
   cursor: pointer;
   color: var(--filter-chip-dismiss-fg);
 
+  // Coarse pointers: the x grows to --size-touch wide (token), the hit area matches it.
+  min-inline-size: var(--filter-chip-dismiss-min-inline-size);
+
+  @include touch-hit-area;
+
   &:hover {
     background: var(--filter-chip-dismiss-bg-hover);
     color: var(--filter-chip-dismiss-fg-hover);

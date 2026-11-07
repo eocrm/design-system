@@ -3,7 +3,8 @@
 // (hover / active / disabled / current) overrides, and the per-size height +
 // padding. Current-page button uses --pagination-current-* so an override can
 // retint the "selected" state without touching the accent palette globally.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Outer cluster
   --pagination-gap: var(--space-1);
 
@@ -51,4 +52,21 @@
   --pagination-font-size-sm: var(--font-size-sm);
   --pagination-font-size-md: var(--font-size-md);
   --pagination-font-size-lg: var(--font-size-md);
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root,
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --pagination-page-button-height-sm: var(--size-touch);
+    --pagination-page-button-height-md: var(--size-touch);
+    --pagination-page-button-height-lg: var(--size-touch);
+    --pagination-nav-button-height-sm: var(--size-touch);
+    --pagination-nav-button-height-md: var(--size-touch);
+    --pagination-nav-button-height-lg: var(--size-touch);
+    --pagination-page-button-min-width-sm: var(--size-touch);
+    --pagination-page-button-min-width-md: var(--size-touch);
+    --pagination-page-button-min-width-lg: var(--size-touch);
+  }
 }

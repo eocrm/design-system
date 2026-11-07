@@ -30,6 +30,11 @@
   }
 }
 
+// Opt-in (hitArea="touch"): invisible 44px tap target on coarse pointers.
+.hitAreaTouch {
+  @include touch-hit-area;
+}
+
 .default {
   color: var(--link-fg-default);
   font-weight: var(--link-font-weight-default);

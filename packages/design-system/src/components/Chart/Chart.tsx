@@ -39,6 +39,7 @@ import {
   X_LABEL_BASELINE,
   resolveSeries,
   visibleSeries,
+  type ChartCurve,
   type ChartMarker,
   type ChartSeries,
   type ChartType,
@@ -46,15 +47,21 @@ import {
 } from './chartModel';
 import styles from './Chart.module.scss';
 
-export type { ChartMarker, ChartMarkerTone, ChartSeries, ChartType } from './chartModel';
+export type {
+  ChartCurve,
+  ChartMarker,
+  ChartMarkerTone,
+  ChartSeries,
+  ChartType,
+} from './chartModel';
 
 export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
   /**
    * Chart form. Required.
-   * - `'line'` — one smoothed line per series; trends over time. Comparison series dashed.
+   * - `'line'` — one line per series (smoothed unless `curve="linear"`); trends over time. Comparison series dashed.
    * - `'bar'` — grouped bars per category; compare a few series per bucket. Comparison bars outlined + light fill.
    * - `'stacked-bar'` — bars stacked per category; parts of a total. Comparison only as `comparisonOf: 'total'` (dashed total line).
-   * - `'area'` — smoothed stacked areas; parts of a total over time. Same comparison rule as `stacked-bar`.
+   * - `'area'` — stacked areas (smoothed unless `curve="linear"`); parts of a total over time. Same comparison rule as `stacked-bar`.
    */
   type: ChartType;
   /** Accessible name of the figure and caption of its data table, e.g. "Deals won per week". Required. */
@@ -71,6 +78,8 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   series: ChartSeries[];
   /** Formats a number for axis ticks, tooltip and data table (the app owns i18n and currency). Required. */
   formatValue: (n: number) => string;
+  /** Line/area interpolation. `'smooth'` (default) is a monotone curve; `'linear'` draws straight segments between points. */
+  curve?: ChartCurve;
   /** EmptyState title when there are no categories or every value is null/zero. Default: translated "No data for this period". */
   emptyMessage?: ReactNode;
   /** Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored. If it would hide every primary series, it is ignored for primaries (the last primary can't be hidden). */
@@ -143,6 +152,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     categories,
     series,
     formatValue,
+    curve,
     emptyMessage,
     hiddenSeries,
     onHiddenSeriesChange,
@@ -208,9 +218,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             width: size.width,
             height: size.height,
             formatValue,
+            curve,
           })
         : null,
-    [empty, size.width, size.height, type, categories, visible, formatValue],
+    [empty, size.width, size.height, type, categories, visible, formatValue, curve],
   );
 
   const markerGeometry = useMemo(

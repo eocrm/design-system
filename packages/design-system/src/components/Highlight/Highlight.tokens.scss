@@ -5,7 +5,8 @@
 // the duration so two waves alternate evenly) are cue-specific motion, not
 // shared --transition-* durations; --highlight-wave-glow (22px) is a shadow
 // blur, not a --space-* step.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Ring + wave colour. Overridden inline by the `color` prop.
   --highlight-color: var(--ring-accent);
 

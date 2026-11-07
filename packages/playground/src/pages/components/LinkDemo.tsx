@@ -243,6 +243,23 @@ export function Demo() {
           </Link>
         </Cluster>
       </Example>
+      <Example
+        title="Touch hit area"
+        description="hitArea='touch' grows a standalone link's tap target to 44px on touch screens without changing its layout. Leave it off for links inside running text."
+        code={`import { Link } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Link href="#contact" variant="subtle" hitArea="touch" onClick={(e) => e.preventDefault()}>
+      Ada Lovelace
+    </Link>
+  );
+}`}
+      >
+        <Link href="#contact" variant="subtle" hitArea="touch" onClick={(e) => e.preventDefault()}>
+          Ada Lovelace
+        </Link>
+      </Example>
     </DemoLayout>
   );
 }

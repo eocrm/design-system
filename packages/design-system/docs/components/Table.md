@@ -182,3 +182,5 @@
 - Wrapping `<Table.CellLink>` in another element inside the cell: it must be the cell's direct child, or the cell keeps its padding and the link stops being full-bleed.
 - A `<Table.CellLink>` whose only content is a number with no `aria-label`: a screen reader hears "3, link" with no row or column context.
 - `scope` on `<Table.Cell>`: it renders a `<td>`, where `scope="row"` is invalid. Use `<Table.HeaderCell scope="row">` for a row-header column.
+
+**Touch devices:** On touch devices (`pointer: coarse`) `Table.CellLink` is at least 44px tall. Override `--table-cell-link-min-height` in your own `@media (pointer: coarse)` block to opt out.

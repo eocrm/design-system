@@ -349,6 +349,11 @@
   border: 0;
   border-radius: var(--select-chip-remove-radius);
 
+  // Coarse pointers: the x grows to --size-touch wide (token), the hit area matches it.
+  min-inline-size: var(--select-chip-remove-min-inline-size);
+
+  @include touch-hit-area;
+
   &:hover,
   &:focus-visible {
     color: var(--select-chip-remove-fg-hover);

@@ -1,5 +1,6 @@
 // ScrollArea.tokens.scss — component-scoped tokens for <ScrollArea>.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Height cap scale (`maxHeight="sm" | "md" | "lg"`).
   --scroll-area-max-height-sm: var(--size-scroll-area-sm);
   --scroll-area-max-height-md: var(--size-scroll-area-md);

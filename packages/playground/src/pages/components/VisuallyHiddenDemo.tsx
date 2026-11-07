@@ -1,10 +1,28 @@
-import { Link, Stack, Text, Title, VisuallyHidden } from '@eocrm/design-system';
+import {
+  Chart,
+  DashboardCanvas,
+  DashboardWidget,
+  Link,
+  Stack,
+  Table,
+  Text,
+  Title,
+  VisuallyHidden,
+  type DashboardCanvasValue,
+} from '@eocrm/design-system';
+import { useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
 
+const CANVAS_VALUE: DashboardCanvasValue = {
+  items: [{ id: 'w', x: 0, y: 0, w: 6, h: 4 }],
+  sections: [],
+};
+
 export function VisuallyHiddenDemo() {
+  const [canvas, setCanvas] = useState(CANVAS_VALUE);
   return (
     <DemoLayout
       name="VisuallyHidden"
@@ -70,6 +88,54 @@ export function Demo() {
             The "Section navigation" heading is never rendered visually, but a screen reader
             announces it on reaching the landmark — that's what aria-labelledby points at.
           </Text>
+        </Stack>
+      </Example>
+      <Example
+        title="Contained in tables and scrolling cells"
+        description="A hidden label in a table header, and a Chart (hidden data table and summary) in a scrolling widget body, neither widens the page nor adds a second scrollbar."
+        code={`<Table.HeaderCell><VisuallyHidden>Actions</VisuallyHidden></Table.HeaderCell>`}
+      >
+        <Stack gap="md">
+          <Table>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>Name</Table.HeaderCell>
+                <Table.HeaderCell>Email address</Table.HeaderCell>
+                <Table.HeaderCell>Company name</Table.HeaderCell>
+                <Table.HeaderCell>Last activity</Table.HeaderCell>
+                <Table.HeaderCell>
+                  <VisuallyHidden>Actions</VisuallyHidden>
+                </Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              <Table.Row>
+                <Table.Cell>Acme</Table.Cell>
+                <Table.Cell>someone@example.com</Table.Cell>
+                <Table.Cell>Acme Incorporated</Table.Cell>
+                <Table.Cell>Yesterday at 4:30 PM</Table.Cell>
+                <Table.Cell>Edit</Table.Cell>
+              </Table.Row>
+            </Table.Body>
+          </Table>
+          <DashboardCanvas
+            value={canvas}
+            onChange={setCanvas}
+            renderItem={() => (
+              <DashboardWidget title="Tall body">
+                <Stack gap="md">
+                  <div style={{ height: 450 }}>Tall content</div>
+                  <Chart
+                    type="bar"
+                    label="Calls per day"
+                    categories={['Mon', 'Tue', 'Wed']}
+                    series={[{ key: 'calls', label: 'Calls', values: [3, 5, 4] }]}
+                    formatValue={(n) => String(n)}
+                  />
+                </Stack>
+              </DashboardWidget>
+            )}
+          />
         </Stack>
       </Example>
     </DemoLayout>

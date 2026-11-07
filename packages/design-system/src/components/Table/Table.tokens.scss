@@ -5,7 +5,8 @@
 // sits on top of this primitive and overrides --color-table-* via its own
 // surface tokens — keeping Table's tokens semantic ensures a Table theme
 // override propagates to DataTable.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Table surface
   --table-fg: var(--color-table-fg);
   --table-bg: var(--color-table-bg);
@@ -76,4 +77,16 @@
 
   // Semibold marks a whole-cell link as actionable without link-blue text.
   --table-cell-link-font-weight: var(--font-weight-semibold);
+
+  // Touch target: Table.CellLink min height (44px on coarse pointers)
+  --table-cell-link-min-height: auto;
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root,
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --table-cell-link-min-height: var(--size-touch);
+  }
 }

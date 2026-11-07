@@ -48,6 +48,14 @@ describe('localeSeparators', () => {
     expect(fr.decimal).toBe(',');
     expect(fr.group).toMatch(/\s/u);
   });
+  it('group never equals decimal, even where 4-digit numbers are ungrouped (es, pl)', () => {
+    for (const l of ['es', 'pl', 'es-ES', 'pt-PT', 'en', 'de', 'fr', 'de-CH']) {
+      const { group, decimal } = localeSeparators(l);
+      expect(group, l).not.toBe(decimal);
+    }
+    expect(localeSeparators('es').decimal).toBe(',');
+    expect(localeSeparators('pl').decimal).toBe(',');
+  });
 });
 
 describe('parseAmount / draftToCanonical', () => {

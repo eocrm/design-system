@@ -375,6 +375,11 @@
     "cluster": "Forms"
   },
   {
+    "name": "NumberField",
+    "summary": "Numeric stepper field",
+    "cluster": "Forms"
+  },
+  {
     "name": "OptionsPicker",
     "summary": "filter picker (multi/single, grouped, searchable)",
     "cluster": "Forms"

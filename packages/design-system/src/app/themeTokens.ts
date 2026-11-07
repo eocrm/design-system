@@ -55,6 +55,13 @@ const LIGHT_SELECTOR = ':root, :root:root[data-accent]';
 const DARK_SELECTOR = ":root[data-theme='dark'], :root:root[data-accent][data-theme='dark']";
 const OS_DARK_SELECTOR =
   ":root:not([data-theme='light']), :root:root[data-accent]:not([data-theme='light'])";
+// DS-21: the library re-declares tokens on any non-root `[data-theme='light'|'dark']` element, which
+// would hide a root override inherited from <html>, so overrides follow it there.
+// Library subtree (0,2,0) / accent subtree (0,3,0) < these (0,3,0) / (0,4,0). Light
+// and dark subtree selectors never match the same element, nor <html>, so they never
+// compete with each other or with the root selectors above.
+const subtreeSelector = (theme: 'light' | 'dark') =>
+  `:root:root [data-theme='${theme}'], :root:root[data-accent] [data-theme='${theme}']`;
 
 /**
  * Build the CSS for consumer token overrides, mirroring `dark.scss`'s scopes so
@@ -63,6 +70,7 @@ const OS_DARK_SELECTOR =
  *   win over the generated `data-accent` blocks by specificity, AND re-emitted
  *   into the dark scopes so a single map applies in both themes.
  * - `darkTokens` → layered AFTER `tokens` inside the dark scopes only.
+ * - Both are re-emitted for `[data-theme]` subtrees (DS-21), light and dark.
  *
  * Returns `null` when there is nothing to emit, so `<AppProvider>` renders no
  * `<style>` for the no-override case (preserving its zero-side-effect default).
@@ -89,6 +97,14 @@ export function buildThemeTokenCss(tokens?: TokenMap, darkTokens?: TokenMap): st
         `${declarations(darkScope, '    ')}\n` +
         `  }\n}`,
     );
+  }
+
+  // Subtree twins last, so the root blocks keep their order.
+  if (base.length > 0) {
+    blocks.push(`${subtreeSelector('light')} {\n${declarations(base, '  ')}\n}`);
+  }
+  if (darkScope.length > 0) {
+    blocks.push(`${subtreeSelector('dark')} {\n${declarations(darkScope, '  ')}\n}`);
   }
 
   return blocks.join('\n');

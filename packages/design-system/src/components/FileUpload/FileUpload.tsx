@@ -101,6 +101,8 @@ export interface FileUploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
    * - `accept="application/pdf,image/png,image/jpeg"` — explicit MIME list
    */
   accept?: string;
+  /** Forwarded to the file input. On mobile, `'environment'` opens the rear camera, `'user'` the front; `true` lets the browser choose. */
+  capture?: boolean | 'user' | 'environment';
   /**
    * Per-file size cap in bytes. Default: no limit.
    * Files exceeding this fire `onFileReject` with reason `'too-large'`.
@@ -206,6 +208,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
     onFileReject,
     multiple = false,
     accept,
+    capture,
     maxSize,
     maxFiles,
     validator,
@@ -496,6 +499,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
             type="file"
             multiple={multiple}
             accept={accept}
+            capture={capture}
             disabled={disabled}
             onChange={handleInputChange}
             className={styles.hiddenInput}

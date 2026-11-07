@@ -87,3 +87,5 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
 - ❌ Using `placeholder`-style hints inside the track ("OFF" / "ON" text). Use a real label.
 - ❌ Toggle without an external optimistic-update flow when `loading` is set. Without it, the user clicks the switch, the spinner appears, and the visual state never changes — confusing.
 - ❌ `tone="success"` for "Mark as failed". Tone communicates the meaning of "on", not just decoration.
+
+**Touch devices:** On touch devices (`pointer: coarse`) the label row is at least 44px tall. Override `--switch-hit-min-height` in your own `@media (pointer: coarse)` block to opt out.

@@ -1,5 +1,6 @@
 // Checkbox.tokens.scss — component-scoped tokens for <Checkbox>. NOTE: --checkbox-color is a consumer-injection variable set by the React layer (palette `color` prop) — DO NOT shadow it here.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Box — shape + base surface
   --checkbox-radius: var(--radius-sm);
   --checkbox-bg: var(--color-bg);
@@ -41,4 +42,16 @@
   // Label
   --checkbox-label-line-height: var(--line-height-normal);
   --checkbox-gap: var(--space-2);
+
+  // Touch target: label wrapper min height (44px on coarse pointers)
+  --checkbox-hit-min-height: auto;
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root,
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --checkbox-hit-min-height: var(--size-touch);
+  }
 }

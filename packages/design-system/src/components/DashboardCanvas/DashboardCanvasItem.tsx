@@ -23,6 +23,8 @@ export interface CanvasGestures {
   resizingId: string | number | null;
   /** Item currently keyboard-picked — its cell renders the picked style. */
   pickedId: string | number | null;
+  /** Item a touch long-press has lifted but not yet moved — the lift cue. */
+  liftedId: string | number | null;
   /** id of the visually-hidden keyboard instructions block (aria-describedby). */
   instructionsId: string;
   onMovePointerDown: (
@@ -86,6 +88,7 @@ export function DashboardCanvasItem({
     movingId,
     resizingId,
     pickedId,
+    liftedId,
     instructionsId,
     onMovePointerDown,
     onResizePointerDown,
@@ -98,6 +101,7 @@ export function DashboardCanvasItem({
       data-dc-drop-preview={movingId === id ? '' : undefined}
       data-dc-resizing={resizingId === id ? '' : undefined}
       data-dc-picked={pickedId === id ? '' : undefined}
+      data-lifted={liftedId === id ? '' : undefined}
       role={readOnly ? undefined : 'button'}
       tabIndex={readOnly ? undefined : 0}
       aria-roledescription={readOnly ? undefined : t('dashboardCanvas.itemRole')}

@@ -32,12 +32,14 @@
   container-type: inline-size;
 }
 
-// Edit-mode drag surfaces: whole item bodies and section headers start drags,
-// so the browser must not claim their touch gestures (Sortable precedent).
-// Narrow width disables editing exactly like readOnly (DashboardCanvas.tsx's
-// `editingEnabled` gate) — excluded here too so the cursor doesn't lie.
+// Edit-mode drag surface: the whole item body starts drags. No
+// `touch-action: none` here (DS-15) — a finger swiping across a widget must
+// still scroll the page; a touch drag arms by long-press instead, and
+// DashboardCanvas.tsx cancels the lifted press's touchmoves so the page
+// stops panning under it. Narrow width disables editing exactly like
+// readOnly (DashboardCanvas.tsx's `editingEnabled` gate) — excluded here too
+// so the cursor doesn't lie.
 .canvas:not([data-readonly], [data-narrow]) .item {
-  touch-action: none;
   cursor: grab;
 }
 
@@ -189,6 +191,22 @@
   @include focus-ring(var(--color-accent), $offset: calc(-1 * var(--ring-offset)));
 }
 
+// Touch long-press lift cue (DS-15): the item rises under the finger before
+// it moves. Reduced motion keeps the shadow and drops the scale.
+.item[data-lifted] {
+  box-shadow: var(--dashboard-canvas-item-lifted-shadow);
+  transform: scale(var(--dashboard-canvas-item-lifted-scale));
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item[data-lifted] {
+    transform: none;
+  }
+}
+
 // A keyboard-picked item travels with the engine preview — mark it like an
 // armed drag (content stays visible; there is no ghost on the keyboard path).
 .item[data-dc-picked] {
@@ -217,7 +235,6 @@
 .handleS,
 .handleSE {
   position: absolute;
-  touch-action: none;
 }
 
 .handleE {

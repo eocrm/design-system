@@ -192,6 +192,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['MoneyInput'],
   },
   {
+    to: '/components/number-field',
+    name: 'NumberField',
+    description:
+      'Split numeric stepper [ − | value | + ] — locale-formatted, clamps and snaps to step on blur.',
+    preview: SCHEMATICS['NumberField'],
+  },
+  {
     to: '/components/currency-select',
     name: 'CurrencySelect',
     description: 'Currency picker over Select — ISO 4217 codes with localized names.',

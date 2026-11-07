@@ -29,7 +29,7 @@ export function Demo() {
       </Accordion.Item>
       <Accordion.Item value="faq-2">
         <Accordion.Trigger>How do I export my data?</Accordion.Trigger>
-        <Accordion.Content>Use the gear icon → Export → CSV.</Accordion.Content>
+        <Accordion.Content>Use the gear icon → Export → <Button size="sm">Export CSV</Button></Accordion.Content>
       </Accordion.Item>
       <Accordion.Item value="faq-3">
         <Accordion.Trigger>How do I invite teammates?</Accordion.Trigger>
@@ -46,7 +46,9 @@ export function Demo() {
           </Accordion.Item>
           <Accordion.Item value="faq-2">
             <Accordion.Trigger>How do I export my data?</Accordion.Trigger>
-            <Accordion.Content>Use the gear icon → Export → CSV.</Accordion.Content>
+            <Accordion.Content data-testid="export-content">
+              Use the gear icon → Export → <Button size="sm">Export CSV</Button>
+            </Accordion.Content>
           </Accordion.Item>
           <Accordion.Item value="faq-3">
             <Accordion.Trigger>How do I invite teammates?</Accordion.Trigger>
@@ -456,6 +458,72 @@ export function Demo() {
               Invoices
             </Accordion.Trigger>
             <Accordion.Content>Download past invoices as PDF.</Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
+      </Example>
+      <Example
+        title="Nested accordion"
+        description="An accordion inside another's content. While the outer item is closed, nothing inside it is reachable, even the inner accordion's open sections and visible actions."
+        code={`import { Pencil } from 'lucide-react';
+import { Accordion, Button } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Accordion type="single" collapsible>
+      <Accordion.Item value="outer">
+        <Accordion.Trigger>Advanced settings</Accordion.Trigger>
+        <Accordion.Content>
+          <Accordion type="multiple" defaultValue={['inner-open']}>
+            <Accordion.Item value="inner-open">
+              <Accordion.Trigger>Open inner section</Accordion.Trigger>
+              <Accordion.Content>
+                <Button size="sm">Inner action</Button>
+              </Accordion.Content>
+            </Accordion.Item>
+            <Accordion.Item value="inner-closed">
+              <Accordion.Trigger
+                actions={
+                  <Button iconOnly size="xs" variant="ghost" aria-label="Edit inner">
+                    <Pencil size={14} />
+                  </Button>
+                }
+              >
+                Closed inner section
+              </Accordion.Trigger>
+              <Accordion.Content>Inner details.</Accordion.Content>
+            </Accordion.Item>
+          </Accordion>
+        </Accordion.Content>
+      </Accordion.Item>
+    </Accordion>
+  );
+}`}
+      >
+        <Accordion type="single" collapsible>
+          <Accordion.Item value="outer">
+            <Accordion.Trigger>Advanced settings</Accordion.Trigger>
+            <Accordion.Content data-testid="nested-outer-content">
+              <Accordion type="multiple" defaultValue={['inner-open']}>
+                <Accordion.Item value="inner-open">
+                  <Accordion.Trigger>Open inner section</Accordion.Trigger>
+                  <Accordion.Content>
+                    <Button size="sm">Inner action</Button>
+                  </Accordion.Content>
+                </Accordion.Item>
+                <Accordion.Item value="inner-closed">
+                  <Accordion.Trigger
+                    actions={
+                      <Button iconOnly size="xs" variant="ghost" aria-label="Edit inner">
+                        <Pencil size={14} />
+                      </Button>
+                    }
+                  >
+                    Closed inner section
+                  </Accordion.Trigger>
+                  <Accordion.Content>Inner details.</Accordion.Content>
+                </Accordion.Item>
+              </Accordion>
+            </Accordion.Content>
           </Accordion.Item>
         </Accordion>
       </Example>

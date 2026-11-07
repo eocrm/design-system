@@ -711,6 +711,15 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       <Bar w={66} />
     </Outline>
   ),
+  NumberField: (
+    <Outline w={130} h={32} style={{ display: 'flex', alignItems: 'center' }}>
+      <Box w={32} h={30} />
+      <Row style={{ flex: 1, justifyContent: 'center' }}>
+        <Bar w={28} />
+      </Row>
+      <Solid w={32} h={30} />
+    </Outline>
+  ),
   CurrencySelect: (
     <Outline w={120} h={32} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: 8 }}>
       <Solid w={30} h={16} style={{ borderRadius: 2 }} />

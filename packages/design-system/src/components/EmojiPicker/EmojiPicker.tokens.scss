@@ -1,5 +1,6 @@
 // EmojiPicker.tokens.scss — component-scoped tokens for <EmojiPicker>.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Panel sizing — the picker owns its own intrinsic panel size (mirrors how
   // OptionsPicker sizes its own panel with literal px). width/max-height are
   // NOT covered by stylelint's strict-value set, but no existing size token

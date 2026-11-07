@@ -66,3 +66,5 @@ The popover is portaled into `document.body`, so it escapes overflow-hidden ance
 
 - ❌ Wrapping the picker in `<label htmlFor={id}>` while also passing `aria-label` — pick one. The wrapper label is preferred.
 - ❌ Using `value` without `onChange` and expecting state to update on user input — the picker is fully controlled when `value` is passed.
+
+**Touch devices:** On touch devices (`pointer: coarse`) the field is 44px tall at every size and the text input is 16px so iOS does not zoom on focus (`--date-picker-input-font-size-*`; TimeField shares the small token).

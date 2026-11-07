@@ -1,5 +1,6 @@
 // Calendar.tokens.scss — Component-scoped tokens for <Calendar> and all of its sibling views (Month/Week/Day/Agenda + DayCell/EventChip/TimedEvent/HourGrid/AllDayBand/ViewSwitcher). Defaults preserve byte-identical output. Cross-component composition with DatePicker is intentional — each component owns its tokens.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // ── Root + header ────────────────────────────────────────────────────────
   --calendar-gap: var(--space-3);
   --calendar-header-gap: var(--space-3);
@@ -259,4 +260,16 @@
   // there.)
   --calendar-agenda-tone-warning: var(--color-warning-strong);
   --calendar-agenda-tone-danger: var(--color-danger);
+
+  // Touch target: agenda row min height (44px on coarse pointers)
+  --calendar-agenda-row-min-height: auto;
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root,
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --calendar-agenda-row-min-height: var(--size-touch);
+  }
 }

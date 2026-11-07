@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './RelativeDateInput.tokens';
 
 // Library controls fill their parent by default (width: 100%); in this row each
@@ -12,4 +13,9 @@
 
 .row .select {
   width: auto;
+}
+
+// Preset Buttons wrap into rows closer than a sm hit area's overhang (DS-35).
+.presets {
+  @include touch-dense-group;
 }

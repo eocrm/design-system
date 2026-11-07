@@ -1,0 +1,59 @@
+// NumberField.tokens.scss — component-scoped tokens for <NumberField>. Surface values mirror <Input>.
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
+  // Surface
+  --number-field-bg: var(--color-bg);
+  --number-field-fg: var(--color-fg);
+  --number-field-border-color: var(--color-border-strong);
+  --number-field-radius: var(--radius-md);
+  --number-field-placeholder-fg: var(--color-fg-subtle);
+
+  // Focus
+  --number-field-border-color-focus: var(--color-accent);
+  --number-field-ring-focus: var(--ring-accent);
+
+  // Invalid
+  --number-field-border-color-invalid: var(--color-danger);
+  --number-field-ring-invalid: var(--ring-danger);
+
+  // Disabled
+  --number-field-bg-disabled: var(--color-bg-subtle);
+  --number-field-border-color-disabled: var(--color-border);
+  --number-field-fg-disabled: var(--color-fg-subtle);
+
+  // − / + buttons
+  --number-field-button-bg: transparent;
+  --number-field-button-fg: var(--color-fg-muted);
+  --number-field-button-fg-hover: var(--color-fg);
+  --number-field-button-bg-hover: var(--color-bg-muted);
+  --number-field-button-divider: var(--color-border);
+
+  // Per-size — field height, square button size, font
+  --number-field-height-sm: var(--size-sm);
+  --number-field-height-md: var(--size-md);
+  --number-field-height-lg: var(--size-lg);
+  --number-field-button-size-sm: var(--size-sm);
+  --number-field-button-size-md: var(--size-md);
+  --number-field-button-size-lg: var(--size-lg);
+  --number-field-font-size-sm: var(--font-size-sm);
+  --number-field-font-size-md: var(--font-size-md);
+  --number-field-font-size-lg: var(--font-size-lg);
+  --number-field-padding-x: var(--space-2);
+}
+
+// Touch devices (DS-35): 44px field and buttons, 16px text (no iOS focus-zoom). Opt out by
+// overriding these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root,
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --number-field-height-sm: var(--size-touch);
+    --number-field-height-md: var(--size-touch);
+    --number-field-height-lg: var(--size-touch);
+    --number-field-button-size-sm: var(--size-touch);
+    --number-field-button-size-md: var(--size-touch);
+    --number-field-button-size-lg: var(--size-touch);
+    --number-field-font-size-sm: var(--font-size-lg);
+    --number-field-font-size-md: var(--font-size-lg);
+    --number-field-font-size-lg: var(--font-size-lg);
+  }
+}

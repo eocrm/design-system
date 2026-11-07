@@ -104,6 +104,7 @@
   align-items: center;
   gap: var(--calendar-agenda-row-gap);
   width: 100%;
+  min-block-size: var(--calendar-agenda-row-min-height);
   padding: var(--calendar-agenda-row-padding);
   border: none;
   border-radius: var(--calendar-agenda-row-radius);

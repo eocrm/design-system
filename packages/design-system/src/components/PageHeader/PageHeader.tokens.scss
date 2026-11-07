@@ -1,6 +1,7 @@
 // PageHeader.tokens.scss — Component-scoped tokens for <PageHeader>. Each
 // token defaults to the primitive the SCSS used before this migration.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Grid + spacing
   // Room the actions track leaves for the title column (it is capped at
   // 100% minus this and the gap): past it the actions wrap instead of

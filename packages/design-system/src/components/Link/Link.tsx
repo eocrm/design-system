@@ -41,11 +41,20 @@ export type LinkVariant = 'default' | 'muted' | 'subtle';
  */
 export type LinkUnderline = 'hover' | 'always' | 'none';
 
+/** Link tap target on coarse pointers: `text` (the text box) or `touch` (≥44px). See `hitArea`. */
+export type LinkHitArea = 'text' | 'touch';
+
 interface LinkOwnProps {
   /** Visual variant. See `LinkVariant` for descriptions. */
   variant?: LinkVariant;
   /** Underline behavior. See `LinkUnderline` for descriptions. Default: `'hover'`. */
   underline?: LinkUnderline;
+  /**
+   * Touch hit area. `'touch'` grows the tap target to ≥44px on coarse pointers without changing
+   * layout; use for standalone links (list-row names, card or widget titles), leave unset for
+   * links inside running text. Default `'text'`.
+   */
+  hitArea?: LinkHitArea;
   children?: ReactNode;
 }
 
@@ -93,7 +102,7 @@ const UNDERLINE_CLASS: Partial<Record<LinkUnderline, string>> = {
  * @see docs/components/Link.md
  */
 export const Link = forwardRef(function Link<C extends ElementType = 'a'>(
-  { as, variant = 'default', underline, className, children, ...props }: LinkProps<C>,
+  { as, variant = 'default', underline, hitArea, className, children, ...props }: LinkProps<C>,
   ref: ForwardedRef<Element>,
 ) {
   const Component = (as || 'a') as ElementType;
@@ -105,6 +114,7 @@ export const Link = forwardRef(function Link<C extends ElementType = 'a'>(
         styles.link,
         VARIANT_CLASS[variant],
         underline && UNDERLINE_CLASS[underline],
+        hitArea === 'touch' && styles.hitAreaTouch,
         className,
       )}
     >

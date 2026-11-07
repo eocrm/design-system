@@ -3,7 +3,8 @@
 // label typography, per-spacing row padding, and the divider color.
 // No hex literals here — a component token that duplicates a semantic value
 // is a structure.test.ts failure.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Label column — a LENGTH, not max-content, so every row in a List resolves
   // the same column without a subgrid.
   --setting-row-label-width: 16rem;

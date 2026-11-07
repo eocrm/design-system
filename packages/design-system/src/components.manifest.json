@@ -666,6 +666,12 @@
     ],
     "composedBy": []
   },
+  "NumberField": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": []
+  },
   "OptionsPicker": {
     "tier": "composition",
     "cluster": "Forms",

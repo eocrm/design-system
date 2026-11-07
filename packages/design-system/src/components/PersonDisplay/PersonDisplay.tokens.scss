@@ -2,7 +2,8 @@
 // Size context (sm/md/lg) is driven by a [data-size] attribute selector on
 // the root in PersonDisplay.module.scss; that mechanism stays. Tokenizes the
 // outer gap per size and the inner Description-line gap.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Outer row gap — sm tightens, md and lg share the same gap.
   --person-display-gap: var(--space-3);
   --person-display-gap-sm: var(--space-2);

@@ -117,6 +117,7 @@ import {
   type LucideIcon,
   Banknote,
   Coins,
+  Hash,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -224,6 +225,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       },
       { to: '/components/phone-input', label: 'PhoneInput', icon: Phone, end: false },
       { to: '/components/money-input', label: 'MoneyInput', icon: Banknote, end: false },
+      { to: '/components/number-field', label: 'NumberField', icon: Hash, end: false },
       { to: '/components/currency-select', label: 'CurrencySelect', icon: Coins, end: false },
       { to: '/components/otp-input', label: 'OtpInput', icon: RectangleEllipsis, end: false },
       { to: '/components/options-picker', label: 'OptionsPicker', icon: ListFilter, end: false },

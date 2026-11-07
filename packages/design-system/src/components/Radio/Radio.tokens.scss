@@ -1,5 +1,6 @@
 // Radio.tokens.scss — component-scoped tokens for <Radio> and <RadioGroup>. Mirrors Checkbox structure: visually-hidden native input + painted ring + painted dot.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Layout
   --radio-gap: var(--space-2);
 
@@ -56,4 +57,16 @@
   // RadioGroup — items
   --radio-group-gap-vertical: var(--space-2);
   --radio-group-gap-horizontal: var(--space-4);
+
+  // Touch target: label wrapper min height (44px on coarse pointers)
+  --radio-hit-min-height: auto;
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root,
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --radio-hit-min-height: var(--size-touch);
+  }
 }

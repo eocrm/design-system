@@ -1,5 +1,6 @@
 // OptionsPicker.tokens.scss — component-scoped tokens for <OptionsPicker>. The React layer still injects --color-palette-<name>-fg (group dot bg + group header bottom-border) inline; that channel is preserved.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Panel sizing (managed internally — panel sits flush; sections handle their own padding)
   --options-picker-panel-min-width: 280px;
   --options-picker-panel-max-width: 360px;
@@ -65,4 +66,16 @@
   // Empty state
   --options-picker-empty-padding-y: var(--space-3);
   --options-picker-empty-padding-x: var(--space-2);
+
+  // Touch target: option row min height (44px on coarse pointers)
+  --options-picker-row-min-height: auto;
+}
+
+// Touch devices (DS-35): 44px targets. Opt out by overriding
+// these in your own `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root,
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --options-picker-row-min-height: var(--size-touch);
+  }
 }

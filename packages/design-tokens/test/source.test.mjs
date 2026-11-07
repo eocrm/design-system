@@ -174,10 +174,26 @@ test('preserves the pre-migration web contract fixture with provenance and expan
   // +1 light: --size-control-currency (MoneyInput picker width).
   // +2 light: --color-link-fg / --color-link-fg-hover (accent-overridable link colour).
   // +1 light: --z-chat-launcher (ChatLauncher layer, #725).
-  assert.equal(Object.keys(fixture.light).length, 325);
+  // +1 light: --size-touch (coarse-pointer target floor, DS-35).
+  assert.equal(Object.keys(fixture.light).length, 326);
   assert.equal(Object.keys(fixture.forcedDark).length, 127);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});
+  // DS-21 subtree scopes, added later: each re-declares every dark-differing
+  // token with that theme's value, plus every alias (a var() resolves where it is
+  // declared, so one inherited from :root is frozen to the root theme).
+  for (const [name, value] of Object.entries(fixture.forcedDark)) {
+    assert.equal(fixture.subtreeDark[name], value, name);
+    assert.equal(fixture.subtreeLight[name], fixture.light[name], name);
+  }
+  for (const [name, value] of Object.entries(fixture.light)) {
+    if (
+      value.includes('var(') &&
+      !name.startsWith('--badge-') &&
+      !name.startsWith('--color-badge-')
+    )
+      assert.ok(name in fixture.subtreeLight && name in fixture.subtreeDark, name);
+  }
   // Provenance now names the GENERATED files, because capture-web-contract.mjs
   // reads them. It used to name packages/design-system/src/styles/*.scss with a
   // `mixin: 'dark-tokens'` origin — but that stopped being true when those files

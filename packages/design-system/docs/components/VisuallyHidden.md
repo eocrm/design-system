@@ -18,7 +18,7 @@
 <!-- props:end -->
 
 - `as?: 'span' | 'div'` — default `'span'`. Use `'div'` when the hidden content wraps other block elements.
-- The "clip" technique (`position: absolute`, 1×1px, clipped) — NOT `display: none` / `visibility: hidden`, which would also remove it from assistive tech.
+- The "clip" technique (`position: absolute`, 1×1px, clipped) — NOT `display: none` / `visibility: hidden`, which would also remove it from assistive tech. The hidden box is pinned to the inline start of its nearest positioned ancestor (so it can't widen a scroller or the page) but keeps its own vertical position, so a screen reader that scrolls to the text being read stays where the text is. Focusable hidden content (a visually hidden radio input) still wants a positioned host, so focusing it scrolls to the control rather than to that ancestor's inline edge. Inside a clipping scroller, give the scroller `position: relative` so the box can't extend it vertically.
 - `forwardRef` to the rendered element; spreads `HTMLAttributes<HTMLElement>` last (consumer wins — nothing here is semantic to protect).
 - The building block `LiveRegion` renders its own announcement text into.
 

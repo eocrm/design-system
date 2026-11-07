@@ -3,6 +3,7 @@
 // so a missing test/export fails CI instead of being caught only at review.
 
 import ts from 'typescript';
+import { compileString } from 'sass';
 import { readdirSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1859,5 +1860,127 @@ describe('component SCSS uses logical text-align (RTL)', () => {
       (w) => !physicalRules.some((r) => r.file === w.file && r.selector === w.selector),
     );
     expect(stale).toEqual([]);
+  });
+});
+
+/**
+ * D2 (DS-35): the invisible touch hit area is the `touch-hit-area` mixin's job
+ * alone. A component that hand-rolls an absolutely positioned pseudo-element
+ * sized by `--size-touch` bypasses the one documented Rule 4 exception.
+ */
+describe('touch hit areas come from the mixin', () => {
+  const scssFiles = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory()
+        ? scssFiles(join(dir, e.name))
+        : e.name.endsWith('.module.scss')
+          ? [join(dir, e.name)]
+          : [],
+    );
+
+  it('only the touch-hit-area mixin positions a pseudo-element absolutely for hit areas', () => {
+    const offenders = scssFiles(componentsDir).filter((f) => {
+      const code = readFileSync(f, 'utf-8');
+      // A `::before` / `::after` block (no nested braces) holding both signals.
+      return [...code.matchAll(/::(?:before|after)\s*\{([^{}]*)\}/g)].some(
+        (m) => /position:\s*absolute/.test(m[1]) && m[1].includes('--size-touch'),
+      );
+    });
+    expect(offenders).toEqual([]);
+  });
+
+  it('touch-hit-area compiles to a direction-agnostic coarse-pointer hit area', () => {
+    const out = compileString(`@use 'mixins' as *;\n.host { @include touch-hit-area; }`, {
+      loadPaths: [join(__dirname, 'styles')],
+    }).css;
+    const size = 'max(100%, var(--size-touch))';
+    const centre = 'calc(50% - max(100%, var(--size-touch)) / 2)';
+    expect(out).toContain('@media (pointer: coarse)');
+    // Zero specificity, so a consumer className positioning the host wins.
+    expect(out).toMatch(/:where\(\.host\)\s*\{\s*position:\s*relative;\s*\}/);
+    expect(out).not.toMatch(/(^|[\s,}])\.host\s*\{/);
+    const before = out.match(/\.host::before\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(before).toMatch(/position:\s*absolute/);
+    expect(before).toMatch(/content:\s*""/);
+    expect(before).toContain(`inset-block-start: ${centre}`);
+    expect(before).toContain(`inset-inline-start: ${centre}`);
+    expect(before).toContain(`inline-size: ${size}`);
+    expect(before).toContain(`block-size: ${size}`);
+    expect(out).not.toMatch(/transform|translate|\[dir/);
+  });
+});
+
+/**
+ * DS-21: `data-theme` on any element. A component token block declared only at
+ * `:root` resolves its `var()` aliases against the ROOT theme (a custom
+ * property's var() is substituted where it is declared), so components inside a
+ * `data-theme` subtree would keep the page theme. Every `:root…` selector in a
+ * `*.tokens.scss` therefore needs a zero-specificity subtree twin, the coarse-
+ * pointer and other `@media`/`@supports` blocks included: without one, the base
+ * block re-declared on the subtree element would hide the inherited override.
+ * The OS-dark `:root:not([data-theme='light'])` block is root-only by design.
+ */
+describe('component token blocks follow data-theme subtrees (DS-21)', () => {
+  // Only the library's own themes: a third-party `data-theme="cupcake"` must
+  // not reset component tokens inside that widget.
+  const subtrees = (prefix: string) =>
+    `:where(${prefix} [data-theme='light'], ${prefix} [data-theme='dark'])`;
+  const twinOf = (selector: string) =>
+    selector.startsWith(':root[data-theme=')
+      ? `:where(:root ${selector.slice(':root'.length)})`
+      : subtrees(selector);
+  /** Split a selector list at top-level commas (not the ones inside `:where()`). */
+  const splitList = (list: string) => {
+    const out: string[] = [];
+    let depth = 0;
+    let cur = '';
+    for (const ch of list) {
+      if (ch === ',' && depth === 0) {
+        out.push(cur.trim());
+        cur = '';
+        continue;
+      }
+      if (ch === '(') depth++;
+      if (ch === ')') depth--;
+      cur += ch;
+    }
+    // Prettier may wrap a long `:where(` list across lines.
+    return [...out, cur.trim()].map((sel) => sel.replace(/\(\s+/g, '(').replace(/\s+\)/g, ')'));
+  };
+  const missingTwins = (code: string) =>
+    scssRules(stripScssComments(code)).flatMap(([selectorList]) => {
+      const selectors = splitList(selectorList);
+      return selectors
+        .filter((s) => s.startsWith(':root') && !s.startsWith(':root:not('))
+        .filter((s) => !selectors.includes(twinOf(s)))
+        .map((s) => `${s} needs ${twinOf(s)}`);
+    });
+  const files = components.flatMap((name) =>
+    readdirSync(join(componentsDir, name))
+      .filter((f) => f.endsWith('.tokens.scss'))
+      .map((f) => [`${name}/${f}`, readFileSync(join(componentsDir, name, f), 'utf-8')] as const),
+  );
+
+  it('found the token files, including ones with coarse-pointer blocks', () => {
+    expect(files.map(([label]) => label)).toEqual(
+      expect.arrayContaining(['Button/Button.tokens.scss', 'FunnelChart/FunnelChart.tokens.scss']),
+    );
+  });
+
+  it.each(files)('%s', (_label, code) => {
+    expect(missingTwins(code)).toEqual([]);
+  });
+
+  it('flags a block without its twin, and a twin that matches any data-theme', () => {
+    expect(missingTwins('@media (pointer: coarse) {\n  :root { --x: 1; }\n}')).toEqual([
+      `:root needs ${subtrees(':root')}`,
+    ]);
+    expect(missingTwins(':root,\n:where(:root [data-theme]) { --x: 1; }')).not.toEqual([]);
+    expect(
+      missingTwins(
+        ":root,\n:where(:root [data-theme='light'], :root [data-theme='dark']) { --x: 1; }",
+      ),
+    ).toEqual([]);
+    expect(twinOf(":root[data-theme='dark']")).toBe(":where(:root [data-theme='dark'])");
   });
 });

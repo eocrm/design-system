@@ -16,6 +16,10 @@
   $ring,
   $opacity-disabled
 ) {
+  // Containing block for the visually-hidden input below: without it the
+  // focusable input pins to the page origin and focus scrolls the page there.
+  // stylelint-disable-next-line property-disallowed-list -- internal anchor, not layout
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;

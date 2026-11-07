@@ -1,6 +1,7 @@
 // Divider.tokens.scss — Component-scoped tokens for <Divider>. Each token
 // defaults to the primitive the SCSS used before this migration.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Line color (and root color inherited by border edges)
   --divider-fg: var(--color-border);
 

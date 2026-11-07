@@ -156,3 +156,5 @@ const [view, setView] = useState<CalendarView>('month');
 - ❌ Pre-grouping events by day in the consumer. Pass the flat array; the layout algorithms group and lane internally.
 - ❌ Treating `onEventMove` as the thing that moves the event. It proposes; your state disposes, and not committing means the block snaps back.
 - ❌ Faking the availability underlay with all-day events, or approximating resource columns with N side-by-side day calendars (see above). Use `backgroundIntervals` and `resources`.
+
+**Touch devices:** On touch devices (`pointer: coarse`) agenda rows are at least 44px tall; the view switcher tabs follow Tabs. Override `--calendar-agenda-row-min-height` in your own `@media (pointer: coarse)` block to opt out.

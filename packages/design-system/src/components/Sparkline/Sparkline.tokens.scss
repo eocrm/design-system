@@ -1,5 +1,6 @@
 // Sparkline.tokens.scss — component tokens for <Sparkline>.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --sparkline-height: var(--size-sparkline);
   --sparkline-color: var(--color-accent);
   --sparkline-area-fill: var(--color-accent-subtle-bg);

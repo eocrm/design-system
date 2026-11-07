@@ -10,6 +10,7 @@ export type {
   DropdownMenuItemTone,
   DropdownMenuGroupProps,
   DropdownMenuLabelProps,
+  DropdownMenuHeaderProps,
   DropdownMenuItemIndicatorProps,
   DropdownMenuCheckboxItemProps,
   DropdownMenuRadioGroupProps,

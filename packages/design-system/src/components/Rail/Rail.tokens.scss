@@ -4,7 +4,8 @@
 // to retheme the rail without forking its module.scss.
 @use '../TopBar/TopBar.tokens';
 
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Width — the rail switches between two fixed widths via `[data-collapsed]`.
   --rail-width-expanded: 240px;
   --rail-width-collapsed: 56px;

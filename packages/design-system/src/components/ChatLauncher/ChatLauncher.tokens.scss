@@ -1,6 +1,7 @@
 // ChatLauncher.tokens.scss — Component tokens for <ChatLauncher>. Default to primitives.
 // The panel surface reuses Card's visual language (bg, border, radius) with a raised shadow.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --chat-launcher-inset: var(--space-4);
   --chat-launcher-gap: var(--space-3);
   --chat-launcher-button-size: var(--size-lg); // the launcher is Button size="lg"

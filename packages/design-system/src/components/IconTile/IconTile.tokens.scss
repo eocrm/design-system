@@ -2,7 +2,8 @@
 // and corner radius per `shape`; default to primitives. The bg/fg tint is set
 // at runtime via the --icon-tile-bg / --icon-tile-fg custom properties (from a
 // PaletteColor), so it is not declared here.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --icon-tile-size-xs: var(--size-xs); // 20px
   --icon-tile-size-sm: var(--size-sm); // 24px
   --icon-tile-size-md: var(--size-md); // 32px

@@ -101,6 +101,12 @@ export interface Messages {
     /** Accessible name of the `<Input suggestions>` listbox. */
     suggestions: string;
   };
+  numberField: {
+    /** aria-label on NumberField's − button. */
+    decrease: string;
+    /** aria-label on NumberField's + button. */
+    increase: string;
+  };
   passwordInput: {
     /** aria-label on the show-password toggle when the password is hidden. */
     show: string;

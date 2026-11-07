@@ -1,6 +1,7 @@
 // Card.tokens.scss — Component-scoped tokens for <Card>. Each token
 // defaults to the primitive the SCSS used before this migration.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Surface + border
   --card-bg: var(--color-bg);
   --card-border-color: var(--color-border);

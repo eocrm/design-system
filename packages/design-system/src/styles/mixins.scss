@@ -70,6 +70,14 @@
 
 @mixin visually-hidden {
   position: absolute;
+
+  // Pin the INLINE start only: at its static inline position the box can lie
+  // past a clipping scroller's edge and widen it or the page (DS-31). The block
+  // axis stays static on purpose — pinning it to the containing block's top
+  // makes screen readers that scroll to the node being read jump the page
+  // there. A vertical escape is contained by a positioned scroller instead
+  // (Card.Body's `.scroll`, DS-14).
+  inset-inline-start: 0;
   width: 1px;
   height: 1px;
   padding: 0;
@@ -139,5 +147,51 @@
         border-radius: calc(var(--wave-radius) + var(--wave-reach));
       }
     }
+  }
+}
+
+// DS-35 D2: an invisible hit area for a small control inside a compact part
+// (a chip's remove button, a tag's close). On coarse pointers the host grows an
+// absolutely positioned ::before at least --size-touch square, centred on the
+// host, so the VISUAL stays compact and the tap target reaches 44px. The one
+// documented exception to Rule 4 (no position/inset in component SCSS).
+// Centring uses logical insets of (50% - size / 2), not translate(-50%): that
+// is direction-agnostic, so no [dir='rtl'] branch exists to get wrong for a host
+// that carries dir itself or an LTR subtree inside an RTL page.
+// The host's position: relative sits in a zero-specificity :where() rule, so a
+// consumer className that positions the host (absolute/fixed/sticky) wins on
+// phones too; any non-static position still contains the ::before.
+// Caveats: it claims the host's ::before; an overflow: hidden host clips the
+// area; neighbours overlapping the area lose taps to this host. Adjacent xs/sm
+// controls' hit areas overlap: the later sibling's ::before paints over the
+// earlier one's face and steals its taps. In toolbars, use md on touch, or space
+// them by at least the overhang ((44px - size) / 2). Library-owned dense groups
+// use `touch-dense-group` below; keep this mixin for isolated hosts only.
+@mixin touch-hit-area {
+  @media (pointer: coarse) {
+    @at-root :where(#{&}) {
+      position: relative;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset-block-start: calc(50% - max(100%, var(--size-touch)) / 2);
+      inset-inline-start: calc(50% - max(100%, var(--size-touch)) / 2);
+      inline-size: max(100%, var(--size-touch));
+      block-size: max(100%, var(--size-touch));
+    }
+  }
+}
+
+// DS-35: a library-owned row or column of adjacent xs/sm Buttons (a toolbar, a
+// calendar header). On coarse pointers it re-points the Button height tokens to
+// --size-touch for the subtree, so each Button becomes a real 44px control; its
+// touch-hit-area ::before is max(100%, --size-touch), so it then collapses onto
+// the control's own face and can no longer cover a neighbour.
+@mixin touch-dense-group {
+  @media (pointer: coarse) {
+    --button-height-xs: var(--size-touch);
+    --button-height-sm: var(--size-touch);
   }
 }

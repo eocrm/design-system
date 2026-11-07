@@ -6,7 +6,14 @@ const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 export function compareWebContracts(expected, actual) {
   const differences = { missing: [], extra: [], changed: [] };
-  for (const scope of ['light', 'forcedDark', 'systemDark', 'forcedLight']) {
+  for (const scope of [
+    'light',
+    'forcedDark',
+    'systemDark',
+    'subtreeDark',
+    'subtreeLight',
+    'forcedLight',
+  ]) {
     const expectedValues = expected[scope] ?? {};
     const actualValues = actual[scope] ?? {};
     const names = [...new Set([...Object.keys(expectedValues), ...Object.keys(actualValues)])].sort(
@@ -33,6 +40,8 @@ export function parseGeneratedWebContract(tokensScss, darkScss, componentScss = 
     light: declarations(blockBody(tokensScss, ':root')),
     forcedDark: declarations(blockBody(darkScss, ":root[data-theme='dark']")),
     systemDark: declarations(blockBody(darkScss, ":root:not([data-theme='light'])")),
+    subtreeDark: declarations(blockBody(darkScss, ":root [data-theme='dark']")),
+    subtreeLight: declarations(blockBody(tokensScss, ":root [data-theme='light']")),
     forcedLight: declarations(blockBody(darkScss, ":root[data-theme='light']")),
   };
   if (!componentScss) return generated;
@@ -44,9 +53,17 @@ export function parseGeneratedWebContract(tokensScss, darkScss, componentScss = 
   // was aliased the block restated `:root` verbatim; requiring the selector
   // meant deleting 24 provably dead lines threw `missing selector` instead.
   const component = {
-    light: declarations(blockBody(componentScss, ':root')),
+    // Component token files pair :root with a DS-21 subtree twin.
+    light: declarations(
+      blockBody(
+        componentScss,
+        ":root,\n:where(:root [data-theme='light'], :root [data-theme='dark'])",
+      ),
+    ),
     forcedDark: declarations(blockBody(componentScss, ":root[data-theme='dark']", true)),
     systemDark: declarations(blockBody(componentScss, ":root:not([data-theme='light'])", true)),
+    subtreeDark: {},
+    subtreeLight: {},
     forcedLight: {},
   };
   return Object.fromEntries(

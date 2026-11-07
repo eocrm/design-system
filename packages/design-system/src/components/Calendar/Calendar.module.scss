@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Calendar.tokens';
 
 .calendar {
@@ -8,6 +9,8 @@
 }
 
 .header {
+  @include touch-dense-group;
+
   display: flex;
   align-items: center;
   justify-content: space-between;

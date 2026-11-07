@@ -1,4 +1,5 @@
 import { createRef, type ComponentProps, type ReactNode } from 'react';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { parse, type Rule } from 'postcss';
@@ -280,4 +281,35 @@ describe('<Link> underline — compiled CSS', () => {
       }
     }
   });
+});
+
+describe('<Link hitArea> (DS-13)', () => {
+  it('hitArea="touch" adds the touch hit-area class', () => {
+    render(
+      <Link href="/x" hitArea="touch">
+        x
+      </Link>,
+    );
+    expect(screen.getByText('x').className).toMatch(/hitAreaTouch/);
+  });
+
+  it('defaults to no hit-area class', () => {
+    render(<Link href="/x">x</Link>);
+    expect(screen.getByText('x').className).not.toMatch(/hitArea/);
+  });
+
+  it('does not leak hitArea to the DOM', () => {
+    render(
+      <Link href="/x" hitArea="touch">
+        x
+      </Link>,
+    );
+    expect(screen.getByText('x')).not.toHaveAttribute('hitArea');
+    expect(screen.getByText('x')).not.toHaveAttribute('hitarea');
+  });
+});
+
+it('.hitAreaTouch includes the touch-hit-area mixin (DS-13)', () => {
+  const scss = readFileSync(resolve(__dirname, 'Link.module.scss'), 'utf8');
+  expect(scss).toMatch(/\.hitAreaTouch \{\s*@include touch-hit-area;/);
 });

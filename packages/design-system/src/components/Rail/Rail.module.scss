@@ -188,6 +188,8 @@
 // a CSS transform — rotating the whole button would mirror its content and
 // visually jump the icon from row-start to row-end.
 .collapseToggle {
+  @include touch-dense-group;
+
   // Override the default <Button iconOnly> centering: stretch to fill the
   // footer row and left-align the icon at the same X as item icons.
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- match item row width

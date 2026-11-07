@@ -4,7 +4,8 @@
 // [data-tone] attribute selector in FilterChip.module.scss and intentionally
 // stay on palette tokens — overriding the dot color is not a chip-level
 // concern.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   // Chip pill
   --filter-chip-gap: var(--space-2);
   --filter-chip-padding-y: var(--space-1);
@@ -22,4 +23,13 @@
   --filter-chip-dismiss-fg: var(--color-fg-subtle);
   --filter-chip-dismiss-bg-hover: var(--color-bg-muted);
   --filter-chip-dismiss-fg-hover: var(--color-fg);
+  --filter-chip-dismiss-min-inline-size: auto;
+}
+
+// Touch devices (DS-35): the x is 44px wide (its hit area is 44px tall).
+@media (pointer: coarse) {
+  :root,
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --filter-chip-dismiss-min-inline-size: var(--size-touch);
+  }
 }

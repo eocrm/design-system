@@ -9,7 +9,8 @@
 // shared --transition-* durations (same reasoning as --modal-content-width-full).
 // --tour-wave-glow (22px) is the waves' inner-glow blur — a shadow blur, not
 // a --space-* step.
-:root {
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
   --tour-z: var(--z-tour);
 
   // Motion: fades are quick, geometry glides are slow enough to follow.

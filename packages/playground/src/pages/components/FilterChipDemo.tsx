@@ -64,7 +64,7 @@ export function Demo() {
 }`}
       >
         <InputExample width="auto">
-          <Cluster gap="sm">
+          <Cluster gap="sm" data-testid="filter-chip-stateful">
             {chips.includes('event') && (
               <FilterChip onDismiss={() => removeChip('event')}>
                 <FilterChip.Label>Event</FilterChip.Label>
