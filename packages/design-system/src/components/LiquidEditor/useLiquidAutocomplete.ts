@@ -49,6 +49,9 @@ export function getAutocompleteContext(value: string, caret: number): Autocomple
 
   // Tag-name position: only whitespace (and an optional `-`) after `{%`.
   if (value.startsWith('{%', open) && /^-?\s*$/.test(value.slice(open + 2, wordStart))) {
+    // Inside an existing tag body (text before its `%}`) there is no tag name to complete.
+    const close = value.indexOf('%}', caret);
+    if (!/^\s*-?$/.test(value.slice(caret, close === -1 ? undefined : close))) return null;
     return { kind: 'tag', query, wordStart, open };
   }
 
@@ -182,7 +185,7 @@ export function useLiquidAutocomplete({
       const q = ctx.query.toLowerCase();
       const items =
         ctx.kind === 'tag'
-          ? tagItems.filter((it) => it.snippet!.tag.startsWith(q))
+          ? tagItems.filter((it) => it.snippet?.tag.startsWith(q))
           : ctx.kind === 'filter'
             ? filters
                 .filter((f) => f.toLowerCase().startsWith(q))

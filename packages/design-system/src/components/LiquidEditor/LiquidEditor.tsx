@@ -274,7 +274,10 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
               value.slice(0, ac.context.open) + value.slice(replaceEnd + tail),
               ac.context.open,
               ac.context.open,
-              item.snippet.template,
+              // Keep a `{%-` whitespace-control dash on the opener.
+              value[ac.context.open + 2] === '-'
+                ? item.snippet.template.replace(/^\{%/, '{%-')
+                : item.snippet.template,
             )
           : applyCompletion(value, replaceEnd, ac.context, item.value);
         close();
