@@ -3,6 +3,7 @@
 // so a missing test/export fails CI instead of being caught only at review.
 
 import ts from 'typescript';
+import { compileString } from 'sass';
 import { readdirSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1888,12 +1889,21 @@ describe('touch hit areas come from the mixin', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('mixins.scss defines the touch-hit-area mixin on the token, coarse pointers only', () => {
-    const mixins = readFileSync(join(__dirname, 'styles/mixins.scss'), 'utf-8');
-    const start = mixins.indexOf('@mixin touch-hit-area');
-    expect(start).toBeGreaterThan(-1);
-    const body = mixins.slice(start);
-    expect(body).toContain('var(--size-touch)');
-    expect(body).toContain('pointer: coarse');
+  it('touch-hit-area compiles to a direction-agnostic coarse-pointer hit area', () => {
+    const out = compileString(`@use 'mixins' as *;\n.host { @include touch-hit-area; }`, {
+      loadPaths: [join(__dirname, 'styles')],
+    }).css;
+    const size = 'max(100%, var(--size-touch))';
+    const centre = 'calc(50% - max(100%, var(--size-touch)) / 2)';
+    expect(out).toContain('@media (pointer: coarse)');
+    expect(out).toMatch(/\.host\s*\{[^}]*position:\s*relative/);
+    const before = out.match(/\.host::before\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(before).toMatch(/position:\s*absolute/);
+    expect(before).toMatch(/content:\s*""/);
+    expect(before).toContain(`inset-block-start: ${centre}`);
+    expect(before).toContain(`inset-inline-start: ${centre}`);
+    expect(before).toContain(`inline-size: ${size}`);
+    expect(before).toContain(`block-size: ${size}`);
+    expect(out).not.toMatch(/transform|translate|\[dir/);
   });
 });

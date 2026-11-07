@@ -147,9 +147,12 @@
 // absolutely positioned ::before at least --size-touch square, centred on the
 // host, so the VISUAL stays compact and the tap target reaches 44px. The one
 // documented exception to Rule 4 (no position/inset in component SCSS).
-// RTL: `inset-inline-start: 50%` lands on the right edge, so the centring
-// translate flips sign. `[dir='rtl'] &` rather than :dir(rtl), which minifiers
-// lower to :lang(...) (see TreeView.module.scss).
+// Centring uses logical insets of (50% - size / 2), not translate(-50%): that
+// is direction-agnostic, so no [dir='rtl'] branch exists to get wrong for a host
+// that carries dir itself or an LTR subtree inside an RTL page.
+// Caveats: it claims the host's ::before; sets position: relative (no hosts with
+// their own positioning); an overflow: hidden host clips the area; neighbours
+// overlapping the area lose taps to this host.
 @mixin touch-hit-area {
   @media (pointer: coarse) {
     position: relative;
@@ -157,15 +160,10 @@
     &::before {
       content: '';
       position: absolute;
-      inset-block-start: 50%;
-      inset-inline-start: 50%;
+      inset-block-start: calc(50% - max(100%, var(--size-touch)) / 2);
+      inset-inline-start: calc(50% - max(100%, var(--size-touch)) / 2);
       inline-size: max(100%, var(--size-touch));
       block-size: max(100%, var(--size-touch));
-      transform: translate(-50%, -50%);
-    }
-
-    [dir='rtl'] &::before {
-      transform: translate(50%, -50%);
     }
   }
 }
