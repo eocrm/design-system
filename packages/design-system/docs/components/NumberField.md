@@ -32,7 +32,7 @@ const [qty, setQty] = useState<number | null>(1);
 
 ## Behaviour
 
-- **Typing.** `onChange` fires on every keystroke whose text parses to a number, with the raw (unclamped) value; clearing the field fires `null`. Partial or malformed text (`-`, `1.`, a second decimal separator like `12.5.3`, or a `-` anywhere but first like `1-2`) stays in the field as typed without firing, and `value` stays the last valid number. Letters are rejected, and so is `-` when `min ≥ 0`. In comma-decimal locales the numpad `.` types the decimal.
+- **Typing.** `onChange` fires on every keystroke whose text parses to a number, with the raw (unclamped) value; clearing the field fires `null`. Partial or malformed text (`-`, `1.`, a second decimal separator like `12.5.3` or `12,5.3`, a `-` anywhere but first like `1-2`, or a space where the locale does not group by space) stays in the field without firing, and `value` stays the last valid number. Letters are rejected, and so is `-` when `min ≥ 0`. Only digits, the locale's group and decimal separators, a leading `-` and surrounding whitespace are accepted. In a locale where neither the decimal nor the group separator is `.` (`ru`), a typed `.` (numpad) is the decimal, so `12.5` is 12.5; where `.` groups (`de`), it stays a group separator.
 - **Commit.** Blur after typing, or Enter, clamps to `min` / `max`, snaps to the `step` grid (anchored at `min`, else 0) and reformats; e.g. `step={0.25}` turns `1.3` into `1.25`. A partial or malformed draft reverts to the last value. Focusing and leaving without typing (or after only stepping) commits nothing, so an external off-grid value is left alone. Enter does not `preventDefault`, so it still submits a surrounding form.
 - **Stepping.** ArrowUp / ArrowDown move by `step`, PageUp / PageDown by `10 × step`, Home / End jump to `min` / `max` (only when set). Stepping adds to the current value without snapping to the grid, and clamps. An empty field steps from 0.
 - **Buttons.** Press steps once; holding repeats after 400 ms, then every 60 ms, until release, pointer leave, or the limit. Each button disables at its limit, and both disable when the field is `disabled` or `readOnly`. They are `tabIndex={-1}` (the arrow keys duplicate them) and named by `numberField.decrease` / `numberField.increase`.
@@ -56,5 +56,4 @@ Anti-patterns:
 
 - ❌ `<Input type="number">` for a quantity — no locale formatting, wheel-scroll surprises; use `NumberField`.
 - ❌ Reading the live `onChange` value as final — it is unclamped while typing; the clamped value arrives on blur / Enter. Validate on submit.
-- ❌ A step in exponent notation (`step={1e-7}`) — it reads as 0 decimals; write the step as a plain decimal literal.
 - ❌ A `max` off the `step` grid (`step={5} max={12}`) — clamping can land on the off-grid `12`.

@@ -57,31 +57,36 @@ export interface NumberFieldProps extends Omit<
 const REPEAT_DELAY = 400;
 const REPEAT_INTERVAL = 60;
 
-// ponytail: exponent-notation steps (1e-7) read as 0 decimals; use a decimal literal.
-const decimalsOf = (n: number) => (String(n).split('.')[1] ?? '').length;
+/** Decimals of `n`, capped at 10 (also trims float noise like 0.1 + 0.2; exponent-safe). */
+const decimalsOf = (n: number) => (n.toFixed(10).replace(/\.?0+$/, '').split('.')[1] ?? '').length;
 
 /**
- * `null` = empty, `undefined` = partial / unparseable draft (`-`, `,`) or malformed text: a
- * second decimal separator (`12.5.3`) or a `-` anywhere but first (`1-2`). Malformed text stays
- * in the field as typed but never fires, and blur restores the last value.
+ * `null` = empty, `undefined` = partial / unparseable draft (`-`, `,`) or malformed text: any
+ * character the locale does not use for numbers, a second decimal separator (`12.5.3`) or a `-`
+ * anywhere but first (`1-2`). Malformed text stays in the field as typed but never fires, and
+ * blur restores the last value. In a locale whose decimal and group are both not `.` (ru), a
+ * typed `.` (numpad) is the decimal separator.
  */
 function parse(text: string, locale: string, allowNegative: boolean): number | null | undefined {
   const trimmed = text.trim();
   if (!trimmed) return null;
-  const { decimal } = localeSeparators(locale);
-  if (trimmed.split(decimal).length > 2 || trimmed.lastIndexOf('-') > 0) return undefined;
-  const draft = parseLocalAmount(text, { locale, precision: 15, allowNegative });
+  const { group, decimal } = localeSeparators(locale);
+  if (trimmed.lastIndexOf('-') > 0) return undefined;
+  const groups = /^\s$/.test(group) ? /[ \u00a0\u202f]/g : new RegExp(`[${group}]`, 'g');
+  let body = trimmed.replace(groups, '');
+  if (decimal !== '.' && group !== '.') body = body.split('.').join(decimal);
+  if (body.split(decimal).length > 2) return undefined;
+  const rest = body.replace(/^-/, '').split(decimal).join('');
+  if (/\D/.test(rest)) return undefined;
+  const draft = parseLocalAmount(body, { locale, precision: 15, allowNegative });
   const canonical = draft && draftToCanonical(draft);
   return canonical ? Number(canonical) : undefined;
 }
 
-/** Most decimals ever shown; also trims float noise (0.1 + 0.2) before counting. */
-const MAX_DECIMALS = 10;
-
 /** Shows at least `precision` decimals, and more when the value has them, so it is never hidden. */
 function format(value: number | null, locale: string, precision: number): string {
   if (value !== null) {
-    precision = Math.max(precision, decimalsOf(Number(value.toFixed(MAX_DECIMALS))));
+    precision = Math.max(precision, decimalsOf(value));
   }
   const draft = value === null ? null : canonicalToDraft(value.toFixed(precision));
   return draft ? formatDraft(draft, { locale, precision, pad: true }) : '';

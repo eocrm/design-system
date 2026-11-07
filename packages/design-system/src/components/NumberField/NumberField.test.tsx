@@ -354,6 +354,45 @@ describe('NumberField', () => {
   });
 
   it.each([
+    ['ru', '12.5', 12.5],
+    ['ru', '-0.5', -0.5],
+    ['de', '1.234,5', 1234.5],
+    ['en', '1,234.5', 1234.5],
+  ])('%s: "%s" parses to %s', async (locale, typed, expected) => {
+    const spy = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider locale={locale}>
+        <Harness spy={spy} initial={null} step={0.01} />
+      </LocaleProvider>,
+    );
+    await user.type(input(), typed);
+    expect(spy).toHaveBeenLastCalledWith(expected);
+  });
+
+  it.each([
+    ['ru', '12.5.3'],
+    ['ru', '12,5.3'],
+    ['ru', '1a2'],
+    ['en', '1a2'],
+    ['en', '1 2'],
+  ])('%s: strict text "%s" never fires', async (locale, typed) => {
+    const spy = vi.fn();
+    render(
+      <LocaleProvider locale={locale}>
+        <Harness spy={spy} initial={null} step={0.01} />
+      </LocaleProvider>,
+    );
+    fireEvent.change(input(), { target: { value: typed } });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('shows a tiny value with step 1 instead of "0"', () => {
+    render(<NumberField aria-label="Qty" value={1e-7} onChange={() => {}} step={1} />);
+    expect(input()).toHaveValue('0.0000001');
+  });
+
+  it.each([
     [2.5, 1, '2.5'],
     [1.25, 0.5, '1.25'],
   ])('shows value %s with step %s as "%s", never hiding the stored value', (value, step, shown) => {
