@@ -9,7 +9,7 @@ test('closed accordion content is skipped by Tab; open content is reachable (DS-
 }) => {
   await page.goto('/components/accordion');
   const item = page.getByRole('button', { name: 'How do I export my data?' }).first();
-  const inner = page.locator('button', { hasText: 'Export CSV' }).first();
+  const inner = page.getByTestId('export-content').locator('button');
 
   await item.focus();
   await page.keyboard.press('Tab');

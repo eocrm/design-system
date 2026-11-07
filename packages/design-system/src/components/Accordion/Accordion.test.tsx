@@ -729,6 +729,11 @@ describe('Accordion closed content (DS-19)', () => {
     expect(scss).toMatch(/\.content\[data-state='open'\] \{[^}]*visibility: visible;/);
   });
 
+  it('reduced-motion reset also covers the higher-specificity open selector', () => {
+    const block = scss.match(/@media \(prefers-reduced-motion: reduce\) \{[^}]*\}/)![0];
+    expect(block).toContain(".content[data-state='open']");
+  });
+
   it('keeps closed content mounted with data-state="closed"', () => {
     render(<BasicSingle />);
     const region = screen.getByText('A content', { selector: '*' }).closest('[role="region"]');

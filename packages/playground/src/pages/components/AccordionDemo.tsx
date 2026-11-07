@@ -46,7 +46,7 @@ export function Demo() {
           </Accordion.Item>
           <Accordion.Item value="faq-2">
             <Accordion.Trigger>How do I export my data?</Accordion.Trigger>
-            <Accordion.Content>
+            <Accordion.Content data-testid="export-content">
               Use the gear icon → Export → <Button size="sm">Export CSV</Button>
             </Accordion.Content>
           </Accordion.Item>

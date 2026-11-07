@@ -56,6 +56,13 @@ describe('FileUpload', () => {
     expect(container.firstElementChild).not.toHaveAttribute('capture');
   });
 
+  it('renders no capture attribute for capture={false}', () => {
+    const { container } = render(
+      <FileUpload files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} capture={false} />,
+    );
+    expect(container.querySelector('input[type=file]')).not.toHaveAttribute('capture');
+  });
+
   // `dropzoneLabel=""` is a string, so the aria-label ternary used to emit a
   // literal `aria-label=""` AND an empty visible span — a role="button" with
   // no accessible name. Assert the exact default on both surfaces.
