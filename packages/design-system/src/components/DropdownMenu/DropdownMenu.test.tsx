@@ -1220,11 +1220,9 @@ describe('DropdownMenu — Header', () => {
     expect(screen.queryByRole('menuitem', { name: /Zed Account/ })).toBeNull();
   });
 
-  // An identity header usually carries an Avatar; inside role="menu" only
-  // menu-owned roles are allowed, and Header's role="none" is transparent, so an
-  // exposed img fails axe's aria-required-children. The name text beside it
-  // carries the identity, so the documented markup hides the Avatar.
-  it('axe flags an exposed Avatar in a Header (why the docs say aria-hidden)', async () => {
+  // Header is aria-hidden itself, so an exposed Avatar inside doesn't trip
+  // axe's aria-required-children in role="menu".
+  it('a Header with a plain Avatar passes axe and is aria-hidden, not overridable', async () => {
     const user = userEvent.setup();
     render(
       <DropdownMenu>
@@ -1232,7 +1230,7 @@ describe('DropdownMenu — Header', () => {
           <button type="button">Open</button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content>
-          <DropdownMenu.Header>
+          <DropdownMenu.Header aria-hidden={false} data-testid="hdr">
             <Avatar name="Zed Morgan" />
           </DropdownMenu.Header>
           <DropdownMenu.Item onSelect={() => {}}>Profile</DropdownMenu.Item>
@@ -1240,10 +1238,13 @@ describe('DropdownMenu — Header', () => {
       </DropdownMenu>,
     );
     await user.click(screen.getByRole('button', { name: 'Open' }));
+    const hdr = screen.getByTestId('hdr');
+    expect(hdr).toHaveAttribute('aria-hidden', 'true');
+    expect(hdr).toHaveAttribute('role', 'none');
     const results = await axe.run(screen.getByRole('menu'), {
       runOnly: ['aria-required-children'],
     });
-    expect(results.violations.map((v) => v.id)).toEqual(['aria-required-children']);
+    expect(results.violations).toEqual([]);
   });
 
   it('a Header with an aria-hidden Avatar passes axe inside role="menu"', async () => {

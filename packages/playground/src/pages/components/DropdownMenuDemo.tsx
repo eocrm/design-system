@@ -427,7 +427,7 @@ export function ViewSettingsExample() {
 
       <Example
         title="Account menu (Header)"
-        description="A non-interactive identity header: Avatar, name, muted subline. Normal case, unlike Label. Screen readers don't announce it inside a menu, so the trigger's aria-label carries the identity."
+        description="A non-interactive identity header: Avatar, name, muted subline. Normal case, unlike Label. The Header is hidden from assistive tech, so the trigger's aria-label must carry the identity."
         code={`import { Avatar, Button, Cluster, DropdownMenu, Stack, Text } from '@eocrm/design-system';
 
 export function AccountMenuExample() {
@@ -441,7 +441,7 @@ export function AccountMenuExample() {
       <DropdownMenu.Content align="start">
         <DropdownMenu.Header>
           <Cluster gap="sm" align="center" wrap={false}>
-            <Avatar aria-hidden name="Zed Morgan" />
+            <Avatar name="Zed Morgan" />
             <Stack gap="xs">
               <Text weight="medium">Zed Morgan</Text>
               <Text tone="muted">zed@example.com</Text>
@@ -464,7 +464,7 @@ export function AccountMenuExample() {
           <DropdownMenu.Content align="start">
             <DropdownMenu.Header>
               <Cluster gap="sm" align="center" wrap={false}>
-                <Avatar aria-hidden name="Zed Morgan" />
+                <Avatar name="Zed Morgan" />
                 <Stack gap="xs">
                   <Text weight="medium">Zed Morgan</Text>
                   <Text tone="muted">zed@example.com</Text>

@@ -111,7 +111,7 @@ Every component defines `--<component>-<part>-<state>` CSS custom properties at 
 </div>
 ```
 
-An ancestor-scoped override like `.danger-zone` does not reach components below a nested `[data-theme]` element, which re-declares the component tokens. Put such an override on the themed element itself, or inside it.
+An ancestor-scoped override like `.danger-zone` does not reach components below a nested `[data-theme='light']` or `[data-theme='dark']` element, which re-declares the component tokens. Put such an override on the themed element itself, or inside it.
 
 **Override per-instance (one Button, inline):**
 
