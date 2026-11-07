@@ -245,9 +245,15 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     const input = e.target;
     const next = input.value;
     const at = (input.selectionStart ?? next.length) - 1;
-    // keydown can't catch mobile keyboards ('Unidentified' key, non-cancelable beforeinput),
-    // so also undo a change that only inserted one '.'.
-    if (blockDot && next[at] === '.' && next.slice(0, at) + next.slice(at + 1) === text) {
+    // keydown can't catch mobile keyboards ('Unidentified' key, non-cancelable beforeinput), so
+    // undo any non-paste/drop edit that adds a '.' (also over a selection). Without inputType
+    // (jsdom), fall back to undoing a change that only inserted one '.'.
+    const kind = (e.nativeEvent as InputEvent).inputType;
+    const dots = (str: string) => str.split('.').length - 1;
+    const addsDot = kind
+      ? kind !== 'insertFromPaste' && kind !== 'insertFromDrop' && dots(next) > dots(text)
+      : next[at] === '.' && next.slice(0, at) + next.slice(at + 1) === text;
+    if (blockDot && addsDot) {
       input.value = text;
       input.setSelectionRange(at, at);
       return;

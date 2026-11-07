@@ -475,6 +475,32 @@ describe('NumberField locale separators and paste', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
+  it('de: an insertText that types "." over a selection is reverted', async () => {
+    const spy = vi.fn();
+    inLocale('de', <Harness spy={spy} />);
+    await userEvent.setup().type(input(), '123');
+    spy.mockClear();
+    const el = input() as HTMLInputElement;
+    fireEvent.input(el, {
+      target: { value: '1.3', selectionStart: 2, selectionEnd: 2 },
+      inputType: 'insertText',
+      data: '.',
+    });
+    expect(el).toHaveValue('123');
+    expect(el.selectionStart).toBe(1);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('de: a paste producing 1.234 is accepted as 1234', async () => {
+    const spy = vi.fn();
+    inLocale('de', <Harness spy={spy} />);
+    const user = userEvent.setup();
+    await user.click(input());
+    await user.paste('1.234');
+    expect(input()).toHaveValue('1.234');
+    expect(spy).toHaveBeenLastCalledWith(1234);
+  });
+
   it('de: paste keeps strict parsing', async () => {
     const spy = vi.fn();
     inLocale('de', <Harness spy={spy} />);
