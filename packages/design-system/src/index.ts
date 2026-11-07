@@ -594,7 +594,7 @@ export type {
 } from './components/DefinitionList';
 
 export { Link } from './components/Link';
-export type { LinkProps, LinkVariant, LinkUnderline } from './components/Link';
+export type { LinkProps, LinkVariant, LinkUnderline, LinkHitArea } from './components/Link';
 
 export { LinkCard } from './components/LinkCard';
 export type { LinkCardProps } from './components/LinkCard';
@@ -918,6 +918,7 @@ export type {
   TreeViewView,
 } from './components/TreeView';
 export type {
+  ChartCurve,
   ChartMarker,
   ChartMarkerTone,
   ChartProps,

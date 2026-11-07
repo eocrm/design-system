@@ -4,6 +4,9 @@ import { stack, stackOffsetDiverging, stackOffsetNone, type Series } from 'd3-sh
 /** Chart form. `area` is always stacked. */
 export type ChartType = 'line' | 'bar' | 'stacked-bar' | 'area';
 
+/** Line/area interpolation: `smooth` is a monotone curve, `linear` straight segments. */
+export type ChartCurve = 'smooth' | 'linear';
+
 /** One plotted series. `values[i]` belongs to `categories[i]`; `null` is a gap. */
 export interface ChartSeries {
   /** Stable identity: legend toggles, `hiddenSeries` and `comparisonOf` refer to it. */
@@ -376,7 +379,7 @@ export interface LayoutInput {
   height: number;
   formatValue: (n: number) => string;
   /** Line/area interpolation; default `'smooth'`. */
-  curve?: 'smooth' | 'linear';
+  curve?: ChartCurve;
 }
 
 export interface ChartLayout {

@@ -41,6 +41,9 @@ export type LinkVariant = 'default' | 'muted' | 'subtle';
  */
 export type LinkUnderline = 'hover' | 'always' | 'none';
 
+/** Link tap target on coarse pointers: `text` (the text box) or `touch` (≥44px). See `hitArea`. */
+export type LinkHitArea = 'text' | 'touch';
+
 interface LinkOwnProps {
   /** Visual variant. See `LinkVariant` for descriptions. */
   variant?: LinkVariant;
@@ -51,7 +54,7 @@ interface LinkOwnProps {
    * layout; use for standalone links (list-row names, card or widget titles), leave unset for
    * links inside running text. Default `'text'`.
    */
-  hitArea?: 'text' | 'touch';
+  hitArea?: LinkHitArea;
   children?: ReactNode;
 }
 

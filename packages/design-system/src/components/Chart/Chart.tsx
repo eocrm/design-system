@@ -39,6 +39,7 @@ import {
   X_LABEL_BASELINE,
   resolveSeries,
   visibleSeries,
+  type ChartCurve,
   type ChartMarker,
   type ChartSeries,
   type ChartType,
@@ -46,7 +47,13 @@ import {
 } from './chartModel';
 import styles from './Chart.module.scss';
 
-export type { ChartMarker, ChartMarkerTone, ChartSeries, ChartType } from './chartModel';
+export type {
+  ChartCurve,
+  ChartMarker,
+  ChartMarkerTone,
+  ChartSeries,
+  ChartType,
+} from './chartModel';
 
 export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
   /**
@@ -72,7 +79,7 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   /** Formats a number for axis ticks, tooltip and data table (the app owns i18n and currency). Required. */
   formatValue: (n: number) => string;
   /** Line/area interpolation. `'smooth'` (default) is a monotone curve; `'linear'` draws straight segments between points. */
-  curve?: 'smooth' | 'linear';
+  curve?: ChartCurve;
   /** EmptyState title when there are no categories or every value is null/zero. Default: translated "No data for this period". */
   emptyMessage?: ReactNode;
   /** Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored. If it would hide every primary series, it is ignored for primaries (the last primary can't be hidden). */
