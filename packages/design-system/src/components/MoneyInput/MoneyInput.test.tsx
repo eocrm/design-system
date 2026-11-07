@@ -310,7 +310,7 @@ describe('MoneyInput', () => {
       await userEvent.type(amountBox(), '12.5');
       expect(amountBox().value).toBe('12,5');
       expect(amountBox().selectionStart).toBe(4);
-      expect(onChange).toHaveBeenLastCalledWith({ amount: '12.5', currency: 'USD' });
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '12.5', currency: 'EUR' });
     });
 
     it('de-DE dot is still the decimal for a 3-digit currency (KWD)', async () => {
