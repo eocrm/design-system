@@ -16,6 +16,7 @@ const ROUTES = [
   '/components/code-block',
   '/components/relative-date-input',
   '/components/tabs',
+  '/components/password-input',
 ];
 
 for (const route of ROUTES) {
@@ -26,10 +27,19 @@ for (const route of ROUTES) {
       const label = (e: Element) =>
         (e.getAttribute('aria-label') || e.textContent || '').trim().slice(0, 30);
       const out: string[] = [];
-      for (const el of document.querySelectorAll(sel)) {
+      const controls = document.querySelectorAll(sel);
+      if (controls.length === 0) out.push('no controls sampled');
+      for (const el of controls) {
         if (el.getBoundingClientRect().width < 6) continue;
         el.scrollIntoView({ block: 'center', inline: 'center' });
         const r = el.getBoundingClientRect();
+        const input = el.parentElement?.querySelector('input');
+        if (input && !input.contains(el)) {
+          // The input's face must not be covered by the adornment button's hit area.
+          const ir = input.getBoundingClientRect();
+          const hit = document.elementFromPoint(ir.right - 2, ir.top + ir.height / 2);
+          if (hit && hit !== input && el.contains(hit)) out.push(`${label(el)} covers input`);
+        }
         const cx = r.left + r.width / 2;
         const cy = r.top + r.height / 2;
         const points = [
