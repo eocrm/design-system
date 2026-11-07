@@ -283,4 +283,68 @@ describe('ScatterChart', () => {
     });
     expect(document.querySelector('[data-chart-tooltip]')).toBeNull();
   });
+  it('draws both axis titles, hidden from assistive tech', () => {
+    const layout = stubLayout();
+    const { container } = render(<ScatterChart {...base} />);
+    layout.fire();
+    const titles = [...container.querySelectorAll('[data-scatter-axis-title]')];
+    expect(titles.map((t) => t.textContent)).toEqual(expect.arrayContaining(['Bowl', 'Meal']));
+    for (const t of titles) expect(t.closest('[aria-hidden="true"]')).not.toBeNull();
+  });
+
+  it('a series without points does not keep the last plotted series hideable', async () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <ScatterChart
+        {...base}
+        series={[base.series[0], { key: 'none', label: 'None', points: [] }]}
+      />,
+    );
+    layout.fire();
+    const cat = screen.getByRole('button', { name: 'Cat' });
+    expect(cat).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(cat);
+    expect(cat).toHaveAttribute('aria-pressed', 'true');
+    expect(dots(container).length).toBeGreaterThan(0);
+  });
+
+  it('ignores a controlled hiddenSeries that hides every series with points', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <ScatterChart
+        {...base}
+        series={[base.series[0], { key: 'none', label: 'None', points: [] }]}
+        hiddenSeries={['cat']}
+      />,
+    );
+    layout.fire();
+    expect(dots(container).length).toBeGreaterThan(0);
+    expect(screen.queryByText('No data for this period')).toBeNull();
+  });
+
+  it('reads the pointer hit radius from --scatter-hit-radius', () => {
+    const real = window.getComputedStyle;
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((el) => {
+      const style = real(el);
+      return {
+        ...style,
+        getPropertyValue: (name: string) =>
+          name === '--scatter-hit-radius' ? '4px' : style.getPropertyValue(name),
+      } as CSSStyleDeclaration;
+    });
+    const layout = stubLayout();
+    const { container } = render(<ScatterChart {...base} />);
+    layout.fire();
+    const plot = screen.getByRole('group', { name: 'Bowl vs meal' });
+    const dot = container.querySelector('[data-series="dog"] [data-scatter-dot]')!;
+    const [cx, cy] = /translate\(([^,]+),([^)]+)\)/
+      .exec(dot.getAttribute('transform')!)!
+      .slice(1)
+      .map(Number);
+    // 10px away: inside the 24px default, outside the 4px token.
+    fireEvent.pointerMove(plot, { clientX: cx + 10, clientY: cy, pointerType: 'mouse' });
+    expect(document.querySelector('[data-chart-tooltip]')).toBeNull();
+    fireEvent.pointerMove(plot, { clientX: cx + 2, clientY: cy, pointerType: 'mouse' });
+    expect(document.querySelector('[data-chart-tooltip]')).not.toBeNull();
+  });
 });

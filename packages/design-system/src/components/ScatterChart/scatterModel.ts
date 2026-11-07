@@ -5,6 +5,7 @@ import {
   estimateTextWidth,
   LABEL_GAP,
   PAD_RIGHT,
+  X_LABEL_BASELINE,
   PAD_TOP,
   X_AXIS_HEIGHT,
   Y_TICK_SPACING,
@@ -77,9 +78,20 @@ export interface ScatterTick {
   pos: number;
   label: string;
 }
+/** Baseline of an axis title, in svg px. */
+export interface ScatterTitlePos {
+  x: number;
+  y: number;
+}
 /** Geometry for one render; `dots` are in paint order (largest first). */
 export interface ScatterLayout {
   plot: Rect;
+  /** y title: above the plot, starting at the svg's left edge (text-anchor start). */
+  yTitle: ScatterTitlePos;
+  /** x title: under the x tick labels, ending at the plot's right edge (text-anchor end). */
+  xTitle: ScatterTitlePos;
+  /** Baseline of the x tick labels. */
+  xTickBaseline: number;
   xTicks: ScatterTick[];
   yTicks: ScatterTick[];
   dots: ScatterDot[];
@@ -111,6 +123,11 @@ export function scatterSizeDomain(series: readonly ResolvedScatterSeries[]): [nu
   const sizes = series.flatMap((s) => s.points.map((p) => p.size).filter(validSize));
   return sizes.length ? [Math.min(...sizes), Math.max(...sizes)] : [0, 1];
 }
+
+/** Height of one axis-title row (--font-size-sm line plus gap); one above the plot, one below the x ticks. */
+const TITLE_ROW = 16;
+/** Baseline of the y title below the svg top. */
+const Y_TITLE_BASELINE = 12;
 
 /** Space kept between the dot edge and the plot's domain bounds: the 1px ring. */
 const DOT_RING = 1;
@@ -182,8 +199,8 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
   const { series, width, height, formatX, formatY } = input;
   const all = series.flatMap((s) => s.points);
 
-  const plotTop = PAD_TOP;
-  const plotBottom = Math.max(plotTop + 1, height - X_AXIS_HEIGHT);
+  const plotTop = PAD_TOP + TITLE_ROW;
+  const plotBottom = Math.max(plotTop + 1, height - X_AXIS_HEIGHT - TITLE_ROW);
   const yCount = Math.max(2, Math.floor((plotBottom - plotTop) / Y_TICK_SPACING));
   const y = scaleLinear().range([plotBottom, plotTop]);
   if (input.yDomain) y.domain(input.yDomain);
@@ -274,6 +291,9 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
 
   return {
     plot,
+    yTitle: { x: 0, y: Y_TITLE_BASELINE },
+    xTitle: { x: plot.x + plot.width, y: height - X_LABEL_BASELINE },
+    xTickBaseline: height - X_LABEL_BASELINE - TITLE_ROW,
     xTicks,
     yTicks: yValues.map((value, i) => ({ value, pos: y(value), label: yLabels[i] })),
     dots,

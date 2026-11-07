@@ -270,3 +270,28 @@ describe('fix round 1', () => {
     expect(l.referencePath!.match(/[ML]/g)).toHaveLength(2);
   });
 });
+
+describe('axis titles', () => {
+  const layout = computeScatterLayout({
+    ...base,
+    series: resolve([
+      { x: 0, y: 0 },
+      { x: 10, y: 10 },
+    ]),
+  });
+
+  it('reserves a row above the plot for the y title, at the y-axis start', () => {
+    expect(layout.yTitle.x).toBe(0);
+    // Baseline above the plot top, below the svg top.
+    expect(layout.yTitle.y).toBeGreaterThan(0);
+    expect(layout.yTitle.y).toBeLessThan(layout.plot.y);
+  });
+
+  it('reserves a row below the x tick labels for the x title, at the plot end', () => {
+    const plotBottom = layout.plot.y + layout.plot.height;
+    expect(layout.xTickBaseline).toBeGreaterThan(plotBottom);
+    expect(layout.xTitle.y).toBeGreaterThan(layout.xTickBaseline);
+    expect(layout.xTitle.y).toBeLessThanOrEqual(base.height);
+    expect(layout.xTitle.x).toBe(layout.plot.x + layout.plot.width);
+  });
+});

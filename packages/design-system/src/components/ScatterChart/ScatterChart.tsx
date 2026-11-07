@@ -19,13 +19,7 @@ import { useControllableState } from '../_internal/useControllableState';
 import { useSize } from '../_internal/useSize';
 import { ChartLegend } from '../Chart/ChartLegend';
 import { ChartTooltip } from '../Chart/ChartTooltip';
-import {
-  LABEL_GAP,
-  MARKER_RADIUS,
-  X_LABEL_BASELINE,
-  markerPath,
-  markerShape,
-} from '../Chart/chartModel';
+import { LABEL_GAP, MARKER_RADIUS, markerPath, markerShape } from '../Chart/chartModel';
 import {
   computeScatterLayout,
   inspectionOrder,
@@ -54,9 +48,9 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
   xDomain?: [number | Date, number | Date];
   /** Fixed y range. Default: the data extent, including 0 when every y ≥ 0, nice-rounded. Points outside are clipped. */
   yDomain?: [number, number];
-  /** Name of the x quantity, e.g. "Bowl weight"; heads the data-table column and names x in the announcement. Required. */
+  /** Name of the x quantity, e.g. "Bowl weight"; drawn as the x-axis title under the ticks at the plot's end, heads the data-table column and names x in the announcement. Required. */
   xLabel: string;
-  /** Name of the y quantity, e.g. "Meal size"; heads the data-table column and names y in the announcement. Required. */
+  /** Name of the y quantity, e.g. "Meal size"; drawn as the y-axis title above the plot, heads the data-table column and names y in the announcement. Required. */
   yLabel: string;
   /** Formats x for ticks, tooltip, announcement and table (epoch ms on a `'time'` axis). Required. */
   formatX: (x: number) => string;
@@ -72,7 +66,7 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
   trendLine?: boolean;
   /** EmptyState title when no series has a point. Default: translated "No data for this period". */
   emptyMessage?: ReactNode;
-  /** Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored; the last visible series can't be hidden. */
+  /** Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored; the last visible series with points can't be hidden (a set hiding all of them is ignored for those). */
   hiddenSeries?: string[];
   /** Called with the next hidden keys when the user toggles a legend item. */
   onHiddenSeriesChange?: (keys: string[]) => void;
@@ -80,9 +74,8 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
   footnote?: ReactNode;
 }
 
-/** Pointer hit radius around a dot centre (`--space-6`). */
+/** Fallbacks for `--scatter-hit-radius` / `--scatter-dot-min` / `--scatter-dot-max` (`--space-6` / `--space-1` / `--space-4`) where computed styles don't resolve (jsdom). */
 const HIT_RADIUS = 24;
-/** Fallbacks for `--scatter-dot-min` / `--scatter-dot-max` (`--space-1` / `--space-4`) where computed styles don't resolve (jsdom). */
 const DOT_MIN = 4;
 const DOT_MAX = 16;
 /** Legend entry for `reference`: not a series, so it can't collide with a series key or be toggled. */
@@ -151,8 +144,11 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
   });
   const hidden = useMemo(() => {
     const known = rawHidden.filter((k) => resolved.some((s) => s.key === k));
-    // A controlled set can hide every series: ignore it so the plot is never blank.
-    return known.length > 0 && known.length >= resolved.length ? NO_HIDDEN : known;
+    // A controlled set can hide every series that has points: ignore it for those so the plot is never blank.
+    const plotted = resolved.filter((s) => s.points.length > 0);
+    return plotted.every((s) => known.includes(s.key))
+      ? known.filter((k) => !plotted.some((s) => s.key === k))
+      : known;
   }, [rawHidden, resolved]);
   const visible = useMemo(
     () => resolved.filter((s) => !hidden.includes(s.key)),
@@ -174,6 +170,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
   );
 
   const [setPlotEl, size, plotEl] = useSize<HTMLDivElement>();
+  const hitRadius = useMemo(() => readPx(plotEl, '--scatter-hit-radius', HIT_RADIUS), [plotEl]);
   const sizeRange = useMemo<[number, number]>(
     () => [
       readPx(plotEl, '--scatter-dot-min', DOT_MIN),
@@ -282,7 +279,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
   const onPointer = (e: PointerEvent<HTMLDivElement>) => {
     if (!layout) return;
     const r = e.currentTarget.getBoundingClientRect();
-    const hit = nearestDot(layout, e.clientX - r.left, e.clientY - r.top, HIT_RADIUS);
+    const hit = nearestDot(layout, e.clientX - r.left, e.clientY - r.top, hitRadius);
     if (hit) inspect({ seriesKey: hit.seriesKey, index: hit.index }, 'pointer');
     // A miss clears a pointer inspection (and any press in the plot), but a hover never steals the keyboard's.
     else if (e.type === 'pointerdown' || activeSource === 'pointer') inspect(null, null);
@@ -303,12 +300,13 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
         }${currentPoint.label ? `. ${currentPoint.label}` : ''}`
       : '';
 
-  const visibleCount = resolved.length - hidden.length;
+  // Only series with points count: hiding the last of them would leave a blank plot (a dead end).
+  const plottedVisible = visible.filter((s) => s.points.length > 0);
+  const isLocked = (key: string) => plottedVisible.length === 1 && plottedVisible[0].key === key;
   const toggle = (key: string) => {
     if (key === REFERENCE_KEY) return;
     if (hidden.includes(key)) setHidden(hidden.filter((k) => k !== key));
-    // Never hide the last visible series: an empty plot is a dead end.
-    else if (visibleCount > 1) setHidden([...hidden, key]);
+    else if (!isLocked(key)) setHidden([...hidden, key]);
   };
   const activeKey = focusKey !== null && visible.some((s) => s.key === focusKey) ? focusKey : null;
   const legendItems = [
@@ -318,7 +316,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       slot: s.slot,
       comparison: false,
       overflow: s.overflow,
-      locked: visibleCount === 1 && !hidden.includes(s.key),
+      locked: isLocked(s.key),
       parentHidden: false,
     })),
     // Slot 0 is Chart's neutral ink; `comparison` gives it the dashed swatch of a line.
@@ -435,15 +433,27 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                 </text>
               ))}
               {layout.xTicks.map((tick) => (
-                <text
-                  key={tick.value}
-                  x={tick.pos}
-                  y={size.height - X_LABEL_BASELINE}
-                  textAnchor="middle"
-                >
+                <text key={tick.value} x={tick.pos} y={layout.xTickBaseline} textAnchor="middle">
                   {tick.label}
                 </text>
               ))}
+              {/* Visual only: AT gets the titles from the table headers and the announcement. */}
+              <text
+                x={layout.yTitle.x}
+                y={layout.yTitle.y}
+                textAnchor="start"
+                data-scatter-axis-title=""
+              >
+                {yLabel}
+              </text>
+              <text
+                x={layout.xTitle.x}
+                y={layout.xTitle.y}
+                textAnchor="end"
+                data-scatter-axis-title=""
+              >
+                {xLabel}
+              </text>
             </g>
             {/* Trend lines and out-of-domain points must never draw outside the plot. */}
             <g clipPath={`url(#${clipId})`} data-scatter-marks="">
