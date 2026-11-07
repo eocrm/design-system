@@ -356,7 +356,6 @@ describe('NumberField', () => {
   it.each([
     ['ru', '12.5', 12.5],
     ['ru', '-0.5', -0.5],
-    ['de', '1.234,5', 1234.5],
     ['en', '1,234.5', 1234.5],
   ])('%s: "%s" parses to %s', async (locale, typed, expected) => {
     const spy = vi.fn();
@@ -440,6 +439,34 @@ describe('NumberField locale separators and paste', () => {
     const user = userEvent.setup();
     await user.click(input());
     await user.paste(text);
+    expect(spy).toHaveBeenLastCalledWith(1234.5);
+  });
+
+  it.each([
+    ['de', '1.5', 1.5],
+    ['es', '12.5', 12.5],
+    ['it', '12.5', 12.5],
+    ['de', '1,5', 1.5],
+  ])('%s: typing %s fires %s', async (locale, text, expected) => {
+    const spy = vi.fn();
+    inLocale(locale, <Harness spy={spy} />);
+    await userEvent.setup().type(input(), text);
+    expect(spy).toHaveBeenLastCalledWith(expected);
+  });
+
+  it('de: a typed . after a decimal is ignored (no x10)', async () => {
+    const spy = vi.fn();
+    inLocale('de', <Harness spy={spy} />);
+    await userEvent.setup().type(input(), '1,5.');
+    expect(spy.mock.calls).toEqual([[1], [1.5]]);
+  });
+
+  it('de: paste keeps strict parsing', async () => {
+    const spy = vi.fn();
+    inLocale('de', <Harness spy={spy} />);
+    const user = userEvent.setup();
+    await user.click(input());
+    await user.paste('1.234,5');
     expect(spy).toHaveBeenLastCalledWith(1234.5);
   });
 

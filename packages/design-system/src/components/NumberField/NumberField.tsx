@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -145,6 +146,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
   // True once the user typed since focus; blur commits only then (stepping and plain
   // focus-blur leave the value alone). Enter always commits.
   const typed = useRef(false);
+  const caret = useRef<number | null>(null);
   const textRef = useRef(text);
   textRef.current = text;
   // Latest value for the hold-to-repeat timers (their closures would otherwise be stale).
@@ -154,6 +156,11 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
   // The repeat interval outlives the render that started it; it steps through this ref so a
   // hold uses the latest onChange / min / max / step.
   const stepByRef = useRef<(delta: number) => boolean>(() => false);
+
+  useLayoutEffect(() => {
+    if (caret.current !== null) inputRef.current?.setSelectionRange(caret.current, caret.current);
+    caret.current = null;
+  }, [text]);
 
   // External value changes show up, unless the focused draft already means that value
   // (our own live echo must not reformat what the user is typing).
@@ -221,9 +228,9 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     if (e.detail === 0) stepBy(delta);
   };
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const applyText = (value: string) => {
     // Numpad '.' types the decimal in comma-decimal locales (unless '.' groups there, as in de).
-    let raw = e.target.value;
+    let raw = value;
     if (decimal !== '.' && group !== '.') raw = raw.split('.').join(decimal);
     const apos = /^['\u2019]$/.test(group) ? ["'", '\u2019'] : [];
     const allowed = new Set([group, decimal, ...apos, ...(allowNegative ? ['-'] : [])]);
@@ -237,9 +244,21 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     }
   };
 
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => applyText(e.target.value);
+
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     onKeyDown?.(e);
     if (e.defaultPrevented || readOnly) return;
+    // A typed '.' (pasted text stays strict) is the decimal when '.' groups (de, es, it) and none is typed yet.
+    const input = e.currentTarget;
+    const { selectionStart: start, selectionEnd: end, value: v } = input;
+    if (e.key === '.' && decimal !== '.' && group === '.' && start !== null && end !== null) {
+      e.preventDefault();
+      if (v.includes(decimal)) return;
+      caret.current = start + 1;
+      applyText(v.slice(0, start) + decimal + v.slice(end));
+      return;
+    }
     const deltas: Record<string, number> = {
       ArrowUp: step,
       ArrowDown: -step,
