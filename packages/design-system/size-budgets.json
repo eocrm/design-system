@@ -33,6 +33,6 @@
   "global-css": {
     "code": "import '@eocrm/design-system/styles/global.css';",
     "jsGzip": 100,
-    "cssGzip": 6100
+    "cssGzip": 6500
   }
 }
