@@ -52,6 +52,7 @@ export type {
   ChartMarker,
   ChartMarkerTone,
   ChartSeries,
+  ChartSeriesColor,
   ChartType,
 } from './chartModel';
 

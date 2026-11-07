@@ -1,4 +1,5 @@
 import {
+  assignSlots,
   barPath,
   categoryIndexAt,
   computeLayout,
@@ -16,6 +17,7 @@ import {
   thinLabels,
   visibleSeries,
   type ChartSeries,
+  type ChartSeriesColor,
   type LayoutInput,
 } from './chartModel';
 
@@ -35,7 +37,45 @@ const layout = (over: Partial<LayoutInput> & Pick<LayoutInput, 'type' | 'series'
     ...over,
   });
 
+describe('assignSlots', () => {
+  const slots = (c: (ChartSeriesColor | undefined)[]) => assignSlots(c).map((x) => x.slot);
+  it('lets unset entries skip explicitly claimed slots', () => {
+    expect(slots([undefined, 1])).toEqual([2, 1]);
+  });
+  it('allows explicit sharing', () => {
+    expect(assignSlots([3, 3])).toEqual([
+      { slot: 3, overflow: false },
+      { slot: 3, overflow: false },
+    ]);
+  });
+  it('wraps unset entries past eight and flags overflow', () => {
+    const r = assignSlots(Array(9).fill(undefined));
+    expect(r.slice(0, 8).map((x) => x.slot)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(r.slice(0, 8).every((x) => !x.overflow)).toBe(true);
+    expect(r[8]).toEqual({ slot: 1, overflow: true });
+  });
+  it('wraps an unset entry when every slot is claimed', () => {
+    expect(assignSlots([1, 2, 3, 4, 5, 6, 7, 8, undefined])[8]).toEqual({
+      slot: 1,
+      overflow: true,
+    });
+  });
+});
+
 describe('resolveSeries', () => {
+  it('honours color on primaries and ignores it on comparisons', () => {
+    const r = resolveSeries(
+      'line',
+      [{ ...s('a', [1]) }, { ...s('b', [1]), color: 1 }, { ...s('b-prev', [1], 'b'), color: 5 }],
+      1,
+    );
+    expect(r.series.map((x) => [x.key, x.slot])).toEqual([
+      ['a', 2],
+      ['b', 1],
+      ['b-prev', 1],
+    ]);
+  });
+
   it('orders comparisons after their parent and inherits the slot', () => {
     const r = resolveSeries('line', [s('a', [1]), s('b', [2]), s('a-prev', [1], 'a')], 1);
     expect(r.series.map((x) => x.key)).toEqual(['a', 'a-prev', 'b']);

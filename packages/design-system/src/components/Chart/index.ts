@@ -5,5 +5,6 @@ export type {
   ChartMarkerTone,
   ChartProps,
   ChartSeries,
+  ChartSeriesColor,
   ChartType,
 } from './Chart';

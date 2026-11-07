@@ -7,6 +7,9 @@ export type ChartType = 'line' | 'bar' | 'stacked-bar' | 'area';
 /** Line/area interpolation: `smooth` is a monotone curve, `linear` straight segments. */
 export type ChartCurve = 'smooth' | 'linear';
 
+/** Categorical palette slot (`--chart-series-N`), 1–8. */
+export type ChartSeriesColor = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
 /** One plotted series. `values[i]` belongs to `categories[i]`; `null` is a gap. */
 export interface ChartSeries {
   /** Stable identity: legend toggles, `hiddenSeries` and `comparisonOf` refer to it. */
@@ -20,6 +23,8 @@ export interface ChartSeries {
    * series, or `'total'` for the stacked sum. Supported on `line`, `bar` and `area`.
    */
   comparisonOf?: string;
+  /** Palette slot (1–8); overrides the positional colour. Ignored on comparison series, which inherit their parent's. */
+  color?: ChartSeriesColor;
 }
 
 /**
@@ -191,6 +196,26 @@ export interface ResolveResult {
   overflowCount: number;
 }
 
+/**
+ * Palette slot per series: explicit colours first (may be shared), then unset ones fill the free slots in
+ * order; once none are free they wrap positionally and are flagged `overflow`.
+ */
+export function assignSlots(
+  colors: readonly (ChartSeriesColor | undefined)[],
+): { slot: number; overflow: boolean }[] {
+  const claimed = new Set(colors.filter((c) => c !== undefined));
+  const free = Array.from({ length: PALETTE_SIZE }, (_, i) => i + 1).filter(
+    (s) => !claimed.has(s as ChartSeriesColor),
+  );
+  return colors.map((c, i) => {
+    if (c !== undefined) return { slot: c, overflow: false };
+    const slot = free.shift();
+    return slot === undefined
+      ? { slot: (i % PALETTE_SIZE) + 1, overflow: true }
+      : { slot, overflow: false };
+  });
+}
+
 const fit = (values: readonly (number | null)[], length: number) =>
   Array.from({ length }, (_, i) => (Number.isFinite(values[i]) ? (values[i] as number) : null));
 
@@ -219,9 +244,9 @@ export function resolveSeries(
   }
 
   const series: ResolvedSeries[] = [];
+  const slots = assignSlots(primaries.map((p) => p.color));
   primaries.forEach((p, i) => {
-    const slot = (i % PALETTE_SIZE) + 1;
-    const overflow = i >= PALETTE_SIZE;
+    const { slot, overflow } = slots[i];
     series.push({ key: p.key, label: p.label, values: fit(p.values, length), slot, overflow });
     for (const c of byParent.get(p.key) ?? []) {
       series.push({
@@ -244,7 +269,7 @@ export function resolveSeries(
       comparisonOf: 'total',
     });
   }
-  return { series, dropped, overflowCount: Math.max(0, primaries.length - PALETTE_SIZE) };
+  return { series, dropped, overflowCount: slots.filter((x) => x.overflow).length };
 }
 
 export function visibleSeries(
