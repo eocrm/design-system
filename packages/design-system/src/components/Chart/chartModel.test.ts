@@ -762,6 +762,14 @@ describe('estimateTextWidth (DS-20)', () => {
   it('measures % wider than the digits it follows', () => {
     expect(estimateTextWidth('100%')).toBeGreaterThan(estimateTextWidth('40 g'));
   });
+  it('widens m, w and East Asian characters', () => {
+    expect(estimateTextWidth('m')).toBe(9);
+    expect(estimateTextWidth('w')).toBe(9);
+    expect(estimateTextWidth('漢')).toBe(12);
+    expect(estimateTextWidth('か')).toBe(12);
+    expect(estimateTextWidth('カ')).toBe(12);
+    expect(estimateTextWidth('한')).toBe(12);
+  });
   it('gives a % y gutter room for the full label', () => {
     const l = layout({
       type: 'line',
@@ -797,13 +805,7 @@ describe('curve (DS-36)', () => {
       .map((p) => p.split(',').map(Number));
     const cx = l.categoryX;
     for (const [x, y] of pts) {
-      const i = Math.min(
-        2,
-        Math.max(
-          0,
-          cx.findLastIndex((c) => c <= x + 1e-9),
-        ),
-      );
+      const i = Math.min(2, Math.max(0, cx.filter((c) => c <= x + 1e-9).length - 1));
       const [, ya] = pts.find(([px]) => Math.abs(px - cx[i]) < 0.01)!;
       const [, yb] = pts.find(([px]) => Math.abs(px - cx[i + 1]) < 0.01)!;
       const t = (x - cx[i]) / (cx[i + 1] - cx[i]);
@@ -817,7 +819,7 @@ describe('curve (DS-36)', () => {
         [2, 4],
       ],
       4,
-      'linear',
+      true,
     );
     expect(tops[1][0]).toEqual([3, 3.25, 3.5, 3.75, 4].map((_, s) => 3 + (7 - 3) * (s / 4)));
   });
