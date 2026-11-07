@@ -9,12 +9,18 @@ test('DashboardCanvas cell with a Chart has no second scrollbar (DS-14)', async 
   await page.goto('/components/visually-hidden');
   const cells = page.locator('[data-scroll]').first();
   await expect(cells).toBeVisible();
-  const bad = await page.evaluate(() =>
-    [...document.querySelectorAll<HTMLElement>('[data-scroll]')]
-      .map((b) => b.parentElement && b.closest<HTMLElement>('[class*="item"]'))
-      .filter((c): c is HTMLElement => !!c && c.scrollHeight > c.clientHeight + 1)
-      .map((c) => `${c.scrollHeight}>${c.clientHeight}`),
-  );
+  const { checked, bad } = await page.evaluate(() => {
+    const items = [...document.querySelectorAll<HTMLElement>('[data-scroll]')]
+      .map((b) => b.closest<HTMLElement>('[data-dc-item]'))
+      .filter((c): c is HTMLElement => !!c);
+    return {
+      checked: items.length,
+      bad: items
+        .filter((c) => c.scrollHeight > c.clientHeight + 1)
+        .map((c) => `${c.scrollHeight}>${c.clientHeight}`),
+    };
+  });
+  expect(checked).toBeGreaterThan(0);
   expect(bad).toEqual([]);
 });
 

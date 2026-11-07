@@ -18,7 +18,7 @@
 <!-- props:end -->
 
 - `as?: 'span' | 'div'` — default `'span'`. Use `'div'` when the hidden content wraps other block elements.
-- The "clip" technique (`position: absolute`, 1×1px, clipped) — NOT `display: none` / `visibility: hidden`, which would also remove it from assistive tech.
+- The "clip" technique (`position: absolute`, 1×1px, clipped) — NOT `display: none` / `visibility: hidden`, which would also remove it from assistive tech. The hidden box sits at the start corner of its nearest positioned ancestor, so focusable hidden content (a visually hidden radio input) needs a positioned host, or focusing it scrolls to wherever that ancestor is, up to the page origin.
 - `forwardRef` to the rendered element; spreads `HTMLAttributes<HTMLElement>` last (consumer wins — nothing here is semantic to protect).
 - The building block `LiveRegion` renders its own announcement text into.
 
