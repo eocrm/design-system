@@ -20,6 +20,22 @@ export function renderWeb(document) {
     )
     .map((token) => declaration(token.outputs.web.name, selectTheme(token.value, 'dark'), webNames))
     .filter(Boolean);
+  // DS-21: `data-theme` on a non-root element. Custom properties resolve var()
+  // where they are DECLARED, so an alias declared on :root is frozen to the root
+  // theme; a subtree must re-declare every themed token AND every alias. Plain
+  // theme-independent literals are inherited unchanged and not repeated.
+  const subtreeTokens = webTokens.filter((token) => {
+    const [light, dark] = ['light', 'dark'].map((theme) =>
+      renderValue(selectTheme(token.value, theme), webNames),
+    );
+    return light !== dark || `${light}${dark}`.includes('var(');
+  });
+  const subtree = (theme) =>
+    subtreeTokens
+      .map((token) =>
+        declaration(token.outputs.web.name, selectTheme(token.value, theme), webNames),
+      )
+      .filter(Boolean);
   const accents = renderAccents(document.accents ?? {}, webTokens);
   const header = `${HEADER}${document.schemaVersion}\n`;
 
@@ -29,7 +45,8 @@ export function renderWeb(document) {
   color-scheme: light;
 ${lightDeclarations.join('\n')}
 }
-${accents.map((accent) => `\n:root[data-accent='${accent.name}'] {\n${accent.light.join('\n')}\n}\n`).join('')}`,
+${accents.map((accent) => `\n:root[data-accent='${accent.name}'] {\n${accent.light.join('\n')}\n}\n`).join('')}
+${subtreeBlocks('light', subtree('light'), accents)}`,
     darkScss: `${header}
 :root[data-theme='dark'] {
   color-scheme: dark;
@@ -46,8 +63,19 @@ ${accents.map((accent) => `\n  :root[data-accent='${accent.name}']:not([data-the
 :root[data-theme='light'] {
   color-scheme: light;
 }
-`,
+
+${subtreeBlocks('dark', subtree('dark'), accents)}`,
   };
+}
+
+// Descendant form, so these never match <html>: the root ladder above is
+// unchanged. Specificity: `:root [data-theme]` (0,2,0) < the accent twin (0,3,0).
+function subtreeBlocks(theme, declarations, accents) {
+  return `:root [data-theme='${theme}'] {
+  color-scheme: ${theme};
+${declarations.join('\n')}
+}
+${accents.map((accent) => `\n:root[data-accent='${accent.name}'] [data-theme='${theme}'] {\n${accent[theme].join('\n')}\n}\n`).join('')}`;
 }
 
 // Per accent: literal-colour overrides of tokens that have a web output. Values are

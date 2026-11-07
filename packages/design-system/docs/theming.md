@@ -51,6 +51,24 @@ Inline this in your app's `<head>` **before** your bundle loads. It applies the 
 </script>
 ```
 
+### Scoping a theme to part of the page
+
+`data-theme` also works on any element below `<html>`: `data-theme="dark"` gives that subtree the dark values of the global `--color-*` (and other generated) tokens, and `data-theme="light"` gives it the light ones, whatever the page theme. Nesting works both ways (light inside dark inside light), the page's `data-accent` applies inside the subtree in that subtree's theme, and `color-scheme` follows, so native controls in it match.
+
+```html
+<html data-accent="ocean" data-theme="light">
+  …
+  <span data-theme="dark">
+    <svg fill="var(--color-accent-bg-subtle)">…</svg>
+    <!-- the ocean accent's DARK values, inside a light page -->
+  </span>
+</html>
+```
+
+- **Leave the root alone.** `<html>` keeps its own rules (forced light/dark, or the OS preference when unset); a subtree only ever overrides itself and its descendants. An unattributed subtree follows its nearest themed ancestor.
+- **`<AppProvider tokens / darkTokens>` overrides follow too.** They are re-emitted for `[data-theme]` subtrees with a higher specificity than the library's, so an override wins inside a subtree as it does on the page. A hand-written `:root { --color-accent: … }` override does **not** reach a subtree, because the subtree re-declares the token; add your own `[data-theme]` selector or use `tokens`.
+- **Use it for brand marks and illustrations, not for components.** Component tokens (`--button-*`, `--badge-*`, …) are declared at `:root` as aliases of the global tokens, and a custom property's `var()` resolves where it is declared, so they keep the page theme's values inside a subtree. Overlays that portal to `<body>` (Tooltip, Popover, menus, dialogs) also leave the subtree. Read the global tokens directly in a scoped subtree.
+
 ## Theming via component tokens
 
 Every component defines `--<component>-<part>-<state>` CSS custom properties at `:root` (in the shipped CSS), and its styles reference those tokens instead of the global primitives. This lets consumers re-theme one component without affecting others.

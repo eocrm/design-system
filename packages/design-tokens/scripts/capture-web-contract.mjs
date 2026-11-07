@@ -15,6 +15,7 @@ const sourcePaths = {
   badge: 'packages/design-system/src/components/Badge/Badge.tokens.scss',
 };
 const fixturePath = 'packages/design-tokens/test/fixtures/current-web-contract.json';
+const SCOPES = ['light', 'forcedDark', 'systemDark', 'subtreeDark', 'subtreeLight', 'forcedLight'];
 
 export async function captureWebContract() {
   const entries = await Promise.all(
@@ -73,6 +74,15 @@ export function captureWebContractFromSources(sources) {
     sources.dark.source,
   );
 
+  // DS-21 subtree scopes (descendant selectors, never <html>). Optional, like the
+  // mixin, so the synthetic pre-DS-21 sources in source.test.mjs still capture.
+  const subtreeDark = darkBlocks.find(
+    ({ header, ancestors }) => header === ":root [data-theme='dark']" && ancestors.length === 0,
+  );
+  const subtreeLight = findBlocks(sources.tokens.content).find(
+    ({ header, ancestors }) => header === ":root [data-theme='light']" && ancestors.length === 0,
+  );
+
   if (mixin) {
     requireMixinInclude(forcedDark.body, 'dark-tokens', forcedDark.header);
     requireMixinInclude(systemDark.body, 'dark-tokens', systemDark.header);
@@ -102,6 +112,13 @@ export function captureWebContractFromSources(sources) {
       mixin: 'dark-tokens',
     });
   }
+  for (const [scope, block, source] of [
+    ['subtreeDark', subtreeDark, sources.dark.source],
+    ['subtreeLight', subtreeLight, sources.tokens.source],
+  ]) {
+    if (block)
+      addBlockDeclarations(contract, scope, block.body, { source, selector: block.header });
+  }
   addBlockDeclarations(contract, 'forcedLight', forcedLight.body, {
     source: sources.dark.source,
     selector: forcedLight.header,
@@ -115,6 +132,8 @@ function emptyContract() {
     light: {},
     forcedDark: {},
     systemDark: {},
+    subtreeDark: {},
+    subtreeLight: {},
     forcedLight: {},
     selectors: {
       light: [{ selector: ':root' }],
@@ -125,12 +144,16 @@ function emptyContract() {
           selector: ":root:not([data-theme='light'])",
         },
       ],
+      subtreeDark: [{ selector: ":root [data-theme='dark']" }],
+      subtreeLight: [{ selector: ":root [data-theme='light']" }],
       forcedLight: [{ selector: ":root[data-theme='light']" }],
     },
     provenance: {
       light: {},
       forcedDark: {},
       systemDark: {},
+      subtreeDark: {},
+      subtreeLight: {},
       forcedLight: {},
     },
   };
@@ -294,7 +317,7 @@ function sameOrigin(left, right) {
 }
 
 function sortContract(contract) {
-  for (const scope of ['light', 'forcedDark', 'systemDark', 'forcedLight']) {
+  for (const scope of SCOPES) {
     contract[scope] = sortObject(contract[scope]);
     contract.provenance[scope] = sortObject(contract.provenance[scope]);
   }

@@ -86,6 +86,8 @@ describe('buildThemeTokenCss', () => {
       ':root, :root:root[data-accent]',
       ":root[data-theme='dark'], :root:root[data-accent][data-theme='dark']",
       ":root:not([data-theme='light']), :root:root[data-accent]:not([data-theme='light'])",
+      ":root:root [data-theme='light'], :root:root[data-accent] [data-theme='light']",
+      ":root:root [data-theme='dark'], :root:root[data-accent] [data-theme='dark']",
     ]);
     // accent blocks: light (0,2,0), dark (0,3,0)
     const accentLight = specificity(":root[data-accent='x']");
@@ -95,6 +97,28 @@ describe('buildThemeTokenCss', () => {
     expect(specificity(":root:root[data-accent][data-theme='dark']")).toBeGreaterThan(accentDark);
     expect(specificity(":root:root[data-accent]:not([data-theme='light'])")).toBeGreaterThan(
       accentOsDark,
+    );
+  });
+
+  // DS-21: the library re-declares tokens on any non-root `[data-theme]` element
+  // (`:root [data-theme='x']` (0,2,0), `:root[data-accent='a'] [data-theme='x']` (0,3,0)),
+  // which would hide a root-level override inherited from <html>.
+  it('re-emits overrides on data-theme subtrees, out-specifying the library subtree blocks', () => {
+    const css = buildThemeTokenCss({ '--a': '1' }, { '--a': '2' })!;
+    const block = (selector: string) => css.slice(css.indexOf(`${selector} {`)).split('}')[0];
+    const lightSubtree =
+      ":root:root [data-theme='light'], :root:root[data-accent] [data-theme='light']";
+    const darkSubtree =
+      ":root:root [data-theme='dark'], :root:root[data-accent] [data-theme='dark']";
+    expect(block(lightSubtree)).toContain('--a: 1;');
+    expect(block(lightSubtree)).not.toContain('--a: 2;');
+    // tokens first, darkTokens after, so darkTokens win inside dark subtrees too.
+    expect(block(darkSubtree)).toMatch(/--a: 1;\n\s*--a: 2;/);
+    expect(specificity(":root:root [data-theme='dark']")).toBeGreaterThan(
+      specificity(":root [data-theme='dark']"),
+    );
+    expect(specificity(":root:root[data-accent] [data-theme='dark']")).toBeGreaterThan(
+      specificity(":root[data-accent='x'] [data-theme='dark']"),
     );
   });
 
