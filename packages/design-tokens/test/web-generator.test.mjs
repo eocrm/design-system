@@ -189,3 +189,9 @@ test('emits accent dark overrides even when equal to the light override', () => 
     /\[data-accent='tealpine'\]:not\(\[data-theme='light'\]\) \{\n    --color-accent: #ffffff;/,
   );
 });
+
+test('generated web contract exposes --size-touch as 44px (DS-35)', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const scss = await readFile(new URL('../generated/web/tokens.scss', import.meta.url), 'utf8');
+  assert.match(scss, /--size-touch:\s*44px;/);
+});

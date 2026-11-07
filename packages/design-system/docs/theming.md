@@ -93,3 +93,22 @@ Every component defines `--<component>-<part>-<state>` CSS custom properties at 
 A component's tokens are the `:root` block at the top of its shipped stylesheet, `dist/components/<Name>/<Name>.css` (e.g. `node_modules/@eocrm/design-system/dist/components/Button/Button.css`). They are plain `--<component>-*` custom properties, also inspectable in browser devtools on `:root`.
 
 **Deprecated:** `--color-badge-<tone>-bg/-fg` tokens are aliased to the new `--badge-bg-<tone>` / `--badge-fg-<tone>` tokens. They still work but will be removed in a future major version.
+
+## Touch devices
+
+On coarse pointers (`@media (pointer: coarse)`) every interactive target is at least `--size-touch` (44px). Fine pointers (mouse, trackpad) are unchanged.
+
+- **Per-component tokens.** Components raise their own size tokens inside a `@media (pointer: coarse)` block in their `*.tokens.scss`, so the touch size is just another token value you can read and override.
+- **`--size-touch`.** The shared 44px floor, a semantic token on `:root`.
+- **Hit-area pattern.** Small controls inside compact parts (a chip's remove button) keep their compact look. The `touch-hit-area` mixin adds an invisible `::before` of at least `--size-touch` square, centred on the control (mirrored under `dir="rtl"`), so the tap target is 44px without changing the visual.
+- **16px text on iOS.** Text inputs use at least 16px on coarse pointers; iOS Safari zooms the page on focus into anything smaller.
+
+**Opting out.** Override the component's token in your own `@media (pointer: coarse)` block, loaded after the library CSS:
+
+```css
+@media (pointer: coarse) {
+  :root {
+    --<component>-<token>: <desktop value>;
+  }
+}
+```

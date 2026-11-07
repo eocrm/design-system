@@ -141,3 +141,31 @@
     }
   }
 }
+
+// DS-35 D2: an invisible hit area for a small control inside a compact part
+// (a chip's remove button, a tag's close). On coarse pointers the host grows an
+// absolutely positioned ::before at least --size-touch square, centred on the
+// host, so the VISUAL stays compact and the tap target reaches 44px. The one
+// documented exception to Rule 4 (no position/inset in component SCSS).
+// RTL: `inset-inline-start: 50%` lands on the right edge, so the centring
+// translate flips sign. `[dir='rtl'] &` rather than :dir(rtl), which minifiers
+// lower to :lang(...) (see TreeView.module.scss).
+@mixin touch-hit-area {
+  @media (pointer: coarse) {
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset-block-start: 50%;
+      inset-inline-start: 50%;
+      inline-size: max(100%, var(--size-touch));
+      block-size: max(100%, var(--size-touch));
+      transform: translate(-50%, -50%);
+    }
+
+    [dir='rtl'] &::before {
+      transform: translate(50%, -50%);
+    }
+  }
+}

@@ -1861,3 +1861,39 @@ describe('component SCSS uses logical text-align (RTL)', () => {
     expect(stale).toEqual([]);
   });
 });
+
+/**
+ * D2 (DS-35): the invisible touch hit area is the `touch-hit-area` mixin's job
+ * alone. A component that hand-rolls an absolutely positioned pseudo-element
+ * sized by `--size-touch` bypasses the one documented Rule 4 exception.
+ */
+describe('touch hit areas come from the mixin', () => {
+  const scssFiles = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory()
+        ? scssFiles(join(dir, e.name))
+        : e.name.endsWith('.module.scss')
+          ? [join(dir, e.name)]
+          : [],
+    );
+
+  it('only the touch-hit-area mixin positions a pseudo-element absolutely for hit areas', () => {
+    const offenders = scssFiles(componentsDir).filter((f) => {
+      const code = readFileSync(f, 'utf-8');
+      // A `::before` / `::after` block (no nested braces) holding both signals.
+      return [...code.matchAll(/::(?:before|after)\s*\{([^{}]*)\}/g)].some(
+        (m) => /position:\s*absolute/.test(m[1]) && m[1].includes('--size-touch'),
+      );
+    });
+    expect(offenders).toEqual([]);
+  });
+
+  it('mixins.scss defines the touch-hit-area mixin on the token, coarse pointers only', () => {
+    const mixins = readFileSync(join(__dirname, 'styles/mixins.scss'), 'utf-8');
+    const start = mixins.indexOf('@mixin touch-hit-area');
+    expect(start).toBeGreaterThan(-1);
+    const body = mixins.slice(start);
+    expect(body).toContain('var(--size-touch)');
+    expect(body).toContain('pointer: coarse');
+  });
+});

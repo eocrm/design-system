@@ -174,7 +174,8 @@ test('preserves the pre-migration web contract fixture with provenance and expan
   // +1 light: --size-control-currency (MoneyInput picker width).
   // +2 light: --color-link-fg / --color-link-fg-hover (accent-overridable link colour).
   // +1 light: --z-chat-launcher (ChatLauncher layer, #725).
-  assert.equal(Object.keys(fixture.light).length, 325);
+  // +1 light: --size-touch (coarse-pointer target floor, DS-35).
+  assert.equal(Object.keys(fixture.light).length, 326);
   assert.equal(Object.keys(fixture.forcedDark).length, 127);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});

@@ -208,7 +208,9 @@ jobs:
       # rendered demo content. It does NOT open overlays, so menus, listboxes,
       # dialogs and pickers are unswept, and it is silent on scroll extremes and
       # on ancestors that clip with a border. A green run here is not the whole
-      # class — playwright.config.ts states the scope in full.
+      # class — playwright.config.ts states the scope in full. The same step
+      # also runs the touch project (Pixel 7, tests/touch-*.spec.ts), which
+      # gates the 44px coarse-pointer target floor.
       - name: Focus-ring geometry sweep
         run: npm run test:focus-geometry
 
