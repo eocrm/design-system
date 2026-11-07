@@ -808,6 +808,35 @@ describe('DashboardCanvas touch long-press (DS-15)', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  // A section grip arms by distance for every pointer type, so a finger's
+  // implicit capture on the grip is lost when the root captures on arming;
+  // that child lostpointercapture must not abandon the reorder either.
+  it('a touch section reorder survives the grip losing implicit capture', () => {
+    const { container, onChange, value, root } = renderCanvas();
+    const grip = sectionHandle(container, 's1');
+    fireEvent.pointerDown(grip, { ...touch, clientX: 100, clientY: 570 });
+    fireEvent.pointerMove(root, { ...touch, clientX: 100, clientY: 900 });
+    fireEvent.lostPointerCapture(grip, { ...touch });
+    expect(container.querySelector('[data-dc-section="s1"]')).toHaveAttribute('data-dragging');
+    fireEvent.pointerUp(root, { ...touch, clientX: 100, clientY: 900 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]).toEqual(reorderSection(value, 's1', 1));
+  });
+
+  it('unmounting inside the long-press window never lifts the detached item', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { container, unmount } = renderCanvas();
+    const b = itemEl(container, 'b');
+    fireEvent.pointerDown(b, { ...touch, clientX: 10, clientY: 10 });
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS / 2));
+    unmount();
+    expect(() => vi.advanceTimersByTime(LONG_PRESS_MS)).not.toThrow();
+    // A lift would have bound a blocking touchmove listener on the node.
+    expect(touchmove(b)).toBe(false);
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+  });
+
   it('mouse drag behaviour unchanged: no hold needed, never lifts', () => {
     const { container, onChange, value, root } = renderCanvas();
     const b = itemEl(container, 'b');

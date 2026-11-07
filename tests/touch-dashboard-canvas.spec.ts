@@ -116,7 +116,11 @@ test('a lifted item dragged up into another container does not scroll the page',
   await page.getByRole('button', { name: 'Current value (JSON)' }).first().click();
   const readout = page.locator('pre').filter({ hasText: '"items"' }).first();
   const json = JSON.parse(await readout.innerText());
-  expect(json.items.map((i: { id: string }) => i.id)).toContain('leaderboard');
+  // It started in the 'team' section; the drop moved it to the top level.
+  type Placed = { id: string };
+  expect(json.items.map((i: Placed) => i.id)).toContain('leaderboard');
+  const team = json.sections.find((s: { id: string }) => s.id === 'team');
+  expect(team.items.map((i: Placed) => i.id)).not.toContain('leaderboard');
 });
 
 test('a quick swipe on an item scrolls the page and does not move it', async ({ page }) => {

@@ -264,6 +264,8 @@ interface MoveDrag {
   previewKey: string | null;
   preview: DashboardCanvasValue | null;
   touch?: TouchPhase;
+  /** Detaches the per-node touch listeners added on lift (startLongPress). */
+  untouch?: () => void;
 }
 interface ResizeDrag {
   kind: 'resize';
@@ -280,6 +282,8 @@ interface ResizeDrag {
   lastH: number;
   preview: DashboardCanvasValue | null;
   touch?: TouchPhase;
+  /** Detaches the per-node touch listeners added on lift (startLongPress). */
+  untouch?: () => void;
 }
 interface SectionDrag {
   kind: 'section';
@@ -496,6 +500,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         if (event.pointerId !== drag.pointerId) return;
         window.removeEventListener('pointerup', release, true);
         window.removeEventListener('pointercancel', release, true);
+        // The lift's per-node touch listeners otherwise wait for a touchend
+        // that a detached (remounted) node may never get.
+        if (drag.kind !== 'section') drag.untouch?.();
         if (dragRef.current !== drag) return;
         if (drag.kind !== 'resize' && !drag.moved) {
           dragRef.current = null;
@@ -539,6 +546,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           target.removeEventListener('touchend', done);
           target.removeEventListener('touchcancel', done);
         };
+        drag.untouch = done;
         target.addEventListener('touchmove', block, { passive: false });
         target.addEventListener('touchend', done);
         target.addEventListener('touchcancel', done);
@@ -1164,6 +1172,14 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       document.addEventListener('selectstart', onSelectStart);
       return () => document.removeEventListener('selectstart', onSelectStart);
     }, []);
+    // Unmount drops any in-flight gesture, so a pending long-press timer
+    // (identity-checked against dragRef) does nothing after unmount.
+    useEffect(
+      () => () => {
+        dragRef.current = null;
+      },
+      [],
+    );
     // Window-level Escape: cancels a pointer drag wherever focus sits, and
     // is the belt-and-braces exit for a pick whose item lost focus (the
     // item-level handler consumes Escape first when focused).
