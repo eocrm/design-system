@@ -30,7 +30,6 @@ import {
   type AmountDraft,
   type CurrencyDisplay,
 } from '../_internal/currency';
-import { useSeparatorTyping } from '../_internal/separatorTyping';
 import styles from './MoneyInput.module.scss';
 
 /** MoneyInput size — passed through to the picker + Input. */
@@ -197,40 +196,16 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
     });
   const isSignificant = (c: string) => (c >= '0' && c <= '9') || c === decimal || c === '-';
 
-  // A typed '.' / decimal (numpad, any precision): see typeSeparator.
-  const separator = useSeparatorTyping(amountRef, decimal, group, (input, raw, caret) =>
-    applyEdit(input, raw, caret),
-  );
-
   /**
    * Shared edit path. Writes the DOM value + caret directly so React's controlled-value
    * reconciliation finds nothing to change and never throws the caret to the end.
    */
-  const applyEdit = (
-    input: HTMLInputElement,
-    raw: string,
-    caret: number,
-    inserted = false,
-  ): boolean => {
+  const applyEdit = (input: HTMLInputElement, raw: string, caret: number, inserted = false) => {
     const prev = text;
     const typed = !inserted && raw.length === prev.length + 1;
     const count = (str: string, c: string) => str.split(c).length - 1;
     const fracDigitsOf = (str: string) =>
       str.includes(decimal) ? str.slice(str.indexOf(decimal) + 1).replace(/\D/g, '').length : 0;
-    // Where '.' groups, a 3rd fraction digit past the precision after a typed '.' means it was a
-    // thousands dot ('1.234'); elsewhere (ru, fr) the digit is rejected below.
-    if (
-      typed &&
-      separator.current.converted &&
-      group === '.' &&
-      precision < 3 &&
-      count(raw, decimal) === 1 &&
-      fracDigitsOf(raw) === 3 &&
-      /\d/.test(raw[caret - 1])
-    ) {
-      raw = raw.replace(decimal, group);
-      separator.current = { converted: false, grouped: true };
-    }
     // A digit typed inside a full fraction overwrites the next digit ('12.|00' + '5' → '12.5|0').
     if (
       typed &&
@@ -257,7 +232,7 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
       const back = Math.max(0, caret - Math.max(0, raw.length - prev.length));
       input.value = prev;
       input.setSelectionRange(back, back);
-      return false;
+      return;
     }
     dirty.current = true;
     // `raw` is always own-locale here: pastes/drops are normalised in insertText first.
@@ -275,7 +250,6 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
     setText(next);
     const amount = draft ? draftToCanonical(draft) : null;
     if (amount !== synced.current.amount) emit(amount, currency);
-    return true;
   };
 
   /**
@@ -329,6 +303,11 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
       if (e.key === 'Backspace' && stepOver(start - 1))
         input.setSelectionRange(start - 1, start - 1);
       if (e.key === 'Delete' && stepOver(start)) input.setSelectionRange(start + 1, start + 1);
+    }
+    // Numpad '.' in a comma-decimal locale types the decimal (any precision).
+    if (e.key === '.' && decimal !== '.' && !v.includes(decimal)) {
+      e.preventDefault();
+      applyEdit(input, v.slice(0, start) + decimal + v.slice(end), start + 1);
     }
   };
 
