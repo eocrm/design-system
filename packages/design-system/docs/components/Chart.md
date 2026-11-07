@@ -61,6 +61,37 @@ import { Chart, DashboardWidget, ErrorState } from '@eocrm/design-system';
 </DashboardWidget>;
 ```
 
+## Range selection and zoom
+
+Pass `selectedRange`, `defaultSelectedRange` or `onSelectedRangeChange` to let users select a category range (`line`, `area`, `bar`, `stacked-bar`). Ranges name categories: `{ from: 'Mon', to: 'Wed' }`, inclusive, either order; duplicate category labels resolve to the first match. A range naming an unknown category is ignored with a dev warning.
+
+| Input                         | Does                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- |
+| Mouse click                   | Inspects (tooltip), as without selection. Outside the selected band it also clears the selection. |
+| Mouse press + drag (past 8px) | Selects from the pressed category to the pointer's; release commits.                              |
+| Shift + ←/→                   | Extends the range from the category inspected when Shift was first used.                          |
+| Esc                           | Clears the selection; a second Esc clears the inspection.                                         |
+
+Selection changes are announced in the chart's live region ("Selected Mon to Wed", "Selection cleared"); the plot's description mentions Shift+arrows only when selection is on.
+
+While a selection exists, a **Zoom to selection** button appears at the end of the legend row; while zoomed, **Reset zoom**. Zooming slices categories, series, markers (clipped; markers outside dropped), value labels and the data table to the range, rescales the y-axis and clears the selection. `details` always receives the **original** category index.
+
+Both are controlled-or-uncontrolled: `selectedRange` + `onSelectedRangeChange`, `zoomRange` + `onZoomRangeChange` (`defaultZoomRange` for uncontrolled). Zoom is uncontrolled by default; control it to sync the zoom with filters or the URL.
+
+```tsx
+const [selection, setSelection] = useState<ChartRange | null>(null);
+
+<Chart
+  type="line"
+  label="Bowl weight"
+  categories={hours}
+  series={weight}
+  formatValue={formatGrams}
+  selectedRange={selection}
+  onSelectedRangeChange={setSelection}
+/>;
+```
+
 <!-- props:start -->
 
 ## Props
@@ -81,6 +112,12 @@ import { Chart, DashboardWidget, ErrorState } from '@eocrm/design-system';
 | `footnote` | `ReactNode` | no | Short note under the plot, e.g. "3 deals in other currencies not included" or why a comparison was omitted. Takes its own row (wraps, never truncates) and the plot fills the rest; also describes the plot for screen readers. Shown in the empty state too, where it often explains the emptiness. |
 | `details` | `((categoryIndex: number) => string[])` | no | Extra plain-text lines for a category, e.g. `['235 kcal', '5 times']`. `categoryIndex` indexes `categories`. Shown as muted rows under the series in the tooltip, appended to the keyboard announcement and listed in a "Details" column of the data table (joined with "; "). Strings only; return `[]` for none. |
 | `valueLabels` | `boolean` | no | Print each value on its bar (`bar`, comparisons included) or the stack total above each `stacked-bar`, using `formatValue`. Decorative (`aria-hidden`); the data table and tooltip carry the same values. A label wider than its bar is omitted rather than truncated. Ignored on `line` and `area`. Default `false`. |
+| `selectedRange` | `ChartRange \| null` | no | Controlled selected category range (`null` = none). Passing this, `defaultSelectedRange` or `onSelectedRangeChange` turns selection on (`line`, `area`, `bar`, `stacked-bar`): mouse press + drag past 8px selects, a click outside the band clears, Shift+←/→ extends from the inspected category and Escape clears. A range naming an unknown category is ignored with a dev warning. |
+| `defaultSelectedRange` | `ChartRange \| null` | no | Initial selection when uncontrolled. Default `null`. Also turns selection on. |
+| `onSelectedRangeChange` | `((range: ChartRange \| null) => void)` | no | Called with the next selection (or `null` when cleared) on every user change. Also turns selection on. |
+| `zoomRange` | `ChartRange \| null` | no | Controlled zoomed category range (`null` = all categories). While zoomed, categories, series, markers and value labels are sliced to the range, the y-axis rescales and `details` still receives original indices. A range naming an unknown category is ignored (full range shown) with a dev warning. Omit for uncontrolled: a "Zoom to selection" button appears in the header while a selection exists, "Reset zoom" while zoomed. |
+| `defaultZoomRange` | `ChartRange \| null` | no | Initial zoomed range when uncontrolled. Default `null` (all categories). |
+| `onZoomRangeChange` | `((range: ChartRange \| null) => void)` | no | Called with the next zoomed range (or `null` on reset) when the user clicks a zoom button. |
 | …native | | | plus native HTML attributes |
 
 <!-- props:end -->

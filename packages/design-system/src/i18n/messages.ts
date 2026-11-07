@@ -908,6 +908,18 @@ export interface Messages {
     markers: string;
     /** Header of the data table's details column (the strings `details` returns for each category). */
     details: string;
+    /** Appended to `keyboardHint` when range selection is enabled: says Shift+arrows select a range. */
+    rangeHint: string;
+    /** Label of the header button that zooms the plot to the selected range. */
+    zoomToSelection: string;
+    /** Label of the header button that leaves the zoomed range and shows every category. */
+    resetZoom: string;
+    /** Live announcement of a selected range of categories. */
+    selected: (params: { from: string; to: string }) => string;
+    /** Live announcement of a selection of a single category. */
+    selectedOne: (params: { category: string }) => string;
+    /** Live announcement when the selection is cleared. */
+    selectionCleared: string;
   };
   funnelChart: {
     /** Accessible description of the focusable plot (its name is the chart label); says arrow keys inspect stages and that the data table lists every value. */

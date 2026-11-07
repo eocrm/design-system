@@ -4,6 +4,7 @@ export type {
   ChartMarker,
   ChartMarkerTone,
   ChartProps,
+  ChartRange,
   ChartSeries,
   ChartSeriesColor,
   ChartType,

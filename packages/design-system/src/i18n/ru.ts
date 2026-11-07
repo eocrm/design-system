@@ -488,6 +488,12 @@ export const ru: Messages = {
     noData: 'Нет данных',
     markers: 'Отметки',
     details: 'Подробности',
+    rangeHint: 'Shift+стрелки выделяют диапазон.',
+    zoomToSelection: 'Увеличить выделенное',
+    resetZoom: 'Сбросить масштаб',
+    selected: ({ from, to }) => `Выделено: ${from as string} — ${to as string}`,
+    selectedOne: ({ category }) => `Выделено: ${category as string}`,
+    selectionCleared: 'Выделение снято',
   },
   funnelChart: {
     keyboardHint:

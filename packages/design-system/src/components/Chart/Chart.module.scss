@@ -42,6 +42,11 @@
   &:focus-visible {
     @include focus-ring(var(--chart-ring));
   }
+
+  // A drag selects categories, not the axis text under it.
+  &[data-selectable] {
+    user-select: none;
+  }
 }
 
 .svg {
@@ -75,6 +80,13 @@
   &[data-tone='subtle'] {
     fill-opacity: var(--chart-marker-band-subtle-opacity);
   }
+}
+
+.selection {
+  fill: var(--chart-selection-fill);
+  fill-opacity: var(--chart-selection-opacity);
+  stroke: var(--chart-selection-edge);
+  stroke-width: 1px;
 }
 
 .markerLine {

@@ -78,6 +78,7 @@
       "Banner",
       "ButtonGroup",
       "Calendar",
+      "Chart",
       "ChatLauncher",
       "CodeBlock",
       "ConfirmationPopover",
@@ -145,6 +146,9 @@
     "tier": "composition",
     "cluster": "Display",
     "composes": [
+      "Button",
+      "Cluster",
+      "DashboardCanvas",
       "EmptyState",
       "LiveRegion",
       "VisuallyHidden"
@@ -195,6 +199,7 @@
     "composes": [],
     "composedBy": [
       "Calendar",
+      "Chart",
       "ConfirmationPopover",
       "DateStrip",
       "OptionsPicker",
@@ -273,7 +278,9 @@
       "Accordion",
       "Highlight"
     ],
-    "composedBy": []
+    "composedBy": [
+      "Chart"
+    ]
   },
   "DashboardWidget": {
     "tier": "composition",

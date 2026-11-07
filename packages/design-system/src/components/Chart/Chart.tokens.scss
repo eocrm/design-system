@@ -41,6 +41,11 @@
   --chart-marker-label-halo: var(--color-bg);
   --chart-marker-label-halo-width: 3px;
 
+  // Range selection (`selectedRange`): an accent-tinted band over the marker bands.
+  --chart-selection-fill: var(--color-accent);
+  --chart-selection-opacity: 0.16;
+  --chart-selection-edge: var(--color-accent);
+
   --chart-value-label-fg: var(--color-fg-muted);
   --chart-value-label-size: var(--font-size-xs);
 

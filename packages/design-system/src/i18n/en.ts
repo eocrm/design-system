@@ -481,6 +481,12 @@ export const en: Messages = {
     noData: 'No data',
     markers: 'Markers',
     details: 'Details',
+    rangeHint: 'Shift+arrows select a range.',
+    zoomToSelection: 'Zoom to selection',
+    resetZoom: 'Reset zoom',
+    selected: ({ from, to }) => `Selected ${from as string} to ${to as string}`,
+    selectedOne: ({ category }) => `Selected ${category as string}`,
+    selectionCleared: 'Selection cleared',
   },
   funnelChart: {
     keyboardHint: 'Use arrow keys to inspect stages. All values are also in the data table.',

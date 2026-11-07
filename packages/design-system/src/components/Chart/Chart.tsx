@@ -3,6 +3,7 @@ import {
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type HTMLAttributes,
@@ -21,6 +22,10 @@ import { ChartTable } from './ChartTable';
 import { ChartTooltip } from './ChartTooltip';
 import { LiveRegion } from '../LiveRegion';
 import { VisuallyHidden } from '../VisuallyHidden';
+import { Button } from '../Button';
+import { Cluster } from '../Cluster';
+import { LONG_PRESS_SLOP_PX } from '../DashboardCanvas/DashboardCanvas';
+import { rangeFromIndices, resolveRange, sliceForZoom, type ChartRange } from './chartRange';
 import {
   categoryIndexAt,
   computeLayout,
@@ -55,6 +60,7 @@ export type {
   ChartSeriesColor,
   ChartType,
 } from './chartModel';
+export type { ChartRange } from './chartRange';
 
 export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
   /**
@@ -113,10 +119,44 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
    * bar is omitted rather than truncated. Ignored on `line` and `area`. Default `false`.
    */
   valueLabels?: boolean;
+  /**
+   * Controlled selected category range (`null` = none). Passing this, `defaultSelectedRange` or
+   * `onSelectedRangeChange` turns selection on (`line`, `area`, `bar`, `stacked-bar`): mouse press + drag
+   * past 8px selects, a click outside the band clears, Shift+←/→ extends from the inspected category and
+   * Escape clears. A range naming an unknown category is ignored with a dev warning.
+   */
+  selectedRange?: ChartRange | null;
+  /** Initial selection when uncontrolled. Default `null`. Also turns selection on. */
+  defaultSelectedRange?: ChartRange | null;
+  /** Called with the next selection (or `null` when cleared) on every user change. Also turns selection on. */
+  onSelectedRangeChange?: (range: ChartRange | null) => void;
+  /**
+   * Controlled zoomed category range (`null` = all categories). While zoomed, categories, series, markers and
+   * value labels are sliced to the range, the y-axis rescales and `details` still receives original indices.
+   * A range naming an unknown category is ignored (full range shown) with a dev warning. Omit for uncontrolled:
+   * a "Zoom to selection" button appears in the header while a selection exists, "Reset zoom" while zoomed.
+   */
+  zoomRange?: ChartRange | null;
+  /** Initial zoomed range when uncontrolled. Default `null` (all categories). */
+  defaultZoomRange?: ChartRange | null;
+  /** Called with the next zoomed range (or `null` on reset) when the user clicks a zoom button. */
+  onZoomRangeChange?: (range: ChartRange | null) => void;
 }
 
 const NO_MARKERS: ChartMarker[] = [];
 const NO_DROPPED: string[] = [];
+const identity = (i: number) => i;
+
+/** Dev-only, once per distinct value: an invalid range is ignored rather than thrown. */
+function useRangeWarning(prop: string, range: ChartRange | null | undefined, invalid: boolean) {
+  const key = invalid && range ? `${range.from}|${range.to}` : '';
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' || !key) return;
+    console.warn(
+      `[Chart] Ignored ${prop} (${key.replace('|', ' to ')}): from/to must be one of categories.`,
+    );
+  }, [prop, key]);
+}
 
 const seriesStyle = (slot: number) =>
   ({
@@ -162,8 +202,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   {
     type,
     label,
-    categories,
-    series,
+    categories: allCategories,
+    series: allSeries,
     formatValue,
     curve,
     emptyMessage,
@@ -173,23 +213,80 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     footnote,
     details,
     valueLabels,
+    selectedRange,
+    defaultSelectedRange,
+    onSelectedRangeChange,
+    zoomRange,
+    defaultZoomRange,
+    onZoomRangeChange,
     className,
     ...rest
   },
   ref,
 ) {
   const t = useTranslation();
+  const selectable =
+    selectedRange !== undefined ||
+    defaultSelectedRange !== undefined ||
+    onSelectedRangeChange !== undefined;
+  const [zoom, setZoom] = useControllableState<ChartRange | null>({
+    value: zoomRange,
+    defaultValue: defaultZoomRange ?? null,
+    onChange: onZoomRangeChange,
+  });
+  const zoomIdx = resolveRange(zoom, allCategories);
+  // No categories yet (loading): every range would "miss"; don't cry wolf.
+  const loaded = allCategories.length > 0;
+  useRangeWarning('zoomRange', zoom, loaded && zoomIdx === null);
+  const zoomFrom = zoomIdx?.from;
+  const zoomTo = zoomIdx?.to;
+  // Everything below works on the zoomed view; `originalIndex` maps back for index-based callbacks.
+  const view = useMemo(
+    () =>
+      zoomFrom === undefined || zoomTo === undefined
+        ? { categories: allCategories, series: allSeries, markers, originalIndex: identity }
+        : sliceForZoom(allCategories, allSeries, markers, { from: zoomFrom, to: zoomTo }),
+    [allCategories, allSeries, markers, zoomFrom, zoomTo],
+  );
+  const { categories, series, originalIndex } = view;
   const resolved = useMemo(
     () => resolveSeries(type, series, categories.length),
     [type, series, categories.length],
   );
-  const resolvedMarkers = useMemo(() => resolveMarkers(markers, categories), [markers, categories]);
+  const resolvedMarkers = useMemo(
+    () => resolveMarkers(view.markers, categories),
+    [view.markers, categories],
+  );
   useDevWarnings(
     resolved.dropped,
     resolved.overflowCount,
-    // No categories yet (loading): every marker would "miss"; don't cry wolf.
-    categories.length > 0 ? resolvedMarkers.dropped : NO_DROPPED,
+    loaded ? resolvedMarkers.dropped : NO_DROPPED,
   );
+
+  const [selection, setSelection] = useControllableState<ChartRange | null>({
+    value: selectedRange,
+    defaultValue: defaultSelectedRange ?? null,
+    onChange: onSelectedRangeChange,
+  });
+  useRangeWarning(
+    'selectedRange',
+    selection,
+    loaded && resolveRange(selection, allCategories) === null,
+  );
+  // Resolved against the view: a selection outside the zoomed range is simply not drawn.
+  const selectedIdx = selectable ? resolveRange(selection, categories) : null;
+  // Last user selection change, announced until keyboard inspection takes over the live region.
+  const [selectionNote, setSelectionNote] = useState('');
+  const select = (next: ChartRange | null) => {
+    setSelection(next);
+    setSelectionNote(
+      next === null
+        ? t('chart.selectionCleared')
+        : next.from === next.to
+          ? t('chart.selectedOne', { category: next.from })
+          : t('chart.selected', { from: next.from, to: next.to }),
+    );
+  };
 
   const [rawHidden, setHidden] = useControllableState<string[]>({
     value: hiddenSeries,
@@ -215,7 +312,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     </div>
   );
   const visible = useMemo(() => visibleSeries(resolved.series, hidden), [resolved.series, hidden]);
-  const empty = isEmpty(categories, resolved.series);
+  // Never empty while zoomed: an all-null window still draws, so "Reset zoom" stays reachable.
+  const empty = zoomIdx === null && isEmpty(categories, resolved.series);
 
   const [setPlotEl, size, plotEl] = useSize<HTMLDivElement>();
   const [setRootEl, rootSize] = useSize<HTMLElement>();
@@ -255,7 +353,11 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     setActiveSource(index === null ? null : source);
   };
 
+  // Shift+arrow anchor: the category inspected when Shift was first used; any other key drops it.
+  const anchor = useRef<number | null>(null);
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const extending = selectable && e.shiftKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft');
+    if (!extending && e.key !== 'Shift') anchor.current = null;
     let next: number | null;
     switch (e.key) {
       case 'ArrowRight':
@@ -271,6 +373,11 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         next = n - 1;
         break;
       case 'Escape':
+        if (selectedIdx !== null) {
+          e.preventDefault();
+          select(null);
+          return;
+        }
         if (current === null) return; // let a surrounding dialog close
         next = null;
         break;
@@ -278,6 +385,12 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         return;
     }
     e.preventDefault();
+    if (extending && next !== null) {
+      anchor.current ??= current ?? next;
+      select(rangeFromIndices(anchor.current, next, categories));
+    } else {
+      setSelectionNote('');
+    }
     inspect(next, 'keyboard');
   };
 
@@ -297,10 +410,60 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     return () => document.removeEventListener('pointerdown', dismiss, true);
   }, [pointerActive, plotEl]);
 
-  const onPointer = (e: PointerEvent<HTMLDivElement>) => {
-    if (!layout) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    inspect(categoryIndexAt(layout, e.clientX - rect.left), 'pointer');
+  const indexAt = (e: PointerEvent<HTMLDivElement>) =>
+    layout
+      ? categoryIndexAt(layout, e.clientX - e.currentTarget.getBoundingClientRect().left)
+      : null;
+
+  // Mouse/pen selection: a press becomes a drag once it moves past the slop; a release without one is a click.
+  // ponytail: touch (long-press) gets its own branch in onPointerDown (DS-23, Task 7).
+  const press = useRef<{
+    id: number;
+    index: number;
+    x: number;
+    y: number;
+    dragging: boolean;
+  } | null>(null);
+  const [draft, setDraft] = useState<{ from: number; to: number } | null>(null);
+
+  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    const index = indexAt(e);
+    if (index === null) return;
+    if (selectable && (e.pointerType === 'mouse' || e.pointerType === 'pen') && e.button === 0) {
+      press.current = { id: e.pointerId, index, x: e.clientX, y: e.clientY, dragging: false };
+    }
+    inspect(index, 'pointer');
+  };
+
+  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    const index = indexAt(e);
+    if (index === null) return;
+    const p = press.current;
+    if (p && p.id === e.pointerId) {
+      if (!p.dragging && Math.hypot(e.clientX - p.x, e.clientY - p.y) > LONG_PRESS_SLOP_PX) {
+        p.dragging = true;
+        // Keep receiving moves and the release when the pointer leaves the plot mid-drag.
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+      }
+      if (p.dragging) setDraft({ from: Math.min(p.index, index), to: Math.max(p.index, index) });
+    }
+    inspect(index, 'pointer');
+  };
+
+  const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    const p = press.current;
+    if (!p || p.id !== e.pointerId) return;
+    press.current = null;
+    setDraft(null);
+    const index = indexAt(e) ?? p.index;
+    if (p.dragging) select(rangeFromIndices(p.index, index, categories));
+    else if (selectedIdx !== null && (index < selectedIdx.from || index > selectedIdx.to))
+      select(null);
+  };
+
+  const onPointerCancel = () => {
+    press.current = null;
+    setDraft(null);
   };
 
   const parentLabel = (s: ResolvedSeries) =>
@@ -332,10 +495,11 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   );
 
   const notes = current === null ? [] : markerLabelsAt(resolvedMarkers.markers, current);
-  // The only call site of `details`: `current` indexes the `categories` prop.
-  const detailLines = current === null ? [] : (details?.(current) ?? []);
-  const liveText =
-    activeSource === 'keyboard' && current !== null
+  // `details` takes original indices: both call sites (here and the table's `detailsAt`) map through `originalIndex`.
+  const detailLines = current === null ? [] : (details?.(originalIndex(current)) ?? []);
+  const liveText = selectionNote
+    ? selectionNote
+    : activeSource === 'keyboard' && current !== null
       ? `${categories[current]}: ${visible
           .map((s, i) => `${columnHeader(s)} ${rows[i].value}`)
           .join(
@@ -385,6 +549,59 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     values: s.values,
   }));
 
+  // The in-progress drag wins over the committed selection; same band geometry as `markers`.
+  const shownRange = draft ?? selectedIdx;
+  const selectionGeometry =
+    layout && shownRange
+      ? layoutMarkers(
+          [{ key: 'selection', kind: 'band', tone: 'neutral', ...shownRange }],
+          layout,
+        )[0]
+      : null;
+
+  // The clicked button unmounts (zoom clears the selection; reset removes itself): keep focus on the plot.
+  const zoomToSelection = () => {
+    if (!selection) return;
+    setZoom(selection);
+    setSelection(null);
+    setSelectionNote('');
+    inspect(null, null);
+    plotEl?.focus();
+  };
+  const resetZoom = () => {
+    setZoom(null);
+    inspect(null, null);
+    plotEl?.focus();
+  };
+  const zoomButtons = (selectedIdx !== null || zoomIdx !== null) && (
+    <Cluster gap="xs">
+      {zoomIdx !== null && (
+        <Button size="xs" variant="ghost" onClick={resetZoom}>
+          {t('chart.resetZoom')}
+        </Button>
+      )}
+      {selectedIdx !== null && (
+        <Button size="xs" variant="ghost" onClick={zoomToSelection}>
+          {t('chart.zoomToSelection')}
+        </Button>
+      )}
+    </Cluster>
+  );
+
+  const legendEl =
+    legendItems.length > 1 ? (
+      <ChartLegend
+        items={legendItems}
+        hidden={hidden}
+        fitWidth={compact ? rootSize.width : undefined}
+        onToggle={toggle}
+        onHoverKey={setHoverKey}
+        onFocusKey={setFocusedKey}
+      />
+    ) : (
+      <span />
+    );
+
   if (empty) {
     return (
       <figure
@@ -414,19 +631,20 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       data-footnote={hasFootnote || undefined}
       className={clsx(styles.root, className)}
     >
-      {legendItems.length > 1 ? (
-        <ChartLegend
-          items={legendItems}
-          hidden={hidden}
-          fitWidth={compact ? rootSize.width : undefined}
-          onToggle={toggle}
-          onHoverKey={setHoverKey}
-          onFocusKey={setFocusedKey}
-        />
+      {/* Header row: the legend, plus the zoom buttons at the end while they apply. */}
+      {zoomButtons ? (
+        <Cluster justify="between" gap="sm">
+          {legendEl}
+          {zoomButtons}
+        </Cluster>
       ) : (
-        <span />
+        legendEl
       )}
-      <VisuallyHidden id={hintId}>{t('chart.keyboardHint')}</VisuallyHidden>
+      <VisuallyHidden id={hintId}>
+        {selectable
+          ? `${t('chart.keyboardHint')} ${t('chart.rangeHint')}`
+          : t('chart.keyboardHint')}
+      </VisuallyHidden>
       <div
         ref={setPlotEl}
         className={styles.plot}
@@ -434,9 +652,12 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         aria-label={label}
         aria-describedby={hasFootnote ? `${hintId} ${footnoteId}` : hintId}
         tabIndex={0}
+        data-selectable={selectable || undefined}
         onKeyDown={onKeyDown}
-        onPointerMove={onPointer}
-        onPointerDown={onPointer}
+        onPointerMove={onPointerMove}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
         // Touch fires pointerleave right after pointerup; keep the tapped tooltip (an outside press clears it).
         onPointerLeave={(e) =>
           e.pointerType !== 'touch' && activeSource === 'pointer' && inspect(null, null)
@@ -466,6 +687,16 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                       height={layout.plot.height}
                     />
                   ),
+              )}
+              {selectionGeometry && (
+                <rect
+                  className={styles.selection}
+                  data-selection=""
+                  x={selectionGeometry.x}
+                  y={layout.plot.y}
+                  width={selectionGeometry.width}
+                  height={layout.plot.height}
+                />
               )}
             </g>
             <g className={styles.grid}>
@@ -629,7 +860,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         markersHeader={t('chart.markers')}
         markers={resolvedMarkers.markers}
         detailsHeader={details ? t('chart.details') : undefined}
-        detailsAt={(i) => details?.(i) ?? []}
+        detailsAt={(i) => details?.(originalIndex(i)) ?? []}
       />
     </figure>
   );
