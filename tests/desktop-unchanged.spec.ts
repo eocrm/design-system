@@ -23,16 +23,43 @@ test('xs Button has no hit-area pseudo-element on desktop', async ({ page }) => 
   expect(content).toBe('none');
 });
 
-test('Table.CellLink grid layout keeps the block-layout desktop height and width', async ({
-  page,
-}) => {
+test('Table.CellLink is display:block and content-sized on desktop', async ({ page }) => {
   await page.goto('/components/table');
   const link = page.locator('td a[href="#"]').first();
-  const grid = (await link.boundingBox())!;
-  // Same element laid out as the pre-DS-35 `display: block`.
-  await link.evaluate((n) => ((n as HTMLElement).style.display = 'block'));
-  const block = (await link.boundingBox())!;
-  expect(grid.height).toBe(block.height);
-  expect(grid.width).toBe(block.width);
-  expect(grid.height).toBeLessThan(44);
+  const m = await link.evaluate((n) => {
+    const cs = getComputedStyle(n);
+    const lh = document.createElement('span');
+    lh.style.cssText = 'position:absolute;visibility:hidden;block-size:1lh';
+    n.appendChild(lh);
+    const line = lh.getBoundingClientRect().height;
+    lh.remove();
+    return {
+      display: cs.display,
+      height: n.getBoundingClientRect().height,
+      line,
+      pad: parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom),
+    };
+  });
+  expect(m.display).toBe('block');
+  expect(m.height).toBeCloseTo(m.line + m.pad, 0);
+  expect(m.height).toBeLessThan(44);
+});
+
+test('truncated Table.CellLink still renders an ellipsis', async ({ page }) => {
+  await page.goto('/components/table');
+  const link = page.locator('td a[href="#"]').first();
+  await link.evaluate((n) => {
+    const td = n.parentElement as HTMLElement;
+    td.style.maxWidth = '40px';
+    td.style.whiteSpace = 'nowrap';
+    td.style.overflow = 'hidden';
+    n.style.cssText += ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    n.textContent = 'A very long link label that must truncate';
+  });
+  const m = await link.evaluate((n) => ({
+    display: getComputedStyle(n).display,
+    overflow: getComputedStyle(n).textOverflow,
+    over: n.scrollWidth > n.clientWidth,
+  }));
+  expect(m).toEqual({ display: 'block', overflow: 'ellipsis', over: true });
 });

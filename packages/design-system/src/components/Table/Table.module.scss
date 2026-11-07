@@ -57,6 +57,29 @@
   padding: var(--table-density-dense-padding-y) var(--table-density-dense-padding-x);
 }
 
+// Touch (DS-35): the link grows to --table-cell-link-min-height; centre its
+// text by growing the block padding to (44px - one line) / 2 instead of
+// display:grid, which would break text-overflow: ellipsis on `truncate` cells.
+// `lh` needs Chrome 109 / Safari 16.4 / Firefox 120; without it the text stays
+// top-aligned inside the (still 44px) link.
+@media (pointer: coarse) {
+  @supports (block-size: 1lh) {
+    .density-comfortable .cellLink {
+      padding-block: max(
+        var(--table-density-comfortable-padding-y),
+        calc((var(--table-cell-link-min-height) - 1lh) / 2)
+      );
+    }
+
+    .density-dense .cellLink {
+      padding-block: max(
+        var(--table-density-dense-padding-y),
+        calc((var(--table-cell-link-min-height) - 1lh) / 2)
+      );
+    }
+  }
+}
+
 // ─── Sections ──────────────────────────────────────────────────────────────
 
 .caption {
@@ -235,11 +258,7 @@
 // Inherits the cell's text-align (block) and colour (tone). Padding comes from
 // the density rules above.
 .cellLink {
-  // grid + align-content centres the text when the touch min-height exceeds
-  // it; the anonymous grid item stretches inline, so the cell's text-align
-  // (start/center/end) still positions the text.
-  display: grid;
-  align-content: center;
+  display: block;
   min-block-size: var(--table-cell-link-min-height);
   color: inherit;
   font-weight: var(--table-cell-link-font-weight);
