@@ -211,6 +211,12 @@ describe('computeHeatmapLayout', () => {
     expect(l.columnLabels.map((c) => c.index)).toEqual([0, 1, 2]);
   });
 
+  it('caps square cells at CELL_MAX; leftover room stays empty', () => {
+    const l = computeHeatmapLayout({ rows: ['a', 'b'], columns: ['A', 'B', 'C'], width: 1200 });
+    expect(l.cell).toBe(48);
+    expect(l.naturalHeight).toBe(l.height);
+  });
+
   it('square cells: the width limits them without a height, the tighter of width and height with one', () => {
     const side = (width: number, height?: number) =>
       computeHeatmapLayout({ rows, columns: hours, width, height }).cell;

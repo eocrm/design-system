@@ -87,7 +87,7 @@ describe('Heatmap', () => {
     expect(all).toHaveLength(base.rows.length * nCols);
     for (const c of all) expect(c.getAttribute('width')).toBe(c.getAttribute('height'));
     const side = Number(all[0].getAttribute('width')) + 2;
-    if (height > 0 && width / nCols > height) {
+    if (width === 1200 && height === 100) {
       // Height-limited: (100 − 20px label band) / 2 rows.
       expect(side).toBeCloseTo(40);
     }

@@ -150,6 +150,8 @@ export function heatmapLegend(b: HeatmapBuckets, formatValue: Format): HeatmapLe
 
 /** Smallest cell side; below it the grid overflows its box instead of shrinking. */
 export const CELL_MIN = 12;
+/** Largest cell side; leftover room stays empty. */
+export const CELL_MAX = 48;
 
 export interface HeatmapLayout {
   /** Top-left of the cell grid. */
@@ -174,8 +176,8 @@ export interface HeatmapLayout {
 }
 
 /**
- * Square cells as large as fit `width` and, when given (> 0), `height`; never under `CELL_MIN`, so a box too small
- * gets a grid that overflows it. The grid sits at the top-left; leftover room stays empty. Row labels on the left,
+ * Square cells as large as fit `width` and, when given (> 0), `height`; never under `CELL_MIN` (so a box too small
+ * gets a grid that overflows it) nor over `CELL_MAX`. The grid sits at the top-left; leftover room stays empty. Row labels on the left,
  * thinned column labels underneath.
  */
 export function computeHeatmapLayout({
@@ -196,7 +198,7 @@ export function computeHeatmapLayout({
   // The last column label is centred on its cell; keep its right half inside the svg.
   const lastHalf = columns.length ? estimateTextWidth(columns[columns.length - 1]) / 2 : 0;
   const padRight = Math.max(0, lastHalf - avail / nCols / 2);
-  const widthCell = Math.max(CELL_MIN, (avail - padRight) / nCols);
+  const widthCell = Math.min(CELL_MAX, Math.max(CELL_MIN, (avail - padRight) / nCols));
   const heightCell = boxHeight > 0 ? (boxHeight - X_AXIS_HEIGHT) / nRows : Infinity;
   const cell = Math.max(CELL_MIN, Math.min(widthCell, heightCell));
   const plotY = 0;
