@@ -42,6 +42,12 @@
   &:focus-visible {
     @include focus-ring(var(--chart-ring));
   }
+
+  // A drag selects categories, not the axis text under it; a long-press must not open the iOS callout.
+  &[data-selectable] {
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
 }
 
 .svg {
@@ -77,6 +83,13 @@
   }
 }
 
+.selection {
+  fill: var(--chart-selection-fill);
+  fill-opacity: var(--chart-selection-opacity);
+  stroke: var(--chart-selection-edge);
+  stroke-width: 1px;
+}
+
 .markerLine {
   stroke: var(--chart-marker-color);
   stroke-width: 1px;
@@ -95,6 +108,12 @@
   stroke-linejoin: round;
   fill: var(--chart-marker-label-fg);
   font-size: var(--chart-axis-size);
+  pointer-events: none;
+}
+
+.valueLabels text {
+  fill: var(--chart-value-label-fg);
+  font-size: var(--chart-value-label-size);
   pointer-events: none;
 }
 
@@ -203,7 +222,8 @@
     text-decoration: line-through;
   }
 
-  &:disabled {
+  &:disabled,
+  &[data-static] {
     cursor: default;
   }
 
@@ -280,6 +300,10 @@
 
 .tooltipNote {
   color: var(--chart-axis-fg);
+}
+
+.tooltipDetail {
+  color: var(--chart-detail-fg);
 }
 
 .tooltipValue {

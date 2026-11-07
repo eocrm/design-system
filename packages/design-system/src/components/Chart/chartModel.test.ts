@@ -1,4 +1,5 @@
 import {
+  assignSlots,
   barPath,
   categoryIndexAt,
   computeLayout,
@@ -16,6 +17,7 @@ import {
   thinLabels,
   visibleSeries,
   type ChartSeries,
+  type ChartSeriesColor,
   type LayoutInput,
 } from './chartModel';
 
@@ -35,7 +37,45 @@ const layout = (over: Partial<LayoutInput> & Pick<LayoutInput, 'type' | 'series'
     ...over,
   });
 
+describe('assignSlots', () => {
+  const slots = (c: (ChartSeriesColor | undefined)[]) => assignSlots(c).map((x) => x.slot);
+  it('lets unset entries skip explicitly claimed slots', () => {
+    expect(slots([undefined, 1])).toEqual([2, 1]);
+  });
+  it('allows explicit sharing', () => {
+    expect(assignSlots([3, 3])).toEqual([
+      { slot: 3, overflow: false },
+      { slot: 3, overflow: false },
+    ]);
+  });
+  it('wraps unset entries past eight and flags overflow', () => {
+    const r = assignSlots(Array(9).fill(undefined));
+    expect(r.slice(0, 8).map((x) => x.slot)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(r.slice(0, 8).every((x) => !x.overflow)).toBe(true);
+    expect(r[8]).toEqual({ slot: 1, overflow: true });
+  });
+  it('wraps an unset entry when every slot is claimed', () => {
+    expect(assignSlots([1, 2, 3, 4, 5, 6, 7, 8, undefined])[8]).toEqual({
+      slot: 1,
+      overflow: true,
+    });
+  });
+});
+
 describe('resolveSeries', () => {
+  it('honours color on primaries and ignores it on comparisons', () => {
+    const r = resolveSeries(
+      'line',
+      [{ ...s('a', [1]) }, { ...s('b', [1]), color: 1 }, { ...s('b-prev', [1], 'b'), color: 5 }],
+      1,
+    );
+    expect(r.series.map((x) => [x.key, x.slot])).toEqual([
+      ['a', 2],
+      ['b', 1],
+      ['b-prev', 1],
+    ]);
+  });
+
   it('orders comparisons after their parent and inherits the slot', () => {
     const r = resolveSeries('line', [s('a', [1]), s('b', [2]), s('a-prev', [1], 'a')], 1);
     expect(r.series.map((x) => x.key)).toEqual(['a', 'a-prev', 'b']);
@@ -827,5 +867,107 @@ describe('curve (DS-36)', () => {
     const d = run('line', [[1, null, 5, 7]], 'linear').marks[0].line!;
     expect(d.match(/M/g)).toHaveLength(1);
     expect(run('line', [[1, 2, null, 5, 7]], 'linear').marks[0].line!.match(/M/g)).toHaveLength(2);
+  });
+});
+
+describe('valueLabels (DS-12b)', () => {
+  const g = (v: string) => `${v} g`;
+  const bar = (values: (number | null)[], over: Partial<LayoutInput> = {}) =>
+    layout({
+      type: 'bar',
+      categories: ['a', 'b'],
+      series: resolveSeries('bar', [s('x', values)], 2).series,
+      formatValue: (n) => g(String(n)),
+      valueLabels: true,
+      ...over,
+    });
+
+  it('labels each bar above its top, centred on the bar', () => {
+    const l = bar([52, 48]);
+    expect(l.valueLabels.map((v) => v.text)).toEqual(['52 g', '48 g']);
+    l.valueLabels.forEach((v, i) => {
+      expect(v.x).toBeCloseTo(l.categoryX[i]);
+      expect(v.anchor).toBe('above');
+    });
+    expect(l.valueLabels[0].y).toBeLessThan(l.marks[0].points[0]!.y);
+  });
+
+  it('puts negative labels below the bar end', () => {
+    const l = bar([-5, 3]);
+    expect(l.valueLabels[0].anchor).toBe('below');
+    expect(l.valueLabels[0].y).toBeGreaterThan(l.marks[0].points[0]!.y);
+  });
+
+  it('skips null values', () => {
+    expect(bar([null, 4]).valueLabels.map((v) => v.text)).toEqual(['4 g']);
+  });
+
+  it('labels a zero value at the zero line', () => {
+    const l = bar([0, 4]);
+    expect(l.valueLabels.map((v) => v.text)).toEqual(['0 g', '4 g']);
+    expect(l.valueLabels[0].anchor).toBe('above');
+    const zeroY = l.marks[0].points[0]!.y;
+    expect(l.valueLabels[0].y).toBeLessThan(zeroY);
+    expect(l.valueLabels[0].y).toBeGreaterThan(zeroY - 14);
+  });
+
+  it('labels a stacked total of 0 when the stack has a value, not an all-null stack', () => {
+    const series = resolveSeries(
+      'stacked-bar',
+      [s('x', [0, 5, null]), s('y', [0, -5, null])],
+      3,
+    ).series;
+    const l = layout({
+      type: 'stacked-bar',
+      categories: ['a', 'b', 'c'],
+      series,
+      valueLabels: true,
+    });
+    expect(l.valueLabels.map((v) => v.text)).toEqual(['0', '0']);
+  });
+
+  it('omits labels wider than their bar', () => {
+    expect(bar([52, 48], { width: 100 }).valueLabels).toEqual([]);
+  });
+
+  it('labels every series in grouped bars, comparisons included', () => {
+    const l = layout({
+      type: 'bar',
+      categories: ['a'],
+      series: resolveSeries('bar', [s('x', [5]), s('p', [4], 'x')], 1).series,
+      valueLabels: true,
+    });
+    expect(l.valueLabels.map((v) => v.text)).toEqual(['5', '4']);
+  });
+
+  it('labels stacked bars with the total of the visible series', () => {
+    const all = resolveSeries('stacked-bar', [s('x', [10, 20]), s('y', [5, 5])], 2).series;
+    const input = { type: 'stacked-bar' as const, categories: ['a', 'b'], valueLabels: true };
+    const l = layout({ ...input, series: all });
+    expect(l.valueLabels.map((v) => v.text)).toEqual(['15', '25']);
+    expect(l.valueLabels[0].y).toBeLessThan(l.marks[1].points[0]!.y);
+    const hidden = layout({ ...input, series: visibleSeries(all, ['y']) });
+    expect(hidden.valueLabels.map((v) => v.text)).toEqual(['10', '20']);
+  });
+
+  it('ignores line and area', () => {
+    for (const type of ['line', 'area'] as const)
+      expect(
+        layout({
+          type,
+          series: resolveSeries(type, [s('x', [1, 2, 3, 4])], 4).series,
+          valueLabels: true,
+        }).valueLabels,
+      ).toEqual([]);
+  });
+
+  it('is empty when off', () => {
+    expect(bar([52, 48], { valueLabels: false }).valueLabels).toEqual([]);
+  });
+
+  it('reserves headroom so the tallest label stays inside the plot', () => {
+    const l = bar([52, 48]);
+    const top = Math.min(...l.valueLabels.map((v) => v.y));
+    expect(top - 14).toBeGreaterThanOrEqual(l.plot.y);
   });
 });

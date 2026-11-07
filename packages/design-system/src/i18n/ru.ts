@@ -487,6 +487,15 @@ export const ru: Messages = {
     category: 'Категория',
     noData: 'Нет данных',
     markers: 'Отметки',
+    details: 'Подробности',
+    rangeHint: 'Shift+стрелки выделяют диапазон.',
+    zoomToSelection: 'Увеличить выделенное',
+    resetZoom: 'Сбросить масштаб',
+    selected: ({ from, to }) => `Выделено: ${from as string} — ${to as string}`,
+    selectedOne: ({ category }) => `Выделено: ${category as string}`,
+    selectionCleared: 'Выделение снято',
+    zoomed: ({ from, to }) => `Масштаб: ${from as string} — ${to as string}`,
+    zoomedOne: ({ category }) => `Масштаб: ${category as string}`,
   },
   funnelChart: {
     keyboardHint:
@@ -498,6 +507,18 @@ export const ru: Messages = {
     ofStage: ({ percent, stage }) => `${percent as string} от «${stage as string}»`,
     noData: '—',
     vsPrevious: 'к предыдущему',
+  },
+  scatterChart: {
+    keyboardHint:
+      'Используйте стрелки для просмотра точек по порядку оси X. Все значения также есть в таблице данных.',
+    series: 'Ряд',
+    size: 'Размер',
+    pointLabel: 'Примечание',
+  },
+  heatmap: {
+    keyboardHint:
+      'Используйте стрелки для перехода между ячейками, Home и End — в пределах строки, Ctrl+Home и Ctrl+End — к углам. Все значения также есть в таблице данных.',
+    noData: 'Нет данных',
   },
   treeView: {
     loading: 'Загрузка…',

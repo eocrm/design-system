@@ -30,6 +30,7 @@ export function ChartTooltip({
   title,
   rows,
   notes,
+  details = [],
 }: {
   /** The plot element; `point` is relative to its top-left. */
   anchor: HTMLElement | null;
@@ -38,6 +39,8 @@ export function ChartTooltip({
   rows: ChartTooltipRow[];
   /** Labels of the markers covering this category. */
   notes: string[];
+  /** Plain-text lines from `Chart`'s `details`, shown muted without a swatch. */
+  details?: string[];
 }) {
   const { refs, floatingStyles } = useFloating({
     placement: 'top',
@@ -79,6 +82,11 @@ export function ChartTooltip({
           />
           <span className={styles.tooltipLabel}>{r.label}</span>
           <span className={styles.tooltipValue}>{r.value}</span>
+        </div>
+      ))}
+      {details.map((line, i) => (
+        <div key={i} className={styles.tooltipDetail}>
+          {line}
         </div>
       ))}
       {/* Index key: two markers may share a label. */}

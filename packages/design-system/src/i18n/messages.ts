@@ -906,6 +906,24 @@ export interface Messages {
     noData: string;
     /** Header of the data table's marker column (labels of the annotations covering each category). */
     markers: string;
+    /** Header of the data table's details column (the strings `details` returns for each category). */
+    details: string;
+    /** Appended to `keyboardHint` when range selection is enabled: says Shift+arrows select a range. */
+    rangeHint: string;
+    /** Label of the header button that zooms the plot to the selected range. */
+    zoomToSelection: string;
+    /** Label of the header button that leaves the zoomed range and shows every category. */
+    resetZoom: string;
+    /** Live announcement of a selected range of categories. */
+    selected: (params: { from: string; to: string }) => string;
+    /** Live announcement of a selection of a single category. */
+    selectedOne: (params: { category: string }) => string;
+    /** Live announcement when the selection is cleared. */
+    selectionCleared: string;
+    /** Zoomed range of categories: part of the plot's description and appended to the data-table caption while zoomed. */
+    zoomed: (params: { from: string; to: string }) => string;
+    /** Zoom to a single category: part of the plot's description and appended to the data-table caption while zoomed. */
+    zoomedOne: (params: { category: string }) => string;
   };
   funnelChart: {
     /** Accessible description of the focusable plot (its name is the chart label); says arrow keys inspect stages and that the data table lists every value. */
@@ -924,6 +942,22 @@ export interface Messages {
     noData: string;
     /** Header of the vertical layout's visible step-conversion column ("vs previous"). */
     vsPrevious: string;
+  };
+  scatterChart: {
+    /** Accessible description of the focusable plot (its name is the chart label); says arrow keys walk the points in order of x and that the data table lists every value. */
+    keyboardHint: string;
+    /** Header of the data table's series column. */
+    series: string;
+    /** Header of the size column and the size name in the tooltip/announcement when `sizeLabel` is not given. */
+    size: string;
+    /** Header of the data table's column of point labels (`ScatterPoint.label`). */
+    pointLabel: string;
+  };
+  heatmap: {
+    /** Accessible description of the focusable grid (its name is the heatmap label); says arrows move by cell, Home/End within a row, Ctrl+Home/End to the corners, and that the data table lists every value. */
+    keyboardHint: string;
+    /** Text of a cell with no value (`null`): its announcement, tooltip and data-table cell, and the legend entry for empty cells ("No data"). */
+    noData: string;
   };
   sparkline: {
     /** Accessible name of a Sparkline with data: label plus the series summary. */

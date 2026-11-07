@@ -907,6 +907,16 @@ export type {
   FunnelSlot,
   FunnelStage,
 } from './components/FunnelChart';
+export { ScatterChart } from './components/ScatterChart';
+export type {
+  ScatterChartProps,
+  ScatterPoint,
+  ScatterReference,
+  ScatterSeries,
+  ScatterXScale,
+} from './components/ScatterChart';
+export { Heatmap } from './components/Heatmap';
+export type { HeatmapProps } from './components/Heatmap';
 export { Sparkline } from './components/Sparkline';
 export type { SparklineProps, SparklineType } from './components/Sparkline';
 export { TreeView } from './components/TreeView';
@@ -922,6 +932,8 @@ export type {
   ChartMarker,
   ChartMarkerTone,
   ChartProps,
+  ChartRange,
   ChartSeries,
+  ChartSeriesColor,
   ChartType,
 } from './components/Chart';

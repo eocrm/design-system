@@ -1,0 +1,22 @@
+// ScatterChart.tokens.scss — component tokens for <ScatterChart>. Shares Chart's palette,
+// grid, axis, legend and tooltip tokens; these alias them where the meaning is the same.
+@use '../Chart/Chart.tokens';
+
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
+  // Dot radius range for points with `size` (sqrt scale); read by the component in px.
+  --scatter-dot-min: var(--space-1);
+  --scatter-dot-max: var(--space-4);
+
+  // Pointer distance (px) within which the nearest dot shows its tooltip; read by the component.
+  --scatter-hit-radius: var(--space-6);
+  --scatter-dot-ring: var(--chart-dot-ring);
+  --scatter-dot-ring-width: var(--chart-dot-ring-width);
+
+  --scatter-trend-width: var(--chart-comparison-stroke);
+  --scatter-trend-dash: var(--chart-dash);
+
+  --scatter-reference-color: var(--color-fg-muted);
+  --scatter-reference-width: var(--chart-comparison-stroke);
+  --scatter-reference-dash: var(--chart-marker-dash);
+}

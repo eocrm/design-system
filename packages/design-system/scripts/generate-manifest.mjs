@@ -107,6 +107,8 @@ const CLUSTERS = {
   StatGroup: 'Display',
   Chart: 'Display',
   FunnelChart: 'Display',
+  ScatterChart: 'Display',
+  Heatmap: 'Display',
   Sparkline: 'Display',
   TreeView: 'Display',
   DataTable: 'Display',

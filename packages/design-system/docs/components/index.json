@@ -255,6 +255,11 @@
     "cluster": "Layout"
   },
   {
+    "name": "Heatmap",
+    "summary": "grid of cells coloured by value (weekday × hour)",
+    "cluster": "Display"
+  },
+  {
     "name": "Highlight",
     "summary": "temporary attention ring on any block",
     "cluster": "Feedback"
@@ -478,6 +483,11 @@
     "name": "RichTextEditor",
     "summary": "controlled rich-text editor (contentEditable)",
     "cluster": "Forms"
+  },
+  {
+    "name": "ScatterChart",
+    "summary": "scatter plot of two measures, optionally sized and on a time axis",
+    "cluster": "Display"
   },
   {
     "name": "Screen",

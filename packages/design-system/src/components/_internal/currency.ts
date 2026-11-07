@@ -51,6 +51,11 @@ export function isValidCurrency(code: string): boolean {
   }
 }
 
+/** Where '.' groups thousands (de, es, it), a typed '.' could mean decimal or thousands: never guess. */
+export function typedDotIsAmbiguous(sep: { group: string; decimal: string }): boolean {
+  return sep.decimal !== '.' && sep.group === '.';
+}
+
 export function localeSeparators(locale: string): { group: string; decimal: string } {
   // 1234567.5: es/pl don't group 4-digit numbers, so a smaller probe has no group part.
   const parts = new Intl.NumberFormat(locale).formatToParts(1234567.5);

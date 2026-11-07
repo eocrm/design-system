@@ -24,6 +24,7 @@ import {
   formatDraft,
   isValidCurrency,
   localeSeparators,
+  typedDotIsAmbiguous,
   parseAmount,
   parseLocalAmount,
   roundAmount,
@@ -186,6 +187,7 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   };
 
   const { group, decimal } = localeSeparators(loc);
+  const blockDot = typedDotIsAmbiguous({ group, decimal });
   // Our own text is strictly own-locale: group chars are never decimals (de '1.23' stays 123).
   // An existing sign survives edits even when negatives are off; only ADDING a '-' is rejected.
   const parseOwn = (s: string) =>
@@ -289,7 +291,21 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   // Typed / deleted / cut / undo edits only: own-locale, never lenient.
   const onAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
     const input = e.target;
-    applyEdit(input, input.value, input.selectionStart ?? input.value.length);
+    const next = input.value;
+    const at = (input.selectionStart ?? next.length) - 1;
+    // keydown can't catch mobile keyboards, so undo a typed '.' here (also over a selection).
+    // Multi-char inserts, history and IME composition are parsed as usual. Without inputType
+    // (jsdom), undo a change that only inserted one '.'.
+    const native = e.nativeEvent as InputEvent;
+    const typedDot = native.inputType
+      ? native.inputType === 'insertText' && native.data === '.' && !native.isComposing
+      : next[at] === '.' && next.slice(0, at) + next.slice(at + 1) === text;
+    if (blockDot && typedDot) {
+      input.value = text;
+      input.setSelectionRange(at, at);
+      return;
+    }
+    applyEdit(input, next, input.selectionStart ?? next.length);
   };
 
   const onAmountKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -304,7 +320,9 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
         input.setSelectionRange(start - 1, start - 1);
       if (e.key === 'Delete' && stepOver(start)) input.setSelectionRange(start + 1, start + 1);
     }
-    // Numpad '.' in a comma-decimal locale types the decimal (any precision).
+    // Where '.' groups (de, es, it) a typed '.' is ambiguous: ignore it (type ',').
+    if (blockDot && e.key === '.') return e.preventDefault();
+    // Numpad '.' where '.' doesn't group (ru, fr) types the decimal (any precision).
     if (e.key === '.' && decimal !== '.' && !v.includes(decimal)) {
       e.preventDefault();
       applyEdit(input, v.slice(0, start) + decimal + v.slice(end), start + 1);

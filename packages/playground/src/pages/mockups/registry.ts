@@ -108,6 +108,8 @@ export type ComponentName =
   | 'StatGroup'
   | 'Chart'
   | 'FunnelChart'
+  | 'ScatterChart'
+  | 'Heatmap'
   | 'Sparkline'
   | 'TreeView'
   | 'PillMenu'

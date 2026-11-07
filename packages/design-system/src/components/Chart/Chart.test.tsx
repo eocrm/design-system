@@ -689,3 +689,549 @@ it('inspection markers paint after every series, so a later stacked area cannot 
     expect(lastArea.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   }
 });
+
+describe('details', () => {
+  const details: ChartProps['details'] = (i) => (i === 0 ? ['235 kcal', '5 times'] : []);
+
+  it('shows detail rows in the tooltip and the announcement', async () => {
+    const layout = stubLayout();
+    render(<Chart {...base} details={details} />);
+    layout.fire();
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    const tip = document.querySelector('[data-chart-tooltip]')!;
+    expect(tip).toHaveTextContent('235 kcal');
+    expect(tip).toHaveTextContent('5 times');
+    const live = document.querySelector('[aria-live="polite"]')!;
+    await waitFor(() => expect(live).toHaveTextContent(/235 kcal, 5 times$/));
+  });
+
+  it('adds a Details column to the data table only when details is given', () => {
+    stubLayout();
+    const { rerender } = render(<Chart {...base} details={details} />);
+    const table = screen.getByRole('table');
+    expect(within(table).getByRole('columnheader', { name: 'Details' })).toBeInTheDocument();
+    const rows = within(table).getAllByRole('row');
+    expect(rows[1].lastElementChild).toHaveTextContent('235 kcal; 5 times');
+    expect(rows[2].lastElementChild).toHaveTextContent(/^$/);
+    rerender(<Chart {...base} />);
+    expect(within(table).queryByRole('columnheader', { name: 'Details' })).toBeNull();
+  });
+
+  it('keeps detail rows when every non-primary series is hidden', async () => {
+    const layout = stubLayout();
+    render(<Chart {...base} details={details} hiddenSeries={['prev']} />);
+    layout.fire();
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('235 kcal');
+  });
+});
+
+describe('valueLabels', () => {
+  it('renders aria-hidden labels matching the tooltip value', async () => {
+    const layout = stubLayout();
+    render(
+      <Chart
+        {...base}
+        type="bar"
+        series={[{ key: 'won', label: 'Deals won', values: [3, 5, 8] }]}
+        valueLabels
+      />,
+    );
+    layout.fire();
+    const labels = document.querySelectorAll('[data-value-label]');
+    expect(Array.from(labels, (l) => l.textContent)).toEqual(['3 deals', '5 deals', '8 deals']);
+    labels.forEach((l) => expect(l).toHaveAttribute('aria-hidden', 'true'));
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('3 deals');
+  });
+
+  it('renders none by default', () => {
+    const layout = stubLayout();
+    render(<Chart {...base} type="bar" />);
+    layout.fire();
+    expect(document.querySelector('[data-value-label]')).toBeNull();
+  });
+});
+
+describe('range selection and zoom', () => {
+  const cats = ['c0', 'c1', 'c2', 'c3', 'c4'];
+  const sel: ChartProps = {
+    ...base,
+    type: 'bar',
+    categories: cats,
+    series: [{ key: 'won', label: 'Deals won', values: [1, 2, 3, 4, 5] }],
+  };
+  const plotOf = () => screen.getByRole('group', { name: 'Deals won per week' });
+  // The x-axis label sits at the category's centre.
+  const xOf = (container: HTMLElement, category: string) =>
+    Number(
+      [...container.querySelectorAll('svg text')]
+        .find((t) => t.textContent === category)!
+        .getAttribute('x'),
+    );
+  const live = () => document.querySelector('[aria-live="polite"]')!;
+  const band = (container: HTMLElement) => container.querySelector('[data-selection]');
+
+  function drag(container: HTMLElement, from: string, to: string) {
+    const plot = plotOf();
+    const opts = { pointerId: 1, pointerType: 'mouse', button: 0 };
+    fireEvent.pointerDown(plot, { ...opts, clientX: xOf(container, from) });
+    fireEvent.pointerMove(plot, { ...opts, clientX: xOf(container, to) });
+    fireEvent.pointerUp(plot, { ...opts, clientX: xOf(container, to) });
+  }
+  function click(container: HTMLElement, at: string) {
+    const plot = plotOf();
+    const opts = { pointerId: 1, pointerType: 'mouse', button: 0, clientX: xOf(container, at) };
+    fireEvent.pointerDown(plot, opts);
+    fireEvent.pointerUp(plot, opts);
+  }
+
+  it('a mouse drag past the slop selects and draws a band', () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+    layout.fire();
+    drag(container, 'c1', 'c3');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c1', to: 'c3' });
+    expect(band(container)).not.toBeNull();
+  });
+
+  it('a click without movement inspects and does not select', () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+    layout.fire();
+    click(container, 'c2');
+    expect(onChange).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('c2');
+  });
+
+  it('a click outside the band clears the selection; inside it does not', () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const { container } = render(
+      <Chart {...sel} selectedRange={{ from: 'c1', to: 'c3' }} onSelectedRangeChange={onChange} />,
+    );
+    layout.fire();
+    click(container, 'c2');
+    expect(onChange).not.toHaveBeenCalled();
+    click(container, 'c4');
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  describe('touch long-press', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+    const touch = { pointerId: 2, pointerType: 'touch' };
+    const hold = () => act(() => vi.advanceTimersByTime(300));
+
+    it('long-press then move then release selects the range', () => {
+      const layout = stubLayout();
+      const onChange = vi.fn();
+      const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+      layout.fire();
+      fireEvent.pointerDown(plotOf(), { ...touch, clientX: xOf(container, 'c1') });
+      hold();
+      fireEvent.pointerMove(plotOf(), { ...touch, clientX: xOf(container, 'c3') });
+      expect(band(container)).not.toBeNull();
+      fireEvent.pointerUp(plotOf(), { ...touch, clientX: xOf(container, 'c3') });
+      expect(onChange).toHaveBeenLastCalledWith({ from: 'c1', to: 'c3' });
+    });
+
+    it('long-press released without moving selects one category', () => {
+      const layout = stubLayout();
+      const onChange = vi.fn();
+      const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+      layout.fire();
+      const at = { ...touch, clientX: xOf(container, 'c1') };
+      fireEvent.pointerDown(plotOf(), at);
+      hold();
+      fireEvent.pointerUp(plotOf(), at);
+      expect(onChange).toHaveBeenLastCalledWith({ from: 'c1', to: 'c1' });
+    });
+
+    it('moving past the slop before the timer is a scroll: no selection, ever', () => {
+      const layout = stubLayout();
+      const onChange = vi.fn();
+      const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+      layout.fire();
+      const x = xOf(container, 'c1');
+      fireEvent.pointerDown(plotOf(), { ...touch, clientX: x, clientY: 50 });
+      act(() => vi.advanceTimersByTime(100));
+      fireEvent.pointerMove(plotOf(), { ...touch, clientX: x, clientY: 70 });
+      act(() => vi.advanceTimersByTime(1000));
+      expect(band(container)).toBeNull();
+      fireEvent.pointerUp(plotOf(), { ...touch, clientX: x, clientY: 70 });
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('a quick tap shows the tooltip and does not select', () => {
+      const layout = stubLayout();
+      const onChange = vi.fn();
+      const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+      layout.fire();
+      const at = { ...touch, clientX: xOf(container, 'c2') };
+      fireEvent.pointerDown(plotOf(), at);
+      fireEvent.pointerUp(plotOf(), at);
+      act(() => vi.advanceTimersByTime(1000));
+      expect(onChange).not.toHaveBeenCalled();
+      expect(band(container)).toBeNull();
+      expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('c2');
+    });
+
+    it('a quick tap outside the band clears the selection; inside it does not', () => {
+      const layout = stubLayout();
+      const onChange = vi.fn();
+      const { container } = render(
+        <Chart
+          {...sel}
+          selectedRange={{ from: 'c1', to: 'c2' }}
+          onSelectedRangeChange={onChange}
+        />,
+      );
+      layout.fire();
+      const tap = (c: string) => {
+        const at = { ...touch, clientX: xOf(container, c) };
+        fireEvent.pointerDown(plotOf(), at);
+        fireEvent.pointerUp(plotOf(), at);
+      };
+      tap('c1');
+      expect(onChange).not.toHaveBeenCalled();
+      tap('c4');
+      expect(onChange).toHaveBeenCalledWith(null);
+    });
+
+    it('unmounting mid-press does not fire the lift', () => {
+      const layout = stubLayout();
+      // jsdom has no setPointerCapture; a real browser throws on a detached element.
+      const capture = vi.fn();
+      Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
+        value: capture,
+        configurable: true,
+      });
+      onTestFinished(() => {
+        delete (HTMLElement.prototype as Partial<HTMLElement>).setPointerCapture;
+      });
+      const { container, unmount } = render(<Chart {...sel} onSelectedRangeChange={() => {}} />);
+      layout.fire();
+      fireEvent.pointerDown(plotOf(), { ...touch, clientX: xOf(container, 'c1') });
+      unmount();
+      expect(() => hold()).not.toThrow();
+      expect(capture).not.toHaveBeenCalled();
+    });
+
+    it('cancels the lifted page scroll for its touchmoves only', () => {
+      const layout = stubLayout();
+      const { container } = render(<Chart {...sel} onSelectedRangeChange={() => {}} />);
+      layout.fire();
+      const touchmove = () => {
+        const e = new Event('touchmove', { bubbles: true, cancelable: true });
+        plotOf().dispatchEvent(e);
+        return e.defaultPrevented;
+      };
+      fireEvent.pointerDown(plotOf(), { ...touch, clientX: xOf(container, 'c1') });
+      expect(touchmove()).toBe(false);
+      hold();
+      expect(touchmove()).toBe(true);
+      fireEvent.pointerUp(plotOf(), { ...touch, clientX: xOf(container, 'c1') });
+      expect(touchmove()).toBe(false);
+    });
+  });
+
+  it('Shift+arrows extend from the anchor; Escape clears selection, then inspection', async () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    render(<Chart {...sel} defaultSelectedRange={null} onSelectedRangeChange={onChange} />);
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    await userEvent.keyboard('{Shift>}{ArrowRight}{ArrowRight}{/Shift}');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c1', to: 'c3' });
+    await waitFor(() => expect(live()).toHaveTextContent('Selected c1 to c3'));
+    await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c1', to: 'c2' });
+    await userEvent.keyboard('{Escape}');
+    expect(onChange).toHaveBeenLastCalledWith(null);
+    await waitFor(() => expect(live()).toHaveTextContent('Selection cleared'));
+    expect(document.querySelector('[data-chart-tooltip]')).not.toBeNull();
+    await userEvent.keyboard('{Escape}');
+    expect(document.querySelector('[data-chart-tooltip]')).toBeNull();
+  });
+
+  it('announces a single-category selection', async () => {
+    const layout = stubLayout();
+    render(<Chart {...sel} onSelectedRangeChange={() => {}} />);
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{Shift>}{ArrowRight}{ArrowLeft}{/Shift}');
+    await waitFor(() => expect(live()).toHaveTextContent('Selected c0'));
+  });
+
+  it('zooms to the selection and resets', async () => {
+    const layout = stubLayout();
+    const onZoom = vi.fn();
+    const { container } = render(
+      <Chart {...sel} defaultSelectedRange={null} onZoomRangeChange={onZoom} />,
+    );
+    layout.fire();
+    expect(screen.queryByRole('button', { name: 'Zoom to selection' })).toBeNull();
+    drag(container, 'c1', 'c3');
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom to selection' }));
+    expect(onZoom).toHaveBeenLastCalledWith({ from: 'c1', to: 'c3' });
+    const table = screen.getByRole('table');
+    expect(within(table).queryByRole('rowheader', { name: 'c0' })).toBeNull();
+    expect(within(table).getByRole('rowheader', { name: 'c1' })).toBeInTheDocument();
+    expect(within(table).getByRole('rowheader', { name: 'c3' })).toBeInTheDocument();
+    expect(within(table).queryByRole('rowheader', { name: 'c4' })).toBeNull();
+    expect(band(container)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Zoom to selection' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Reset zoom' }));
+    expect(onZoom).toHaveBeenLastCalledWith(null);
+    expect(within(table).getByRole('rowheader', { name: 'c0' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reset zoom' })).toBeNull();
+  });
+
+  it('ignores a controlled zoomRange naming an unknown category, warning once', () => {
+    const layout = stubLayout();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { rerender } = render(<Chart {...sel} zoomRange={{ from: 'c1', to: 'nope' }} />);
+    layout.fire();
+    rerender(<Chart {...sel} zoomRange={{ from: 'c1', to: 'nope' }} />);
+    expect(within(screen.getByRole('table')).getByRole('rowheader', { name: 'c0' })).toBeTruthy();
+    expect(warn.mock.calls.filter(([m]) => String(m).includes('zoomRange'))).toHaveLength(1);
+  });
+
+  it('passes original category indices to details while zoomed', async () => {
+    const layout = stubLayout();
+    const details = vi.fn((i: number) => [`detail ${i}`]);
+    render(<Chart {...sel} details={details} zoomRange={{ from: 'c2', to: 'c4' }} />);
+    layout.fire();
+    expect(within(screen.getByRole('table')).getByText('detail 2')).toBeInTheDocument();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('detail 2');
+    expect(details.mock.calls.map(([i]) => i)).not.toContain(0);
+  });
+
+  it('keeps value labels while zoomed', () => {
+    const layout = stubLayout();
+    render(<Chart {...sel} valueLabels zoomRange={{ from: 'c2', to: 'c4' }} />);
+    layout.fire();
+    const labels = document.querySelectorAll('[data-value-label]');
+    expect(Array.from(labels, (l) => l.textContent)).toEqual(['3 deals', '4 deals', '5 deals']);
+  });
+
+  it('a zoomed window with no data still draws and keeps Reset zoom', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart
+        {...sel}
+        series={[{ key: 'won', label: 'Deals won', values: [1, null, null, 4, 5] }]}
+        zoomRange={{ from: 'c1', to: 'c2' }}
+      />,
+    );
+    layout.fire();
+    expect(container.querySelector('svg')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Reset zoom' })).toBeInTheDocument();
+  });
+
+  it('Shift+arrow after zooming starts a fresh range inside the zoomed view', async () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}{Shift>}{ArrowRight}{ArrowRight}{/Shift}');
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom to selection' }));
+    expect(plotOf()).toHaveFocus();
+    await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c1', to: 'c1' });
+    await waitFor(() => expect(live()).toHaveTextContent('Selected c1'));
+    expect(live()).not.toHaveTextContent('undefined');
+  });
+
+  it('Shift+arrow after a mouse selection extends from the inspected category, not the old anchor', async () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const { container } = render(<Chart {...sel} onSelectedRangeChange={onChange} />);
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{Shift>}{ArrowRight}{/Shift}');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c0', to: 'c1' });
+    drag(container, 'c3', 'c4');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c3', to: 'c4' });
+    await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c3', to: 'c4' });
+  });
+
+  it('Escape, plot clicks and zoom act on a selection outside the zoomed view', async () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const onZoom = vi.fn();
+    const { container, rerender } = render(
+      <Chart
+        {...sel}
+        zoomRange={{ from: 'c2', to: 'c4' }}
+        onZoomRangeChange={onZoom}
+        selectedRange={{ from: 'c0', to: 'c1' }}
+        onSelectedRangeChange={onChange}
+      />,
+    );
+    layout.fire();
+    expect(band(container)).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom to selection' }));
+    expect(onZoom).toHaveBeenLastCalledWith({ from: 'c0', to: 'c1' });
+    onChange.mockClear();
+    rerender(
+      <Chart
+        {...sel}
+        zoomRange={{ from: 'c2', to: 'c4' }}
+        selectedRange={{ from: 'c0', to: 'c1' }}
+        onSelectedRangeChange={onChange}
+      />,
+    );
+    plotOf().focus();
+    await userEvent.keyboard('{Escape}');
+    expect(onChange).toHaveBeenLastCalledWith(null);
+    onChange.mockClear();
+    click(container, 'c3');
+    expect(onChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('describes the zoom and selection on the plot and names the zoom in the table caption', () => {
+    const layout = stubLayout();
+    render(
+      <Chart
+        {...sel}
+        zoomRange={{ from: 'c1', to: 'c3' }}
+        selectedRange={{ from: 'c3', to: 'c2' }}
+        onSelectedRangeChange={() => {}}
+      />,
+    );
+    layout.fire();
+    expect(plotOf()).toHaveAccessibleDescription(
+      'Zoomed to c1–c3. Selected c2 to c3. Use arrow keys to inspect values. All values are also in the data table. Shift+arrows select a range.',
+    );
+    expect(screen.getByRole('table', { name: 'Deals won per week. Zoomed to c1–c3' })).toBeTruthy();
+  });
+
+  it('draws the part of a selection inside the zoom window; a click there keeps it', () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const { container } = render(
+      <Chart
+        {...sel}
+        zoomRange={{ from: 'c1', to: 'c3' }}
+        selectedRange={{ from: 'c0', to: 'c2' }}
+        onSelectedRangeChange={onChange}
+      />,
+    );
+    layout.fire();
+    expect(band(container)).not.toBeNull();
+    click(container, 'c2');
+    expect(onChange).not.toHaveBeenCalled();
+    click(container, 'c3');
+    expect(onChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('Escape during a drag cancels it without committing', () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const { container } = render(
+      <Chart
+        {...sel}
+        defaultSelectedRange={{ from: 'c0', to: 'c0' }}
+        onSelectedRangeChange={onChange}
+      />,
+    );
+    layout.fire();
+    const plot = plotOf();
+    const opts = { pointerId: 1, pointerType: 'mouse', button: 0 };
+    fireEvent.pointerDown(plot, { ...opts, clientX: xOf(container, 'c1') });
+    fireEvent.pointerMove(plot, { ...opts, clientX: xOf(container, 'c3') });
+    fireEvent.keyDown(plot, { key: 'Escape' });
+    fireEvent.pointerUp(plot, { ...opts, clientX: xOf(container, 'c3') });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(band(container)).not.toBeNull();
+    expect(Number(band(container)!.getAttribute('width'))).toBeLessThan(
+      xOf(container, 'c2') - xOf(container, 'c0'),
+    );
+  });
+
+  it('a focused legend button keeps focus when the zoom buttons appear', () => {
+    const layout = stubLayout();
+    const two: ChartProps = {
+      ...sel,
+      series: [
+        { key: 'a', label: 'Alpha', values: [1, 2, 3, 4, 5] },
+        { key: 'b', label: 'Bravo', values: [1, 2, 3, 4, 5] },
+      ],
+      onSelectedRangeChange: () => {},
+    };
+    const { rerender } = render(<Chart {...two} selectedRange={null} />);
+    layout.fire();
+    const alpha = screen.getByRole('button', { name: 'Alpha' });
+    act(() => alpha.focus());
+    rerender(<Chart {...two} selectedRange={{ from: 'c1', to: 'c2' }} />);
+    expect(screen.getByRole('button', { name: 'Zoom to selection' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Alpha' })).toBe(alpha);
+    expect(alpha).toHaveFocus();
+  });
+
+  it('Reset zoom into an empty chart moves focus to the figure', async () => {
+    const layout = stubLayout();
+    render(
+      <Chart
+        {...sel}
+        series={[{ key: 'won', label: 'Deals won', values: [null, null, null, null, null] }]}
+        defaultZoomRange={{ from: 'c1', to: 'c2' }}
+      />,
+    );
+    layout.fire();
+    await userEvent.click(screen.getByRole('button', { name: 'Reset zoom' }));
+    expect(screen.getByRole('figure', { name: 'Deals won per week' })).toHaveFocus();
+  });
+
+  it('compact: the legend fits into the width the zoom buttons leave', () => {
+    // The stub gives every element the same width, so the zoom buttons claim the whole row.
+    const layout = stubLayout(400, 100);
+    const many: ChartProps = {
+      ...sel,
+      series: ['Alpha team', 'Bravo team', 'Charlie team', 'Delta team', 'Echo team'].map(
+        (label, i) => ({ key: `s${i}`, label, values: [1, 2, 3, 4, 5] }),
+      ),
+    };
+    const legendButtons = () =>
+      screen.getAllByRole('button').filter((b) => b.hasAttribute('aria-pressed')).length;
+    const { rerender } = render(<Chart {...many} />);
+    layout.fire();
+    const without = legendButtons();
+    rerender(<Chart {...many} zoomRange={{ from: 'c1', to: 'c3' }} />);
+    layout.fire();
+    expect(screen.getByRole('button', { name: 'Reset zoom' })).toBeInTheDocument();
+    expect(legendButtons()).toBeLessThan(without);
+  });
+
+  it('is off without selection props', async () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...sel} />);
+    layout.fire();
+    drag(container, 'c1', 'c3');
+    expect(band(container)).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(plotOf()).toHaveAccessibleDescription(
+      'Use arrow keys to inspect values. All values are also in the data table.',
+    );
+  });
+
+  it('adds the range hint when selection is enabled', () => {
+    stubLayout();
+    render(<Chart {...sel} onSelectedRangeChange={() => {}} />);
+    expect(plotOf()).toHaveAccessibleDescription(
+      'Use arrow keys to inspect values. All values are also in the data table. Shift+arrows select a range.',
+    );
+  });
+});

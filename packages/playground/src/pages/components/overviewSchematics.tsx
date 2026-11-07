@@ -1575,6 +1575,37 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Row>
     </Col>
   ),
+  ScatterChart: (
+    <svg width={84} height={44} viewBox="0 0 84 44" fill="none" aria-hidden="true">
+      {[
+        [10, 34, 3],
+        [22, 28, 4],
+        [30, 32, 3],
+        [44, 20, 5],
+        [58, 16, 4],
+        [70, 8, 3],
+      ].map(([cx, cy, r], i) => (
+        <circle
+          key={i}
+          cx={cx}
+          cy={cy}
+          r={r}
+          fill={i === 3 ? 'var(--color-accent)' : 'var(--color-accent-subtle-bg)'}
+        />
+      ))}
+    </svg>
+  ),
+  Heatmap: (
+    <Col gap={3}>
+      {[0, 1, 2].map((r) => (
+        <Row key={r} gap={3}>
+          {[0, 1, 2, 3].map((c) =>
+            r === 1 && c === 2 ? <Solid key={c} w={14} h={10} /> : <Box key={c} w={14} h={10} />,
+          )}
+        </Row>
+      ))}
+    </Col>
+  ),
   Sparkline: (
     <Col gap={6}>
       <Bar w={28} />

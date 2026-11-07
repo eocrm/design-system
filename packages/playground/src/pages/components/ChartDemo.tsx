@@ -7,7 +7,9 @@ import {
   DashboardWidget,
   Stack,
   Switch,
+  Text,
   type ChartMarker,
+  type ChartRange,
   type ChartSeries,
   type ChartType,
 } from '@eocrm/design-system';
@@ -79,6 +81,47 @@ const dailySeries: ChartSeries[] = [
   { key: 'prev', label: 'Previous period', values: wave(7, 90, 8), comparisonOf: 'calls' },
 ];
 
+// Bowl weight sampled once a minute over an hour, as a feeder would log it.
+const minutes = Array.from({ length: 60 }, (_, i) => `08:${String(i).padStart(2, '0')}`);
+const bowlSeries: ChartSeries[] = [
+  {
+    key: 'bowl',
+    label: 'Bowl weight',
+    values: minutes.map((_, i) => Math.max(0, 120 - i * 2 + (i % 7 === 0 ? 30 : 0))),
+  },
+];
+const formatGrams = (n: number) => `${fmt.format(n)} g`;
+
+const mealHours = ['07:00', '12:00', '18:00', '21:00'];
+const pinnedSeries: ChartSeries[] = [
+  { key: 'a', label: 'Bowl A', color: 3, values: [45, 38, 52, 30] },
+  { key: 'b', label: 'Bowl B', color: 5, values: [28, 60, 41, null] },
+];
+const eatenSeries: ChartSeries[] = [{ key: 'g', label: 'Eaten', values: [73, 98, 93, 30] }];
+const mealDetails = (i: number) => [`${[190, 255, 240, 80][i]} kcal`, `${[3, 4, 4, 1][i]} times`];
+
+function RangeSelectionExample() {
+  const [range, setRange] = useState<ChartRange | null>(null);
+  return (
+    <Stack gap="sm">
+      <Cell title="Bowl weight">
+        <Chart
+          type="line"
+          label="Bowl weight per minute"
+          categories={minutes}
+          series={bowlSeries}
+          formatValue={formatGrams}
+          selectedRange={range}
+          onSelectedRangeChange={setRange}
+        />
+      </Cell>
+      <Text size="sm" tone="muted" data-testid="chart-range-readout">
+        {range ? `Selected ${range.from} – ${range.to}` : ''}
+      </Text>
+    </Stack>
+  );
+}
+
 export function ChartDemo() {
   const [type, setType] = useState<ChartType>('line');
   const [loading, setLoading] = useState(false);
@@ -145,6 +188,60 @@ export function ChartDemo() {
             />
           </Cell>
         </Stack>
+      </Example>
+
+      <Example
+        title="Range selection"
+        description="Passing onSelectedRangeChange turns selection on. While a range exists a Zoom to selection button appears in the legend row (Reset zoom once zoomed), so the chart can zoom with no extra props. Mouse: press and drag. Touch: hold a finger still for a moment, then slide; a quick swipe still scrolls the page and a tap shows the tooltip. Keyboard: Shift+arrows. A click or tap outside the band clears it."
+        code={`const [range, setRange] = useState<ChartRange | null>(null);
+<Chart type="line" label="Bowl weight per minute" categories={minutes} series={bowl}
+  formatValue={formatGrams} selectedRange={range} onSelectedRangeChange={setRange}
+/>
+<Text size="sm" tone="muted">{range ? \`Selected \${range.from} – \${range.to}\` : ''}</Text>`}
+      >
+        <RangeSelectionExample />
+      </Example>
+
+      <Example
+        title="Colour"
+        description="color pins a series to a palette slot (1-8) so an entity keeps its colour when others are filtered or reordered. Series without color fill the free slots in order."
+        code={`<Chart type="line" label="Eaten per bowl" categories={hours}
+  series={[
+    { key: 'a', label: 'Bowl A', color: 3, values: bowlA },
+    { key: 'b', label: 'Bowl B', color: 5, values: bowlB },
+  ]}
+/>`}
+      >
+        <Cell title="Eaten per bowl">
+          <Chart
+            type="line"
+            label="Eaten per bowl"
+            categories={mealHours}
+            series={pinnedSeries}
+            formatValue={formatGrams}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Details and value labels"
+        description="details adds muted lines per category to the tooltip, the keyboard announcement and a Details column in the data table. valueLabels prints each bar's value (or stack total) on the chart."
+        code={`<Chart type="bar" label="Grams eaten per meal" categories={mealHours} series={eaten}
+  formatValue={formatGrams} valueLabels
+  details={(i) => [\`\${kcal[i]} kcal\`, \`\${times[i]} times\`]}
+/>`}
+      >
+        <Cell title="Grams per meal">
+          <Chart
+            type="bar"
+            label="Grams eaten per meal"
+            categories={mealHours}
+            series={eatenSeries}
+            formatValue={formatGrams}
+            valueLabels
+            details={mealDetails}
+          />
+        </Cell>
       </Example>
 
       <Example

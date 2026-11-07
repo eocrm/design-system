@@ -1,0 +1,25 @@
+// Heatmap.tokens.scss — component tokens for <Heatmap>. Steps alias the validated sequential
+// ramp (heatmap.1..5, gated in design-tokens/test/heatmap-ramp.test.mjs); axis, legend, tooltip
+// and footnote reuse Chart's tokens.
+@use '../Chart/Chart.tokens';
+
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
+  --heatmap-step-1: var(--color-heatmap-1);
+  --heatmap-step-2: var(--color-heatmap-2);
+  --heatmap-step-3: var(--color-heatmap-3);
+  --heatmap-step-4: var(--color-heatmap-4);
+  --heatmap-step-5: var(--color-heatmap-5);
+
+  // A null cell: neutral fill plus an outline, so "no data" never reads as the lowest step.
+  --heatmap-empty: var(--color-bg-muted);
+  --heatmap-empty-outline: var(--color-border);
+  --heatmap-empty-outline-width: var(--border-width);
+
+  // Surface-coloured space between cells (px, read by the component).
+  --heatmap-gap: var(--border-width-emphasis);
+
+  // Outline of the hovered / keyboard-inspected cell.
+  --heatmap-active-ring: var(--color-fg);
+  --heatmap-active-ring-width: var(--border-width-emphasis);
+}

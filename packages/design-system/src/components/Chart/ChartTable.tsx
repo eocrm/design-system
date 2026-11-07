@@ -17,6 +17,8 @@ export function ChartTable({
   formatValue,
   markersHeader,
   markers,
+  detailsHeader,
+  detailsAt,
 }: {
   caption: string;
   categoryHeader: string;
@@ -26,6 +28,9 @@ export function ChartTable({
   formatValue: (n: number) => string;
   markersHeader: string;
   markers: readonly ResolvedMarker[];
+  /** Set only when the chart has `details`; omitted means no details column. */
+  detailsHeader?: string;
+  detailsAt: (categoryIndex: number) => string[];
 }) {
   // Only labelled markers carry meaning; decorative bands add no column.
   const hasNotes = markers.some((m) => m.label);
@@ -42,6 +47,7 @@ export function ChartTable({
               </th>
             ))}
             {hasNotes && <th scope="col">{markersHeader}</th>}
+            {detailsHeader && <th scope="col">{detailsHeader}</th>}
           </tr>
         </thead>
         <tbody>
@@ -53,6 +59,7 @@ export function ChartTable({
                 return <td key={c.key}>{v === null ? noData : formatValue(v)}</td>;
               })}
               {hasNotes && <td>{markerLabelsAt(markers, i).join(', ')}</td>}
+              {detailsHeader && <td>{detailsAt(i).join('; ')}</td>}
             </tr>
           ))}
         </tbody>

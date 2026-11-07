@@ -300,10 +300,10 @@ describe('MoneyInput', () => {
       expect(onChange).toHaveBeenLastCalledWith({ amount: '-5', currency: 'JPY' });
     });
 
-    it('de-DE numpad dot becomes the decimal', async () => {
+    it('ru-RU numpad dot becomes the decimal', async () => {
       const onChange = vi.fn();
       render(
-        <LocaleProvider locale="de-DE">
+        <LocaleProvider locale="ru-RU">
           <Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />
         </LocaleProvider>,
       );
@@ -313,10 +313,10 @@ describe('MoneyInput', () => {
       expect(onChange).toHaveBeenLastCalledWith({ amount: '12.5', currency: 'EUR' });
     });
 
-    it('de-DE dot is still the decimal for a 3-digit currency (KWD)', async () => {
+    it('ru-RU dot is still the decimal for a 3-digit currency (KWD)', async () => {
       const onChange = vi.fn();
       render(
-        <LocaleProvider locale="de-DE">
+        <LocaleProvider locale="ru-RU">
           <Harness
             onChange={onChange}
             currencies={['KWD', 'EUR']}
@@ -712,5 +712,61 @@ describe('MoneyInput', () => {
     expect(onChange).toHaveBeenLastCalledWith({ amount: '5', currency: 'EUR' });
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+
+  describe('typed dot (DS-39)', () => {
+    const inLoc = (locale: string, spy = vi.fn()) => {
+      render(
+        <LocaleProvider locale={locale}>
+          <Harness
+            onChange={spy}
+            currencies={['EUR', 'RUB']}
+            initial={{ amount: null, currency: 'EUR' }}
+          />
+        </LocaleProvider>,
+      );
+      return spy;
+    };
+
+    it('de: typing 1.234,5 gives 1234.5 (the dot is ignored)', async () => {
+      const spy = inLoc('de-DE');
+      await userEvent.setup().type(amountBox(), '1.234,5');
+      expect(spy).toHaveBeenLastCalledWith({ amount: '1234.5', currency: 'EUR' });
+      expect(amountBox().value).toBe('1.234,5');
+    });
+
+    it('de: typing 1.5 gives 15', async () => {
+      const spy = inLoc('de-DE');
+      await userEvent.setup().type(amountBox(), '1.5');
+      expect(spy).toHaveBeenLastCalledWith({ amount: '15', currency: 'EUR' });
+      expect(amountBox().value).toBe('15');
+    });
+
+    it('de: a mobile insertText "." (no keydown) is reverted', async () => {
+      const spy = inLoc('de-DE');
+      await userEvent.setup().type(amountBox(), '15');
+      spy.mockClear();
+      fireEvent.input(amountBox(), {
+        target: { value: '1.5', selectionStart: 2, selectionEnd: 2 },
+        inputType: 'insertText',
+        data: '.',
+      });
+      expect(amountBox().value).toBe('15');
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('de: a pasted 1.234,5 is 1234.5', async () => {
+      const spy = inLoc('de-DE');
+      const user = userEvent.setup();
+      await user.click(amountBox());
+      await user.paste('1.234,5');
+      expect(spy).toHaveBeenLastCalledWith({ amount: '1234.5', currency: 'EUR' });
+    });
+
+    it('ru: the numpad dot still types the decimal', async () => {
+      const spy = inLoc('ru-RU');
+      await userEvent.setup().type(amountBox(), '12.5');
+      expect(spy).toHaveBeenLastCalledWith({ amount: '12.5', currency: 'EUR' });
+    });
   });
 });

@@ -78,6 +78,7 @@
       "Banner",
       "ButtonGroup",
       "Calendar",
+      "Chart",
       "ChatLauncher",
       "CodeBlock",
       "ConfirmationPopover",
@@ -145,12 +146,16 @@
     "tier": "composition",
     "cluster": "Display",
     "composes": [
+      "Button",
+      "Cluster",
       "EmptyState",
       "LiveRegion",
       "VisuallyHidden"
     ],
     "composedBy": [
-      "FunnelChart"
+      "FunnelChart",
+      "Heatmap",
+      "ScatterChart"
     ]
   },
   "ChatBubble": {
@@ -195,6 +200,7 @@
     "composes": [],
     "composedBy": [
       "Calendar",
+      "Chart",
       "ConfirmationPopover",
       "DateStrip",
       "OptionsPicker",
@@ -395,7 +401,9 @@
       "CatalogPicker",
       "Chart",
       "DataTable",
-      "FunnelChart"
+      "FunnelChart",
+      "Heatmap",
+      "ScatterChart"
     ]
   },
   "EntityChip": {
@@ -483,6 +491,17 @@
       "FormRow",
       "StatGroup"
     ]
+  },
+  "Heatmap": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Chart",
+      "EmptyState",
+      "LiveRegion",
+      "VisuallyHidden"
+    ],
+    "composedBy": []
   },
   "Highlight": {
     "tier": "primitive",
@@ -624,7 +643,9 @@
       "CodeBlock",
       "DateStrip",
       "FunnelChart",
+      "Heatmap",
       "RichTextEditor",
+      "ScatterChart",
       "TopBar",
       "TreeView"
     ]
@@ -847,6 +868,17 @@
       "Slider",
       "Stack",
       "Text"
+    ],
+    "composedBy": []
+  },
+  "ScatterChart": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Chart",
+      "EmptyState",
+      "LiveRegion",
+      "VisuallyHidden"
     ],
     "composedBy": []
   },
@@ -1144,7 +1176,9 @@
       "DashboardWidget",
       "DateStrip",
       "FunnelChart",
+      "Heatmap",
       "LiveRegion",
+      "ScatterChart",
       "StagePath",
       "StatGroup",
       "TreeView"

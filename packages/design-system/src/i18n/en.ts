@@ -480,6 +480,15 @@ export const en: Messages = {
     category: 'Category',
     noData: 'No data',
     markers: 'Markers',
+    details: 'Details',
+    rangeHint: 'Shift+arrows select a range.',
+    zoomToSelection: 'Zoom to selection',
+    resetZoom: 'Reset zoom',
+    selected: ({ from, to }) => `Selected ${from as string} to ${to as string}`,
+    selectedOne: ({ category }) => `Selected ${category as string}`,
+    selectionCleared: 'Selection cleared',
+    zoomed: ({ from, to }) => `Zoomed to ${from as string}–${to as string}`,
+    zoomedOne: ({ category }) => `Zoomed to ${category as string}`,
   },
   funnelChart: {
     keyboardHint: 'Use arrow keys to inspect stages. All values are also in the data table.',
@@ -490,6 +499,18 @@ export const en: Messages = {
     ofStage: ({ percent, stage }) => `${percent as string} of ${stage as string}`,
     noData: '—',
     vsPrevious: 'vs previous',
+  },
+  scatterChart: {
+    keyboardHint:
+      'Use arrow keys to inspect points in order of x. All values are also in the data table.',
+    series: 'Series',
+    size: 'Size',
+    pointLabel: 'Note',
+  },
+  heatmap: {
+    keyboardHint:
+      'Use arrow keys to move between cells, Home and End within a row, Ctrl+Home and Ctrl+End to the corners. All values are also in the data table.',
+    noData: 'No data',
   },
   treeView: {
     loading: 'Loading…',

@@ -10,6 +10,7 @@ import {
   localeSeparators,
   parseAmount,
   parseLocalAmount,
+  typedDotIsAmbiguous,
   roundAmount,
 } from './currency';
 
@@ -244,5 +245,18 @@ describe('parseLocalAmount (strict own-locale)', () => {
     expect(c('1.234,5', de)).toBe('1234.5');
     expect(c('-5', { ...en, allowNegative: true })).toBe('-5');
     expect(c('-5')).toBe('5');
+  });
+});
+
+describe('typedDotIsAmbiguous', () => {
+  it.each([
+    ['de-DE', true],
+    ['es-ES', true],
+    ['it-IT', true],
+    ['ru-RU', false],
+    ['fr-FR', false],
+    ['en-US', false],
+  ])('%s', (locale, expected) => {
+    expect(typedDotIsAmbiguous(localeSeparators(locale))).toBe(expected);
   });
 });

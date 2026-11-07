@@ -1,0 +1,103 @@
+@use './Heatmap.tokens';
+@use '../../styles/mixins' as *;
+
+// Layout mirrors Chart: legend row, plot filling the rest, optional footnote. The plot clips (overflow hidden), so
+// its grid track's minimum is its inline min-height / min-width (minimum cells): a box too small makes the figure
+// overflow rather than clip cells. Without a definite height the track sizes to the svg's width-limited height.
+.root {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--chart-gap);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.root[data-empty] {
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
+}
+
+.root[data-footnote] {
+  grid-template-rows: auto 1fr auto;
+}
+
+.root[data-empty][data-footnote] {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.footnote {
+  color: var(--chart-footnote-fg);
+  font-size: var(--chart-footnote-size);
+  line-height: var(--chart-footnote-line-height);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--chart-legend-gap);
+  padding: 0;
+  list-style: none;
+  color: var(--chart-legend-fg);
+  font-size: var(--chart-legend-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.swatch {
+  flex-shrink: 0;
+  width: var(--chart-swatch);
+  height: var(--chart-swatch);
+  border-radius: var(--radius-sm);
+  background: var(--heatmap-swatch, var(--heatmap-empty));
+}
+
+.swatchEmpty {
+  box-shadow: inset 0 0 0 var(--heatmap-empty-outline-width) var(--heatmap-empty-outline);
+}
+
+.plot {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--chart-plot-radius);
+  outline: none;
+  touch-action: pan-y;
+
+  &:focus-visible {
+    @include focus-ring(var(--chart-ring));
+  }
+}
+
+.svg {
+  display: block;
+}
+
+.axis text {
+  fill: var(--chart-axis-fg);
+  font-size: var(--chart-axis-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.cell {
+  fill: var(--heatmap-swatch, var(--heatmap-empty));
+}
+
+.empty {
+  fill: var(--heatmap-empty);
+  stroke: var(--heatmap-empty-outline);
+  stroke-width: var(--heatmap-empty-outline-width);
+}
+
+.active {
+  fill: none;
+  stroke: var(--heatmap-active-ring);
+  stroke-width: var(--heatmap-active-ring-width);
+  pointer-events: none;
+}
