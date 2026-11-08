@@ -44,6 +44,10 @@ decisions, spans multiple coupled changes, or the user explicitly requests a
 written spec or plan. Skipping planning paperwork does not skip relevant tests,
 formatting, verification, or PR/review gates.
 
+## Work tracking
+
+Bugs and feature requests live in **eocrm, space DS** (keys like `DS-41`), not GitHub issues. Use the eocrm `tasks_*` tools to read and update them, and the `implement-task` skill to take one from open to released and Done. File new defects there as `bug` tasks.
+
 ## Git workflow
 
 **Code, configs, and workflows go through PRs — direct pushes to `main` are prohibited.**
