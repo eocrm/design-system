@@ -58,7 +58,7 @@ function SelectableRows() {
             fullWidth
             align="start"
             selected={picked === place}
-            aria-pressed={picked === place}
+            aria-current={picked === place ? 'true' : undefined}
             onClick={() => setPicked(place)}
           >
             {place}
@@ -232,7 +232,7 @@ export function AppliedFilters() {
 
       <Example
         title="Selectable rows (fullWidth + align)"
-        description="fullWidth fills the container; align start puts the label at the inline start, so rows of different-length names line up and the whole row is the hit area. Content stays centred without align (a full-width submit). Both are ignored with iconOnly."
+        description="fullWidth fills the container; align start puts the label at the inline start, so rows of different-length names line up and the whole row is the hit area; a long label wraps. Pick-one rows mark the chosen one with aria-current, not aria-pressed (clicking it again doesn't unpick it). Content stays centred without align (a full-width submit). Both are ignored with iconOnly."
         code={`import { useState } from 'react';
 import { Button, List } from '@eocrm/design-system';
 
@@ -249,7 +249,7 @@ export function SelectableRows() {
             fullWidth
             align="start"
             selected={picked === place}
-            aria-pressed={picked === place}
+            aria-current={picked === place ? 'true' : undefined}
             onClick={() => setPicked(place)}
           >
             {place}

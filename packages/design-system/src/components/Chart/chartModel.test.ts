@@ -809,6 +809,7 @@ describe('estimateTextWidth (DS-20)', () => {
     // DS-41: wide capitals; "Wed" renders ~25px at 12px system-ui and clipped at 23.
     expect(estimateTextWidth('W')).toBe(12);
     expect(estimateTextWidth('M')).toBe(12);
+    expect(estimateTextWidth('М')).toBe(12); // Cyrillic Em, as in "Май"
     expect(estimateTextWidth('Wed')).toBeGreaterThanOrEqual(25);
     expect(estimateTextWidth('か')).toBe(12);
     expect(estimateTextWidth('カ')).toBe(12);

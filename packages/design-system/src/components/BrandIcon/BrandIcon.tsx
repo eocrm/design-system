@@ -26,6 +26,7 @@ type BrandSvg = { viewBox: string; body: ReactNode };
 const ICONS: Record<BrandName, BrandSvg> = {
   // GitHub's mark is monochrome by brand rule, so it follows `currentColor`
   // (the surrounding text colour) and stays readable on any button and theme.
+  // Path: Primer Octicons `mark-github-16`; use is per GitHub's logo guidelines.
   github: {
     viewBox: '0 0 16 16',
     body: (

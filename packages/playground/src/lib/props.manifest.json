@@ -445,14 +445,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Fill the container's inline size (`inline-size: 100%`). Content stays\ncentred unless `align=\"start\"`. For a full-width submit on a narrow form,\nor (with `align=\"start\"`) a selectable list row. Ignored with `iconOnly`.\nDefaults to `false` (content width)."
+          "description": "Fill the container's inline size (`inline-size: 100%`). Content stays\ncentred unless `align=\"start\"`. A label too long for the width wraps and\nthe button grows (the size's height becomes a minimum). For a full-width\nsubmit on a narrow form, or (with `align=\"start\"`) a selectable list row.\nIgnored with `iconOnly`. Defaults to `false` (content width)."
         },
         {
           "name": "align",
           "type": "\"start\" | \"center\"",
           "required": false,
           "default": "center",
-          "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\nfor a selectable list row whose labels line up. Ignored with `iconOnly`."
+          "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\n(+ `aria-current=\"true\"` on the picked row) for a pick-one list row whose\nlabels line up. Ignored with `iconOnly`."
         },
         {
           "name": "as",
@@ -6510,14 +6510,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Fill the container's inline size (`inline-size: 100%`). Content stays\ncentred unless `align=\"start\"`. For a full-width submit on a narrow form,\nor (with `align=\"start\"`) a selectable list row. Ignored with `iconOnly`.\nDefaults to `false` (content width)."
+          "description": "Fill the container's inline size (`inline-size: 100%`). Content stays\ncentred unless `align=\"start\"`. A label too long for the width wraps and\nthe button grows (the size's height becomes a minimum). For a full-width\nsubmit on a narrow form, or (with `align=\"start\"`) a selectable list row.\nIgnored with `iconOnly`. Defaults to `false` (content width)."
         },
         {
           "name": "align",
           "type": "\"start\" | \"center\"",
           "required": false,
           "default": "center",
-          "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\nfor a selectable list row whose labels line up. Ignored with `iconOnly`."
+          "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\n(+ `aria-current=\"true\"` on the picked row) for a pick-one list row whose\nlabels line up. Ignored with `iconOnly`."
         },
         {
           "name": "as",

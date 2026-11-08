@@ -91,16 +91,18 @@ interface ButtonOwnProps {
   color?: PaletteColor;
   /**
    * Fill the container's inline size (`inline-size: 100%`). Content stays
-   * centred unless `align="start"`. For a full-width submit on a narrow form,
-   * or (with `align="start"`) a selectable list row. Ignored with `iconOnly`.
-   * Defaults to `false` (content width).
+   * centred unless `align="start"`. A label too long for the width wraps and
+   * the button grows (the size's height becomes a minimum). For a full-width
+   * submit on a narrow form, or (with `align="start"`) a selectable list row.
+   * Ignored with `iconOnly`. Defaults to `false` (content width).
    */
   fullWidth?: boolean;
   /**
    * Where the content sits when the button is wider than it: `center`
    * (default) or `start` (the inline start — left in LTR, right in RTL).
    * Pair `align="start"` with `fullWidth` and `variant="ghost"` + `selected`
-   * for a selectable list row whose labels line up. Ignored with `iconOnly`.
+   * (+ `aria-current="true"` on the picked row) for a pick-one list row whose
+   * labels line up. Ignored with `iconOnly`.
    */
   align?: 'start' | 'center';
 }

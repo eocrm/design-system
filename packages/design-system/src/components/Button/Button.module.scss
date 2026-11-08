@@ -43,6 +43,7 @@
   @include touch-hit-area;
 
   height: var(--button-height-xs);
+  min-height: var(--button-height-xs);
   padding: 0 var(--button-padding-x-xs);
   font-size: var(--button-font-size-xs);
   gap: var(--button-gap-xs);
@@ -52,18 +53,21 @@
   @include touch-hit-area;
 
   height: var(--button-height-sm);
+  min-height: var(--button-height-sm);
   padding: 0 var(--button-padding-x-sm);
   font-size: var(--button-font-size-sm);
 }
 
 .md {
   height: var(--button-height-md);
+  min-height: var(--button-height-md);
   padding: 0 var(--button-padding-x-md);
   font-size: var(--button-font-size-md);
 }
 
 .lg {
   height: var(--button-height-lg);
+  min-height: var(--button-height-lg);
   padding: 0 var(--button-padding-x-lg);
   font-size: var(--button-font-size-lg);
 }
@@ -75,13 +79,20 @@
 }
 
 // Layout opt-ins (DS-38): 100% of the container is the intrinsic-width
-// exception Rule 4 allows; the parent still owns placement.
+// exception Rule 4 allows; the parent still owns placement. A full-width
+// label wraps instead of spilling past the border: the size's height becomes
+// a minimum (set on each size class above) and the box grows per line.
 .fullWidth {
-  width: 100%;
+  inline-size: 100%;
+  height: auto;
+  padding-block: var(--button-padding-y-wrap);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .alignStart {
   justify-content: flex-start;
+  text-align: start;
 }
 
 // Variants

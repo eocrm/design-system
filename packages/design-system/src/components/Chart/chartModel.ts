@@ -302,7 +302,7 @@ export function estimateTextWidth(text: string): number {
     else if (/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(ch))
       w += 12;
     // W and M render ~11–12px at 12px; at 9 a "Wed" / "Mon" heatmap row label clipped at the edge (DS-41).
-    else if (/[WMШЩЖЮ]/u.test(ch)) w += 12;
+    else if (/[WMМШЩЖЮФЫ]/u.test(ch)) w += 12;
     else if (/[\p{Lu}mw]/u.test(ch)) w += 9;
     else if (/\p{L}/u.test(ch)) w += 7;
     else w += 9;
