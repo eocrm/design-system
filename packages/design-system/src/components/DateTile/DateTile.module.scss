@@ -101,7 +101,7 @@
 }
 
 .today.stacked.plain {
-  color: var(--date-tile-today-bg);
+  color: var(--date-tile-today-text);
 
   .month,
   .bottom {
@@ -123,9 +123,4 @@
 .past.stacked .month,
 .past .bottom {
   color: var(--date-tile-past-fg);
-}
-
-// Wrapper only carries aria-hidden; layout belongs to the root.
-.visual {
-  display: contents;
 }

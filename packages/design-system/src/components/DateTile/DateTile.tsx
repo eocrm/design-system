@@ -20,15 +20,15 @@ export type DateTileSize = 'sm' | 'md' | 'lg';
 export type DateTileSurface = 'filled' | 'plain';
 
 export interface DateTileProps extends Omit<HTMLAttributes<HTMLTimeElement>, 'color' | 'children'> {
-  /** The date: a `Date`, a `'YYYY-MM-DD'` calendar day (no time zone shift), or any other string parsed as an instant (e.g. ISO datetime). */
+  /** The date: a `Date`, a `'YYYY-MM-DD'` calendar day (no time zone shift), or any other string parsed as an instant. Instant strings must carry `Z` or an offset (`'2026-11-12T14:30:00Z'`); an offset-less datetime is read as device-local time, not `timeZone`. */
   date: DateTileInput;
   /** Optional range end; an end not after `date` is ignored. */
   end?: DateTileInput;
-  /** `'stacked'` (**default**) or `'page'`. */
+  /** `'stacked'` (**default**) for lists and compact slots; `'page'` for event/booking cards and headers that want a calendar-page look. */
   layout?: DateTileLayout;
-  /** `'sm'` / `'md'` (**default**) / `'lg'`. `'sm'` has no bottom line. */
+  /** `'sm'` for the leading slot of list rows (bottom line hidden, put the time beside it); `'md'` (**default**) for cards and widgets; `'lg'` for headers and hero areas. */
   size?: DateTileSize;
-  /** `'filled'` (**default**) or `'plain'`. */
+  /** `'filled'` (**default**) subtle bg + border; `'plain'` for dense lists and timelines. */
   surface?: DateTileSurface;
   /** Bottom line: `'weekday'` (**default**), `'time'` or `'weekday-time'`. Time needs an instant (`Date` or non-day string). */
   show?: DateTileShow;
@@ -38,7 +38,7 @@ export interface DateTileProps extends Omit<HTMLAttributes<HTMLTimeElement>, 'co
   now?: Date;
   /** IANA time zone used to resolve instants to a day and time. Defaults to the runtime zone. */
   timeZone?: string;
-  /** Palette color of the month band — `layout="page"` only, ignored for stacked. */
+  /** Palette color of the month band — `layout="page"` only, ignored for stacked. Default accent; use it categorically (event type), not semantically (success/danger). */
   color?: PaletteColor;
 }
 
@@ -104,14 +104,22 @@ export const DateTile = forwardRef<HTMLTimeElement, DateTileProps>(function Date
         className,
       )}
       style={{ ...cssVars, ...style }}
+      // Spread last (Pattern A): the visible text is aria-hidden per span and the
+      // name is the VisuallyHidden label; a consumer can still override aria-*.
       {...rest}
     >
       <VisuallyHidden>{parts.label}</VisuallyHidden>
-      <span aria-hidden="true" className={styles.visual}>
-        <span className={styles.month}>{parts.month}</span>
-        <span className={styles.day}>{parts.day}</span>
-        {size !== 'sm' && parts.bottom && <span className={styles.bottom}>{parts.bottom}</span>}
+      <span aria-hidden="true" className={styles.month}>
+        {parts.month}
       </span>
+      <span aria-hidden="true" className={styles.day}>
+        {parts.day}
+      </span>
+      {size !== 'sm' && parts.bottom && (
+        <span aria-hidden="true" className={styles.bottom}>
+          {parts.bottom}
+        </span>
+      )}
     </time>
   );
 });

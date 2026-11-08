@@ -40,6 +40,13 @@ describe('dateTileParts', () => {
     expect(r.label).not.toContain('Today');
   });
 
+  it('TZ pin takes effect and a day string with no timeZone uses the device day', () => {
+    const at = new Date('2026-11-12T03:00:00Z');
+    expect(at.getDate()).toBe(11);
+    expect(p({ date: at, now: at }).day).toBe('11');
+    expect(p({ date: '2026-11-11', now: at }).relative).toBe('today');
+  });
+
   it('resolves instants in the given time zone (RF1)', () => {
     const date = new Date('2026-11-12T23:30:00Z');
     expect(p({ date, timeZone: 'Asia/Tokyo' }).day).toBe('13');
@@ -116,6 +123,15 @@ describe('dateTileParts', () => {
     });
     it('strips locale abbreviation dots from every month', () => {
       expect(p({ date: '2026-11-28', end: '2026-12-02', locale: 'ru' }).month).toBe('нояб – дек');
+    });
+    it('ru year line has no era word (single and cross-year)', () => {
+      expect(p({ date: '2027-03-04', locale: 'ru' }).month).not.toMatch(/г/);
+      const r = p({ date: '2026-12-30', end: '2027-01-02', locale: 'ru' }).month;
+      expect(r).not.toMatch(/г/);
+      expect(r).toMatch(/2026.*2027/);
+    });
+    it('en year line unchanged', () => {
+      expect(p({ date: '2027-03-04', locale: 'en-US' }).month).toBe('Mar 2027');
     });
     it('ended', () => {
       expect(p({ date: '2026-11-01', end: '2026-11-03' }).relative).toBe('past');

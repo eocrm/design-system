@@ -9,12 +9,6 @@ import type { PaletteColor } from '../palette';
 import type { LiquidTagSnippetId } from '../components/LiquidEditor/liquidTags';
 
 export interface Messages {
-  dateTile: {
-    today: string;
-    tomorrow: string;
-    yesterday: string;
-    ongoing: string;
-  };
   alert: {
     /** aria-label on the Alert's dismiss (×) button. */
     dismiss: string;
@@ -53,6 +47,16 @@ export interface Messages {
     cancel: string;
     /** Label on the primary "Confirm" button inside the confirmation popover. */
     confirm: string;
+  };
+  dateTile: {
+    /** DateTile relative word (also in its accessible name) for the current day. */
+    today: string;
+    /** DateTile relative word for the next day. */
+    tomorrow: string;
+    /** DateTile relative word for the previous day. */
+    yesterday: string;
+    /** DateTile word for a range that contains today. */
+    ongoing: string;
   };
   mediaTile: {
     /**

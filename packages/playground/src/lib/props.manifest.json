@@ -2305,7 +2305,7 @@
           "type": "string | Date",
           "required": true,
           "default": "",
-          "description": "The date: a `Date`, a `'YYYY-MM-DD'` calendar day (no time zone shift), or any other string parsed as an instant (e.g. ISO datetime)."
+          "description": "The date: a `Date`, a `'YYYY-MM-DD'` calendar day (no time zone shift), or any other string parsed as an instant. Instant strings must carry `Z` or an offset (`'2026-11-12T14:30:00Z'`); an offset-less datetime is read as device-local time, not `timeZone`."
         },
         {
           "name": "end",
@@ -2319,21 +2319,21 @@
           "type": "DateTileLayout",
           "required": false,
           "default": "'stacked'",
-          "description": "`'stacked'` (**default**) or `'page'`."
+          "description": "`'stacked'` (**default**) for lists and compact slots; `'page'` for event/booking cards and headers that want a calendar-page look."
         },
         {
           "name": "size",
           "type": "DateTileSize",
           "required": false,
           "default": "'md'",
-          "description": "`'sm'` / `'md'` (**default**) / `'lg'`. `'sm'` has no bottom line."
+          "description": "`'sm'` for the leading slot of list rows (bottom line hidden, put the time beside it); `'md'` (**default**) for cards and widgets; `'lg'` for headers and hero areas."
         },
         {
           "name": "surface",
           "type": "DateTileSurface",
           "required": false,
           "default": "'filled'",
-          "description": "`'filled'` (**default**) or `'plain'`."
+          "description": "`'filled'` (**default**) subtle bg + border; `'plain'` for dense lists and timelines."
         },
         {
           "name": "show",
@@ -2368,7 +2368,7 @@
           "type": "PaletteColor",
           "required": false,
           "default": "",
-          "description": "Palette color of the month band — `layout=\"page\"` only, ignored for stacked."
+          "description": "Palette color of the month band — `layout=\"page\"` only, ignored for stacked. Default accent; use it categorically (event type), not semantically (success/danger)."
         }
       ]
     },

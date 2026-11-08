@@ -14,17 +14,17 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `date` | `DateTileInput` | yes | The date: a `Date`, a `'YYYY-MM-DD'` calendar day (no time zone shift), or any other string parsed as an instant (e.g. ISO datetime). |
+| `date` | `DateTileInput` | yes | The date: a `Date`, a `'YYYY-MM-DD'` calendar day (no time zone shift), or any other string parsed as an instant. Instant strings must carry `Z` or an offset (`'2026-11-12T14:30:00Z'`); an offset-less datetime is read as device-local time, not `timeZone`. |
 | `end` | `DateTileInput` | no | Optional range end; an end not after `date` is ignored. |
-| `layout` | `'stacked' \| 'page'` | no | `'stacked'` (**default**) or `'page'`. |
-| `size` | `'sm' \| 'md' \| 'lg'` | no | `'sm'` / `'md'` (**default**) / `'lg'`. `'sm'` has no bottom line. |
-| `surface` | `'filled' \| 'plain'` | no | `'filled'` (**default**) or `'plain'`. |
+| `layout` | `'stacked' \| 'page'` | no | `'stacked'` (**default**) for lists and compact slots; `'page'` for event/booking cards and headers that want a calendar-page look. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | `'sm'` for the leading slot of list rows (bottom line hidden, put the time beside it); `'md'` (**default**) for cards and widgets; `'lg'` for headers and hero areas. |
+| `surface` | `'filled' \| 'plain'` | no | `'filled'` (**default**) subtle bg + border; `'plain'` for dense lists and timelines. |
 | `show` | `'weekday' \| 'time' \| 'weekday-time'` | no | Bottom line: `'weekday'` (**default**), `'time'` or `'weekday-time'`. Time needs an instant (`Date` or non-day string). |
 | `relative` | `boolean` | no | Highlight today/ongoing, mute the past, and show Today/Tomorrow/Yesterday words. Default `true`. |
 | `now` | `Date` | no | The reference "now" for `relative`. Defaults to the current time at render. |
 | `timeZone` | `string` | no | IANA time zone used to resolve instants to a day and time. Defaults to the runtime zone. |
-| `color` | `PaletteColor` | no | Palette color of the month band — `layout="page"` only, ignored for stacked. |
-| …native | | | plus native `<Time>` attributes |
+| `color` | `PaletteColor` | no | Palette color of the month band — `layout="page"` only, ignored for stacked. Default accent; use it categorically (event type), not semantically (success/danger). |
+| …native | | | plus native `<time>` attributes |
 
 <!-- props:end -->
 
@@ -36,7 +36,8 @@
 - `show="time"` / `"weekday-time"` needs an instant (`Date` or non-day string); with a `'YYYY-MM-DD'` day string it falls back to what `show="weekday"` shows: the relative word (Today / Tomorrow / Yesterday) when `relative` is on, else the weekday. `size="sm"` (~40px) hides the bottom line entirely.
 - Invalid input (unparseable or impossible dates like `2026-02-30`) throws.
 - A11y: the visual tile is `aria-hidden`; a visually hidden full date (e.g. "Today, Thursday, 12 November 2026, 14:30") is the accessible name.
-- ❌ A clickable date picker — use `DatePicker` / `DateStrip`.
-- ❌ Wrapping it in a `Button` just to style it as a button.
+- ❌ A date picker — use `DatePicker` / `DateStrip`.
+- ❌ Using it as a date picker or input. To make a tile clickable, wrap it in a `Link`/`Button` with an accessible name.
+- ❌ Passing an offset-less datetime string (`'2026-11-12T14:30:00'`) expecting `timeZone` to apply: it is parsed as device-local time. Instant strings must carry `Z` or an offset.
 - ❌ `new Date('2026-11-12')` for an all-day date — it parses as UTC and can land on the wrong day; pass the string `'2026-11-12'`.
 - ❌ A bare date in running text — use `Text` with `Intl`.

@@ -5,7 +5,7 @@ import { getComponentFiles } from '../../lib/componentFiles';
 
 const IMPORT = `import { DateTile } from '@eocrm/design-system';`;
 
-// Fixed anchor so the static sections do not drift; the relative section uses real "now".
+// Relative offsets from the real "now"; static sections use fixed dates.
 const DAY = 24 * 60 * 60 * 1000;
 function offsetDay(days: number): Date {
   return new Date(Date.now() + days * DAY);
@@ -121,12 +121,27 @@ const offsetDay = (d: number) => new Date(Date.now() + d * DAY);
 export function Demo() {
   return (
     <Stack gap="lg">
-      <Cluster gap="md" align="center">
-        <DateTile date={offsetDay(-1)} />
-        <DateTile date={offsetDay(0)} />
-        <DateTile date={offsetDay(1)} />
-        <DateTile date={offsetDay(7)} />
-        <DateTile date={offsetDay(-1)} end={offsetDay(1)} />
+      <Cluster gap="md" align="start">
+        <Stack gap="xs" align="center">
+          <DateTile date={offsetDay(-1)} />
+          <Text tone="muted" size="sm">Yesterday</Text>
+        </Stack>
+        <Stack gap="xs" align="center">
+          <DateTile date={offsetDay(0)} />
+          <Text tone="muted" size="sm">Today</Text>
+        </Stack>
+        <Stack gap="xs" align="center">
+          <DateTile date={offsetDay(1)} />
+          <Text tone="muted" size="sm">Tomorrow</Text>
+        </Stack>
+        <Stack gap="xs" align="center">
+          <DateTile date={offsetDay(7)} />
+          <Text tone="muted" size="sm">Next week</Text>
+        </Stack>
+        <Stack gap="xs" align="center">
+          <DateTile date={offsetDay(-1)} end={offsetDay(1)} />
+          <Text tone="muted" size="sm">Ongoing</Text>
+        </Stack>
       </Cluster>
       <Cluster gap="md" align="center">
         <DateTile layout="page" color="blue" date={offsetDay(-1)} />
@@ -139,19 +154,44 @@ export function Demo() {
         <DateTile surface="plain" date={offsetDay(1)} />
       </Cluster>
       <Cluster gap="md" align="center">
-  <DateTile date={offsetDay(0)} relative={false} />
-</Cluster>
+        <DateTile date={offsetDay(0)} relative={false} />
+      </Cluster>
     </Stack>
   );
 }`}
       >
         <Stack gap="lg">
-          <Cluster gap="md" align="center">
-            <DateTile date={offsetDay(-1)} />
-            <DateTile date={offsetDay(0)} />
-            <DateTile date={offsetDay(1)} />
-            <DateTile date={offsetDay(7)} />
-            <DateTile date={offsetDay(-1)} end={offsetDay(1)} />
+          <Cluster gap="md" align="start">
+            <Stack gap="xs" align="center">
+              <DateTile date={offsetDay(-1)} />
+              <Text tone="muted" size="sm">
+                Yesterday
+              </Text>
+            </Stack>
+            <Stack gap="xs" align="center">
+              <DateTile date={offsetDay(0)} />
+              <Text tone="muted" size="sm">
+                Today
+              </Text>
+            </Stack>
+            <Stack gap="xs" align="center">
+              <DateTile date={offsetDay(1)} />
+              <Text tone="muted" size="sm">
+                Tomorrow
+              </Text>
+            </Stack>
+            <Stack gap="xs" align="center">
+              <DateTile date={offsetDay(7)} />
+              <Text tone="muted" size="sm">
+                Next week
+              </Text>
+            </Stack>
+            <Stack gap="xs" align="center">
+              <DateTile date={offsetDay(-1)} end={offsetDay(1)} />
+              <Text tone="muted" size="sm">
+                Ongoing
+              </Text>
+            </Stack>
           </Cluster>
           <Cluster gap="md" align="center">
             <DateTile layout="page" color="blue" date={offsetDay(-1)} />

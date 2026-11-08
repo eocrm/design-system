@@ -15,7 +15,7 @@ export interface DateTileParts {
   bottom: string | null; // weekday / time / 'Today' / 'Thu–Sat' / 'Today · 14:30'; null when nothing applies
   relative: DateTileRelative; // 'today' and 'ongoing' both get the today look; 'past' gets muted
   label: string; // accessible name, e.g. 'Today, Thursday, 12 November 2026, 14:30'
-  dateTime: string; // '2026-11-12' for a day string, Date#toISOString() for a timestamp; range → start
+  dateTime: string; // '2026-11-12' for a day string, Date#toISOString() for an instant; range → start
 }
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -56,6 +56,23 @@ function shiftDay(iso: string, days: number): string {
 
 const strip = (s: string) => s.replace(/\.(?=\s|$)/g, '');
 
+// Month/year line without locale era words (ru adds a literal ' г.' after the year).
+function monthLine(
+  first: string,
+  last: string | null,
+  locale: string,
+  o: Intl.DateTimeFormatOptions,
+): string {
+  const f = new Intl.DateTimeFormat(locale, { ...o, timeZone: 'UTC' });
+  const a = parseIsoDay(first);
+  const parts = last ? f.formatRangeToParts(a, parseIsoDay(last)) : f.formatToParts(a);
+  return parts
+    .map((p) => (p.type === 'literal' ? p.value.replace(/\p{L}+\.?/gu, '') : p.value))
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function dateTileParts(opts: {
   date: DateTileInput;
   end?: DateTileInput;
@@ -84,9 +101,7 @@ export function dateTileParts(opts: {
   const monthOpts: Intl.DateTimeFormatOptions = withYear
     ? { month: 'short', year: 'numeric' }
     : { month: 'short' };
-  const month = strip(
-    last ? formatIsoRange(first, last, locale, monthOpts) : fmt(first, monthOpts),
-  );
+  const month = strip(monthLine(first, last, locale, monthOpts));
   const day = join({ day: 'numeric' });
   const weekday = join({ weekday: 'short' });
 

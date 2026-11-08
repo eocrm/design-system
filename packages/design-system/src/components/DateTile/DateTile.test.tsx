@@ -34,9 +34,11 @@ describe('DateTile', () => {
     expect(label).toMatch(/November/);
     expect(label).toMatch(/2026/);
     expect(getByText(label)).toBeInTheDocument();
-    const hidden = container.querySelector('[aria-hidden="true"]')!;
-    expect(hidden.textContent).toMatch(/20/);
-    expect(hidden.textContent).not.toContain(label);
+    const hidden = [...container.querySelectorAll('[aria-hidden="true"]')];
+    expect(hidden).toHaveLength(3);
+    expect(hidden.map((h) => h.textContent).join(' ')).toMatch(/20/);
+    expect(hidden.every((h) => !h.textContent!.includes(label))).toBe(true);
+    expect(getByText(label)).not.toHaveAttribute('aria-hidden');
   });
 
   it('applies the class contract', () => {
@@ -49,6 +51,13 @@ describe('DateTile', () => {
     for (const c of [styles.page, styles.plain, styles.past]) expect(cls).toContain(c);
     rerender(<DateTile date="2026-11-10" end="2026-11-14" now={now} />);
     expect(root(container).className).toContain(styles.today);
+  });
+
+  it('applies size classes', () => {
+    const { container, rerender } = render(<DateTile date="2026-11-20" now={now} size="sm" />);
+    expect(root(container).className).toContain(styles['size-sm']);
+    rerender(<DateTile date="2026-11-20" now={now} size="lg" />);
+    expect(root(container).className).toContain(styles['size-lg']);
   });
 
   it('sm renders no bottom line', () => {
