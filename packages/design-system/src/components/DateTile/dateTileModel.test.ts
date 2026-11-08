@@ -109,6 +109,14 @@ describe('dateTileParts', () => {
       expect(r).toMatchObject({ relative: 'ongoing', bottom: 'Wed–Sat' });
       expect(r.label.startsWith('Ongoing, ')).toBe(true);
     });
+    it('starting today is ongoing', () => {
+      const r = p({ date: '2026-11-12', end: '2026-11-14' });
+      expect(r).toMatchObject({ relative: 'ongoing', bottom: 'Thu–Sat' });
+      expect(r.label.startsWith('Ongoing, ')).toBe(true);
+    });
+    it('strips locale abbreviation dots from every month', () => {
+      expect(p({ date: '2026-11-28', end: '2026-12-02', locale: 'ru' }).month).toBe('нояб – дек');
+    });
     it('ended', () => {
       expect(p({ date: '2026-11-01', end: '2026-11-03' }).relative).toBe('past');
     });
@@ -131,6 +139,10 @@ describe('dateTileParts', () => {
       expect(p({ date: '2026-11-20', end: '2026-11-20' })).toEqual(single);
       expect(p({ date: '2026-11-20', end: '2026-11-18' })).toEqual(single);
     });
+  });
+
+  it('throws on a calendar-invalid day string', () => {
+    expect(() => p({ date: '2026-02-30' })).toThrow(/\[DateTile\] invalid date: 2026-02-30/);
   });
 
   it('throws on an invalid date (RF4)', () => {

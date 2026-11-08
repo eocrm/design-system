@@ -39,7 +39,8 @@ function isoDayOf(d: Date, timeZone?: string): string {
 
 function normalise(input: DateTileInput, timeZone?: string): Norm {
   if (typeof input === 'string' && DAY.test(input)) {
-    parseIsoDay(input);
+    if (parseIsoDay(input).toISOString().slice(0, 10) !== input)
+      throw new Error(`[DateTile] invalid date: ${input}`);
     return { iso: input, instant: null };
   }
   const d = new Date(input);
@@ -53,7 +54,7 @@ function shiftDay(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-const strip = (s: string) => s.replace(/\.$/, '');
+const strip = (s: string) => s.replace(/\.(?=\s|$)/g, '');
 
 export function dateTileParts(opts: {
   date: DateTileInput;
@@ -97,8 +98,7 @@ export function dateTileParts(opts: {
       if (last < today) relative = 'past';
       else if (first > today) {
         if (first === shiftDay(today, 1)) [relative, word] = ['tomorrow', words.tomorrow];
-      } else if (first === today) [relative, word] = ['today', words.today];
-      else [relative, word] = ['ongoing', words.ongoing];
+      } else [relative, word] = ['ongoing', words.ongoing];
     } else if (first === today) [relative, word] = ['today', words.today];
     else if (first === shiftDay(today, 1)) [relative, word] = ['tomorrow', words.tomorrow];
     else if (first === shiftDay(today, -1)) [relative, word] = ['past', words.yesterday];
@@ -109,7 +109,7 @@ export function dateTileParts(opts: {
   const hour12 = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions().hour12;
   const time = start.instant
     ? new Intl.DateTimeFormat(locale, {
-        hour: hour12 ? 'numeric' : '2-digit',
+        hour: hour12 === false ? '2-digit' : 'numeric',
         minute: '2-digit',
         timeZone,
       }).format(start.instant)
