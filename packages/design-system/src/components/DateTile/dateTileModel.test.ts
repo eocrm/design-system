@@ -125,10 +125,15 @@ describe('dateTileParts', () => {
       expect(p({ date: '2026-11-28', end: '2026-12-02', locale: 'ru' }).month).toBe('нояб – дек');
     });
     it('ru year line has no era word (single and cross-year)', () => {
-      expect(p({ date: '2027-03-04', locale: 'ru' }).month).not.toMatch(/г/);
-      const r = p({ date: '2026-12-30', end: '2027-01-02', locale: 'ru' }).month;
-      expect(r).not.toMatch(/г/);
-      expect(r).toMatch(/2026.*2027/);
+      expect(p({ date: '2027-03-04', locale: 'ru' }).month).toBe('март 2027');
+      expect(p({ date: '2026-12-30', end: '2027-01-02', locale: 'ru' }).month).toBe(
+        'дек 2026 – янв 2027',
+      );
+    });
+    it('ja keeps its 年/月 literals', () => {
+      expect(p({ date: '2027-03-04', locale: 'ja' }).month).toBe('2027年3月');
+      expect(p({ date: '2026-11-20', locale: 'ja' }).month).toBe('11月');
+      expect(p({ date: '2026-11-28', end: '2026-12-02', locale: 'ja' }).month).toBe('11月～12月');
     });
     it('en year line unchanged', () => {
       expect(p({ date: '2027-03-04', locale: 'en-US' }).month).toBe('Mar 2027');

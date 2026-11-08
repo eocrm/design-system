@@ -36,8 +36,7 @@
 - `show="time"` / `"weekday-time"` needs an instant (`Date` or non-day string); with a `'YYYY-MM-DD'` day string it falls back to what `show="weekday"` shows: the relative word (Today / Tomorrow / Yesterday) when `relative` is on, else the weekday. `size="sm"` (~40px) hides the bottom line entirely.
 - Invalid input (unparseable or impossible dates like `2026-02-30`) throws.
 - A11y: the visual tile is `aria-hidden`; a visually hidden full date (e.g. "Today, Thursday, 12 November 2026, 14:30") is the accessible name.
-- ❌ A date picker — use `DatePicker` / `DateStrip`.
-- ❌ Using it as a date picker or input. To make a tile clickable, wrap it in a `Link`/`Button` with an accessible name.
+- ❌ A date picker or input — use `DatePicker` / `DateStrip`. To make a tile clickable, wrap it in a `Link`/`Button` with an accessible name.
 - ❌ Passing an offset-less datetime string (`'2026-11-12T14:30:00'`) expecting `timeZone` to apply: it is parsed as device-local time. Instant strings must carry `Z` or an offset.
 - ❌ `new Date('2026-11-12')` for an all-day date — it parses as UTC and can land on the wrong day; pass the string `'2026-11-12'`.
 - ❌ A bare date in running text — use `Text` with `Intl`.

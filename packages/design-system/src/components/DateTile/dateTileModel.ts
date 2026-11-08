@@ -67,7 +67,7 @@ function monthLine(
   const a = parseIsoDay(first);
   const parts = last ? f.formatRangeToParts(a, parseIsoDay(last)) : f.formatToParts(a);
   return parts
-    .map((p) => (p.type === 'literal' ? p.value.replace(/\p{L}+\.?/gu, '') : p.value))
+    .map((p) => (p.type === 'literal' ? p.value.replace(/\p{L}+\./gu, '') : p.value))
     .join('')
     .replace(/\s+/g, ' ')
     .trim();
