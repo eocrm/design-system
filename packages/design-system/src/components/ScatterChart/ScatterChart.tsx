@@ -29,6 +29,7 @@ import {
   type ScatterReference,
   type ScatterSeries,
   type ScatterXScale,
+  REFERENCE_DASHES,
 } from './scatterModel';
 import styles from './ScatterChart.module.scss';
 
@@ -60,8 +61,8 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
   formatSize?: (size: number) => string;
   /** Name of `size` in the tooltip, announcement and table header, e.g. "Calories". Default: translated "Size". */
   sizeLabel?: string;
-  /** App-computed reference line (e.g. a recommended ratio), drawn dashed in neutral ink and listed in the legend. */
-  reference?: ScatterReference;
+  /** App-computed reference line(s) (e.g. a recommended ratio), drawn dashed (a different pattern per line) and each listed in the legend. */
+  reference?: ScatterReference | ScatterReference[];
   /** Draw a dashed least-squares line per visible series over its own x-extent (series with ≥2 distinct x only). Decorative. Default `false`. */
   trendLine?: boolean;
   /** EmptyState title when no series has a point. Default: translated "No data for this period". */
@@ -78,8 +79,6 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
 const HIT_RADIUS = 24;
 const DOT_MIN = 4;
 const DOT_MAX = 16;
-/** Legend key for `reference`: not a series, so it can't collide with a series key (its entry is `static`). */
-const REFERENCE_KEY = '\0reference';
 const NO_HIDDEN: string[] = [];
 
 const seriesStyle = (slot: number) =>
@@ -178,6 +177,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
     ],
     [plotEl],
   );
+  const references = useMemo(() => [reference ?? []].flat(), [reference]);
   // Over every series, hidden included, so a legend toggle never resizes the remaining dots.
   const sizeDomain = useMemo(() => scatterSizeDomain(resolved), [resolved]);
   const layout = useMemo(
@@ -192,7 +192,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
             height: size.height,
             formatX,
             formatY,
-            reference,
+            reference: references,
             trendLine,
             sizeRange,
             sizeDomain,
@@ -208,7 +208,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       yDomain,
       formatX,
       formatY,
-      reference,
+      references,
       trendLine,
       sizeRange,
       sizeDomain,
@@ -321,20 +321,23 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       parentHidden: false,
     })),
     // Slot 0 is Chart's neutral ink; `comparison` gives it the dashed swatch of a line.
-    ...(reference
-      ? [
-          {
-            key: REFERENCE_KEY,
-            label: reference.label,
-            slot: 0,
-            comparison: true,
-            overflow: false,
-            locked: false,
-            parentHidden: false,
-            static: true,
-          },
-        ]
-      : []),
+    ...references.flatMap((r, i) =>
+      r.points.length
+        ? [
+            {
+              key: `\0reference:${r.key ?? i}`,
+              label: r.label,
+              slot: r.color ?? 0,
+              dash: i % REFERENCE_DASHES,
+              comparison: true,
+              overflow: false,
+              locked: false,
+              parentHidden: false,
+              static: true,
+            },
+          ]
+        : [],
+    ),
   ];
 
   if (empty) {
@@ -459,13 +462,16 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
             </g>
             {/* Trend lines and out-of-domain points must never draw outside the plot. */}
             <g clipPath={`url(#${clipId})`} data-scatter-marks="">
-              {layout.referencePath && (
+              {layout.references.map((r) => (
                 <path
+                  key={r.key}
                   className={styles.reference}
-                  d={layout.referencePath}
+                  style={r.slot ? seriesStyle(r.slot) : undefined}
+                  d={r.path}
                   data-scatter-reference=""
+                  data-dash={r.dash}
                 />
-              )}
+              ))}
               {visible.map((s) => (
                 <g
                   key={s.key}

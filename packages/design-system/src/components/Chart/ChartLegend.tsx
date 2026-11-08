@@ -15,6 +15,8 @@ export interface ChartLegendItem {
   parentHidden: boolean;
   /** Not a series (ScatterChart's reference line): a plain entry with no toggle. */
   static?: boolean;
+  /** Dash pattern index of a comparison swatch (ScatterChart reference lines); omit for the default. */
+  dash?: number;
 }
 
 const swatchStyle = (slot: number) =>
@@ -69,6 +71,7 @@ export function ChartLegend({
               className={styles.swatch}
               data-comparison={item.comparison || undefined}
               data-overflow={item.overflow || undefined}
+              data-dash={item.dash}
               aria-hidden="true"
             />
             {item.label}

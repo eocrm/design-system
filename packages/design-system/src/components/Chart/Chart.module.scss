@@ -248,6 +248,16 @@
     border-radius: 0;
     background: transparent;
   }
+
+  // ScatterChart reference lines cycle patterns (dash 0 is the default dashed look).
+  &[data-dash='1'] {
+    border-top-style: dotted;
+  }
+
+  &[data-dash='2'] {
+    border-top-style: double;
+    border-top-width: var(--chart-swatch-double-width);
+  }
 }
 
 .legendItem[aria-pressed='false'] .swatch {

@@ -37,11 +37,18 @@ export interface ScatterSeries {
 }
 /** An app-computed dashed line (e.g. a recommended ratio), drawn through `points` sorted by `x`. */
 export interface ScatterReference {
+  /** Identity of the line (React key, legend entry). Defaults to its index. */
+  key?: string;
   /** Legend name of the line. */
   label: string;
   /** Points the line passes through, in data units. */
   points: { x: number | Date; y: number }[];
+  /** Pins a palette slot (1–8); default is neutral ink. */
+  color?: ChartSeriesColor;
 }
+
+/** Number of distinct dash patterns reference lines cycle through. */
+export const REFERENCE_DASHES = 3;
 /** X-axis kind: `'number'` (linear) or `'time'` (x as `Date` or epoch ms). */
 export type ScatterXScale = 'number' | 'time';
 
@@ -95,7 +102,8 @@ export interface ScatterLayout {
   xTicks: ScatterTick[];
   yTicks: ScatterTick[];
   dots: ScatterDot[];
-  referencePath?: string;
+  /** One entry per reference line with points: its key, path, dash pattern index and palette slot (0 = neutral ink). */
+  references: { key: string; path: string; dash: number; slot: number }[];
   trends: { seriesKey: string; slot: number; path: string }[];
 }
 
@@ -108,7 +116,7 @@ export interface ScatterLayoutInput {
   height: number;
   formatX: (x: number) => string;
   formatY: (y: number) => string;
-  reference?: ScatterReference;
+  reference?: ScatterReference | ScatterReference[];
   trendLine?: boolean;
   /** Min and max dot radius for points with `size`. */
   sizeRange: [number, number];
@@ -278,14 +286,23 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     )
     .sort((a, b) => b.r - a.r); // stable: ties keep series/point order
 
-  const referencePath = input.reference?.points.length
-    ? input.reference.points
-        .map((p) => ({ x: num(p.x), y: p.y }))
-        .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y))
-        .sort((a, b) => a.x - b.x)
-        .map((p, i) => `${i ? 'L' : 'M'}${x(p.x)},${y(p.y)}`)
-        .join('')
-    : undefined;
+  const references = [input.reference ?? []].flat().flatMap((r, i) =>
+    r.points.length
+      ? [
+          {
+            key: r.key ?? String(i),
+            path: r.points
+              .map((p) => ({ x: num(p.x), y: p.y }))
+              .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y))
+              .sort((a, b) => a.x - b.x)
+              .map((p, j) => `${j ? 'L' : 'M'}${x(p.x)},${y(p.y)}`)
+              .join(''),
+            dash: i % REFERENCE_DASHES,
+            slot: r.color ?? 0,
+          },
+        ]
+      : [],
+  );
 
   const trends: ScatterLayout['trends'] = [];
   if (input.trendLine)
@@ -305,7 +322,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     xTicks,
     yTicks: yValues.map((value, i) => ({ value, pos: y(value), label: yLabels[i] })),
     dots,
-    referencePath,
+    references,
     trends,
   };
 }

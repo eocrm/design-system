@@ -183,7 +183,7 @@ describe('trend and reference', () => {
   });
   it('builds a reference path only when given', () => {
     const series = resolve([{ x: 1, y: 1 }]);
-    expect(computeScatterLayout({ ...base, series }).referencePath).toBeUndefined();
+    expect(computeScatterLayout({ ...base, series }).references).toEqual([]);
     const l = computeScatterLayout({
       ...base,
       series,
@@ -195,7 +195,7 @@ describe('trend and reference', () => {
         ],
       },
     });
-    expect(l.referencePath).toMatch(/^M[^L]+L[^L]+$/);
+    expect(l.references[0].path).toMatch(/^M[^L]+L[^L]+$/);
   });
 });
 
@@ -305,7 +305,40 @@ describe('fix round 1', () => {
         ],
       },
     });
-    expect(l.referencePath!.match(/[ML]/g)).toHaveLength(2);
+    expect(l.references[0].path.match(/[ML]/g)).toHaveLength(2);
+  });
+});
+
+describe('several references', () => {
+  const pts = [
+    { x: 1, y: 1 },
+    { x: 2, y: 2 },
+  ];
+  const run = (reference: Parameters<typeof computeScatterLayout>[0]['reference']) =>
+    computeScatterLayout({ ...base, series: resolve([{ x: 1, y: 1 }]), reference });
+  it('gives each line its own dash, the first being 0', () => {
+    const l = run([
+      { label: 'a', points: pts },
+      { label: 'b', points: pts },
+    ]);
+    expect(l.references).toHaveLength(2);
+    expect(l.references[0].dash).toBe(0);
+    expect(l.references[1].dash).not.toBe(0);
+  });
+  it('slot is the pinned colour, else 0', () => {
+    const l = run([
+      { label: 'a', points: pts, color: 3 },
+      { label: 'b', points: pts },
+    ]);
+    expect(l.references.map((r) => r.slot)).toEqual([3, 0]);
+  });
+  it('omits a line without points', () => {
+    const l = run([
+      { label: 'a', points: [] },
+      { key: 'b', label: 'b', points: pts },
+    ]);
+    expect(l.references).toHaveLength(1);
+    expect(l.references[0].key).toBe('b');
   });
 });
 

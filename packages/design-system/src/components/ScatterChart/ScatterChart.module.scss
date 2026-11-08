@@ -85,9 +85,17 @@
 
 .reference {
   fill: none;
-  stroke: var(--scatter-reference-color);
+  stroke: var(--chart-series-color, var(--scatter-reference-color));
   stroke-width: var(--scatter-reference-width);
-  stroke-dasharray: var(--scatter-reference-dash);
+  stroke-dasharray: var(--scatter-reference-dash-0);
+
+  &[data-dash='1'] {
+    stroke-dasharray: var(--scatter-reference-dash-1);
+  }
+
+  &[data-dash='2'] {
+    stroke-dasharray: var(--scatter-reference-dash-2);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
