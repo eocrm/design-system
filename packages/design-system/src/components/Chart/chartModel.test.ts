@@ -1135,6 +1135,20 @@ describe('viewport (DS-48)', () => {
     expect(categoryIndexAt(l, l.plot.x + l.plot.width - 1)).toBe(3);
   });
 
+  it('maps x outside the plot (axis gutter, right padding) to the edge visible categories', () => {
+    const half = { from: 0.25, to: 0.75 };
+    const l = layout({ type: 'bar', series: one([1, 2, 3, 4]), viewport: half });
+    expect(categoryIndexAt(l, 0)).toBe(1);
+    expect(categoryIndexAt(l, l.plot.x + l.plot.width)).toBe(2);
+    expect(categoryIndexAt(l, 10_000)).toBe(2);
+  });
+
+  it('valueAt clamps to the plot height', () => {
+    const l = layout({ type: 'line', series: one([1, 2, 3, 4]) });
+    expect(l.valueAt(-1000)).toBeCloseTo(l.valueAt(l.plot.y));
+    expect(l.valueAt(10_000)).toBeCloseTo(l.valueAt(l.plot.y + l.plot.height));
+  });
+
   it('a null viewport and the full window equal no viewport', () => {
     const plain = layout({ type: 'line', series: one([1, 2, 3, 4]) });
     const nulled = layout({ type: 'line', series: one([1, 2, 3, 4]), viewport: null });

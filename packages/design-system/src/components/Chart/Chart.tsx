@@ -365,7 +365,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const [viewportDataKey, setViewportDataKey] = useState(categoriesKey);
   if (viewportDataKey !== categoriesKey) {
     setViewportDataKey(categoriesKey);
-    if (viewport === undefined) setViewportState(null);
+    // The first data after loading (no categories yet) is not new data: it keeps `defaultViewport`.
+    if (viewport === undefined && viewportDataKey !== '') setViewportState(null);
   }
   useDevWarnings(
     resolved.dropped,
@@ -417,7 +418,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     .filter(Boolean)
     .map((part) => `${part}.`)
     .join(' ');
-  // Last user selection change, announced until keyboard inspection takes over the live region.
+  // Last user selection or keyboard zoom change, announced until keyboard inspection takes over the live region.
   const [selectionNote, setSelectionNote] = useState('');
   const select = (next: ChartRange | null) => {
     setSelection(next);
@@ -552,6 +553,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
           : 0.5;
       const next = zoomViewport(vp, e.key === '-' ? 1 / KEY_ZOOM : KEY_ZOOM, at, n);
       if (!sameViewport(next, vp)) changeViewport(next, true);
+      // Hard rule 10: a key press changed what the plot shows; say what it shows now.
+      const shown = visibleIndexRange(next, n);
+      if (n > 0) setSelectionNote(zoomedText(categories[shown.from], categories[shown.to]));
       return;
     }
     if (

@@ -78,13 +78,12 @@ const TabNavRoot = forwardRef<HTMLElement, TabNavProps>(function TabNav(
 
     if (lastCurrentRef.current !== node) {
       lastCurrentRef.current = node;
-      // Only when it is clipped by the strip, so a fitting strip never
-      // scrolls the page.
+      // Scroll the strip alone (scrollIntoView would also move the page or an
+      // outer scroller). A viewport-space delta is correct in RTL as well.
       const w = wrap.getBoundingClientRect();
       const r = node.getBoundingClientRect();
-      if (r.left < w.left || r.right > w.right) {
-        node.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-      }
+      wrap.scrollLeft +=
+        r.left < w.left ? r.left - w.left : r.right > w.right ? r.right - w.right : 0;
     }
   };
 

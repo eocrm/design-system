@@ -15,7 +15,7 @@ export interface ChartLegendItem {
   parentHidden: boolean;
   /** Not a series (ScatterChart's reference line): a plain entry with no toggle. */
   static?: boolean;
-  /** Dash pattern index of a comparison swatch (ScatterChart reference lines); omit for the default. */
+  /** Dash pattern index (`--chart-reference-dash-N`): draws a line swatch (ScatterChart reference lines); omit for the box swatch. */
   dash?: number;
 }
 
@@ -67,13 +67,19 @@ export function ChartLegend({
         const on = !hidden.includes(item.key) && !item.parentHidden;
         const content = (
           <>
-            <span
-              className={styles.swatch}
-              data-comparison={item.comparison || undefined}
-              data-overflow={item.overflow || undefined}
-              data-dash={item.dash}
-              aria-hidden="true"
-            />
+            {item.dash === undefined ? (
+              <span
+                className={styles.swatch}
+                data-comparison={item.comparison || undefined}
+                data-overflow={item.overflow || undefined}
+                aria-hidden="true"
+              />
+            ) : (
+              // A stroked line with the plot line's own dash, so references are told apart without colour.
+              <svg className={styles.swatchLine} data-dash={item.dash} aria-hidden="true">
+                <line x1="0" x2="100%" y1="50%" y2="50%" />
+              </svg>
+            )}
             {item.label}
             {item.parentLabel && <VisuallyHidden>, {item.parentLabel}</VisuallyHidden>}
           </>

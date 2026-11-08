@@ -14,10 +14,10 @@ import styles from './TabNav.module.scss';
  * Polymorphic props helper. Same shape as Link's — duplicated so this module
  * doesn't reach into Link's internals.
  */
-type PolymorphicProps<C extends ElementType, P> = P & { as?: C } & Omit<
-    ComponentPropsWithoutRef<C>,
-    keyof P | 'as'
-  >;
+type PolymorphicProps<C extends ElementType, P> = P & {
+  /** Element or component to render the link as (e.g. a router `NavLink`); its props are typed and forwarded. Default `'a'`. */
+  as?: C;
+} & Omit<ComponentPropsWithoutRef<C>, keyof P | 'as'>;
 
 interface TabNavLinkOwnProps {
   /**
@@ -40,6 +40,12 @@ interface TabNavLinkOwnProps {
   trailing?: ReactNode;
   /** The link label. */
   children?: ReactNode;
+  /**
+   * Extra class on the link — a string only (a router `NavLink`'s function
+   * form is not supported); style the active link through
+   * `[aria-current='page']` instead.
+   */
+  className?: string;
 }
 
 /**

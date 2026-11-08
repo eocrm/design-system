@@ -51,7 +51,7 @@ interface ChartMarkerBase {
   tone?: ChartMarkerTone;
   /** Palette slot (1–8) the line strokes / band tints in, e.g. to match a series. Default: neutral ink. */
   color?: ChartSeriesColor;
-  /** Short text or emoji drawn centred above the marker, over the plot. Decorative: never read out (`label` carries meaning). */
+  /** Short text or emoji drawn centred above the marker, in the gutter above the plot. Decorative: never read out (`label` carries meaning). */
   icon?: string;
   /** Where `label` is drawn. Default `'beside'`. */
   labelPlacement?: ChartMarkerLabelPlacement;
@@ -775,7 +775,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     bandWidth,
     marks,
     valueLabels,
-    valueAt: (py) => y.invert(py),
+    valueAt: (py) => y.invert(Math.max(plot.y, Math.min(plot.y + plot.height, py))),
   };
 }
 
@@ -893,10 +893,17 @@ function sampledRuns(
   return runs;
 }
 
-/** Category index under svg x coordinate `x`, clamped to the data (0 when there are no categories). Viewport-aware. */
+/**
+ * Category index under svg x coordinate `x`, clamped to the categories visible in the plot (0 when there are none):
+ * the axis gutter and right padding map to the window's edge categories, never off-screen ones. Viewport-aware.
+ */
 export function categoryIndexAt(layout: ChartLayout, x: number): number {
   const n = layout.categoryX.length;
   if (n === 0) return 0;
-  const origin = layout.categoryX[0] - layout.step / 2;
-  return Math.max(0, Math.min(n - 1, Math.floor((x - origin) / layout.step)));
+  const { plot, step } = layout;
+  const at = (px: number) => (px - (layout.categoryX[0] - step / 2)) / step;
+  // Band edges: the right edge belongs to the band left of it.
+  const lo = Math.max(0, Math.floor(at(plot.x)));
+  const hi = Math.min(n - 1, Math.ceil(at(plot.x + plot.width)) - 1);
+  return Math.max(lo, Math.min(hi, Math.floor(at(x))));
 }

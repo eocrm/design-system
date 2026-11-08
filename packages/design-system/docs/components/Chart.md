@@ -74,7 +74,7 @@ Pass `selectedRange`, `defaultSelectedRange` or `onSelectedRangeChange` to let u
 | Shift + ←/→                                               | Extends the range from the category inspected when Shift was first used.                                                                                                                                   |
 | Esc                                                       | Mid-drag, cancels the drag (nothing is committed). Otherwise clears the selection; a second Esc clears the inspection.                                                                                     |
 
-Selection changes are announced in the chart's live region ("Selected Mon to Wed", "Selection cleared"); the plot's description mentions Shift+arrows only when selection is on. The current zoom and selection are also part of the plot's description ("Zoomed to W3–W7. Selected W4 to W5."), and the data-table caption names the zoom, so a screen-reader user arriving later still hears them.
+Selection changes and keyboard zoom (`+` / `-`) are announced in the chart's live region ("Selected Mon to Wed", "Selection cleared", "Zoomed to W3–W7"); the plot's description mentions Shift+arrows only when selection is on. The current zoom and selection are also part of the plot's description ("Zoomed to W3–W7. Selected W4 to W5."), and the data-table caption names the zoom, so a screen-reader user arriving later still hears them.
 
 While a selection exists, a **Zoom to selection** button appears at the end of the legend row; whenever zoomed (also when the app sets `zoomRange` without selection enabled), **Reset zoom**. A selection partly outside the zoomed range draws its visible part. Zooming slices categories, series, markers (clipped; markers outside dropped), value labels and the data table to the range, rescales the y-axis and clears the selection. `details` always receives the **original** category index.
 
@@ -120,7 +120,7 @@ const [selection, setSelection] = useState<ChartRange | null>(null);
 
 ### Plot double-click
 
-`onPlotDoubleClick(e: ChartPlotPointerEvent)` fires on a mouse double-click, a touch double-tap (two taps within 300ms and 24px) and **Enter** on the category inspected from the keyboard, so the action is not pointer-only. `e.index` is the nearest category as an index into `categories` (the **original** index while zoomed, like `details`), `e.fraction` the 0..1 position across the current domain in viewport coordinates, `e.value` the y value at the pointer (`null` from the keyboard), plus `clientX` / `clientY` and `source: 'mouse' | 'touch' | 'keyboard'`. The plot's `touch-action: pan-y` already stops the browser's double-tap zoom.
+`onPlotDoubleClick(e: ChartPlotPointerEvent)` fires on a mouse double-click, a touch double-tap (two taps within 300ms and 24px) and **Enter** on the category inspected from the keyboard, so the action is not pointer-only. `e.index` is the nearest category as an index into `categories` (the **original** index while zoomed, like `details`), `e.fraction` the 0..1 position across the current domain in viewport coordinates, `e.value` the y value at the pointer (`null` from the keyboard; a pointer over the axis gutter or padding counts as the nearest plot edge, so `index` / `fraction` / `value` stay inside the visible window), plus `clientX` / `clientY` and `source: 'mouse' | 'touch' | 'keyboard'`. The plot's `touch-action: pan-y` already stops the browser's double-tap zoom.
 
 ```tsx
 <Chart

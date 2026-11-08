@@ -65,7 +65,14 @@
   --chart-legend-fg-off: var(--color-fg-subtle);
   --chart-swatch: var(--space-3);
   --chart-swatch-dash-width: var(--border-width-emphasis);
-  --chart-swatch-double-width: calc(var(--chart-swatch-dash-width) * 2);
+
+  // Line swatch (reference lines): wide enough for one full period of every reference dash.
+  --chart-swatch-line: var(--space-5);
+
+  // Dash patterns reference lines cycle through (index = line order), shared by plot lines and legend swatches.
+  --chart-reference-dash-0: var(--chart-marker-dash);
+  --chart-reference-dash-1: 1 3;
+  --chart-reference-dash-2: 8 3 1 3;
 
   --chart-tooltip-bg: var(--color-bg);
   --chart-tooltip-fg: var(--color-fg);

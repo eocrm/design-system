@@ -55,6 +55,11 @@
   &[data-pannable] {
     cursor: grab;
     user-select: none;
+
+    // Held down: the drag is (or is about to be) a pan.
+    &:active {
+      cursor: grabbing;
+    }
   }
 }
 
@@ -275,15 +280,24 @@
     border-radius: 0;
     background: transparent;
   }
+}
 
-  // ScatterChart reference lines cycle patterns (dash 0 is the default dashed look).
+// ScatterChart reference lines: the same dash patterns as their plot lines.
+.swatchLine {
+  flex-shrink: 0;
+  width: var(--chart-swatch-line);
+  height: var(--chart-swatch-dash-width);
+  overflow: visible;
+  stroke: var(--chart-series-color, currentColor);
+  stroke-width: var(--chart-swatch-dash-width);
+  stroke-dasharray: var(--chart-reference-dash-0);
+
   &[data-dash='1'] {
-    border-top-style: dotted;
+    stroke-dasharray: var(--chart-reference-dash-1);
   }
 
   &[data-dash='2'] {
-    border-top-style: double;
-    border-top-width: var(--chart-swatch-double-width);
+    stroke-dasharray: var(--chart-reference-dash-2);
   }
 }
 

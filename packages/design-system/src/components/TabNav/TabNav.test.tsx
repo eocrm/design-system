@@ -171,7 +171,7 @@ describe('<TabNav>', () => {
     expect(indicatorOf(container).style.width).toBe('40px');
   });
 
-  it('scrolls the current link into view when it is outside the strip', () => {
+  it('scrolls only the strip (not the page) to a current link outside it', () => {
     const spy = vi.fn();
     const original = Element.prototype.scrollIntoView;
     const rect = Element.prototype.getBoundingClientRect;
@@ -183,7 +183,7 @@ describe('<TabNav>', () => {
       return { left, right, top: 0, bottom: 0, width: right - left, height: 0 } as DOMRect;
     };
     try {
-      render(
+      const { container } = render(
         <TabNav aria-label="Sections">
           <TabNav.Link href="/a">A</TabNav.Link>
           <TabNav.Link href="/b" current>
@@ -191,8 +191,10 @@ describe('<TabNav>', () => {
           </TabNav.Link>
         </TabNav>,
       );
-      expect(spy).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
-      expect(spy.mock.contexts[0]).toBe(screen.getByRole('link', { name: 'B' }));
+      // scrollIntoView would also scroll the page or an outer scroller.
+      expect(spy).not.toHaveBeenCalled();
+      const wrap = container.querySelector('ul')!.parentElement!.parentElement!;
+      expect(wrap.scrollLeft).toBe(100);
     } finally {
       Element.prototype.scrollIntoView = original;
       Element.prototype.getBoundingClientRect = rect;
@@ -204,7 +206,7 @@ describe('<TabNav>', () => {
     const original = Element.prototype.scrollIntoView;
     Element.prototype.scrollIntoView = spy;
     try {
-      render(
+      const { container } = render(
         <TabNav aria-label="Sections">
           <TabNav.Link href="/a" current>
             A
@@ -212,6 +214,7 @@ describe('<TabNav>', () => {
         </TabNav>,
       );
       expect(spy).not.toHaveBeenCalled();
+      expect(container.querySelector('ul')!.parentElement!.parentElement!.scrollLeft).toBe(0);
     } finally {
       Element.prototype.scrollIntoView = original;
     }
@@ -235,6 +238,16 @@ describe('<TabNav>', () => {
     expect(navRef.current?.className).toMatch(/root/);
     expect(link).toHaveClass('custom-link');
     expect(link.className).toMatch(/link/);
+  });
+
+  it('types className as a string only (a NavLink function className would be dropped)', () => {
+    const FnClassLink = (p: { to: string; className?: string | (() => string) }) => (
+      <a href={p.to} className={typeof p.className === 'string' ? p.className : undefined} />
+    );
+    const fn = () => 'x';
+    // @ts-expect-error -- string only; style the active link through aria-current
+    const el = <TabNav.Link as={FnClassLink} to="/x" className={fn} />;
+    expect(el).toBeTruthy();
   });
 
   it('renders leading and trailing inside the link', () => {

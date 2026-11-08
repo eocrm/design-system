@@ -99,7 +99,11 @@ describe('domainFractionAt', () => {
     const z = computeLayout({ ...base, viewport: { from: 0.5, to: 1 } });
     expect(domainFractionAt(z, z.plot.x)).toBeCloseTo(0.5);
     expect(domainFractionAt(z, z.plot.x + z.plot.width / 2)).toBeCloseTo(0.75);
-    expect(domainFractionAt(z, -1000)).toBe(0);
+    // Outside the plot (axis gutter, right padding): the window's edges, never off-screen.
+    expect(domainFractionAt(z, -1000)).toBeCloseTo(0.5);
+    expect(domainFractionAt(z, 10_000)).toBeCloseTo(1);
+    const mid = computeLayout({ ...base, viewport: { from: 0.25, to: 0.75 } });
+    expect(domainFractionAt(mid, 10_000)).toBeCloseTo(0.75);
   });
   it('is 0 with no categories', () => {
     expect(domainFractionAt(computeLayout({ ...base, categories: [] }), 50)).toBe(0);

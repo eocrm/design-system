@@ -56,11 +56,12 @@ import { NavLink } from 'react-router-dom';
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `as` | `ElementType` | no |  |
+| `as` | `ElementType` | no | Element or component to render the link as (e.g. a router `NavLink`); its props are typed and forwarded. Default `'a'`. |
 | `current` | `boolean` | no | Marks this link as the current page: sets `aria-current="page"`, which draws the active colour and moves the underline here. Leave unset when the `as` component sets `aria-current` itself (react-router's `NavLink` does); TabNav picks that up from the DOM. Default `false`. |
 | `leading` | `ReactNode` | no | Adornment before the label (an icon, a status dot). Rendered as-is, NOT `aria-hidden`: mark decorative nodes `aria-hidden` yourself; meaningful ones join the link's accessible name. |
 | `trailing` | `ReactNode` | no | Adornment after the label (a count `Badge`). Rendered as-is — same a11y note as `leading`. |
 | `children` | `ReactNode` | no | The link label. |
+| `className` | `string` | no | Extra class on the link — a string only (a router `NavLink`'s function form is not supported); style the active link through `[aria-current='page']` instead. |
 | …native | | | plus native attributes of the `as` element (default `<a>`) |
 
 <!-- props:end -->

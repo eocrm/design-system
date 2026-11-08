@@ -68,13 +68,15 @@ export function visibleIndexRange(
   };
 }
 
-/** Svg x → 0..1 of the domain (band edges), clamped; 0 with no categories. */
+/** Svg x → 0..1 of the domain (band edges), clamped to the plot (so to the visible window); 0 with no categories. */
 export function domainFractionAt(layout: ChartLayout, x: number): number {
   const n = layout.categoryX.length;
   if (n === 0) return 0;
+  const { plot } = layout;
+  const px = Math.max(plot.x, Math.min(plot.x + plot.width, x));
   return Math.max(
     0,
-    Math.min(1, (x - (layout.categoryX[0] - layout.step / 2)) / (n * layout.step)),
+    Math.min(1, (px - (layout.categoryX[0] - layout.step / 2)) / (n * layout.step)),
   );
 }
 

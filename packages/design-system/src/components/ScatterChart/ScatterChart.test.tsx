@@ -261,6 +261,27 @@ describe('ScatterChart', () => {
     expect(swatch?.getAttribute('data-dash')).toBe(paths[1].getAttribute('data-dash'));
   });
 
+  it('reference swatches are stroked lines with their plot line dash (identifiable without colour)', () => {
+    const layout = stubLayout();
+    const pts = [
+      { x: 0, y: 0 },
+      { x: 40, y: 20 },
+    ];
+    render(
+      <ScatterChart
+        {...base}
+        reference={['A', 'B', 'C'].map((label) => ({ label, points: pts }))}
+      />,
+    );
+    layout.fire();
+    ['A', 'B', 'C'].forEach((label, i) => {
+      const swatch = screen.getByText(label).querySelector('[data-dash]');
+      expect(swatch?.tagName.toLowerCase()).toBe('svg');
+      expect(swatch?.getAttribute('data-dash')).toBe(String(i));
+      expect(swatch?.querySelector('line')).not.toBeNull();
+    });
+  });
+
   it('a single reference keeps data-dash 0', () => {
     const layout = stubLayout();
     const { container } = render(

@@ -1454,6 +1454,29 @@ describe('viewport (DS-48)', () => {
     expect(onViewport).not.toHaveBeenCalled();
   });
 
+  it('keeps defaultViewport when the first categories arrive after loading', () => {
+    const layout = stubLayout();
+    const { rerender } = render(
+      <Chart {...vp} categories={[]} series={[]} defaultViewport={{ from: 0.5, to: 1 }} />,
+    );
+    layout.fire();
+    rerender(<Chart {...vp} defaultViewport={{ from: 0.5, to: 1 }} />);
+    expect(reset()).not.toBeNull();
+    expect(plotOf()).toHaveAccessibleDescription(/^Zoomed to c4–c7\./);
+  });
+
+  it('keyboard zoom announces the new window in the live region', async () => {
+    const layout = stubLayout();
+    render(<Chart {...vp} zoomGestures />);
+    layout.fire();
+    plotOf().focus();
+    const live = document.querySelector('[aria-live="polite"]')!;
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}+');
+    await waitFor(() => expect(live).toHaveTextContent('Zoomed to c1–c5'));
+    await userEvent.keyboard('-');
+    await waitFor(() => expect(live).toHaveTextContent('Zoomed to c0–c7'));
+  });
+
   it('keyboard: +/= and - zoom around the inspected category', async () => {
     const layout = stubLayout();
     const onViewport = vi.fn();
@@ -1781,6 +1804,32 @@ describe('gestures and plot double-click (DS-48)', () => {
     rerender(<Chart {...vp} zoomRange={{ from: 'c2', to: 'c6' }} onPlotDoubleClick={onDbl} />);
     fireEvent.doubleClick(plotOf(), { clientX: xOf(container, 'c4'), clientY: 120 });
     expect(onDbl.mock.lastCall![0]).toMatchObject({ index: 4, source: 'mouse' });
+  });
+
+  it('hover and dblclick over the axis gutter or right padding stay on the visible window', () => {
+    const layout = stubLayout();
+    const onDbl = vi.fn();
+    render(<Chart {...vp} defaultViewport={{ from: 0.25, to: 0.5 }} onPlotDoubleClick={onDbl} />);
+    layout.fire();
+    fireEvent.pointerMove(plotOf(), { pointerType: 'mouse', clientX: 0, clientY: 50 });
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('c2');
+    fireEvent.pointerMove(plotOf(), { pointerType: 'mouse', clientX: 400, clientY: 50 });
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('c3');
+    fireEvent.doubleClick(plotOf(), { clientX: 0, clientY: -500 });
+    const left = onDbl.mock.lastCall![0];
+    expect(left.index).toBe(2);
+    expect(left.fraction).toBeCloseTo(0.25);
+    fireEvent.doubleClick(plotOf(), { clientX: 400, clientY: 120 });
+    const right = onDbl.mock.lastCall![0];
+    expect(right.index).toBe(3);
+    expect(right.fraction).toBeCloseTo(0.5);
+    // Outside the plot's height the value stops at the y range's ends instead of extrapolating.
+    fireEvent.doubleClick(plotOf(), { clientX: 200, clientY: -400 });
+    expect(onDbl.mock.lastCall![0].value).toBeCloseTo(left.value);
+    fireEvent.doubleClick(plotOf(), { clientX: 200, clientY: 10_000 });
+    const below = onDbl.mock.lastCall![0].value;
+    fireEvent.doubleClick(plotOf(), { clientX: 200, clientY: 20_000 });
+    expect(onDbl.mock.lastCall![0].value).toBeCloseTo(below);
   });
 
   it('a touch double-tap fires once; taps 400ms apart do not', () => {
