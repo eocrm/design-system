@@ -1495,14 +1495,20 @@ describe('viewport (DS-48)', () => {
     expect(next.to).toBeCloseTo(0.375);
   });
 
-  it('keyboard zoom keys are off without zoomGestures', async () => {
+  it('keyboard zoom keys are off without zoomGestures; inspection still pans the window', async () => {
     const layout = stubLayout();
     const onViewport = vi.fn();
     render(<Chart {...vp} defaultViewport={{ from: 0, to: 0.25 }} onViewportChange={onViewport} />);
     layout.fire();
     plotOf().focus();
-    await userEvent.keyboard('{ArrowRight}+-{ArrowRight}{ArrowRight}{ArrowRight}');
+    await userEvent.keyboard('{ArrowRight}+-=');
     expect(onViewport).not.toHaveBeenCalled();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    const [next, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: true });
+    expect(next.from).toBeCloseTo(0.125);
+    expect(next.to).toBeCloseTo(0.375);
+    expect(plotOf()).toHaveAccessibleDescription(/^Zoomed to c1–c2\./);
   });
 
   it('renders no NaN while loading or with one category', () => {

@@ -104,7 +104,8 @@ const [selection, setSelection] = useState<ChartRange | null>(null);
 - **With `zoomRange`:** the window lives inside the slice. Any `zoomRange` change (Zoom to selection, Reset, a new prop) resets it to `null`, calling `onViewportChange(null, { end: true })` when it was set. **Reset zoom** shows whenever either is set and clears both in one action.
 - **New data:** an uncontrolled window (`defaultViewport`) resets to `null` silently when `categories` change content. A controlled `viewport` is yours to reset after swapping in finer data.
 - **`onViewportChange(next, { end })`:** apps refetch on `end: true` (each keyboard step, a button, a reset).
-- **`zoomGestures`** (default `false`) turns on interaction. With the plot focused: `+` / `=` zoom in and `-` zooms out around the inspected category; moving the inspected category past an edge pans the window to keep it visible.
+- **`zoomGestures`** (default `false`) turns on interaction. With the plot focused: `+` / `=` zoom in and `-` zooms out around the inspected category.
+- **Keyboard inspection** (always, whenever a viewport is set): moving the inspected category past an edge pans the window to keep it visible (`onViewportChange` with `end: true`; a controlled `viewport` without a handler stays put).
 
 ```tsx
 const [viewport, setViewport] = useState<ChartViewport | null>(null);
@@ -153,7 +154,7 @@ const [viewport, setViewport] = useState<ChartViewport | null>(null);
 | `viewport` | `ChartViewport \| null` | no | Controlled render window inside the current domain (the `zoomRange` slice, else all categories): fractions `{ from, to }` of the domain's band edges (0 = left edge of the first category, 1 = right edge of the last). `null` = everything. Only the plot follows it (continuous x positions, marks clipped to the plot, x labels and y axis from the visible categories); the data table, tooltip contents, keyboard inspection and markers keep every category of the domain. Clamped to 0..1 and at least two categories. Any `zoomRange` change resets it to `null`. Omit for uncontrolled. |
 | `defaultViewport` | `ChartViewport \| null` | no | Initial render window when uncontrolled. Default `null`. Resets to `null` when `categories` change content (new data). |
 | `onViewportChange` | `((next: ChartViewport \| null, info: { end: boolean; }) => void)` | no | Called with the next window (`null` = everything) when the user zooms or pans, "Reset zoom" clears it, or a `zoomRange` change resets it. `end: true` once the change settles (each keyboard step, a button, a reset): refetch finer data then. |
-| `zoomGestures` | `boolean` | no | Turns on interactive zooming of the `viewport`. With the plot focused: `+` / `=` zoom in and `-` zooms out around the inspected category, and moving the inspected category past the window's edge pans to keep it visible. Default `false`. |
+| `zoomGestures` | `boolean` | no | Turns on interactive zooming of the `viewport`. With the plot focused: `+` / `=` zoom in and `-` zooms out around the inspected category. (Moving the inspected category past the window's edge pans to keep it visible whenever a viewport is set, with or without this.) Default `false`. |
 | …native | | | plus native HTML attributes |
 
 <!-- props:end -->

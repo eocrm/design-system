@@ -177,8 +177,8 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   onViewportChange?: (next: ChartViewport | null, info: { end: boolean }) => void;
   /**
    * Turns on interactive zooming of the `viewport`. With the plot focused: `+` / `=` zoom in and `-` zooms out around
-   * the inspected category, and moving the inspected category past the window's edge pans to keep it visible.
-   * Default `false`.
+   * the inspected category. (Moving the inspected category past the window's edge pans to keep it visible whenever
+   * a viewport is set, with or without this.) Default `false`.
    */
   zoomGestures?: boolean;
 }
@@ -565,7 +565,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     } else {
       setSelectionNote('');
     }
-    if (zoomGestures && next !== null) {
+    // Pan any window (app-set too) so keyboard inspection never lands off-screen.
+    if (next !== null) {
       const panned = ensureVisible(vp, next, n);
       if (!sameViewport(panned, vp)) changeViewport(panned, true);
     }
