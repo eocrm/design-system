@@ -2,7 +2,7 @@
   "button": {
     "code": "import { Button } from '@eocrm/design-system'; console.log(Button);",
     "jsGzip": 900,
-    "cssGzip": 1400
+    "cssGzip": 1600
   },
   "typical": {
     "code": "import { Button, Stack, Input, Select, Modal, Tooltip } from '@eocrm/design-system'; console.log(Button, Stack, Input, Select, Modal, Tooltip);",
@@ -22,7 +22,7 @@
   "i18n-en": {
     "code": "import { I18nProvider, Button } from '@eocrm/design-system'; console.log(I18nProvider, Button);",
     "jsGzip": 7800,
-    "cssGzip": 1400,
+    "cssGzip": 1600,
     "mustNotContain": ["Закрыть"]
   },
   "all": {

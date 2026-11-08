@@ -53,7 +53,13 @@ for (const route of ROUTES) {
           const hit = document.elementFromPoint(x, y);
           if (!hit || el.contains(hit)) continue;
           const other = hit.closest(sel);
-          if (other && !other.contains(el)) {
+          if (!other || other.contains(el)) continue;
+          // Only a steal by the ::before overhang counts. A point inside the other
+          // control's own box is a deliberate visual overlap (cascaded Calendar
+          // events in one time slot), not a hit-area steal.
+          const or = other.getBoundingClientRect();
+          if (x >= or.left && x <= or.right && y >= or.top && y <= or.bottom) continue;
+          {
             out.push(`${label(el)} -> ${label(other)}`);
             break;
           }
