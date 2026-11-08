@@ -90,7 +90,7 @@ function MealsToday({ bowlA, bowlB, usualPace }: MealsTodayProps) {
 
 - **Series** are point groups in a stable order. Colour and marker shape come from the same 8-slot palette as [Chart](Chart.md); `color` pins a slot, series without it fill the free slots in order. Identity never relies on colour alone.
 - **Axes.** `xScale="number"` (default) is linear; `"time"` takes `Date` or epoch ms for `x` and passes epoch ms to `formatX`. Domains default to the data extent (y includes 0 when every y ≥ 0); points outside a fixed `xDomain` / `yDomain` are clipped. `xLabel` / `yLabel` are drawn as axis titles and head the data-table columns.
-- **Size.** `point.size` maps to dot area (sqrt scale) and needs `formatSize`; name it with `sizeLabel`.
+- **Size.** Dot area is proportional to `point.size`, scaled from 0 (20 and 22 look nearly alike; tiny, zero or negative sizes get the smallest dot). Needs `formatSize`; name it with `sizeLabel`.
 - **`trendLine`** draws a dashed least-squares line per visible series (decorative; series with fewer than 2 distinct x get none). **`reference`** is an app-computed dashed line listed in the legend as a plain entry (not a toggle); the component does not fit it.
 - **Legend** toggles series (`hiddenSeries` / `onHiddenSeriesChange` to control). The last visible series with points can't be hidden.
 - **Keyboard.** Focus the plot; ←/→ walk all points by x, Home / End jump to the first / last, Esc dismisses. **Screen readers** get a visually hidden data table (caption = `label`) with every point of the visible series; the SVG is hidden from them.

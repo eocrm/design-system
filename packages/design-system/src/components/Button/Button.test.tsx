@@ -53,6 +53,27 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Saved!' }).className).toMatch(/success/);
   });
 
+  it('fullWidth and align="start" add layout classes; iconOnly ignores both', () => {
+    render(
+      <>
+        <Button fullWidth align="start">
+          Row
+        </Button>
+        <Button>Plain</Button>
+        <Button iconOnly fullWidth align="start" aria-label="Close">
+          ×
+        </Button>
+      </>,
+    );
+    const row = screen.getByRole('button', { name: 'Row' }).className;
+    expect(row).toMatch(/fullWidth/);
+    expect(row).toMatch(/alignStart/);
+    for (const name of ['Plain', 'Close']) {
+      const cls = screen.getByRole('button', { name }).className;
+      expect(cls).not.toMatch(/fullWidth|alignStart/);
+    }
+  });
+
   it('applies selected paint only to secondary and ghost variants', () => {
     render(
       <>

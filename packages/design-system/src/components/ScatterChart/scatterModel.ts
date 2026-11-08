@@ -19,7 +19,7 @@ export interface ScatterPoint {
   x: number | Date;
   /** Vertical value. */
   y: number;
-  /** Optional magnitude mapped to dot area (sqrt scale); needs `formatSize` on the chart. */
+  /** Optional magnitude; dot area is proportional to it (scale from 0, small values floored at the min radius). Needs `formatSize` on the chart. */
   size?: number;
   /** Optional note shown in the tooltip, announcement and data table, e.g. "Big lunch". */
   label?: string;
@@ -118,10 +118,13 @@ export interface ScatterLayoutInput {
 
 const validSize = (s: number | undefined): s is number => s !== undefined && Number.isFinite(s);
 
-/** Min/max `size` over all points of `series`. */
+/**
+ * `[0, max size]` over all points of `series`. The scale starts at 0, not the data minimum, so dot area stays
+ * proportional to the value: 20 and 22 look nearly alike (DS-41). Negative sizes count as 0.
+ */
 export function scatterSizeDomain(series: readonly ResolvedScatterSeries[]): [number, number] {
   const sizes = series.flatMap((s) => s.points.map((p) => p.size).filter(validSize));
-  return sizes.length ? [Math.min(...sizes), Math.max(...sizes)] : [0, 1];
+  return [0, Math.max(0, ...sizes)];
 }
 
 /** Height of one axis-title row (--font-size-sm line plus gap); one above the plot, one below the x ticks. */
@@ -256,8 +259,11 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     prevEnd = pos + half;
   }
 
-  const [sMin, sMax] = input.sizeDomain ?? scatterSizeDomain(series);
-  const r = scaleSqrt().domain([sMin, sMax]).range(input.sizeRange);
+  const [, sMax] = input.sizeDomain ?? scatterSizeDomain(series);
+  const [rMin, rMax] = input.sizeRange;
+  // Area ∝ value from 0; the min radius is only a floor so tiny / zero values stay visible and hoverable.
+  const area = scaleSqrt().domain([0, sMax]).range([0, rMax]).clamp(true);
+  const r = (v: number) => (sMax > 0 ? Math.max(rMin, area(Math.max(0, v))) : rMin);
   const dots: ScatterDot[] = series
     .flatMap((s) =>
       s.points.map((datum, index) => ({

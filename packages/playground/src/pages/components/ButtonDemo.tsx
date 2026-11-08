@@ -3,6 +3,7 @@ import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import {
   Button,
   Cluster,
+  List,
   PALETTE_COLORS,
   PillMenu,
   type PaletteColor,
@@ -41,6 +42,30 @@ function SaveWithSuccessFlash() {
         )}
       </Button>
     </Cluster>
+  );
+}
+
+const PLACES = ['Seeded Park · Park', 'Riverside Café · Food', 'Central Library · Study'];
+
+function SelectableRows() {
+  const [picked, setPicked] = useState(PLACES[0]);
+  return (
+    <List variant="plain" aria-label="Places">
+      {PLACES.map((place) => (
+        <List.Item key={place}>
+          <Button
+            variant="ghost"
+            fullWidth
+            align="start"
+            selected={picked === place}
+            aria-pressed={picked === place}
+            onClick={() => setPicked(place)}
+          >
+            {place}
+          </Button>
+        </List.Item>
+      ))}
+    </List>
   );
 }
 
@@ -203,6 +228,39 @@ export function AppliedFilters() {
 }`}
       >
         <AppliedFilters />
+      </Example>
+
+      <Example
+        title="Selectable rows (fullWidth + align)"
+        description="fullWidth fills the container; align start puts the label at the inline start, so rows of different-length names line up and the whole row is the hit area. Content stays centred without align (a full-width submit). Both are ignored with iconOnly."
+        code={`import { useState } from 'react';
+import { Button, List } from '@eocrm/design-system';
+
+const PLACES = ['Seeded Park · Park', 'Riverside Café · Food', 'Central Library · Study'];
+
+export function SelectableRows() {
+  const [picked, setPicked] = useState(PLACES[0]);
+  return (
+    <List variant="plain" aria-label="Places">
+      {PLACES.map((place) => (
+        <List.Item key={place}>
+          <Button
+            variant="ghost"
+            fullWidth
+            align="start"
+            selected={picked === place}
+            aria-pressed={picked === place}
+            onClick={() => setPicked(place)}
+          >
+            {place}
+          </Button>
+        </List.Item>
+      ))}
+    </List>
+  );
+}`}
+      >
+        <SelectableRows />
       </Example>
 
       <Example

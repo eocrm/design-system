@@ -15,6 +15,14 @@ describe('BrandIcon', () => {
     expect(svg.getAttribute('viewBox')).toBe('0 0 48 48');
   });
 
+  it('renders the github mark in currentColor (monochrome, follows text colour)', () => {
+    const { container } = render(<BrandIcon name="github" />);
+    const svg = container.querySelector('svg')!;
+    expect(svg.getAttribute('viewBox')).toBe('0 0 16 16');
+    const fills = [...svg.querySelectorAll('[fill]')].map((n) => n.getAttribute('fill'));
+    expect(fills).toEqual(['currentColor']);
+  });
+
   it('renders the yandex mark (distinct viewBox + brand red)', () => {
     const { container } = render(<BrandIcon name="yandex" />);
     expect(svgOf(container).getAttribute('viewBox')).toBe('0 0 24 24');
@@ -22,7 +30,7 @@ describe('BrandIcon', () => {
   });
 
   it('renders every known brand without throwing', () => {
-    (['google', 'yandex'] as const).forEach((name) => {
+    (['google', 'yandex', 'github'] as const).forEach((name) => {
       expect(() => render(<BrandIcon name={name} />)).not.toThrow();
     });
   });

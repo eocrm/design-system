@@ -293,7 +293,7 @@ export function isEmpty(categories: readonly string[], series: readonly Resolved
   );
 }
 
-/** Estimated pixel width of `text` at the chart's 12px font, by glyph class (digits 7, `%` 11, capitals / m / w 9, CJK 12...). */
+/** Estimated pixel width of `text` at the chart's 12px font, by glyph class (digits 7, `%` 11, capitals / m / w 9, W / M and wide Cyrillic capitals 12, CJK 12...). */
 export function estimateTextWidth(text: string): number {
   let w = 0;
   for (const ch of text) {
@@ -301,6 +301,8 @@ export function estimateTextWidth(text: string): number {
     else if (/[\d.,\s\u2212+-]/.test(ch)) w += 7;
     else if (/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(ch))
       w += 12;
+    // W and M render ~11–12px at 12px; at 9 a "Wed" / "Mon" heatmap row label clipped at the edge (DS-41).
+    else if (/[WMШЩЖЮ]/u.test(ch)) w += 12;
     else if (/[\p{Lu}mw]/u.test(ch)) w += 9;
     else if (/\p{L}/u.test(ch)) w += 7;
     else w += 9;

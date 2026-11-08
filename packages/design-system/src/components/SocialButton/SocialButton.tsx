@@ -10,7 +10,7 @@ export interface SocialButtonProps extends Omit<
 > {
   /**
    * Which provider's brand mark to show. Tied to `<BrandIcon>`'s set, so it
-   * grows as BrandIcon does (today: `'google'` / `'yandex'`).
+   * grows as BrandIcon does (today: `'google'` / `'yandex'` / `'github'`).
    */
   provider: BrandName;
   /** The button text — e.g. `"Continue with Google"`. Required (consumer-supplied). */

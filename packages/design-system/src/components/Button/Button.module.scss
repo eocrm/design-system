@@ -74,6 +74,16 @@
   padding: var(--button-padding-icon-only);
 }
 
+// Layout opt-ins (DS-38): 100% of the container is the intrinsic-width
+// exception Rule 4 allows; the parent still owns placement.
+.fullWidth {
+  width: 100%;
+}
+
+.alignStart {
+  justify-content: flex-start;
+}
+
 // Variants
 .primary {
   background: var(--button-bg);
