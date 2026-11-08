@@ -1105,3 +1105,73 @@ describe('valueLabels (DS-12b)', () => {
     expect(top - 14).toBeGreaterThanOrEqual(l.plot.y);
   });
 });
+
+describe('viewport (DS-48)', () => {
+  const vp = { from: 0.5, to: 1 };
+  const one = (values: number[]) => resolveSeries('line', [s('a', values)], values.length).series;
+
+  it('renders the window: step widens and the first visible band starts at the plot edge', () => {
+    const l = layout({ type: 'line', series: one([1, 2, 3, 4]), viewport: vp });
+    expect(l.step).toBeCloseTo(l.plot.width / 2);
+    expect(l.categoryX[2]).toBeCloseTo(l.plot.x + l.step / 2);
+    expect(l.categoryX[0]).toBeLessThan(l.plot.x);
+  });
+
+  it('scales y to the visible values only', () => {
+    const l = layout({ type: 'bar', series: one([1000, 2, 3, 4]), viewport: vp });
+    expect(Math.max(...l.yTicks.map((t) => t.value))).toBeLessThan(100);
+    const full = layout({ type: 'bar', series: one([1000, 2, 3, 4]) });
+    expect(Math.max(...full.yTicks.map((t) => t.value))).toBeGreaterThanOrEqual(1000);
+  });
+
+  it('picks x labels from the visible categories only', () => {
+    const l = layout({ type: 'line', series: one([1, 2, 3, 4]), viewport: vp });
+    expect(l.xLabels.map((x) => x.index)).toEqual([2, 3]);
+  });
+
+  it('maps x to categories through the shifted origin', () => {
+    const l = layout({ type: 'line', series: one([1, 2, 3, 4]), viewport: vp });
+    expect(categoryIndexAt(l, l.plot.x + 1)).toBe(2);
+    expect(categoryIndexAt(l, l.plot.x + l.plot.width - 1)).toBe(3);
+  });
+
+  it('a null viewport and the full window equal no viewport', () => {
+    const plain = layout({ type: 'line', series: one([1, 2, 3, 4]) });
+    expect(layout({ type: 'line', series: one([1, 2, 3, 4]), viewport: null })).toEqual(plain);
+  });
+
+  it('has no NaN with no categories or one', () => {
+    for (const categories of [[], ['a']]) {
+      // Series arrive fitted to the categories (resolveSeries).
+      const l = layout({
+        type: 'bar',
+        categories,
+        series: one(categories.map(() => 5)),
+        viewport: vp,
+      });
+      expect(JSON.stringify(l, (_, v) => (Number.isNaN(v) ? 'NaN' : v))).not.toContain('NaN');
+    }
+  });
+
+  it('never clamps a marker outside the window into view', () => {
+    const cats = ['a', 'b', 'c', 'd'];
+    const l = layout({ type: 'line', series: [], viewport: vp });
+    const [off, in1, band] = layoutMarkers(
+      resolveMarkers(
+        [
+          { key: 'off', at: 'a', label: 'Off', icon: '🐱' },
+          { key: 'in', at: 'c', label: 'In', icon: '🐱', labelPlacement: 'top' },
+          { key: 'band', from: 'a', to: 'b', label: 'Band', icon: '🐱' },
+        ],
+        cats,
+      ).markers,
+      l,
+    );
+    expect(off.x).toBeLessThan(l.plot.x);
+    expect(off.top).toBeUndefined();
+    expect(off.label).toBeUndefined();
+    expect(in1.top!.x).toBeGreaterThanOrEqual(l.plot.x);
+    expect(band.top).toBeUndefined();
+    expect(band.label).toBeUndefined();
+  });
+});

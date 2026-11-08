@@ -947,4 +947,5 @@ export type {
   ChartSeries,
   ChartSeriesColor,
   ChartType,
+  ChartViewport,
 } from './components/Chart';

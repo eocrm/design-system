@@ -9,4 +9,5 @@ export type {
   ChartSeries,
   ChartSeriesColor,
   ChartType,
+  ChartViewport,
 } from './Chart';

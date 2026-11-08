@@ -1304,3 +1304,227 @@ describe('range selection and zoom', () => {
     );
   });
 });
+
+describe('viewport (DS-48)', () => {
+  const cats = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'];
+  const vp: ChartProps = {
+    ...base,
+    type: 'bar',
+    categories: cats,
+    series: [{ key: 'won', label: 'Deals won', values: [1, 2, 3, 4, 5, 6, 7, 8] }],
+  };
+  const plotOf = () => screen.getByRole('group', { name: 'Deals won per week' });
+  const reset = () => screen.queryByRole('button', { name: 'Reset zoom' });
+
+  it('clips marks, markers, selection and value labels to the plot and says zoomed', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart
+        {...vp}
+        valueLabels
+        markers={[{ key: 'm', at: 'c5', label: 'Launch' }]}
+        defaultSelectedRange={{ from: 'c4', to: 'c5' }}
+        defaultViewport={{ from: 0.5, to: 1 }}
+      />,
+    );
+    layout.fire();
+    const clip = container.querySelector('clipPath');
+    expect(clip).not.toBeNull();
+    const url = `url(#${clip!.id})`;
+    const clipped = (el: Element | null) =>
+      expect(el?.closest('[clip-path]')?.getAttribute('clip-path')).toBe(url);
+    clipped(container.querySelector('[data-series="won"]'));
+    clipped(container.querySelector('[data-selection]'));
+    clipped(container.querySelector('[data-value-label]'));
+    clipped(container.querySelector('line[data-tone]'));
+    expect(plotOf()).toHaveAccessibleDescription(/^Zoomed to c4–c7\. Selected c4 to c5\./);
+  });
+
+  it('draws no clipPath without a viewport', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...vp} />);
+    layout.fire();
+    expect(container.querySelector('clipPath')).toBeNull();
+  });
+
+  it('keeps every category of the domain in the data table', () => {
+    const layout = stubLayout();
+    render(<Chart {...vp} defaultViewport={{ from: 0.5, to: 1 }} />);
+    layout.fire();
+    const table = screen.getByRole('table', { name: 'Deals won per week' });
+    for (const c of cats) expect(within(table).getByRole('rowheader', { name: c })).toBeTruthy();
+  });
+
+  it('Reset zoom shows for a viewport alone and clears only what is set', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const onZoom = vi.fn();
+    const { unmount } = render(
+      <Chart
+        {...vp}
+        defaultViewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+        onZoomRangeChange={onZoom}
+      />,
+    );
+    layout.fire();
+    await userEvent.click(reset()!);
+    expect(onViewport).toHaveBeenCalledWith(null, { end: true });
+    expect(onZoom).not.toHaveBeenCalled();
+    expect(reset()).toBeNull();
+    unmount();
+
+    onViewport.mockClear();
+    render(
+      <Chart
+        {...vp}
+        defaultZoomRange={{ from: 'c2', to: 'c7' }}
+        defaultViewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+        onZoomRangeChange={onZoom}
+      />,
+    );
+    layout.fire();
+    await userEvent.click(reset()!);
+    expect(onZoom).toHaveBeenCalledWith(null);
+    expect(onViewport).toHaveBeenCalledTimes(1);
+    expect(onViewport).toHaveBeenCalledWith(null, { end: true });
+  });
+
+  it('a zoomRange change resets a non-null viewport', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { rerender } = render(
+      <Chart {...vp} viewport={{ from: 0.5, to: 1 }} onViewportChange={onViewport} />,
+    );
+    layout.fire();
+    rerender(
+      <Chart
+        {...vp}
+        zoomRange={{ from: 'c1', to: 'c5' }}
+        viewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    expect(onViewport).toHaveBeenCalledWith(null, { end: true });
+  });
+
+  it('Zoom to selection resets an uncontrolled viewport', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    render(
+      <Chart
+        {...vp}
+        defaultSelectedRange={{ from: 'c5', to: 'c6' }}
+        defaultViewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    layout.fire();
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom to selection' }));
+    expect(onViewport).toHaveBeenCalledWith(null, { end: true });
+    expect(plotOf()).toHaveAccessibleDescription(/^Zoomed to c5–c6\./);
+  });
+
+  it('an uncontrolled viewport resets silently when the categories change content', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { rerender } = render(
+      <Chart {...vp} defaultViewport={{ from: 0.5, to: 1 }} onViewportChange={onViewport} />,
+    );
+    layout.fire();
+    rerender(
+      <Chart
+        {...vp}
+        categories={[...cats]}
+        defaultViewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    expect(reset()).not.toBeNull();
+    rerender(
+      <Chart
+        {...vp}
+        categories={cats.map((c) => `${c}!`)}
+        defaultViewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    expect(reset()).toBeNull();
+    expect(onViewport).not.toHaveBeenCalled();
+  });
+
+  it('keyboard: +/= and - zoom around the inspected category', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    render(<Chart {...vp} zoomGestures onViewportChange={onViewport} />);
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}');
+    await userEvent.keyboard('+');
+    // c2's centre (2.5 / 8) stays put while the span halves.
+    const [zoomed, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: true });
+    expect(zoomed.from).toBeCloseTo(0.15625);
+    expect(zoomed.to).toBeCloseTo(0.65625);
+    await userEvent.keyboard('-');
+    expect(onViewport).toHaveBeenLastCalledWith(null, { end: true });
+    await userEvent.keyboard('=');
+    expect(onViewport.mock.lastCall![0]).not.toBeNull();
+  });
+
+  it('keyboard: inspecting past the right edge pans the window', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    render(
+      <Chart
+        {...vp}
+        zoomGestures
+        defaultViewport={{ from: 0, to: 0.25 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    expect(onViewport).not.toHaveBeenCalled();
+    await userEvent.keyboard('{ArrowRight}');
+    const [next, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: true });
+    expect(next.from).toBeCloseTo(0.125);
+    expect(next.to).toBeCloseTo(0.375);
+  });
+
+  it('keyboard zoom keys are off without zoomGestures', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    render(<Chart {...vp} defaultViewport={{ from: 0, to: 0.25 }} onViewportChange={onViewport} />);
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}+-{ArrowRight}{ArrowRight}{ArrowRight}');
+    expect(onViewport).not.toHaveBeenCalled();
+  });
+
+  it('renders no NaN while loading or with one category', () => {
+    const layout = stubLayout();
+    const noNaN = (container: HTMLElement) => {
+      for (const el of container.querySelectorAll('svg *'))
+        for (const a of el.attributes) expect(`${a.name}=${a.value}`).not.toContain('NaN');
+    };
+    const { container, rerender } = render(
+      <Chart {...vp} categories={[]} series={[]} viewport={{ from: 0.5, to: 1 }} />,
+    );
+    layout.fire();
+    noNaN(container);
+    rerender(
+      <Chart
+        {...vp}
+        categories={['only']}
+        series={[{ key: 'won', label: 'Deals won', values: [3] }]}
+        viewport={{ from: 0.5, to: 1 }}
+      />,
+    );
+    expect(container.querySelector('svg')).not.toBeNull();
+    noNaN(container);
+  });
+});

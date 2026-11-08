@@ -3,6 +3,7 @@ import {
   Fragment,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -53,6 +54,13 @@ import {
   type ChartType,
   type ResolvedSeries,
 } from './chartModel';
+import {
+  clampViewport,
+  ensureVisible,
+  visibleIndexRange,
+  zoomViewport,
+  type ChartViewport,
+} from './chartViewport';
 import styles from './Chart.module.scss';
 
 export type {
@@ -65,6 +73,7 @@ export type {
   ChartType,
 } from './chartModel';
 export type { ChartRange } from './chartRange';
+export type { ChartViewport } from './chartViewport';
 
 export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
   /**
@@ -149,11 +158,40 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   defaultZoomRange?: ChartRange | null;
   /** Called with the next zoomed range (or `null` on reset) when the user clicks a zoom button. */
   onZoomRangeChange?: (range: ChartRange | null) => void;
+  /**
+   * Controlled render window inside the current domain (the `zoomRange` slice, else all categories): fractions
+   * `{ from, to }` of the domain's band edges (0 = left edge of the first category, 1 = right edge of the last).
+   * `null` = everything. Only the plot follows it (continuous x positions, marks clipped to the plot, x labels
+   * and y axis from the visible categories); the data table, tooltip contents, keyboard inspection and markers
+   * keep every category of the domain. Clamped to 0..1 and at least two categories. Any `zoomRange` change resets
+   * it to `null`. Omit for uncontrolled.
+   */
+  viewport?: ChartViewport | null;
+  /** Initial render window when uncontrolled. Default `null`. Resets to `null` when `categories` change content (new data). */
+  defaultViewport?: ChartViewport | null;
+  /**
+   * Called with the next window (`null` = everything) when the user zooms or pans, "Reset zoom" clears it, or a
+   * `zoomRange` change resets it. `end: true` once the change settles (each keyboard step, a button, a reset):
+   * refetch finer data then.
+   */
+  onViewportChange?: (next: ChartViewport | null, info: { end: boolean }) => void;
+  /**
+   * Turns on interactive zooming of the `viewport`. With the plot focused: `+` / `=` zoom in and `-` zooms out around
+   * the inspected category, and moving the inspected category past the window's edge pans to keep it visible.
+   * Default `false`.
+   */
+  zoomGestures?: boolean;
 }
 
 const NO_MARKERS: ChartMarker[] = [];
 const NO_DROPPED: string[] = [];
 const identity = (i: number) => i;
+/** Span multiplier of one `+` key press (`-` divides by it). */
+const KEY_ZOOM = 0.5;
+/** Vertical room the clip leaves around the plot, so a top/bottom inspection marker and stroke are not cut. */
+const CLIP_SLACK = MARKER_RADIUS + 2;
+const sameViewport = (a: ChartViewport | null, b: ChartViewport | null) =>
+  a === b || (!!a && !!b && a.from === b.from && a.to === b.to);
 /** The header `Cluster gap="sm"` between the legend and the zoom buttons. */
 const HEADER_GAP_PX = 8;
 
@@ -233,6 +271,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     zoomRange,
     defaultZoomRange,
     onZoomRangeChange,
+    viewport,
+    defaultViewport,
+    onViewportChange,
+    zoomGestures = false,
     className,
     ...rest
   },
@@ -271,6 +313,31 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     () => resolveMarkers(view.markers, categories),
     [view.markers, categories],
   );
+  // Render window over the view; no `onChange` here: `changeViewport` adds the `{ end }` info itself.
+  const [rawViewport, setViewportState] = useControllableState<ChartViewport | null>({
+    value: viewport,
+    defaultValue: defaultViewport ?? null,
+  });
+  const changeViewport = (next: ChartViewport | null, end: boolean) => {
+    setViewportState(next);
+    onViewportChange?.(next, { end });
+  };
+  const vFrom = rawViewport?.from;
+  const vTo = rawViewport?.to;
+  const n = categories.length;
+  const vp = useMemo(
+    () =>
+      vFrom === undefined || vTo === undefined ? null : clampViewport({ from: vFrom, to: vTo }, n),
+    [vFrom, vTo, n],
+  );
+  // New data (categories with other content) drops an uncontrolled window silently: notifying would make an app
+  // that refetches on change undo the finer data it just swapped in. A controlled window is the app's to set.
+  const categoriesKey = allCategories.join('\u0000');
+  const [viewportDataKey, setViewportDataKey] = useState(categoriesKey);
+  if (viewportDataKey !== categoriesKey) {
+    setViewportDataKey(categoriesKey);
+    if (viewport === undefined) setViewportState(null);
+  }
   useDevWarnings(
     resolved.dropped,
     resolved.overflowCount,
@@ -303,13 +370,18 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       ? t('chart.selectedOne', { category: r.from })
       : t('chart.selected', { from: r.from, to: r.to });
   // Persistent zoom and selection, in the plot's description (Hard rule 10: a state the user arrives at).
-  const zoomText = !zoomIdx
-    ? ''
-    : zoomIdx.from === zoomIdx.to
-      ? t('chart.zoomedOne', { category: allCategories[zoomIdx.from] })
-      : t('chart.zoomed', { from: allCategories[zoomIdx.from], to: allCategories[zoomIdx.to] });
+  const zoomedText = (from: string, to: string) =>
+    from === to ? t('chart.zoomedOne', { category: from }) : t('chart.zoomed', { from, to });
+  // The table caption names the domain (the table lists all of it); the plot names what it shows.
+  const zoomText = zoomIdx
+    ? zoomedText(allCategories[zoomIdx.from], allCategories[zoomIdx.to])
+    : '';
+  const shownIdx = vp && visibleIndexRange(vp, n);
+  const plotZoomText = shownIdx
+    ? zoomedText(categories[shownIdx.from], categories[shownIdx.to])
+    : zoomText;
   const statusText = [
-    zoomText,
+    plotZoomText,
     selectionIdx &&
       selectedText(rangeFromIndices(selectionIdx.from, selectionIdx.to, allCategories)),
   ]
@@ -339,6 +411,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const focusKey = hoverKey ?? focusedKey;
   const hintId = useId();
+  const clipId = useId();
   const statusId = useId();
   const footnoteId = useId();
   const hasFootnote = footnote != null && footnote !== false && footnote !== '';
@@ -374,6 +447,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             curve,
             valueLabels,
             topGutter: gutterRows * MARKER_LABEL_BASELINE,
+            viewport: vp,
           })
         : null,
     [
@@ -387,6 +461,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       curve,
       valueLabels,
       gutterRows,
+      vp,
     ],
   );
 
@@ -397,7 +472,6 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
 
   const [active, setActive] = useState<number | null>(null);
   const [activeSource, setActiveSource] = useState<'pointer' | 'keyboard' | null>(null);
-  const n = categories.length;
   const current = active !== null && active < n ? active : null;
 
   // Shift+arrow anchor: the category inspected when Shift was first used; any other key, any pointer
@@ -420,12 +494,37 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   useEffect(() => {
     anchor.current = null;
   }, [zoomKey]);
+  // A zoomRange change re-bases the domain, so the window inside it no longer applies. Before paint, so the old
+  // window never shows on the new domain; not during render, as it calls the consumer.
+  const viewportZoomKey = useRef(zoomKey);
+  useLayoutEffect(() => {
+    if (viewportZoomKey.current === zoomKey) return;
+    viewportZoomKey.current = zoomKey;
+    if (rawViewport === null) return;
+    setViewportState(null);
+    onViewportChange?.(null, { end: true });
+  }, [zoomKey, rawViewport, setViewportState, onViewportChange]);
   const clampIndex = (i: number) => Math.max(0, Math.min(n - 1, i));
   const rangeAt = (a: number, b: number) =>
     rangeFromIndices(clampIndex(a), clampIndex(b), categories);
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const extending = selectable && e.shiftKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft');
     if (!extending && e.key !== 'Shift') anchor.current = null;
+    const plainKey = !e.ctrlKey && !e.metaKey && !e.altKey;
+    if (zoomGestures && plainKey && (e.key === '+' || e.key === '=' || e.key === '-')) {
+      e.preventDefault();
+      // Around the inspected category's centre (as a fraction of the visible plot), else the middle.
+      const at =
+        current !== null && layout
+          ? Math.max(
+              0,
+              Math.min(1, (layout.categoryX[current] - layout.plot.x) / layout.plot.width),
+            )
+          : 0.5;
+      const next = zoomViewport(vp, e.key === '-' ? 1 / KEY_ZOOM : KEY_ZOOM, at, n);
+      if (!sameViewport(next, vp)) changeViewport(next, true);
+      return;
+    }
     let next: number | null;
     switch (e.key) {
       case 'ArrowRight':
@@ -465,6 +564,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       select(rangeAt(anchor.current, next));
     } else {
       setSelectionNote('');
+    }
+    if (zoomGestures && next !== null) {
+      const panned = ensureVisible(vp, next, n);
+      if (!sameViewport(panned, vp)) changeViewport(panned, true);
     }
     inspect(next, 'keyboard');
   };
@@ -619,7 +722,14 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         }));
 
   // Plot-local scalars so `point` keeps its identity until x/y change; the tooltip resolves viewport coords itself.
-  const anchorX = current !== null && layout ? layout.categoryX[current] : undefined;
+  // Kept on the plot: with a viewport the inspected category can be scrolled out of view.
+  const anchorX =
+    current !== null && layout
+      ? Math.max(
+          layout.plot.x,
+          Math.min(layout.plot.x + layout.plot.width, layout.categoryX[current]),
+        )
+      : undefined;
   const anchorY = layout?.plot.y;
   const point = useMemo(
     () => (anchorX === undefined || anchorY === undefined ? null : { x: anchorX, y: anchorY }),
@@ -707,14 +817,18 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     setSelectionNote('');
     plotEl?.focus();
   };
+  // Clears both in one action; the viewport first, so the zoomRange reset finds no window left to notify about.
   const resetZoom = () => {
-    setZoom(null);
+    if (vp) changeViewport(null, true);
+    if (zoomIdx !== null) setZoom(null);
     plotEl?.focus();
     refocusAfterReset.current = true;
   };
-  const zoomButtons = (hasSelection || zoomIdx !== null) && (
+  const zoomed = zoomIdx !== null || vp !== null;
+  const clip = vp ? `url(#${clipId})` : undefined;
+  const zoomButtons = (hasSelection || zoomed) && (
     <Cluster ref={setZoomEl} gap="xs">
-      {zoomIdx !== null && (
+      {zoomed && (
         <Button size="xs" variant="ghost" onClick={resetZoom}>
           {t('chart.resetZoom')}
         </Button>
@@ -816,8 +930,18 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             aria-hidden="true"
             focusable="false"
           >
+            {clip && (
+              <clipPath id={clipId}>
+                <rect
+                  x={layout.plot.x}
+                  y={layout.plot.y - CLIP_SLACK}
+                  width={layout.plot.width}
+                  height={layout.plot.height + 2 * CLIP_SLACK}
+                />
+              </clipPath>
+            )}
             {/* Bands sit under the grid and data; lines under the data, labels over it. */}
-            <g className={styles.markers}>
+            <g className={styles.markers} clipPath={clip}>
               {markerGeometry.map(
                 (m) =>
                   m.kind === 'band' && (
@@ -874,115 +998,120 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 </text>
               ))}
             </g>
-            {current !== null &&
-              (type === 'bar' || type === 'stacked-bar' ? (
-                <rect
-                  className={styles.band}
-                  x={layout.categoryX[current] - layout.step / 2}
-                  y={layout.plot.y}
-                  width={layout.step}
-                  height={layout.plot.height}
-                />
-              ) : (
-                <line
-                  className={styles.crosshair}
-                  x1={layout.categoryX[current]}
-                  x2={layout.categoryX[current]}
-                  y1={layout.plot.y}
-                  y2={layout.plot.y + layout.plot.height}
-                />
-              ))}
-            <g className={styles.markers}>
-              {markerGeometry.map(
-                (m) =>
-                  m.kind === 'line' && (
-                    <line
-                      key={m.key}
-                      className={styles.markerLine}
-                      data-tone={m.tone}
-                      data-slot={m.slot || undefined}
-                      style={m.slot ? seriesStyle(m.slot) : undefined}
-                      x1={m.x}
-                      x2={m.x}
-                      y1={layout.plot.y}
-                      y2={layout.plot.y + layout.plot.height}
-                    />
-                  ),
-              )}
-            </g>
-            {layout.marks.map((m) => (
-              <g
-                key={m.key}
-                className={styles.series}
-                style={seriesStyle(m.slot)}
-                data-series={m.key}
-                data-comparison={m.comparison || undefined}
-                data-overflow={m.overflow || undefined}
-                data-dimmed={dimmed(m.key)}
-              >
-                {m.area && <path className={styles.area} d={m.area} />}
-                {m.line && <path className={styles.line} d={m.line} />}
-                {m.bars?.map((d, i) => d && <path key={i} className={styles.bar} d={d} />)}
-                {m.dots.map((p, i) => (
-                  <circle key={i} className={styles.dot} cx={p.x} cy={p.y} r={DOT_RADIUS} />
+            {/* With a viewport, everything drawn at category positions is clipped to the plot. */}
+            <g clipPath={clip}>
+              {current !== null &&
+                (type === 'bar' || type === 'stacked-bar' ? (
+                  <rect
+                    className={styles.band}
+                    x={layout.categoryX[current] - layout.step / 2}
+                    y={layout.plot.y}
+                    width={layout.step}
+                    height={layout.plot.height}
+                  />
+                ) : (
+                  <line
+                    className={styles.crosshair}
+                    x1={layout.categoryX[current]}
+                    x2={layout.categoryX[current]}
+                    y1={layout.plot.y}
+                    y2={layout.plot.y + layout.plot.height}
+                  />
                 ))}
-              </g>
-            ))}
-            {layout.valueLabels.length > 0 && (
-              <g className={styles.valueLabels}>
-                {layout.valueLabels.map((v, i) => (
-                  <text
-                    key={i}
-                    data-value-label
-                    aria-hidden="true"
-                    x={v.x}
-                    y={v.y}
-                    textAnchor="middle"
-                  >
-                    {v.text}
-                  </text>
-                ))}
-              </g>
-            )}
-            {/* Inspection markers in their own pass: a later stacked area would paint over them. */}
-            {current !== null &&
-              layout.marks.map(
-                (m) =>
-                  m.kind !== 'bars' &&
-                  m.points[current] && (
-                    <g
-                      key={m.key}
-                      className={styles.series}
-                      style={seriesStyle(m.slot)}
-                      data-dimmed={dimmed(m.key)}
-                    >
-                      <path
-                        className={styles.marker}
-                        d={markerPath(
-                          markerShape(m.slot),
-                          m.points[current]!.x,
-                          m.points[current]!.y,
-                          MARKER_RADIUS,
-                        )}
-                      />
-                    </g>
-                  ),
-              )}
-            {!compact && (
-              <g className={styles.markerLabels}>
+              <g className={styles.markers}>
                 {markerGeometry.map(
                   (m) =>
-                    m.label && (
-                      <text
+                    m.kind === 'line' && (
+                      <line
                         key={m.key}
-                        x={m.label.x}
-                        y={layout.plot.y + MARKER_LABEL_BASELINE}
-                        textAnchor={m.label.anchor}
-                      >
-                        {m.label.text}
-                      </text>
+                        className={styles.markerLine}
+                        data-tone={m.tone}
+                        data-slot={m.slot || undefined}
+                        style={m.slot ? seriesStyle(m.slot) : undefined}
+                        x1={m.x}
+                        x2={m.x}
+                        y1={layout.plot.y}
+                        y2={layout.plot.y + layout.plot.height}
+                      />
                     ),
                 )}
+              </g>
+              {layout.marks.map((m) => (
+                <g
+                  key={m.key}
+                  className={styles.series}
+                  style={seriesStyle(m.slot)}
+                  data-series={m.key}
+                  data-comparison={m.comparison || undefined}
+                  data-overflow={m.overflow || undefined}
+                  data-dimmed={dimmed(m.key)}
+                >
+                  {m.area && <path className={styles.area} d={m.area} />}
+                  {m.line && <path className={styles.line} d={m.line} />}
+                  {m.bars?.map((d, i) => d && <path key={i} className={styles.bar} d={d} />)}
+                  {m.dots.map((p, i) => (
+                    <circle key={i} className={styles.dot} cx={p.x} cy={p.y} r={DOT_RADIUS} />
+                  ))}
+                </g>
+              ))}
+              {layout.valueLabels.length > 0 && (
+                <g className={styles.valueLabels}>
+                  {layout.valueLabels.map((v, i) => (
+                    <text
+                      key={i}
+                      data-value-label
+                      aria-hidden="true"
+                      x={v.x}
+                      y={v.y}
+                      textAnchor="middle"
+                    >
+                      {v.text}
+                    </text>
+                  ))}
+                </g>
+              )}
+              {/* Inspection markers in their own pass: a later stacked area would paint over them. */}
+              {current !== null &&
+                layout.marks.map(
+                  (m) =>
+                    m.kind !== 'bars' &&
+                    m.points[current] && (
+                      <g
+                        key={m.key}
+                        className={styles.series}
+                        style={seriesStyle(m.slot)}
+                        data-dimmed={dimmed(m.key)}
+                      >
+                        <path
+                          className={styles.marker}
+                          d={markerPath(
+                            markerShape(m.slot),
+                            m.points[current]!.x,
+                            m.points[current]!.y,
+                            MARKER_RADIUS,
+                          )}
+                        />
+                      </g>
+                    ),
+                )}
+            </g>
+            {!compact && (
+              <g className={styles.markerLabels}>
+                <g clipPath={clip}>
+                  {markerGeometry.map(
+                    (m) =>
+                      m.label && (
+                        <text
+                          key={m.key}
+                          x={m.label.x}
+                          y={layout.plot.y + MARKER_LABEL_BASELINE}
+                          textAnchor={m.label.anchor}
+                        >
+                          {m.label.text}
+                        </text>
+                      ),
+                  )}
+                </g>
                 {/* Gutter above the plot: icons in the first row, top labels in the last. */}
                 {markerGeometry.map(
                   (m) =>
