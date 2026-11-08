@@ -488,6 +488,7 @@ export const en: Messages = {
     markers: 'Markers',
     details: 'Details',
     rangeHint: 'Shift+arrows select a range.',
+    zoomHint: 'Plus and minus zoom in and out.',
     zoomToSelection: 'Zoom to selection',
     resetZoom: 'Reset zoom',
     selected: ({ from, to }) => `Selected ${from as string} to ${to as string}`,

@@ -37,6 +37,8 @@
   overflow: hidden;
   border-radius: var(--chart-plot-radius);
   outline: none;
+
+  // A vertical swipe scrolls the page; no browser pinch or double-tap zoom (the chart owns them, DS-48).
   touch-action: pan-y;
 
   &:focus-visible {
@@ -47,6 +49,12 @@
   &[data-selectable] {
     user-select: none;
     -webkit-touch-callout: none;
+  }
+
+  // Zoomed with gestures on and selection off: a mouse drag pans the window.
+  &[data-pannable] {
+    cursor: grab;
+    user-select: none;
   }
 }
 

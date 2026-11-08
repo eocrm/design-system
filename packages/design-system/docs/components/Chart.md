@@ -103,8 +103,35 @@ const [selection, setSelection] = useState<ChartRange | null>(null);
 - **Limits:** clamped into 0..1 and to at least two categories; a window covering everything is `null`.
 - **With `zoomRange`:** the window lives inside the slice. Any `zoomRange` change (Zoom to selection, Reset, a new prop) resets it to `null`, calling `onViewportChange(null, { end: true })` when it was set. **Reset zoom** shows whenever either is set and clears both in one action.
 - **New data:** an uncontrolled window (`defaultViewport`) resets to `null` silently when `categories` change content. A controlled `viewport` is yours to reset after swapping in finer data.
-- **`onViewportChange(next, { end })`:** apps refetch on `end: true` (each keyboard step, a button, a reset).
-- **`zoomGestures`** (default `false`) turns on interaction. With the plot focused: `+` / `=` zoom in and `-` zooms out around the inspected category.
+- **`onViewportChange(next, { end })`:** fires with `end: false` continuously during a gesture and once with `end: true` when it settles (pointer up, last finger lifted, wheel idle 200ms, each keyboard step, a button, a reset). Refetch on `end: true` only.
+- **`zoomGestures`** (default `false`) turns on interaction; the plot's description then mentions the plus and minus keys:
+
+| Input                                   | Does                                                                                    |
+| --------------------------------------- | --------------------------------------------------------------------------------------- |
+| Plain vertical wheel                    | **Scrolls the page.** The chart never traps page scroll.                                |
+| Ctrl/⌘ + wheel, trackpad pinch          | Zooms around the pointer.                                                               |
+| Shift + wheel, horizontal wheel / swipe | Pans while zoomed (otherwise left to the page).                                         |
+| Two-finger pinch / two-finger drag      | Zooms around the fingers' midpoint / pans.                                              |
+| One-finger horizontal drag              | Pans while zoomed.                                                                      |
+| One-finger vertical swipe               | Scrolls the page (the plot keeps `touch-action: pan-y`).                                |
+| Touch long-press (300ms)                | Still selects when selection is on; once it lifts, a second finger does not pinch.      |
+| Mouse drag                              | Pans while zoomed **only when selection is off**; with selection on it keeps selecting. |
+| `+` / `=`, `-` (plot focused)           | Zoom in / out around the inspected category.                                            |
+
+### Plot double-click
+
+`onPlotDoubleClick(e: ChartPlotPointerEvent)` fires on a mouse double-click, a touch double-tap (two taps within 300ms and 24px) and **Enter** on the category inspected from the keyboard, so the action is not pointer-only. `e.index` is the nearest category as an index into `categories` (the **original** index while zoomed, like `details`), `e.fraction` the 0..1 position across the current domain in viewport coordinates, `e.value` the y value at the pointer (`null` from the keyboard), plus `clientX` / `clientY` and `source: 'mouse' | 'touch' | 'keyboard'`. The plot's `touch-action: pan-y` already stops the browser's double-tap zoom.
+
+```tsx
+<Chart
+  {...props}
+  markers={markers}
+  onPlotDoubleClick={({ index }) =>
+    setMarkers((m) => [...m, { key: `m${index}`, label: 'Note', at: categories[index] }])
+  }
+/>
+```
+
 - **Keyboard inspection** (always, whenever a viewport is set): moving the inspected category past an edge pans the window to keep it visible (`onViewportChange` with `end: true`; a controlled `viewport` without a handler stays put).
 
 ```tsx
@@ -154,7 +181,8 @@ const [viewport, setViewport] = useState<ChartViewport | null>(null);
 | `viewport` | `ChartViewport \| null` | no | Controlled render window inside the current domain (the `zoomRange` slice, else all categories): fractions `{ from, to }` of the domain's band edges (0 = left edge of the first category, 1 = right edge of the last). `null` = everything. Only the plot follows it (continuous x positions, marks clipped to the plot, x labels and y axis from the visible categories); the data table, tooltip contents, keyboard inspection and markers keep every category of the domain. Clamped to 0..1 and at least two categories. Any `zoomRange` change resets it to `null`. Omit for uncontrolled. |
 | `defaultViewport` | `ChartViewport \| null` | no | Initial render window when uncontrolled. Default `null`. Resets to `null` when `categories` change content (new data). |
 | `onViewportChange` | `((next: ChartViewport \| null, info: { end: boolean; }) => void)` | no | Called with the next window (`null` = everything) when the user zooms or pans, "Reset zoom" clears it, or a `zoomRange` change resets it. `end: true` once the change settles (each keyboard step, a button, a reset): refetch finer data then. |
-| `zoomGestures` | `boolean` | no | Turns on interactive zooming of the `viewport`. With the plot focused: `+` / `=` zoom in and `-` zooms out around the inspected category. (Moving the inspected category past the window's edge pans to keep it visible whenever a viewport is set, with or without this.) Default `false`. |
+| `zoomGestures` | `boolean` | no | Turns on interactive zooming of the `viewport`: Ctrl/⌘ + wheel and trackpad pinch zoom around the pointer; Shift + wheel or a horizontal wheel pans while zoomed; a plain vertical wheel always scrolls the page. Touch: two-finger pinch zooms and two-finger drag pans; a one-finger horizontal drag pans while zoomed; a vertical swipe scrolls the page; a long-press still selects. Mouse drag pans while zoomed only when selection is off. With the plot focused: `+` / `=` zoom in and `-` zooms out around the inspected category. (Moving the inspected category past the window's edge pans to keep it visible whenever a viewport is set, with or without this.) `onViewportChange` fires with `end: false` during a gesture and `end: true` when it settles. Default `false`. |
+| `onPlotDoubleClick` | `((e: ChartPlotPointerEvent) => void)` | no | Called on a mouse double-click or a touch double-tap (two taps within 300ms and 24px) on the plot, and on Enter while a category is inspected from the keyboard (`value: null`). Reports the nearest category's original index, the domain fraction and the y value at the pointer, e.g. to add a marker there. |
 | …native | | | plus native HTML attributes |
 
 <!-- props:end -->

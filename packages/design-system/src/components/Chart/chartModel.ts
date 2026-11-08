@@ -519,6 +519,8 @@ export interface ChartLayout {
   marks: SeriesMarks[];
   /** Bar value labels; empty unless requested on a bar type. A label wider than its bar is omitted. */
   valueLabels: ValueLabel[];
+  /** The y value at an svg y (inverse of the y scale). */
+  valueAt: (svgY: number) => number;
 }
 
 type StackRow = Record<string, number>;
@@ -773,6 +775,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     bandWidth,
     marks,
     valueLabels,
+    valueAt: (py) => y.invert(py),
   };
 }
 

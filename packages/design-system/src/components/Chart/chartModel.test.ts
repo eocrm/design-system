@@ -1137,7 +1137,14 @@ describe('viewport (DS-48)', () => {
 
   it('a null viewport and the full window equal no viewport', () => {
     const plain = layout({ type: 'line', series: one([1, 2, 3, 4]) });
-    expect(layout({ type: 'line', series: one([1, 2, 3, 4]), viewport: null })).toEqual(plain);
+    const nulled = layout({ type: 'line', series: one([1, 2, 3, 4]), viewport: null });
+    expect(nulled).toEqual({ ...plain, valueAt: expect.any(Function) });
+    expect(nulled.valueAt(50)).toBe(plain.valueAt(50));
+  });
+
+  it('valueAt inverts the y scale at the ticks', () => {
+    const l = layout({ type: 'line', series: one([1, 2, 3, 4]) });
+    for (const tick of l.yTicks) expect(l.valueAt(tick.y)).toBeCloseTo(tick.value);
   });
 
   it('has no NaN with no categories or one', () => {

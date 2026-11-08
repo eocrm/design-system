@@ -12,6 +12,7 @@ import {
   type ChartRange,
   type ChartSeries,
   type ChartType,
+  type ChartViewport,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -133,6 +134,45 @@ function RangeSelectionExample() {
   );
 }
 
+const fmtViewport = (v: ChartViewport | null) =>
+  v ? `${v.from.toFixed(2)}–${v.to.toFixed(2)}` : 'everything';
+
+function ZoomGesturesExample() {
+  const [viewport, setViewport] = useState<ChartViewport | null>(null);
+  const [log, setLog] = useState('');
+  const [notes, setNotes] = useState<ChartMarker[]>([]);
+  return (
+    <Stack gap="sm">
+      <Cell title="Bowl weight">
+        <Chart
+          type="line"
+          label="Bowl weight per minute"
+          categories={minutes}
+          series={bowlSeries}
+          formatValue={formatGrams}
+          markers={notes}
+          zoomGestures
+          viewport={viewport}
+          onViewportChange={(next, { end }) => {
+            setViewport(next);
+            setLog(`onViewportChange(${fmtViewport(next)}, { end: ${end} })`);
+          }}
+          onPlotDoubleClick={({ index, source }) =>
+            setNotes((m) =>
+              m.some((n) => n.key === `note-${index}`)
+                ? m
+                : [...m, { key: `note-${index}`, label: `Note (${source})`, at: minutes[index] }],
+            )
+          }
+        />
+      </Cell>
+      <Text size="sm" tone="muted" data-testid="chart-viewport-log">
+        {log || 'Zoom or pan the chart'}
+      </Text>
+    </Stack>
+  );
+}
+
 export function ChartDemo() {
   const [type, setType] = useState<ChartType>('line');
   const [loading, setLoading] = useState(false);
@@ -211,6 +251,24 @@ export function ChartDemo() {
 <Text size="sm" tone="muted">{range ? \`Selected \${range.from} – \${range.to}\` : ''}</Text>`}
       >
         <RangeSelectionExample />
+      </Example>
+
+      <Example
+        title="Zoom gestures"
+        description="zoomGestures with a controlled viewport. Ctrl/⌘ + wheel or a trackpad pinch zooms around the pointer; Shift + wheel or a horizontal swipe pans; a plain wheel scrolls the page. Touch: pinch, two-finger drag, or a one-finger horizontal drag while zoomed. Mouse drag pans while zoomed (selection is off here). Keyboard: + and -. The line below logs onViewportChange; apps refetch on end: true. Double-click, double-tap or Enter on an inspected point adds a marker there (onPlotDoubleClick)."
+        code={`const [viewport, setViewport] = useState<ChartViewport | null>(null);
+<Chart type="line" label="Bowl weight per minute" categories={minutes} series={bowl}
+  formatValue={formatGrams} markers={notes} zoomGestures viewport={viewport}
+  onViewportChange={(next, { end }) => {
+    setViewport(next);
+    if (end) refetchFor(next);
+  }}
+  onPlotDoubleClick={({ index }) =>
+    setNotes((m) => [...m, { key: \`note-\${index}\`, label: 'Note', at: minutes[index] }])
+  }
+/>`}
+      >
+        <ZoomGesturesExample />
       </Example>
 
       <Example

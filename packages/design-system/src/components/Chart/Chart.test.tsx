@@ -1534,3 +1534,302 @@ describe('viewport (DS-48)', () => {
     noNaN(container);
   });
 });
+
+describe('gestures and plot double-click (DS-48)', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+  const cats = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'];
+  const vp: ChartProps = {
+    ...base,
+    type: 'bar',
+    categories: cats,
+    series: [{ key: 'won', label: 'Deals won', values: [1, 2, 3, 4, 5, 6, 7, 8] }],
+  };
+  const plotOf = () => screen.getByRole('group', { name: 'Deals won per week' });
+  const xOf = (container: HTMLElement, category: string) =>
+    Number(
+      [...container.querySelectorAll('svg text')]
+        .find((t) => t.textContent === category)!
+        .getAttribute('x'),
+    );
+  // Middle of the plot, from a grid line's ends.
+  const centreOf = (container: HTMLElement) => {
+    const line = container.querySelector('svg line')!;
+    return (Number(line.getAttribute('x1')) + Number(line.getAttribute('x2'))) / 2;
+  };
+  /** Dispatches a cancelable touch event; returns true when it was cancelled. */
+  const touch = (type: string, points: { x: number; y: number }[]) => {
+    const e = new Event(type, { bubbles: true, cancelable: true });
+    const list = points.map((p) => ({ clientX: p.x, clientY: p.y }));
+    Object.defineProperty(e, 'touches', { value: list });
+    act(() => {
+      plotOf().dispatchEvent(e);
+    });
+    return e.defaultPrevented;
+  };
+  const span = (v: { from: number; to: number }) => v.to - v.from;
+
+  it('ctrl+wheel zooms around the pointer, then settles with end after WHEEL_END_MS', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { container } = render(<Chart {...vp} zoomGestures onViewportChange={onViewport} />);
+    layout.fire();
+    const notCancelled = fireEvent.wheel(plotOf(), {
+      ctrlKey: true,
+      deltaY: -100,
+      clientX: centreOf(container),
+    });
+    expect(notCancelled).toBe(false);
+    const [next, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: false });
+    expect(span(next)).toBeLessThan(1);
+    expect((next.from + next.to) / 2).toBeCloseTo(0.5, 2);
+    act(() => vi.advanceTimersByTime(200));
+    expect(onViewport).toHaveBeenCalledTimes(2);
+    expect(onViewport).toHaveBeenLastCalledWith(next, { end: true });
+  });
+
+  it('plain wheel scrolls the page; shift or horizontal wheel pans while zoomed', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { container } = render(
+      <Chart
+        {...vp}
+        zoomGestures
+        defaultViewport={{ from: 0.25, to: 0.5 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    layout.fire();
+    const x = centreOf(container);
+    expect(fireEvent.wheel(plotOf(), { deltaY: 100, clientX: x })).toBe(true);
+    expect(onViewport).not.toHaveBeenCalled();
+    expect(fireEvent.wheel(plotOf(), { shiftKey: true, deltaY: 100, clientX: x })).toBe(false);
+    expect(onViewport.mock.lastCall![0].from).toBeGreaterThan(0.25);
+    onViewport.mockClear();
+    fireEvent.wheel(plotOf(), { deltaX: -100, deltaY: 1, clientX: x });
+    expect(onViewport.mock.lastCall![0].from).toBeLessThan(0.25 + 0.01);
+    expect(span(onViewport.mock.lastCall![0])).toBeCloseTo(0.25);
+  });
+
+  it('ctrl+wheel does nothing without zoomGestures', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { container } = render(<Chart {...vp} onViewportChange={onViewport} />);
+    layout.fire();
+    expect(
+      fireEvent.wheel(plotOf(), { ctrlKey: true, deltaY: -100, clientX: centreOf(container) }),
+    ).toBe(true);
+    act(() => vi.advanceTimersByTime(500));
+    expect(onViewport).not.toHaveBeenCalled();
+  });
+
+  it('a controlled viewport without onViewportChange stays put', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...vp} zoomGestures viewport={{ from: 0, to: 0.5 }} />);
+    layout.fire();
+    const before = xOf(container, 'c1');
+    fireEvent.wheel(plotOf(), { ctrlKey: true, deltaY: -300, clientX: centreOf(container) });
+    act(() => vi.advanceTimersByTime(500));
+    expect(xOf(container, 'c1')).toBe(before);
+  });
+
+  it('touch: a two-finger pinch zooms and ends on the last lift', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { container } = render(<Chart {...vp} zoomGestures onViewportChange={onViewport} />);
+    layout.fire();
+    const c = centreOf(container);
+    touch('touchstart', [
+      { x: c - 20, y: 100 },
+      { x: c + 20, y: 100 },
+    ]);
+    expect(
+      touch('touchmove', [
+        { x: c - 60, y: 100 },
+        { x: c + 60, y: 100 },
+      ]),
+    ).toBe(true);
+    const [zoomed, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: false });
+    expect(span(zoomed)).toBeLessThan(0.5);
+    touch('touchend', [{ x: c + 60, y: 100 }]);
+    expect(onViewport.mock.lastCall![1]).toEqual({ end: false });
+    touch('touchend', []);
+    expect(onViewport).toHaveBeenLastCalledWith(zoomed, { end: true });
+  });
+
+  it('touch: one-finger horizontal pan while zoomed; vertical swipe is left to the page', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { container } = render(
+      <Chart
+        {...vp}
+        zoomGestures
+        defaultViewport={{ from: 0.25, to: 0.5 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    layout.fire();
+    const c = centreOf(container);
+    touch('touchstart', [{ x: c, y: 100 }]);
+    expect(touch('touchmove', [{ x: c, y: 140 }])).toBe(false);
+    touch('touchmove', [{ x: c - 60, y: 140 }]);
+    touch('touchend', []);
+    expect(onViewport).not.toHaveBeenCalled();
+
+    touch('touchstart', [{ x: c, y: 100 }]);
+    expect(touch('touchmove', [{ x: c - 60, y: 102 }])).toBe(true);
+    expect(onViewport.mock.lastCall![0].from).toBeGreaterThan(0.25);
+    touch('touchend', []);
+    expect(onViewport.mock.lastCall![1]).toEqual({ end: true });
+  });
+
+  it('touch: a lifted long-press keeps the touch; a pinch first cancels the pending long-press', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const onSelect = vi.fn();
+    const { container } = render(
+      <Chart {...vp} zoomGestures onViewportChange={onViewport} onSelectedRangeChange={onSelect} />,
+    );
+    layout.fire();
+    const c = centreOf(container);
+    const finger = { pointerId: 5, pointerType: 'touch', clientX: c, clientY: 100 };
+    const pinch = () => {
+      touch('touchstart', [
+        { x: c, y: 100 },
+        { x: c + 40, y: 100 },
+      ]);
+      touch('touchmove', [
+        { x: c - 40, y: 100 },
+        { x: c + 80, y: 100 },
+      ]);
+      touch('touchend', []);
+    };
+    fireEvent.pointerDown(plotOf(), finger);
+    act(() => vi.advanceTimersByTime(300));
+    pinch();
+    fireEvent.pointerUp(plotOf(), finger);
+    expect(onViewport).not.toHaveBeenCalled();
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    fireEvent.pointerDown(plotOf(), finger);
+    pinch();
+    act(() => vi.advanceTimersByTime(300));
+    fireEvent.pointerUp(plotOf(), finger);
+    expect(onViewport).toHaveBeenCalled();
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('mouse drag pans while zoomed when selection is off; selects when it is on', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const mouse = { pointerId: 1, pointerType: 'mouse', button: 0 };
+    const { container, unmount } = render(
+      <Chart
+        {...vp}
+        zoomGestures
+        defaultViewport={{ from: 0.25, to: 0.5 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    layout.fire();
+    const c = centreOf(container);
+    fireEvent.pointerDown(plotOf(), { ...mouse, clientX: c });
+    fireEvent.pointerMove(plotOf(), { ...mouse, clientX: c - 50 });
+    const [next, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: false });
+    expect(next.from).toBeGreaterThan(0.25);
+    fireEvent.pointerUp(plotOf(), { ...mouse, clientX: c - 50 });
+    expect(onViewport).toHaveBeenLastCalledWith(next, { end: true });
+    unmount();
+
+    onViewport.mockClear();
+    const onSelect = vi.fn();
+    const r = render(
+      <Chart
+        {...vp}
+        zoomGestures
+        defaultViewport={{ from: 0.25, to: 0.5 }}
+        onViewportChange={onViewport}
+        onSelectedRangeChange={onSelect}
+      />,
+    );
+    layout.fire();
+    const x2 = xOf(r.container, 'c2');
+    const x3 = xOf(r.container, 'c3');
+    fireEvent.pointerDown(plotOf(), { ...mouse, clientX: x2 });
+    fireEvent.pointerMove(plotOf(), { ...mouse, clientX: x3 });
+    fireEvent.pointerUp(plotOf(), { ...mouse, clientX: x3 });
+    expect(onSelect).toHaveBeenLastCalledWith({ from: 'c2', to: 'c3' });
+    expect(onViewport).not.toHaveBeenCalled();
+  });
+
+  it('dblclick reports the original category index, a domain fraction and the value at the pointer', () => {
+    const layout = stubLayout();
+    const onDbl = vi.fn();
+    const { container, rerender } = render(<Chart {...vp} onPlotDoubleClick={onDbl} />);
+    layout.fire();
+    fireEvent.doubleClick(plotOf(), { clientX: xOf(container, 'c2'), clientY: 120 });
+    expect(onDbl).toHaveBeenCalledTimes(1);
+    const e = onDbl.mock.lastCall![0];
+    expect(e).toMatchObject({ index: 2, source: 'mouse', clientY: 120 });
+    expect(e.fraction).toBeGreaterThan(0);
+    expect(e.fraction).toBeLessThan(1);
+    expect(e.fraction).toBeCloseTo(2.5 / 8);
+    expect(typeof e.value).toBe('number');
+    rerender(<Chart {...vp} zoomRange={{ from: 'c2', to: 'c6' }} onPlotDoubleClick={onDbl} />);
+    fireEvent.doubleClick(plotOf(), { clientX: xOf(container, 'c4'), clientY: 120 });
+    expect(onDbl.mock.lastCall![0]).toMatchObject({ index: 4, source: 'mouse' });
+  });
+
+  it('a touch double-tap fires once; taps 400ms apart do not', () => {
+    const layout = stubLayout();
+    const onDbl = vi.fn();
+    const { container } = render(<Chart {...vp} onPlotDoubleClick={onDbl} />);
+    layout.fire();
+    const at = { pointerId: 3, pointerType: 'touch', clientX: xOf(container, 'c1'), clientY: 90 };
+    const tap = () => {
+      fireEvent.pointerDown(plotOf(), at);
+      fireEvent.pointerUp(plotOf(), at);
+    };
+    tap();
+    act(() => vi.advanceTimersByTime(400));
+    tap();
+    expect(onDbl).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(100));
+    tap();
+    expect(onDbl).toHaveBeenCalledTimes(1);
+    expect(onDbl.mock.lastCall![0]).toMatchObject({ index: 1, source: 'touch' });
+    // The synthesized dblclick after a double-tap is not a second report.
+    fireEvent.doubleClick(plotOf(), at);
+    expect(onDbl).toHaveBeenCalledTimes(1);
+  });
+
+  it('Enter on the inspected category fires it from the keyboard', () => {
+    const layout = stubLayout();
+    const onDbl = vi.fn();
+    render(<Chart {...vp} onPlotDoubleClick={onDbl} />);
+    layout.fire();
+    plotOf().focus();
+    for (let i = 0; i < 3; i++) fireEvent.keyDown(plotOf(), { key: 'ArrowRight' });
+    fireEvent.keyDown(plotOf(), { key: 'Enter' });
+    expect(onDbl).toHaveBeenCalledTimes(1);
+    expect(onDbl.mock.lastCall![0]).toMatchObject({ index: 2, source: 'keyboard', value: null });
+  });
+
+  it('keeps the pan-y plot (no browser double-tap zoom) and hints the zoom keys only with zoomGestures', () => {
+    const layout = stubLayout();
+    const { rerender } = render(<Chart {...vp} />);
+    layout.fire();
+    expect(plotOf().className).toMatch(/plot/);
+    expect(plotOf()).toHaveAccessibleDescription(
+      'Use arrow keys to inspect values. All values are also in the data table.',
+    );
+    rerender(<Chart {...vp} zoomGestures onPlotDoubleClick={() => {}} />);
+    expect(plotOf().className).toMatch(/plot/);
+    expect(plotOf()).toHaveAccessibleDescription(
+      'Use arrow keys to inspect values. All values are also in the data table. Plus and minus zoom in and out.',
+    );
+  });
+});

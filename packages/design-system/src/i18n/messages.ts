@@ -920,6 +920,8 @@ export interface Messages {
     details: string;
     /** Appended to `keyboardHint` when range selection is enabled: says Shift+arrows select a range. */
     rangeHint: string;
+    /** Appended to `keyboardHint` when `zoomGestures` is on: says the plus and minus keys zoom. */
+    zoomHint: string;
     /** Label of the header button that zooms the plot to the selected range. */
     zoomToSelection: string;
     /** Label of the header button that leaves the zoomed range and shows every category. */

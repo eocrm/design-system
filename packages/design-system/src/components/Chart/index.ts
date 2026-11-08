@@ -4,6 +4,7 @@ export type {
   ChartMarker,
   ChartMarkerLabelPlacement,
   ChartMarkerTone,
+  ChartPlotPointerEvent,
   ChartProps,
   ChartRange,
   ChartSeries,

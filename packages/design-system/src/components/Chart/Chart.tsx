@@ -56,11 +56,13 @@ import {
 } from './chartModel';
 import {
   clampViewport,
+  domainFractionAt,
   ensureVisible,
   visibleIndexRange,
   zoomViewport,
   type ChartViewport,
 } from './chartViewport';
+import { useChartGestures } from './useChartGestures';
 import styles from './Chart.module.scss';
 
 export type {
@@ -74,6 +76,22 @@ export type {
 } from './chartModel';
 export type { ChartRange } from './chartRange';
 export type { ChartViewport } from './chartViewport';
+
+/** What `onPlotDoubleClick` reports about the double-clicked (double-tapped, or Enter-activated) plot point. */
+export interface ChartPlotPointerEvent {
+  /** Nearest category, as an index into the `categories` prop (the original index while zoomed). */
+  index: number;
+  /** Continuous 0..1 position across the current domain (band edges), the same coordinates as `viewport`. */
+  fraction: number;
+  /** The y value at the pointer, from the y scale; `null` from the keyboard. */
+  value: number | null;
+  /** Viewport x of the pointer (keyboard: the inspected category's x). */
+  clientX: number;
+  /** Viewport y of the pointer (keyboard: the plot's vertical middle). */
+  clientY: number;
+  /** What fired it: a mouse `dblclick`, a touch double-tap, or Enter on the inspected category. */
+  source: 'mouse' | 'touch' | 'keyboard';
+}
 
 export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
   /**
@@ -176,11 +194,21 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
    */
   onViewportChange?: (next: ChartViewport | null, info: { end: boolean }) => void;
   /**
-   * Turns on interactive zooming of the `viewport`. With the plot focused: `+` / `=` zoom in and `-` zooms out around
-   * the inspected category. (Moving the inspected category past the window's edge pans to keep it visible whenever
-   * a viewport is set, with or without this.) Default `false`.
+   * Turns on interactive zooming of the `viewport`: Ctrl/⌘ + wheel and trackpad pinch zoom around the pointer;
+   * Shift + wheel or a horizontal wheel pans while zoomed; a plain vertical wheel always scrolls the page. Touch:
+   * two-finger pinch zooms and two-finger drag pans; a one-finger horizontal drag pans while zoomed; a vertical
+   * swipe scrolls the page; a long-press still selects. Mouse drag pans while zoomed only when selection is off.
+   * With the plot focused: `+` / `=` zoom in and `-` zooms out around the inspected category. (Moving the inspected
+   * category past the window's edge pans to keep it visible whenever a viewport is set, with or without this.)
+   * `onViewportChange` fires with `end: false` during a gesture and `end: true` when it settles. Default `false`.
    */
   zoomGestures?: boolean;
+  /**
+   * Called on a mouse double-click or a touch double-tap (two taps within 300ms and 24px) on the plot, and on
+   * Enter while a category is inspected from the keyboard (`value: null`). Reports the nearest category's original
+   * index, the domain fraction and the y value at the pointer, e.g. to add a marker there.
+   */
+  onPlotDoubleClick?: (e: ChartPlotPointerEvent) => void;
 }
 
 const NO_MARKERS: ChartMarker[] = [];
@@ -275,6 +303,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     defaultViewport,
     onViewportChange,
     zoomGestures = false,
+    onPlotDoubleClick,
     className,
     ...rest
   },
@@ -525,6 +554,25 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       if (!sameViewport(next, vp)) changeViewport(next, true);
       return;
     }
+    if (
+      e.key === 'Enter' &&
+      onPlotDoubleClick &&
+      current !== null &&
+      layout &&
+      anchorX !== undefined
+    ) {
+      e.preventDefault();
+      const rect = e.currentTarget.getBoundingClientRect();
+      onPlotDoubleClick({
+        index: originalIndex(current),
+        fraction: (current + 0.5) / n,
+        value: null,
+        clientX: rect.left + anchorX,
+        clientY: rect.top + layout.plot.y + layout.plot.height / 2,
+        source: 'keyboard',
+      });
+      return;
+    }
     let next: number | null;
     switch (e.key) {
       case 'ArrowRight':
@@ -684,6 +732,36 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     press.current = null;
     setDraft(null);
   };
+
+  const firePlotDoubleClick = (clientX: number, clientY: number, source: 'mouse' | 'touch') => {
+    if (!layout || !plotEl || !onPlotDoubleClick) return;
+    const rect = plotEl.getBoundingClientRect();
+    const x = clientX - rect.left;
+    onPlotDoubleClick({
+      index: originalIndex(categoryIndexAt(layout, x)),
+      fraction: domainFractionAt(layout, x),
+      value: layout.valueAt(clientY - rect.top),
+      clientX,
+      clientY,
+      source,
+    });
+  };
+  const gestures = useChartGestures({
+    plotEl,
+    layout,
+    enabled: zoomGestures,
+    selectable,
+    viewport: vp,
+    n,
+    onChange: changeViewport,
+    onDoubleClick: onPlotDoubleClick && firePlotDoubleClick,
+    // A lifted long-press selection keeps the touch; otherwise a pending one gives way to the pan/pinch.
+    claim: () => {
+      if (press.current?.touch === 'lifted') return false;
+      if (press.current?.touch === 'pending') press.current = null;
+      return true;
+    },
+  });
 
   // Touch scroll suppression, as in DashboardCanvas (DS-15): the plot keeps `touch-action: pan-y` so a
   // swipe scrolls, and touch-action can't change mid-gesture, so a lifted press cancels its own
@@ -898,9 +976,13 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       </Cluster>
       <VisuallyHidden id={statusId}>{statusText}</VisuallyHidden>
       <VisuallyHidden id={hintId}>
-        {selectable
-          ? `${t('chart.keyboardHint')} ${t('chart.rangeHint')}`
-          : t('chart.keyboardHint')}
+        {[
+          t('chart.keyboardHint'),
+          selectable && t('chart.rangeHint'),
+          zoomGestures && t('chart.zoomHint'),
+        ]
+          .filter(Boolean)
+          .join(' ')}
       </VisuallyHidden>
       <div
         ref={setPlotEl}
@@ -912,11 +994,25 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
           .join(' ')}
         tabIndex={0}
         data-selectable={selectable || undefined}
+        data-pannable={(zoomGestures && !selectable && vp !== null) || undefined}
         onKeyDown={onKeyDown}
-        onPointerMove={onPointerMove}
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerCancel}
+        onPointerMove={(e) => {
+          gestures.onPointerMove(e);
+          onPointerMove(e);
+        }}
+        onPointerDown={(e) => {
+          gestures.onPointerDown(e);
+          onPointerDown(e);
+        }}
+        onPointerUp={(e) => {
+          gestures.onPointerUp(e);
+          onPointerUp(e);
+        }}
+        onPointerCancel={(e) => {
+          gestures.onPointerUp(e);
+          onPointerCancel();
+        }}
+        onDoubleClick={gestures.onDoubleClick}
         // Touch fires pointerleave right after pointerup; keep the tapped tooltip (an outside press clears it).
         onPointerLeave={(e) =>
           e.pointerType !== 'touch' && activeSource === 'pointer' && inspect(null, null)
