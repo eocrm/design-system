@@ -6,6 +6,12 @@
   grid-template-columns: var(--grid-columns, repeat(auto-fit, minmax(240px, 1fr)));
 }
 
+// `as="ul" | "ol"`: reset the UA bullets and indent (same as List).
+.list {
+  padding: 0;
+  list-style: none;
+}
+
 // Grid.Item placement — the value is resolved in GridItem.tsx and injected
 // as an inline custom property (span N / 1 / -1). Declared before the
 // collapse rules so a collapsed grid's `1 / -1` override wins by source order.

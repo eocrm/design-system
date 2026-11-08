@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { createRef, type CSSProperties } from 'react';
 import { Grid, type GridAlignItems, type GridGap, type GridJustifyItems } from './Grid';
@@ -344,5 +346,25 @@ describe('Grid graduated collapse (#318)', () => {
     // @ts-expect-error — collapseBelow (map form included) requires `columns`.
     const Invalid = <Grid minColumnWidth="200px" collapseBelow={{ md: 6 }} />;
     void Invalid;
+  });
+});
+
+describe('Grid as list (DS-43)', () => {
+  it.each(['ul', 'ol'] as const)('as="%s" gets the list reset class', (as) => {
+    const { container } = render(
+      <Grid as={as}>
+        <Grid.Item as="li">A</Grid.Item>
+      </Grid>,
+    );
+    expect(container.firstElementChild!.tagName).toBe(as.toUpperCase());
+    expect(container.firstElementChild!.className).toContain('list');
+  });
+  it('as="div" does not', () => {
+    const { container } = render(<Grid>A</Grid>);
+    expect(container.firstElementChild!.className).not.toContain('list');
+  });
+  it('.list resets list-style and padding', () => {
+    const scss = readFileSync(resolve(__dirname, 'Grid.module.scss'), 'utf8');
+    expect(scss).toMatch(/\.list \{\s*padding: 0;\s*list-style: none;/);
   });
 });

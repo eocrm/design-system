@@ -32,6 +32,7 @@
   --button-group-item-height-sm: var(--size-sm);
   --button-group-item-height-md: var(--size-md);
   --button-group-item-height-lg: var(--size-lg);
+  --button-group-item-min-width: auto;
   --button-group-item-padding-x-xs: var(--space-2);
   --button-group-item-padding-x-sm: var(--space-3);
   --button-group-item-padding-x-md: var(--space-3);
@@ -47,9 +48,18 @@
 @media (pointer: coarse) {
   :root,
   :where(:root [data-theme='light'], :root [data-theme='dark']) {
-    --button-group-item-height-xs: var(--size-touch);
-    --button-group-item-height-sm: var(--size-touch);
-    --button-group-item-height-md: var(--size-touch);
-    --button-group-item-height-lg: var(--size-touch);
+    --button-group-item-height-xs: calc(
+      var(--size-touch) + 2 * var(--button-group-segmented-padding)
+    );
+    --button-group-item-height-sm: calc(
+      var(--size-touch) + 2 * var(--button-group-segmented-padding)
+    );
+    --button-group-item-height-md: calc(
+      var(--size-touch) + 2 * var(--button-group-segmented-padding)
+    );
+    --button-group-item-height-lg: calc(
+      var(--size-touch) + 2 * var(--button-group-segmented-padding)
+    );
+    --button-group-item-min-width: var(--size-touch);
   }
 }

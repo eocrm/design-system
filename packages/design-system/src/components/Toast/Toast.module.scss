@@ -13,7 +13,12 @@
   margin: 0;
   padding: 0;
   pointer-events: none; // stack itself doesn't intercept clicks
-  max-width: calc(100vw - 2 * var(--toast-viewport-inset));
+  max-width: calc(
+    100vw - max(var(--toast-viewport-inset), env(safe-area-inset-left)) - max(
+        var(--toast-viewport-inset),
+        env(safe-area-inset-right)
+      )
+  );
   width: 360px;
 }
 
@@ -25,37 +30,37 @@
 // (newest farther from edge); bottom-anchored grow upward via column-reverse.
 
 .posTopLeft {
-  top: var(--toast-viewport-inset);
-  left: var(--toast-viewport-inset);
+  top: max(var(--toast-viewport-inset), env(safe-area-inset-top));
+  left: max(var(--toast-viewport-inset), env(safe-area-inset-left));
 }
 
 .posTopCenter {
-  top: var(--toast-viewport-inset);
+  top: max(var(--toast-viewport-inset), env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
 }
 
 .posTopRight {
-  top: var(--toast-viewport-inset);
-  right: var(--toast-viewport-inset);
+  top: max(var(--toast-viewport-inset), env(safe-area-inset-top));
+  right: max(var(--toast-viewport-inset), env(safe-area-inset-right));
 }
 
 .posBottomLeft {
-  bottom: var(--toast-viewport-inset);
-  left: var(--toast-viewport-inset);
+  bottom: max(var(--toast-viewport-inset), env(safe-area-inset-bottom));
+  left: max(var(--toast-viewport-inset), env(safe-area-inset-left));
   flex-direction: column-reverse;
 }
 
 .posBottomCenter {
-  bottom: var(--toast-viewport-inset);
+  bottom: max(var(--toast-viewport-inset), env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   flex-direction: column-reverse;
 }
 
 .posBottomRight {
-  bottom: var(--toast-viewport-inset);
-  right: var(--toast-viewport-inset);
+  bottom: max(var(--toast-viewport-inset), env(safe-area-inset-bottom));
+  right: max(var(--toast-viewport-inset), env(safe-area-inset-right));
   flex-direction: column-reverse;
 }
 
