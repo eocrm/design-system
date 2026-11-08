@@ -940,6 +940,7 @@ export type {
 export type {
   ChartCurve,
   ChartMarker,
+  ChartMarkerLabelPlacement,
   ChartMarkerTone,
   ChartProps,
   ChartRange,

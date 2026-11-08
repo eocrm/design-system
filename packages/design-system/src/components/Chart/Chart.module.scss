@@ -81,6 +81,11 @@
   &[data-tone='subtle'] {
     fill-opacity: var(--chart-marker-band-subtle-opacity);
   }
+
+  // `color`: the palette slot tints the band; the tone still sets the strength.
+  &[data-slot] {
+    fill: var(--chart-series-color, currentColor);
+  }
 }
 
 .selection {
@@ -98,6 +103,14 @@
   &[data-tone='subtle'] {
     stroke: var(--chart-marker-subtle-color);
   }
+
+  &[data-slot] {
+    stroke: var(--chart-series-color, currentColor);
+  }
+
+  &[data-slot][data-tone='subtle'] {
+    stroke-opacity: var(--chart-marker-line-subtle-opacity);
+  }
 }
 
 .markerLabels text {
@@ -109,6 +122,12 @@
   fill: var(--chart-marker-label-fg);
   font-size: var(--chart-axis-size);
   pointer-events: none;
+}
+
+// Decorative marker icon in the gutter above the plot (no halo: it never overlaps data).
+.markerLabels .markerIcon {
+  stroke: none;
+  font-size: var(--chart-marker-icon-size);
 }
 
 .valueLabels text {

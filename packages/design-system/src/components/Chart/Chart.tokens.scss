@@ -41,6 +41,10 @@
   --chart-marker-label-halo: var(--color-bg);
   --chart-marker-label-halo-width: 3px;
 
+  // A coloured (`color`) subtle line: the palette ink, faded.
+  --chart-marker-line-subtle-opacity: 0.5;
+  --chart-marker-icon-size: var(--font-size-md);
+
   // Range selection (`selectedRange`): an accent-tinted band over the marker bands.
   --chart-selection-fill: var(--color-accent);
   --chart-selection-opacity: 0.16;

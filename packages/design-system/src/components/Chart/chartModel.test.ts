@@ -9,6 +9,7 @@ import {
   isEmpty,
   layoutMarkers,
   smoothStack,
+  markerGutterRows,
   markerLabelsAt,
   markerPath,
   markerShape,
@@ -749,9 +750,36 @@ describe('markers', () => {
       cats,
     );
     expect(r.markers).toEqual([
-      { key: 'l', label: 'L', tone: 'neutral', kind: 'line', from: 1, to: 1 },
-      { key: 'r', label: undefined, tone: 'subtle', kind: 'band', from: 2, to: 3 },
-      { key: 'e', label: undefined, tone: 'neutral', kind: 'line', from: 0, to: 0 },
+      {
+        key: 'l',
+        label: 'L',
+        tone: 'neutral',
+        kind: 'line',
+        from: 1,
+        to: 1,
+        slot: 0,
+        placement: 'beside',
+      },
+      {
+        key: 'r',
+        label: undefined,
+        tone: 'subtle',
+        kind: 'band',
+        from: 2,
+        to: 3,
+        slot: 0,
+        placement: 'beside',
+      },
+      {
+        key: 'e',
+        label: undefined,
+        tone: 'neutral',
+        kind: 'line',
+        from: 0,
+        to: 0,
+        slot: 0,
+        placement: 'beside',
+      },
     ]);
     expect(r.dropped).toEqual(['x']);
     expect(markerLabelsAt(r.markers, 1)).toEqual(['L']);
@@ -795,6 +823,107 @@ describe('markers', () => {
     );
     expect(narrow[0].label?.anchor).toBe('end');
     expect(narrow[0].label!.x).toBeLessThan(l.categoryX[3]);
+  });
+});
+
+describe('marker colour, icon and top labels (DS-47)', () => {
+  const cats = ['a', 'b', 'c', 'd'];
+  const l = layout({ type: 'line', series: [] });
+  const iconHalf = (icon: string) => Math.max(18, (estimateTextWidth(icon) * 14) / 12) / 2;
+
+  it('resolves colour to a slot, icon and placement (default beside)', () => {
+    const { markers } = resolveMarkers(
+      [
+        { key: 'f', label: 'Fed', at: 'b', color: 2, icon: '🐱', labelPlacement: 'top' },
+        { key: 'g', at: 'c' },
+      ],
+      cats,
+    );
+    expect(markers[0]).toMatchObject({ slot: 2, icon: '🐱', placement: 'top' });
+    expect(markers[1]).toMatchObject({ slot: 0, placement: 'beside' });
+    expect(markers[1].icon).toBeUndefined();
+  });
+
+  it('counts gutter rows: none 0, icon 1, top label 1, icon + top label 2', () => {
+    const rows = (m: Parameters<typeof resolveMarkers>[0]) =>
+      markerGutterRows(resolveMarkers(m, cats).markers);
+    expect(rows([{ key: 'a', label: 'A', at: 'a' }])).toBe(0);
+    expect(rows([{ key: 'a', label: 'A', at: 'a', icon: '🐱' }])).toBe(1);
+    expect(rows([{ key: 'a', label: 'A', at: 'a', labelPlacement: 'top' }])).toBe(1);
+    expect(
+      rows([
+        { key: 'a', at: 'a', icon: '🐱' },
+        { key: 'b', label: 'B', at: 'c', icon: '🐱', labelPlacement: 'top' },
+      ]),
+    ).toBe(2);
+  });
+
+  it('reserves the top gutter above the plot; topGutter 0 equals omitted', () => {
+    expect(layout({ type: 'line', series: [], topGutter: 0 }).plot).toEqual(l.plot);
+    const g = layout({ type: 'line', series: [], topGutter: 24 });
+    expect(g.plot.y).toBe(l.plot.y + 24);
+    expect(g.plot.y + g.plot.height).toBe(l.plot.y + l.plot.height);
+  });
+
+  it('shifts top items inward at the plot edges', () => {
+    const tight = layout({ type: 'line', series: [], categories: cats, width: 160 });
+    const tr = tight.plot.x + tight.plot.width;
+    const [first, last] = layoutMarkers(
+      resolveMarkers(
+        [
+          { key: 'a', at: 'a', icon: '🐱', label: 'Breakfast', labelPlacement: 'top' },
+          { key: 'd', at: 'd', icon: 'Done!' },
+        ],
+        cats,
+      ).markers,
+      tight,
+    );
+    expect(first.top!.x).toBeGreaterThanOrEqual(tight.plot.x + estimateTextWidth('Breakfast') / 2);
+    expect(first.top!.x).toBeGreaterThan(tight.categoryX[0]);
+    expect(last.top!.x).toBeLessThanOrEqual(tr - iconHalf('Done!'));
+    expect(last.top!.x).toBeLessThan(tight.categoryX[3]);
+  });
+
+  it('drops a later top item that collides with an earlier one', () => {
+    const many = layout({ type: 'line', series: [], categories: 'abcdefghijklmnopqrst'.split('') });
+    const g = layoutMarkers(
+      resolveMarkers(
+        [
+          { key: 'x', at: 'c', icon: '🐱' },
+          { key: 'y', at: 'd', icon: '🐱' },
+        ],
+        'abcdefghijklmnopqrst'.split(''),
+      ).markers,
+      many,
+    );
+    expect(g[0].top?.icon).toBe('🐱');
+    expect(g[1].top).toBeUndefined();
+  });
+
+  it('a top marker has no beside label; a beside marker with an icon keeps both', () => {
+    const [top, beside] = layoutMarkers(
+      resolveMarkers(
+        [
+          { key: 't', at: 'a', label: 'Fed', labelPlacement: 'top' },
+          { key: 'b', at: 'c', label: 'Fed', icon: '🐱' },
+        ],
+        cats,
+      ).markers,
+      l,
+    );
+    expect(top.label).toBeUndefined();
+    expect(top.top).toEqual({ x: l.categoryX[0], label: 'Fed' });
+    expect(beside.top).toEqual({ x: l.categoryX[2], icon: '🐱' });
+    expect(beside.label?.text).toBe('Fed');
+  });
+
+  it('centres a band icon on the band, and carries the slot', () => {
+    const [band] = layoutMarkers(
+      resolveMarkers([{ key: 'r', from: 'b', to: 'c', icon: '🐱', color: 3 }], cats).markers,
+      l,
+    );
+    expect(band.top!.x).toBeCloseTo((l.categoryX[1] + l.categoryX[2]) / 2);
+    expect(band.slot).toBe(3);
   });
 });
 

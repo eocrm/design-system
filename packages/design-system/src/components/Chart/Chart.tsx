@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  Fragment,
   useEffect,
   useId,
   useMemo,
@@ -34,9 +35,11 @@ import {
   COMPACT_HEIGHT,
   isEmpty,
   layoutMarkers,
+  markerGutterRows,
   markerLabelsAt,
   resolveMarkers,
   DOT_RADIUS,
+  PAD_TOP,
   MARKER_LABEL_BASELINE,
   MARKER_RADIUS,
   LABEL_GAP,
@@ -55,6 +58,7 @@ import styles from './Chart.module.scss';
 export type {
   ChartCurve,
   ChartMarker,
+  ChartMarkerLabelPlacement,
   ChartMarkerTone,
   ChartSeries,
   ChartSeriesColor,
@@ -96,9 +100,11 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   /**
    * Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,
    * `{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:
-   * `'neutral'` for events (the tone default) or `'subtle'` for recurring context. Labelled markers are also listed in the
-   * tooltip, the keyboard announcement and the data table; unlabelled ones are decorative. A marker naming an
-   * unknown category is ignored with a dev warning.
+   * `'neutral'` for events (the tone default) or `'subtle'` for recurring context. `color` (palette slot 1–8) strokes /
+   * tints the marker, e.g. to match a series. `icon` (short text or emoji, decorative) is drawn centred above the plot;
+   * `labelPlacement: 'top'` moves the label there too, under the icon (default `'beside'`, on the plot). Labelled
+   * markers are also listed in the tooltip, the keyboard announcement and the data table; unlabelled ones are
+   * decorative. A marker naming an unknown category is ignored with a dev warning.
    */
   markers?: ChartMarker[];
   /**
@@ -161,6 +167,10 @@ function useRangeWarning(prop: string, range: ChartRange | null | undefined, inv
     );
   }, [prop, key]);
 }
+
+// Lifts descenders off the row below (or the plot top).
+const GUTTER_DESCENT = 2;
+const gutterBaseline = (row: number) => PAD_TOP + row * MARKER_LABEL_BASELINE - GUTTER_DESCENT;
 
 const seriesStyle = (slot: number) =>
   ({
@@ -348,6 +358,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     () => mergeRefs(ref, (el: HTMLElement | null) => setRootEl(el)),
     [ref, setRootEl],
   );
+  const compact = rootSize.height > 0 && rootSize.height < COMPACT_HEIGHT;
+  // Compact charts hide marker text, icons included, so they reserve no gutter for it.
+  const gutterRows = compact ? 0 : markerGutterRows(resolvedMarkers.markers);
   const layout = useMemo(
     () =>
       !empty && size.width > 0 && size.height > 0
@@ -360,9 +373,21 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             formatValue,
             curve,
             valueLabels,
+            topGutter: gutterRows * MARKER_LABEL_BASELINE,
           })
         : null,
-    [empty, size.width, size.height, type, categories, visible, formatValue, curve, valueLabels],
+    [
+      empty,
+      size.width,
+      size.height,
+      type,
+      categories,
+      visible,
+      formatValue,
+      curve,
+      valueLabels,
+      gutterRows,
+    ],
   );
 
   const markerGeometry = useMemo(
@@ -648,7 +673,6 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     parentHidden:
       s.comparisonOf !== undefined && s.comparisonOf !== 'total' && hidden.includes(s.comparisonOf),
   }));
-  const compact = rootSize.height > 0 && rootSize.height < COMPACT_HEIGHT;
 
   const columns = visible.map((s) => ({
     key: s.key,
@@ -661,7 +685,16 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const selectionGeometry =
     layout && shownRange
       ? layoutMarkers(
-          [{ key: 'selection', kind: 'band', tone: 'neutral', ...shownRange }],
+          [
+            {
+              key: 'selection',
+              kind: 'band',
+              tone: 'neutral',
+              slot: 0,
+              placement: 'beside',
+              ...shownRange,
+            },
+          ],
           layout,
         )[0]
       : null;
@@ -792,6 +825,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                       key={m.key}
                       className={styles.markerBand}
                       data-tone={m.tone}
+                      data-slot={m.slot || undefined}
+                      style={m.slot ? seriesStyle(m.slot) : undefined}
                       x={m.x}
                       y={layout.plot.y}
                       width={m.width}
@@ -865,6 +900,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                       key={m.key}
                       className={styles.markerLine}
                       data-tone={m.tone}
+                      data-slot={m.slot || undefined}
+                      style={m.slot ? seriesStyle(m.slot) : undefined}
                       x1={m.x}
                       x2={m.x}
                       y1={layout.plot.y}
@@ -944,6 +981,30 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                       >
                         {m.label.text}
                       </text>
+                    ),
+                )}
+                {/* Gutter above the plot: icons in the first row, top labels in the last. */}
+                {markerGeometry.map(
+                  (m) =>
+                    m.top && (
+                      <Fragment key={`top-${m.key}`}>
+                        {m.top.icon && (
+                          <text
+                            className={styles.markerIcon}
+                            aria-hidden="true"
+                            x={m.top.x}
+                            y={gutterBaseline(1)}
+                            textAnchor="middle"
+                          >
+                            {m.top.icon}
+                          </text>
+                        )}
+                        {m.top.label && (
+                          <text x={m.top.x} y={gutterBaseline(gutterRows)} textAnchor="middle">
+                            {m.top.label}
+                          </text>
+                        )}
+                      </Fragment>
                     ),
                 )}
               </g>

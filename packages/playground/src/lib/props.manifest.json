@@ -822,7 +822,7 @@
           "type": "ChartMarker[]",
           "required": false,
           "default": "",
-          "description": "Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,\n`{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:\n`'neutral'` for events (the tone default) or `'subtle'` for recurring context. Labelled markers are also listed in the\ntooltip, the keyboard announcement and the data table; unlabelled ones are decorative. A marker naming an\nunknown category is ignored with a dev warning."
+          "description": "Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,\n`{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:\n`'neutral'` for events (the tone default) or `'subtle'` for recurring context. `color` (palette slot 1–8) strokes /\ntints the marker, e.g. to match a series. `icon` (short text or emoji, decorative) is drawn centred above the plot;\n`labelPlacement: 'top'` moves the label there too, under the icon (default `'beside'`, on the plot). Labelled\nmarkers are also listed in the tooltip, the keyboard announcement and the data table; unlabelled ones are\ndecorative. A marker naming an unknown category is ignored with a dev warning."
         },
         {
           "name": "footnote",
@@ -5898,10 +5898,10 @@
         },
         {
           "name": "reference",
-          "type": "ScatterReference",
+          "type": "ScatterReference | ScatterReference[]",
           "required": false,
           "default": "",
-          "description": "App-computed reference line (e.g. a recommended ratio), drawn dashed in neutral ink and listed in the legend."
+          "description": "App-computed reference line(s) (e.g. a recommended ratio), drawn dashed (a different pattern per line) and each listed in the legend."
         },
         {
           "name": "trendLine",
@@ -7911,7 +7911,7 @@
     "StatGroupVariant": "\"filled\" | \"card\"",
     "FunnelShape": "\"taper\" | \"sharp\"",
     "FunnelStage": "{ key: string; label: string; value: number; color?: FunnelSlot }",
-    "ScatterReference": "{ label: string; points: { x: number | Date; y: number; }[] }",
+    "ScatterReference": "{ key?: string; label: string; points: { x: number | Date; y: number; }[]; color?: ChartSeriesColor }",
     "ScatterSeries": "{ key: string; label: string; points: ScatterPoint[]; color?: ChartSeriesColor }",
     "ScatterXScale": "\"number\" | \"time\"",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",

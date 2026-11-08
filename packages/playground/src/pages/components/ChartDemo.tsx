@@ -97,6 +97,17 @@ const pinnedSeries: ChartSeries[] = [
   { key: 'a', label: 'Bowl A', color: 3, values: [45, 38, 52, 30] },
   { key: 'b', label: 'Bowl B', color: 5, values: [28, 60, 41, null] },
 ];
+// Pet Control: bowl weight on two scales over a day, with each feeding marked in its scale's colour.
+const dayHours = Array.from({ length: 17 }, (_, i) => `${String(6 + i).padStart(2, '0')}:00`);
+const scaleSeries: ChartSeries[] = [
+  { key: 'a', label: 'Scale A', color: 3, values: dayHours.map((_, i) => 40 + ((i * 13) % 50)) },
+  { key: 'b', label: 'Scale B', color: 5, values: dayHours.map((_, i) => 30 + ((i * 7) % 40)) },
+];
+const feedingMarkers: ChartMarker[] = [
+  { key: 'fa1', label: 'Breakfast', at: '07:00', color: 3, icon: '🐱' },
+  { key: 'fb1', label: 'Snack', at: '11:00', color: 5, icon: '🐱' },
+  { key: 'fa2', label: 'Dinner', at: '18:00', color: 3, icon: '🐱', labelPlacement: 'top' },
+];
 const eatenSeries: ChartSeries[] = [{ key: 'g', label: 'Eaten', values: [73, 98, 93, 30] }];
 const mealDetails = (i: number) => [`${[190, 255, 240, 80][i]} kcal`, `${[3, 4, 4, 1][i]} times`];
 
@@ -366,6 +377,33 @@ export function ChartDemo() {
             series={markerSeries}
             markers={eventMarkers}
             formatValue={formatCount}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Marker colour, icon and top labels"
+        description="color strokes a marker in a palette slot, e.g. the scale it belongs to. icon (short text or emoji, decorative) is drawn above the plot; labelPlacement 'top' moves the label there too, under the icon. Without icons or top labels the plot keeps its size."
+        code={`<Chart type="line" label="Bowl weight per scale" categories={hours}
+  series={[
+    { key: 'a', label: 'Scale A', color: 3, values: scaleA },
+    { key: 'b', label: 'Scale B', color: 5, values: scaleB },
+  ]}
+  markers={[
+    { key: 'fa1', label: 'Breakfast', at: '07:00', color: 3, icon: '🐱' },
+    { key: 'fb1', label: 'Snack', at: '11:00', color: 5, icon: '🐱' },
+    { key: 'fa2', label: 'Dinner', at: '18:00', color: 3, icon: '🐱', labelPlacement: 'top' },
+  ]}
+/>`}
+      >
+        <Cell title="Feedings">
+          <Chart
+            type="line"
+            label="Bowl weight per scale"
+            categories={dayHours}
+            series={scaleSeries}
+            markers={feedingMarkers}
+            formatValue={formatGrams}
           />
         </Cell>
       </Example>

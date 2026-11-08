@@ -34,6 +34,13 @@ export interface ChartSeries {
  */
 export type ChartMarkerTone = 'neutral' | 'subtle';
 
+/**
+ * Where a marker's `label` is drawn.
+ * - `'beside'` — default; on the plot, just right of the line / inside the band's left edge.
+ * - `'top'` — centred above the plot, under the `icon` when there is one.
+ */
+export type ChartMarkerLabelPlacement = 'beside' | 'top';
+
 interface ChartMarkerBase {
   /** Stable identity (React key). */
   key: string;
@@ -41,6 +48,12 @@ interface ChartMarkerBase {
   label?: string;
   /** Visual weight. Default `'neutral'`. */
   tone?: ChartMarkerTone;
+  /** Palette slot (1–8) the line strokes / band tints in, e.g. to match a series. Default: neutral ink. */
+  color?: ChartSeriesColor;
+  /** Short text or emoji drawn centred above the marker, over the plot. Decorative: never read out (`label` carries meaning). */
+  icon?: string;
+  /** Where `label` is drawn. Default `'beside'`. */
+  labelPlacement?: ChartMarkerLabelPlacement;
 }
 
 /**
@@ -70,6 +83,10 @@ export interface ResolvedMarker {
   /** Category index range, inclusive; `from === to` for a line. */
   from: number;
   to: number;
+  /** Palette slot 1..8; 0 = neutral ink. */
+  slot: number;
+  icon?: string;
+  placement: ChartMarkerLabelPlacement;
 }
 
 /** Maps markers onto category indices; markers naming an unknown category are dropped. */
@@ -93,9 +110,20 @@ export function resolveMarkers(
       kind: m.at === undefined ? 'band' : 'line',
       from: Math.min(a, b),
       to: Math.max(a, b),
+      slot: m.color ?? 0,
+      icon: m.icon || undefined,
+      placement: m.labelPlacement ?? 'beside',
     });
   }
   return { markers: resolved, dropped };
+}
+
+const topLabel = (m: ResolvedMarker) => (m.placement === 'top' ? m.label : undefined);
+
+/** Rows of the gutter above the plot: 2 when a marker stacks an icon over a top label, 1 for an icon or a top label alone. */
+export function markerGutterRows(markers: readonly ResolvedMarker[]): 0 | 1 | 2 {
+  if (markers.some((m) => m.icon && topLabel(m))) return 2;
+  return markers.some((m) => m.icon || topLabel(m)) ? 1 : 0;
 }
 
 /** Labels of the markers covering category `i`, in marker order. */
@@ -107,12 +135,16 @@ export interface MarkerGeometry {
   key: string;
   kind: 'line' | 'band';
   tone: ChartMarkerTone;
+  /** Palette slot 1..8; 0 = neutral ink. */
+  slot: number;
   /** Line x, or band left edge. */
   x: number;
   /** Band width; 0 for a line. */
   width: number;
   /** Label to draw, or undefined when absent or it would collide/clip. */
   label?: { text: string; x: number; anchor: 'start' | 'end' };
+  /** Icon and/or top label above the plot, centred on `x` (shifted inward at the edges); undefined when absent or it would collide. */
+  top?: { x: number; icon?: string; label?: string };
 }
 
 /** Marker geometry in svg coordinates. Labels that would overlap an earlier label or leave the plot are dropped. */
@@ -123,11 +155,27 @@ export function layoutMarkers(
   const { plot, categoryX, step } = layout;
   const right = plot.x + plot.width;
   const taken: [number, number][] = [];
+  const takenTop: [number, number][] = [];
+  const free = (spans: [number, number][], [a0, a1]: [number, number]) =>
+    spans.every(([a, b]) => a1 + LABEL_GAP <= a || b + LABEL_GAP <= a0);
   return markers.map((m) => {
     const x = m.kind === 'line' ? categoryX[m.from] : categoryX[m.from] - step / 2;
     const width = m.kind === 'line' ? 0 : (m.to - m.from + 1) * step;
-    const g: MarkerGeometry = { key: m.key, kind: m.kind, tone: m.tone, x, width };
-    if (!m.label) return g;
+    const g: MarkerGeometry = { key: m.key, kind: m.kind, tone: m.tone, slot: m.slot, x, width };
+    const above = topLabel(m);
+    // Centre on the visible part of the marker; a marker wholly outside the plot has no top item.
+    const lo = Math.max(x, plot.x);
+    const hi = Math.min(x + width, right);
+    if ((m.icon || above) && lo <= hi) {
+      const half = Math.max(m.icon ? iconWidth(m.icon) : 0, above ? textWidth(above) : 0) / 2;
+      const cx = Math.max(plot.x + half, Math.min(right - half, (lo + hi) / 2));
+      const span: [number, number] = [cx - half, cx + half];
+      if (free(takenTop, span)) {
+        takenTop.push(span);
+        g.top = { x: cx, ...(m.icon && { icon: m.icon }), ...(above && { label: above }) };
+      }
+    }
+    if (!m.label || above) return g;
     const w = textWidth(m.label);
     // Start just right of the line / inside the band's left edge; flip left of a line near the right edge.
     let anchor: 'start' | 'end' = 'start';
@@ -138,8 +186,7 @@ export function layoutMarkers(
     }
     const span: [number, number] = anchor === 'start' ? [lx, lx + w] : [lx - w, lx];
     const fits = span[0] >= plot.x && span[1] <= right;
-    const free = taken.every(([a, b]) => span[1] + LABEL_GAP <= a || b + LABEL_GAP <= span[0]);
-    if (fits && free) {
+    if (fits && free(taken, span)) {
       taken.push(span);
       g.label = { text: m.label, x: lx, anchor };
     }
@@ -158,8 +205,12 @@ export const X_LABEL_BASELINE = 4;
 export const DOT_RADIUS = 3;
 /** Radius of the keyboard/hover inspection marker on a line point. */
 export const MARKER_RADIUS = 4;
-/** Baseline of marker labels below the plot top. */
+/** Baseline of marker labels below the plot top; also the height of one marker gutter row above the plot. */
 export const MARKER_LABEL_BASELINE = 12;
+// ponytail: an icon is estimated as one emoji (~1.25em at --chart-marker-icon-size 14px) or
+// its 12px text estimate scaled to 14px, whichever is wider; measure if icons overlap in real fonts.
+const ICON_MIN_WIDTH = 18;
+const iconWidth = (icon: string) => Math.max(ICON_MIN_WIDTH, (textWidth(icon) * 14) / 12);
 /** Below this root height the legend collapses to one row with a "+N" counter. */
 export const COMPACT_HEIGHT = 120;
 
@@ -420,6 +471,8 @@ export interface LayoutInput {
   curve?: ChartCurve;
   /** Label each bar (`bar`) or stack total (`stacked-bar`) with its value; ignored on line/area. */
   valueLabels?: boolean;
+  /** Pixels reserved above the plot for marker icons / top labels; default 0. */
+  topGutter?: number;
 }
 
 export interface ChartLayout {
@@ -495,7 +548,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   for (const layer of areaStack ?? []) for (const seg of layer) seg.forEach(take);
   if (min === max) max = min + 1;
 
-  const plotTop = PAD_TOP;
+  const plotTop = PAD_TOP + (input.topGutter ?? 0);
   const plotBottom = Math.max(plotTop + 1, height - X_AXIS_HEIGHT);
   const tickCount = Math.max(2, Math.floor((plotBottom - plotTop) / Y_TICK_SPACING));
   const labelled = !!input.valueLabels && (type === 'bar' || type === 'stacked-bar');

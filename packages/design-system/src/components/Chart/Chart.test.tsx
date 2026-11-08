@@ -666,6 +666,75 @@ describe('markers', () => {
   });
 });
 
+describe('marker colour, icon and top labels (DS-47)', () => {
+  const lineY = (c: HTMLElement) =>
+    Number(c.querySelector('line[class*="markerLine"]')!.getAttribute('y1'));
+
+  it('keeps the plot top unchanged without icons or top labels; a gutter row pushes it down', () => {
+    const layout = stubLayout();
+    const { container, rerender } = render(
+      <Chart {...base} markers={[{ key: 'l', label: 'Launch', at: 'W2' }]} />,
+    );
+    layout.fire();
+    expect(lineY(container)).toBe(8);
+    rerender(<Chart {...base} markers={[{ key: 'l', label: 'Launch', at: 'W2', icon: '🐱' }]} />);
+    expect(lineY(container)).toBe(20);
+    rerender(
+      <Chart
+        {...base}
+        markers={[{ key: 'l', label: 'Launch', at: 'W2', icon: '🐱', labelPlacement: 'top' }]}
+      />,
+    );
+    expect(lineY(container)).toBe(32);
+  });
+
+  it('colours a marker with its palette slot', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart
+        {...base}
+        markers={[
+          { key: 'l', at: 'W2', color: 2 },
+          { key: 'b', from: 'W1', to: 'W1', color: 3 },
+        ]}
+      />,
+    );
+    layout.fire();
+    const line = container.querySelector('line[class*="markerLine"]') as SVGElement;
+    expect(line).toHaveAttribute('data-slot', '2');
+    expect(line.style.getPropertyValue('--chart-series-color')).toBe('var(--chart-series-2)');
+    expect(container.querySelector('rect[class*="markerBand"]')).toHaveAttribute('data-slot', '3');
+  });
+
+  it('draws the icon as decorative text, kept out of the table and tooltip', async () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart {...base} markers={[{ key: 'f', label: 'Fed', at: 'W2', icon: '🐱' }]} />,
+    );
+    layout.fire();
+    const icon = [...container.querySelectorAll('[class*="markerLabels"] text')].find(
+      (t) => t.textContent === '🐱',
+    );
+    expect(icon).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByRole('table')).not.toHaveTextContent('🐱');
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    const tip = document.querySelector('[data-chart-tooltip]')!;
+    await waitFor(() => expect(tip).toHaveTextContent('Fed'));
+    expect(tip).not.toHaveTextContent('🐱');
+  });
+
+  it('compact charts draw no icons and reserve no gutter', () => {
+    const layout = stubLayout(400, 100);
+    const { container } = render(
+      <Chart {...base} markers={[{ key: 'f', label: 'Fed', at: 'W2', icon: '🐱' }]} />,
+    );
+    layout.fire();
+    expect(container).not.toHaveTextContent('🐱');
+    expect(lineY(container)).toBe(8);
+  });
+});
+
 it('inspection markers paint after every series, so a later stacked area cannot cover them', async () => {
   const layout = stubLayout();
   const { container } = render(
