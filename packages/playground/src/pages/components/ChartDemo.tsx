@@ -146,7 +146,7 @@ function ZoomGesturesExample() {
       <Cell title="Bowl weight">
         <Chart
           type="line"
-          label="Bowl weight per minute"
+          label="Bowl weight, zoomable"
           categories={minutes}
           series={bowlSeries}
           formatValue={formatGrams}
@@ -257,7 +257,7 @@ export function ChartDemo() {
         title="Zoom gestures"
         description="zoomGestures with a controlled viewport. Ctrl/⌘ + wheel or a trackpad pinch zooms around the pointer; Shift + wheel or a horizontal swipe pans; a plain wheel scrolls the page. Touch: pinch, two-finger drag, or a one-finger horizontal drag while zoomed. Mouse drag pans while zoomed (selection is off here). Keyboard: + and -. The line below logs onViewportChange; apps refetch on end: true. Double-click, double-tap or Enter on an inspected point adds a marker there (onPlotDoubleClick)."
         code={`const [viewport, setViewport] = useState<ChartViewport | null>(null);
-<Chart type="line" label="Bowl weight per minute" categories={minutes} series={bowl}
+<Chart type="line" label="Bowl weight, zoomable" categories={minutes} series={bowl}
   formatValue={formatGrams} markers={notes} zoomGestures viewport={viewport}
   onViewportChange={(next, { end }) => {
     setViewport(next);
