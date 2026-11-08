@@ -22,14 +22,14 @@ time zone and theme.
 The user chose to ship **all six variants** shown in the mockup. They are props
 on one component that combine freely, not separate components:
 
-| Mockup | Prop | Values |
-|---|---|---|
-| A stacked / B calendar page | `layout` | `'stacked'` (default) · `'page'` — page = coloured month band on top |
-| A sizes | `size` | `'sm'` · `'md'` (default) · `'lg'` — `sm` hides the bottom line so it fits a list row |
-| F surface | `surface` | `'filled'` (default) · `'plain'` (no background/border, for dense lists and timelines) |
-| D with time | `show` (bottom line) | `'weekday'` (default) · `'time'` · `'weekday-time'` |
-| C relative states | automatic, see below | today = accent fill + "Today"; past = muted; tomorrow → "Tomorrow" |
-| E range | `end` | optional end date → `12–14` / `Thu–Sat`; crossing months → `Nov – Dec`, `28–2` |
+| Mockup                      | Prop                 | Values                                                                                 |
+| --------------------------- | -------------------- | -------------------------------------------------------------------------------------- |
+| A stacked / B calendar page | `layout`             | `'stacked'` (default) · `'page'` — page = coloured month band on top                   |
+| A sizes                     | `size`               | `'sm'` · `'md'` (default) · `'lg'` — `sm` hides the bottom line so it fits a list row  |
+| F surface                   | `surface`            | `'filled'` (default) · `'plain'` (no background/border, for dense lists and timelines) |
+| D with time                 | `show` (bottom line) | `'weekday'` (default) · `'time'` · `'weekday-time'`                                    |
+| C relative states           | automatic, see below | today = accent fill + "Today"; past = muted; tomorrow → "Tomorrow"                     |
+| E range                     | `end`                | optional end date → `12–14` / `Thu–Sat`; crossing months → `Nov – Dec`, `28–2`         |
 
 `page` layout's band colour: `color?: PaletteColor` (same 30-colour categorical palette
 as `IconTile`), default = accent.
