@@ -81,6 +81,7 @@ describe('Button', () => {
       /padding-block:\s*max\(0px,\s*calc\(\(var\(--button-height-current\)\s*-\s*1lh\)/,
     );
     expect(rule).toMatch(/line-height:\s*var\(--line-height-normal\)/);
+    expect(rule).toMatch(/min-height:\s*var\(--button-height-current\)/);
     for (const size of ['xs', 'sm', 'md', 'lg'])
       expect(scss).toMatch(
         new RegExp(

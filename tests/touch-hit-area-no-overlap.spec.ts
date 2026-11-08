@@ -54,15 +54,16 @@ for (const route of ROUTES) {
           if (!hit || el.contains(hit)) continue;
           const other = hit.closest(sel);
           if (!other || other.contains(el)) continue;
-          // Only a steal by the ::before overhang counts. A point inside the other
-          // control's own box is a deliberate visual overlap (cascaded Calendar
-          // events in one time slot), not a hit-area steal.
+          // Calendar timed events in one slot cascade over each other on purpose
+          // (demo data is relative to today, so this shows some weeks only). Only
+          // a point inside the other event's own box is exempt; a ::before
+          // overhang steal lands outside it and still counts.
+          const cascaded = '[style*="--cal-block-left"]';
           const or = other.getBoundingClientRect();
-          if (x >= or.left && x <= or.right && y >= or.top && y <= or.bottom) continue;
-          {
-            out.push(`${label(el)} -> ${label(other)}`);
-            break;
-          }
+          const insideOther = x >= or.left && x <= or.right && y >= or.top && y <= or.bottom;
+          if (insideOther && el.matches(cascaded) && other.matches(cascaded)) continue;
+          out.push(`${label(el)} -> ${label(other)}`);
+          break;
         }
       }
       return out;
