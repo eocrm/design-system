@@ -338,6 +338,14 @@
     ],
     "composedBy": []
   },
+  "DateTile": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
   "DefinitionList": {
     "tier": "primitive",
     "cluster": "Display",
@@ -1175,6 +1183,7 @@
       "ChatBubble",
       "DashboardWidget",
       "DateStrip",
+      "DateTile",
       "FunnelChart",
       "Heatmap",
       "LiveRegion",
