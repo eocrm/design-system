@@ -46,6 +46,7 @@
 }
 
 .month {
+  line-height: var(--line-height-tight);
   font-size: var(--date-tile-month);
   font-weight: var(--font-weight-semibold);
   letter-spacing: var(--letter-spacing-caps);
@@ -55,12 +56,14 @@
 }
 
 .day {
+  line-height: var(--line-height-tight);
   font-size: var(--date-tile-day);
   font-weight: var(--font-weight-bold);
   white-space: nowrap;
 }
 
 .bottom {
+  line-height: var(--line-height-tight);
   font-size: var(--date-tile-bottom);
   color: var(--date-tile-fg-secondary);
   white-space: nowrap;
@@ -107,8 +110,8 @@
 }
 
 .page.today {
-  outline: 2px solid var(--date-tile-today-ring);
-  outline-offset: -1px;
+  outline: var(--date-tile-today-ring-width) solid var(--date-tile-today-ring);
+  outline-offset: calc(var(--date-tile-today-ring-width) * -1);
 }
 
 // Muted via colour, not by fading (keeps contrast predictable). The page band

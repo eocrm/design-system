@@ -10,13 +10,14 @@
   --date-tile-today-bg: var(--color-accent);
   --date-tile-today-fg: var(--color-accent-fg);
   --date-tile-today-ring: var(--color-accent);
+  --date-tile-today-ring-width: calc(var(--border-width) * 2);
   --date-tile-past-fg: var(--color-fg-muted);
   --date-tile-band-bg: var(--color-accent);
   --date-tile-band-fg: var(--color-accent-fg);
   --date-tile-radius: var(--radius-md);
   --date-tile-size-sm: var(--size-lg); // 40px, beside two lines of body text
-  --date-tile-size-md: var(--size-xl); // 48px
-  --date-tile-size-lg: calc(var(--size-xl) * 1.5); // 72px
+  --date-tile-size-md: calc(var(--size-md) + var(--size-sm)); // 56px
+  --date-tile-size-lg: calc(var(--size-lg) + var(--size-md)); // 72px
   --date-tile-month-sm: var(--font-size-xs);
   --date-tile-month-md: var(--font-size-xs);
   --date-tile-month-lg: var(--font-size-sm);
