@@ -6,6 +6,12 @@ import type { Messages } from './messages';
  * interface — adding a key here without adding it to `ru.ts` will fail TS.
  */
 export const en: Messages = {
+  dateTile: {
+    today: 'Today',
+    tomorrow: 'Tomorrow',
+    yesterday: 'Yesterday',
+    ongoing: 'Ongoing',
+  },
   alert: {
     dismiss: 'Dismiss',
   },

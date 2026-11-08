@@ -7,6 +7,12 @@ import { ruPlural } from './format';
  * here (and vice-versa) — TS enforces shape parity through `Messages`.
  */
 export const ru: Messages = {
+  dateTile: {
+    today: 'Сегодня',
+    tomorrow: 'Завтра',
+    yesterday: 'Вчера',
+    ongoing: 'Идёт',
+  },
   alert: {
     dismiss: 'Закрыть',
   },

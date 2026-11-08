@@ -9,6 +9,12 @@ import type { PaletteColor } from '../palette';
 import type { LiquidTagSnippetId } from '../components/LiquidEditor/liquidTags';
 
 export interface Messages {
+  dateTile: {
+    today: string;
+    tomorrow: string;
+    yesterday: string;
+    ongoing: string;
+  };
   alert: {
     /** aria-label on the Alert's dismiss (×) button. */
     dismiss: string;

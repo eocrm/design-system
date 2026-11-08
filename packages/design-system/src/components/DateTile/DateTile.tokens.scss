@@ -1,0 +1,28 @@
+// DateTile.tokens.scss — Component tokens for <DateTile>. Colors default to
+// semantic tokens; band-bg/band-fg may be overridden at runtime from a
+// PaletteColor (page layout only).
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
+  --date-tile-bg: var(--color-bg-subtle);
+  --date-tile-border: var(--color-border);
+  --date-tile-fg: var(--color-fg);
+  --date-tile-fg-secondary: var(--color-fg-muted);
+  --date-tile-today-bg: var(--color-accent);
+  --date-tile-today-fg: var(--color-accent-fg);
+  --date-tile-today-ring: var(--color-accent);
+  --date-tile-past-fg: var(--color-fg-muted);
+  --date-tile-band-bg: var(--color-accent);
+  --date-tile-band-fg: var(--color-accent-fg);
+  --date-tile-radius: var(--radius-md);
+  --date-tile-size-sm: var(--size-lg); // 40px, beside two lines of body text
+  --date-tile-size-md: var(--size-xl); // 48px
+  --date-tile-size-lg: calc(var(--size-xl) * 1.5); // 72px
+  --date-tile-month-sm: var(--font-size-xs);
+  --date-tile-month-md: var(--font-size-xs);
+  --date-tile-month-lg: var(--font-size-sm);
+  --date-tile-day-sm: var(--font-size-lg);
+  --date-tile-day-md: var(--font-size-xl);
+  --date-tile-day-lg: var(--font-size-3xl);
+  --date-tile-bottom-md: var(--font-size-xs);
+  --date-tile-bottom-lg: var(--font-size-sm);
+}
