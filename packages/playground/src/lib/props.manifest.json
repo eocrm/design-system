@@ -2298,6 +2298,80 @@
         }
       ]
     },
+    "DateTile": {
+      "props": [
+        {
+          "name": "date",
+          "type": "string | Date",
+          "required": true,
+          "default": "",
+          "description": "The date: a `Date`, a `'YYYY-MM-DD'` calendar day (no time zone shift), or any other string parsed as an instant (e.g. ISO datetime)."
+        },
+        {
+          "name": "end",
+          "type": "DateTileInput",
+          "required": false,
+          "default": "",
+          "description": "Optional range end; an end not after `date` is ignored."
+        },
+        {
+          "name": "layout",
+          "type": "DateTileLayout",
+          "required": false,
+          "default": "'stacked'",
+          "description": "`'stacked'` (**default**) or `'page'`."
+        },
+        {
+          "name": "size",
+          "type": "DateTileSize",
+          "required": false,
+          "default": "'md'",
+          "description": "`'sm'` / `'md'` (**default**) / `'lg'`. `'sm'` has no bottom line."
+        },
+        {
+          "name": "surface",
+          "type": "DateTileSurface",
+          "required": false,
+          "default": "'filled'",
+          "description": "`'filled'` (**default**) or `'plain'`."
+        },
+        {
+          "name": "show",
+          "type": "DateTileShow",
+          "required": false,
+          "default": "'weekday'",
+          "description": "Bottom line: `'weekday'` (**default**), `'time'` or `'weekday-time'`. Time needs an instant (`Date` or non-day string)."
+        },
+        {
+          "name": "relative",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Highlight today/ongoing, mute the past, and show Today/Tomorrow/Yesterday words. Default `true`."
+        },
+        {
+          "name": "now",
+          "type": "Date",
+          "required": false,
+          "default": "",
+          "description": "The reference \"now\" for `relative`. Defaults to the current time at render."
+        },
+        {
+          "name": "timeZone",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "IANA time zone used to resolve instants to a day and time. Defaults to the runtime zone."
+        },
+        {
+          "name": "color",
+          "type": "PaletteColor",
+          "required": false,
+          "default": "",
+          "description": "Palette color of the month band — `layout=\"page\"` only, ignored for stacked."
+        }
+      ]
+    },
     "DefinitionList": {
       "props": [
         {
@@ -7695,6 +7769,11 @@
     "ErrorStateAlign": "\"start\" | \"center\"",
     "ErrorStateTone": "\"neutral\" | \"danger\"",
     "ErrorStateHeadingLevel": "1 | 2 | 3 | 4 | 5 | 6",
+    "DateTileLayout": "\"stacked\" | \"page\"",
+    "DateTileSize": "\"sm\" | \"md\" | \"lg\"",
+    "DateTileSurface": "\"filled\" | \"plain\"",
+    "DateTileShow": "\"time\" | \"weekday\" | \"weekday-time\"",
+    "DateTileInput": "string | Date",
     "IconTileSize": "\"sm\" | \"md\" | \"lg\" | \"inline\" | \"xs\"",
     "IconTileShape": "\"circle\" | \"square\"",
     "TooltipSide": "\"left\" | \"right\" | \"top\" | \"bottom\"",
@@ -7767,11 +7846,11 @@
     "ImageCropAspectRatio": "number",
     "CropArea": "{ x: number; y: number; width: number; height: number }",
     "DataTableInstance": "DataTableInstance<T>",
-    "ListVariant": "\"number\" | \"bullet\" | \"plain\"",
+    "ListVariant": "\"number\" | \"plain\" | \"bullet\"",
     "ListGap": "\"sm\" | \"md\" | \"xs\"",
     "ListSize": "\"body\" | \"heading\"",
     "ListNumberStyle": "\"plain\" | \"badge\"",
-    "DefinitionListLayout": "\"horizontal\" | \"stacked\"",
+    "DefinitionListLayout": "\"stacked\" | \"horizontal\"",
     "DefinitionListSpacing": "\"sm\" | \"md\" | \"lg\"",
     "LinkVariant": "\"default\" | \"muted\" | \"subtle\"",
     "LinkUnderline": "\"none\" | \"always\" | \"hover\"",

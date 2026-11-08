@@ -126,6 +126,7 @@ import { FilterChipDemo } from './pages/components/FilterChipDemo';
 import { FlowCanvasDemo } from './pages/components/FlowCanvasDemo';
 import { DashboardCanvasDemo } from './pages/components/DashboardCanvasDemo';
 import { PersonDisplayDemo } from './pages/components/PersonDisplayDemo';
+import { DateTileDemo } from './pages/components/DateTileDemo';
 import { IconTileDemo } from './pages/components/IconTileDemo';
 import { ImageDemo } from './pages/components/ImageDemo';
 import { MediaTileDemo } from './pages/components/MediaTileDemo';
@@ -281,6 +282,7 @@ export default function App() {
             <Route path="/components/filter-chip" element={<FilterChipDemo />} />
             <Route path="/components/flow-canvas" element={<FlowCanvasDemo />} />
             <Route path="/components/dashboard-canvas" element={<DashboardCanvasDemo />} />
+            <Route path="/components/date-tile" element={<DateTileDemo />} />
             <Route path="/components/icon-tile" element={<IconTileDemo />} />
             <Route path="/components/image" element={<ImageDemo />} />
             <Route path="/components/media-tile" element={<MediaTileDemo />} />

@@ -100,6 +100,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['ImageCrop'],
   },
   {
+    to: '/components/date-tile',
+    name: 'DateTile',
+    description:
+      'Compact calendar-style tile showing a date or range, with relative today/past states.',
+    preview: SCHEMATICS['DateTile'],
+  },
+  {
     to: '/components/icon-tile',
     name: 'IconTile',
     description: 'Decorative tile framing an icon, tinted by a Palette color.',
