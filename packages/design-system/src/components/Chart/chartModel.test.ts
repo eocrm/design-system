@@ -21,6 +21,7 @@ import {
   type ChartSeriesColor,
   type LayoutInput,
 } from './chartModel';
+import { clampViewport, visibleIndexRange } from './chartViewport';
 
 const fmt = (n: number) => String(n);
 const s = (key: string, values: (number | null)[], comparisonOf?: string): ChartSeries => ({
@@ -1141,6 +1142,40 @@ describe('viewport (DS-48)', () => {
     expect(categoryIndexAt(l, 0)).toBe(1);
     expect(categoryIndexAt(l, l.plot.x + l.plot.width)).toBe(2);
     expect(categoryIndexAt(l, 10_000)).toBe(2);
+  });
+
+  it('maps the plot edges to the visible edge categories on band-aligned windows (float error)', () => {
+    for (const n of [3, 5, 7, 10, 13])
+      for (const width of [400, 401.7, 333.3, 517.9, 289.1])
+        for (let k = 0; k + 2 <= n; k++)
+          for (const span of [2, 3]) {
+            if (k + span > n) continue;
+            const v = clampViewport({ from: k / n, to: (k + span) / n }, n);
+            const cats = Array.from({ length: n }, (_, i) => `c${i}`);
+            const l = computeLayout({
+              type: 'bar',
+              categories: cats,
+              series: resolveSeries(
+                'bar',
+                [
+                  s(
+                    'a',
+                    cats.map((_, i) => i + 1),
+                  ),
+                ],
+                n,
+              ).series,
+              width,
+              height: 200,
+              formatValue: fmt,
+              viewport: v,
+            });
+            const shown = visibleIndexRange(v, n);
+            expect(categoryIndexAt(l, l.plot.x)).toBe(shown.from);
+            expect(categoryIndexAt(l, l.plot.x - 30)).toBe(shown.from);
+            expect(categoryIndexAt(l, l.plot.x + l.plot.width)).toBe(shown.to);
+            expect(categoryIndexAt(l, l.plot.x + l.plot.width + 30)).toBe(shown.to);
+          }
   });
 
   it('valueAt clamps to the plot height', () => {

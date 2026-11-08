@@ -14,7 +14,8 @@ export interface ChartViewport {
 
 /** The window never shrinks below this many categories. */
 export const MIN_VIEWPORT_CATEGORIES = 2;
-const EPS = 1e-9;
+/** Float tolerance for band-edge maths (a window edge that lands on a band edge). */
+export const EPS = 1e-9;
 const minSpan = (n: number) => Math.min(1, MIN_VIEWPORT_CATEGORIES / n);
 
 /** Keeps `span` and shifts the window into 0..1; null when it covers everything. */

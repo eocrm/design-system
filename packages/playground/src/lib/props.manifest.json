@@ -4175,7 +4175,7 @@
           "type": "C",
           "required": false,
           "default": "",
-          "description": ""
+          "description": "Element or component to render the link as (e.g. a router `Link`); its props are typed and forwarded. Default `'a'`."
         }
       ]
     },

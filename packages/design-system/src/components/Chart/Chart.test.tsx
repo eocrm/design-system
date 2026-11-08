@@ -1477,6 +1477,50 @@ describe('viewport (DS-48)', () => {
     await waitFor(() => expect(live).toHaveTextContent('Zoomed to c0–c7'));
   });
 
+  it('keyboard zoom that changes nothing announces nothing', async () => {
+    const layout = stubLayout();
+    const { unmount } = render(<Chart {...vp} zoomGestures />);
+    layout.fire();
+    plotOf().focus();
+    const quiet = async () => {
+      await userEvent.keyboard(key);
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, PAST_ANNOUNCE_DELAY_MS));
+      });
+      expect(document.querySelector('[aria-live="polite"]')).toBeEmptyDOMElement();
+    };
+    let key = '-'; // already at full extent
+    await quiet();
+    unmount();
+    // Already at the minimum span (2 of 8 categories).
+    const at = render(<Chart {...vp} zoomGestures defaultViewport={{ from: 0, to: 0.25 }} />);
+    layout.fire();
+    plotOf().focus();
+    key = '+';
+    await quiet();
+    at.unmount();
+    // Controlled, and the app keeps its window: what is rendered did not change.
+    render(<Chart {...vp} zoomGestures viewport={null} onViewportChange={() => {}} />);
+    layout.fire();
+    plotOf().focus();
+    await quiet();
+  });
+
+  it('another viewport change clears the keyboard zoom note, so the same text is heard again', async () => {
+    const layout = stubLayout();
+    render(<Chart {...vp} zoomGestures />);
+    layout.fire();
+    plotOf().focus();
+    const live = document.querySelector('[aria-live="polite"]')!;
+    await userEvent.keyboard('+');
+    await waitFor(() => expect(live).toHaveTextContent('Zoomed to c2–c5'));
+    await userEvent.click(reset()!);
+    await waitFor(() => expect(live).not.toHaveTextContent('Zoomed'));
+    plotOf().focus();
+    await userEvent.keyboard('+');
+    await waitFor(() => expect(live).toHaveTextContent('Zoomed to c2–c5'));
+  });
+
   it('keyboard: +/= and - zoom around the inspected category', async () => {
     const layout = stubLayout();
     const onViewport = vi.fn();

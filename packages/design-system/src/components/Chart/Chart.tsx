@@ -418,12 +418,29 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     .filter(Boolean)
     .map((part) => `${part}.`)
     .join(' ');
-  // Last user selection or keyboard zoom change, announced until keyboard inspection takes over the live region.
+  // Last user selection change, announced until keyboard inspection takes over the live region.
   const [selectionNote, setSelectionNote] = useState('');
   const select = (next: ChartRange | null) => {
     setSelection(next);
     setSelectionNote(next === null ? t('chart.selectionCleared') : selectedText(next));
+    setZoomNote('');
   };
+  // Hard rule 10: a keyboard zoom says what the plot shows now. Written when the rendered window actually changes
+  // (a controlled `viewport` may keep or adjust it), so a no-op zoom is silent; any other window change (wheel,
+  // pan, Reset zoom, zoomRange, new data) clears it, so the same text later is heard again.
+  const [zoomNote, setZoomNote] = useState('');
+  const [keyZoomFrom, setKeyZoomFrom] = useState<string | null>(null);
+  const windowKey = `${zoomFrom}|${zoomTo}|${n}|${vp ? `${vp.from}|${vp.to}` : ''}`;
+  const [noteWindowKey, setNoteWindowKey] = useState(windowKey);
+  if (noteWindowKey !== windowKey || keyZoomFrom !== null) {
+    setNoteWindowKey(windowKey);
+    setKeyZoomFrom(null);
+    const shown = visibleIndexRange(vp, n);
+    const changed = noteWindowKey !== windowKey;
+    if (keyZoomFrom !== null && keyZoomFrom !== windowKey && n > 0)
+      setZoomNote(zoomedText(categories[shown.from], categories[shown.to]));
+    else if (changed) setZoomNote('');
+  }
 
   const [rawHidden, setHidden] = useControllableState<string[]>({
     value: hiddenSeries,
@@ -552,10 +569,11 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             )
           : 0.5;
       const next = zoomViewport(vp, e.key === '-' ? 1 / KEY_ZOOM : KEY_ZOOM, at, n);
-      if (!sameViewport(next, vp)) changeViewport(next, true);
-      // Hard rule 10: a key press changed what the plot shows; say what it shows now.
-      const shown = visibleIndexRange(next, n);
-      if (n > 0) setSelectionNote(zoomedText(categories[shown.from], categories[shown.to]));
+      if (!sameViewport(next, vp)) {
+        changeViewport(next, true);
+        setSelectionNote('');
+        setKeyZoomFrom(windowKey);
+      }
       return;
     }
     if (
@@ -616,6 +634,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       select(rangeAt(anchor.current, next));
     } else {
       setSelectionNote('');
+      setZoomNote('');
     }
     // Pan any window (app-set too) so keyboard inspection never lands off-screen.
     if (next !== null) {
@@ -824,13 +843,15 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const detailLines = current === null ? [] : (details?.(originalIndex(current)) ?? []);
   const liveText = selectionNote
     ? selectionNote
-    : activeSource === 'keyboard' && current !== null
-      ? `${categories[current]}: ${visible
-          .map((s, i) => `${columnHeader(s)} ${rows[i].value}`)
-          .join(
-            ', ',
-          )}${notes.length ? `. ${notes.join(', ')}` : ''}${detailLines.length ? `. ${detailLines.join(', ')}` : ''}`
-      : '';
+    : zoomNote
+      ? zoomNote
+      : activeSource === 'keyboard' && current !== null
+        ? `${categories[current]}: ${visible
+            .map((s, i) => `${columnHeader(s)} ${rows[i].value}`)
+            .join(
+              ', ',
+            )}${notes.length ? `. ${notes.join(', ')}` : ''}${detailLines.length ? `. ${detailLines.join(', ')}` : ''}`
+        : '';
   const known = hidden.filter((k) => resolved.series.some((s) => s.key === k));
   const visiblePrimaries = resolved.series.filter(
     (s) => s.comparisonOf === undefined && !hidden.includes(s.key),

@@ -1,6 +1,6 @@
 import { scaleLinear } from 'd3-scale';
 import { stack, stackOffsetDiverging, stackOffsetNone, type Series } from 'd3-shape';
-import { clampViewport, visibleIndexRange, type ChartViewport } from './chartViewport';
+import { clampViewport, EPS, visibleIndexRange, type ChartViewport } from './chartViewport';
 
 /** Chart form. `area` is always stacked. */
 export type ChartType = 'line' | 'bar' | 'stacked-bar' | 'area';
@@ -902,8 +902,9 @@ export function categoryIndexAt(layout: ChartLayout, x: number): number {
   if (n === 0) return 0;
   const { plot, step } = layout;
   const at = (px: number) => (px - (layout.categoryX[0] - step / 2)) / step;
-  // Band edges: the right edge belongs to the band left of it.
-  const lo = Math.max(0, Math.floor(at(plot.x)));
-  const hi = Math.min(n - 1, Math.ceil(at(plot.x + plot.width)) - 1);
+  // Band edges: the right edge belongs to the band left of it. EPS as in `visibleIndexRange`, so a window edge on a
+  // band edge never picks the off-screen neighbour through float error.
+  const lo = Math.max(0, Math.floor(at(plot.x) + EPS));
+  const hi = Math.min(n - 1, Math.ceil(at(plot.x + plot.width) - EPS) - 1);
   return Math.max(lo, Math.min(hi, Math.floor(at(x))));
 }
