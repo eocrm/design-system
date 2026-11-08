@@ -144,6 +144,7 @@ const CLUSTERS = {
   Rail: 'Navigation',
   TableOfContents: 'Navigation',
   Tabs: 'Navigation',
+  TabNav: 'Navigation',
   TopBar: 'Navigation',
 
   // Overlays

@@ -227,6 +227,9 @@ export { TableOfContents } from './components/TableOfContents';
 export type { TableOfContentsItem, TableOfContentsProps } from './components/TableOfContents';
 
 export { Tabs } from './components/Tabs';
+
+export { TabNav } from './components/TabNav';
+export type { TabNavProps, TabNavLinkProps } from './components/TabNav';
 export type {
   TabsProps,
   TabItem,

@@ -650,6 +650,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Tabs'],
   },
   {
+    to: '/components/tab-nav',
+    name: 'TabNav',
+    description:
+      'Tab-styled page sub-navigation: a nav of links with aria-current and the same sliding underline as Tabs.',
+    preview: SCHEMATICS['TabNav'],
+  },
+  {
     to: '/components/text',
     name: 'Text',
     description:

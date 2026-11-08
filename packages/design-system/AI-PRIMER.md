@@ -130,6 +130,7 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`.
 - `Palette` — categorical color set
 - `FilterChip` — dismissible "active filter" pill
 - `Tabs` — tab strip (horizontal or vertical)
+- `TabNav` — tab-styled page sub-navigation (links, `aria-current`)
 - `Accordion` — vertically-stacked collapsible panels
 - `Breadcrumb` — navigation trail
 - `Rail` — collapsible left-side navigation

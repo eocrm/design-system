@@ -120,6 +120,7 @@ export type ComponentName =
   | 'Table'
   | 'TableOfContents'
   | 'Tabs'
+  | 'TabNav'
   | 'Text'
   | 'Textarea'
   | 'Thread'

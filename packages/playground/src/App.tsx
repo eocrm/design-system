@@ -98,6 +98,7 @@ import { BrandIconDemo } from './pages/components/BrandIconDemo';
 import { LogoDemo } from './pages/components/LogoDemo';
 import { TableOfContentsDemo } from './pages/components/TableOfContentsDemo';
 import { TabsDemo } from './pages/components/TabsDemo';
+import { TabNavDemo } from './pages/components/TabNavDemo';
 import { DropdownMenuDemo } from './pages/components/DropdownMenuDemo';
 import { TooltipDemo } from './pages/components/TooltipDemo';
 import { ModalDemo } from './pages/components/ModalDemo';
@@ -255,6 +256,7 @@ export default function App() {
             <Route path="/components/logo" element={<LogoDemo />} />
             <Route path="/components/table-of-contents" element={<TableOfContentsDemo />} />
             <Route path="/components/tabs" element={<TabsDemo />} />
+            <Route path="/components/tab-nav" element={<TabNavDemo />} />
             <Route path="/components/dropdown-menu" element={<DropdownMenuDemo />} />
             <Route path="/components/tooltip" element={<TooltipDemo />} />
             <Route path="/components/modal" element={<ModalDemo />} />

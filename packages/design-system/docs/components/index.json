@@ -585,6 +585,11 @@
     "cluster": "Forms"
   },
   {
+    "name": "TabNav",
+    "summary": "tab-styled page sub-navigation",
+    "cluster": "Navigation"
+  },
+  {
     "name": "Table",
     "summary": "tabular data primitive",
     "cluster": "Display"

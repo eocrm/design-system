@@ -166,6 +166,7 @@ const CLUSTERS: Record<string, string> = {
   Rail: 'Navigation',
   TableOfContents: 'Navigation',
   Tabs: 'Navigation',
+  TabNav: 'Navigation',
   TopBar: 'Navigation',
 
   // Overlays
