@@ -20,7 +20,7 @@ export type DateTileSize = 'sm' | 'md' | 'lg';
 export type DateTileSurface = 'filled' | 'plain';
 
 export interface DateTileProps extends Omit<HTMLAttributes<HTMLTimeElement>, 'color' | 'children'> {
-  /** The date: a `Date`/timestamp, or a `YYYY-MM-DD` day string (no time zone shift). */
+  /** The date: a `Date`, a `'YYYY-MM-DD'` calendar day (no time zone shift), or any other string parsed as an instant (e.g. ISO datetime). */
   date: DateTileInput;
   /** Optional range end; an end not after `date` is ignored. */
   end?: DateTileInput;
@@ -30,13 +30,13 @@ export interface DateTileProps extends Omit<HTMLAttributes<HTMLTimeElement>, 'co
   size?: DateTileSize;
   /** `'filled'` (**default**) or `'plain'`. */
   surface?: DateTileSurface;
-  /** Bottom line: `'weekday'` (**default**), `'time'` or `'weekday-time'`. Time needs a `Date`/timestamp. */
+  /** Bottom line: `'weekday'` (**default**), `'time'` or `'weekday-time'`. Time needs an instant (`Date` or non-day string). */
   show?: DateTileShow;
   /** Highlight today/ongoing, mute the past, and show Today/Tomorrow/Yesterday words. Default `true`. */
   relative?: boolean;
   /** The reference "now" for `relative`. Defaults to the current time at render. */
   now?: Date;
-  /** IANA time zone used to resolve timestamps to a day and time. Defaults to the runtime zone. */
+  /** IANA time zone used to resolve instants to a day and time. Defaults to the runtime zone. */
   timeZone?: string;
   /** Palette color of the month band — `layout="page"` only, ignored for stacked. */
   color?: PaletteColor;

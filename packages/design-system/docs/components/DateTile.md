@@ -14,26 +14,26 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `date` | `DateTileInput` | yes | The date: a `Date`/timestamp, or a `YYYY-MM-DD` day string (no time zone shift). |
+| `date` | `DateTileInput` | yes | The date: a `Date`, a `'YYYY-MM-DD'` calendar day (no time zone shift), or any other string parsed as an instant (e.g. ISO datetime). |
 | `end` | `DateTileInput` | no | Optional range end; an end not after `date` is ignored. |
 | `layout` | `'stacked' \| 'page'` | no | `'stacked'` (**default**) or `'page'`. |
 | `size` | `'sm' \| 'md' \| 'lg'` | no | `'sm'` / `'md'` (**default**) / `'lg'`. `'sm'` has no bottom line. |
 | `surface` | `'filled' \| 'plain'` | no | `'filled'` (**default**) or `'plain'`. |
-| `show` | `'weekday' \| 'time' \| 'weekday-time'` | no | Bottom line: `'weekday'` (**default**), `'time'` or `'weekday-time'`. Time needs a `Date`/timestamp. |
+| `show` | `'weekday' \| 'time' \| 'weekday-time'` | no | Bottom line: `'weekday'` (**default**), `'time'` or `'weekday-time'`. Time needs an instant (`Date` or non-day string). |
 | `relative` | `boolean` | no | Highlight today/ongoing, mute the past, and show Today/Tomorrow/Yesterday words. Default `true`. |
 | `now` | `Date` | no | The reference "now" for `relative`. Defaults to the current time at render. |
-| `timeZone` | `string` | no | IANA time zone used to resolve timestamps to a day and time. Defaults to the runtime zone. |
+| `timeZone` | `string` | no | IANA time zone used to resolve instants to a day and time. Defaults to the runtime zone. |
 | `color` | `PaletteColor` | no | Palette color of the month band — `layout="page"` only, ignored for stacked. |
 | …native | | | plus native `<Time>` attributes |
 
 <!-- props:end -->
 
 - A compact, non-interactive calendar tile: month, day and a bottom line (weekday, time, or a relative word). Renders a `<time>` with a machine-readable `dateTime`.
-- Input is a `Date`/timestamp or a `YYYY-MM-DD` day string. A day string never shifts with time zones; a timestamp is resolved to a day (and time) in `timeZone` (default: the runtime zone).
-- Relative states (`relative`, default `true`): today and ongoing ranges get the highlighted outline, the past is muted, and single days show Today / Tomorrow / Yesterday instead of the weekday. Ranges keep the weekday span (`Fri–Sun`), with "Ongoing" shown only in the accessible name's word. Pass `relative={false}` for static archives where nothing should highlight or mute.
+- `date`/`end` take a `Date` or a string. A `'YYYY-MM-DD'` string is a calendar day and never shifts with time zones; any other string is parsed as an instant (e.g. `'2026-11-12T14:30:00Z'`), as is a `Date`, and resolved to a day (and time) in `timeZone` (default: the runtime zone). Numbers are not accepted.
+- Relative states (`relative`, default `true`): today and ongoing ranges are highlighted, the past is muted, and single days show Today / Tomorrow / Yesterday instead of the weekday. Highlight per look: stacked + filled gets an accent fill with inverse text; `surface="plain"` gets accent text colour and no box; `layout="page"` keeps its band colour and gets an accent outline ring. Pass `relative={false}` for static archives where nothing should highlight or mute.
 - `now` sets the reference time for `relative` (tests, screenshots, server rendering); defaults to the current time at render.
-- A range (`end` after `date`) shows `12–14` and a merged month; an `end` not after `date` is ignored. The year appears only when it differs from the current year.
-- `show="time"` / `"weekday-time"` needs a `Date`/timestamp; with a day string it falls back to the weekday. `size="sm"` (~40px) hides the bottom line entirely.
+- A range (`end` after `date`) shows `12–14` and a merged month; an `end` not after `date` is ignored. The bottom line always keeps the weekday span (`Fri–Sun`); "Ongoing" (range containing today) and "Tomorrow" (range starting tomorrow) appear only in the accessible name. The year appears only when it differs from the current year.
+- `show="time"` / `"weekday-time"` needs an instant (`Date` or non-day string); with a `'YYYY-MM-DD'` day string it falls back to what `show="weekday"` shows: the relative word (Today / Tomorrow / Yesterday) when `relative` is on, else the weekday. `size="sm"` (~40px) hides the bottom line entirely.
 - Invalid input (unparseable or impossible dates like `2026-02-30`) throws.
 - A11y: the visual tile is `aria-hidden`; a visually hidden full date (e.g. "Today, Thursday, 12 November 2026, 14:30") is the accessible name.
 - ❌ A clickable date picker — use `DatePicker` / `DateStrip`.
