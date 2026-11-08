@@ -45,7 +45,11 @@ function SaveWithSuccessFlash() {
   );
 }
 
-const PLACES = ['Seeded Park · Park', 'Riverside Café · Food', 'Central Library · Study'];
+const PLACES = [
+  'Seeded Park · Park',
+  'Riverside Café on the long embankment walk · Food and drinks',
+  'Central Library · Study',
+];
 
 function SelectableRows() {
   const [picked, setPicked] = useState(PLACES[0]);
@@ -231,12 +235,16 @@ export function AppliedFilters() {
       </Example>
 
       <Example
-        title="Selectable rows (fullWidth + align)"
-        description="fullWidth fills the container; align start puts the label at the inline start, so rows of different-length names line up and the whole row is the hit area; a long label wraps. Pick-one rows mark the chosen one with aria-current, not aria-pressed (clicking it again doesn't unpick it). Content stays centred without align (a full-width submit). Both are ignored with iconOnly."
+        title="Master–detail rows (fullWidth + align)"
+        description="fullWidth fills the container; align start puts the label at the inline start, so rows of different-length names line up and the whole row is the hit area; a long label wraps. Here the current row (whose details would show alongside) carries aria-current; to choose a value, use RadioGroup. Content stays centred without align (a full-width submit). Both are ignored with iconOnly."
         code={`import { useState } from 'react';
 import { Button, List } from '@eocrm/design-system';
 
-const PLACES = ['Seeded Park · Park', 'Riverside Café · Food', 'Central Library · Study'];
+const PLACES = [
+  'Seeded Park · Park',
+  'Riverside Café on the long embankment walk · Food and drinks',
+  'Central Library · Study',
+];
 
 export function SelectableRows() {
   const [picked, setPicked] = useState(PLACES[0]);

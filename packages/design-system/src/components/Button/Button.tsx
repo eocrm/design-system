@@ -101,8 +101,9 @@ interface ButtonOwnProps {
    * Where the content sits when the button is wider than it: `center`
    * (default) or `start` (the inline start — left in LTR, right in RTL).
    * Pair `align="start"` with `fullWidth` and `variant="ghost"` + `selected`
-   * (+ `aria-current="true"` on the picked row) for a pick-one list row whose
-   * labels line up. Ignored with `iconOnly`.
+   * (+ `aria-current="true"` on the current row) for a master–detail or
+   * navigation list whose labels line up; to choose a value use `RadioGroup`.
+   * Ignored with `iconOnly`.
    */
   align?: 'start' | 'center';
 }

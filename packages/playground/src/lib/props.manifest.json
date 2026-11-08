@@ -452,7 +452,7 @@
           "type": "\"start\" | \"center\"",
           "required": false,
           "default": "center",
-          "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\n(+ `aria-current=\"true\"` on the picked row) for a pick-one list row whose\nlabels line up. Ignored with `iconOnly`."
+          "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\n(+ `aria-current=\"true\"` on the current row) for a master–detail or\nnavigation list whose labels line up; to choose a value use `RadioGroup`.\nIgnored with `iconOnly`."
         },
         {
           "name": "as",
@@ -6517,7 +6517,7 @@
           "type": "\"start\" | \"center\"",
           "required": false,
           "default": "center",
-          "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\n(+ `aria-current=\"true\"` on the picked row) for a pick-one list row whose\nlabels line up. Ignored with `iconOnly`."
+          "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\n(+ `aria-current=\"true\"` on the current row) for a master–detail or\nnavigation list whose labels line up; to choose a value use `RadioGroup`.\nIgnored with `iconOnly`."
         },
         {
           "name": "as",

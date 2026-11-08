@@ -42,8 +42,10 @@
 .xs {
   @include touch-hit-area;
 
-  height: var(--button-height-xs);
-  min-height: var(--button-height-xs);
+  --button-height-current: var(--button-height-xs);
+
+  height: var(--button-height-current);
+  min-height: var(--button-height-current);
   padding: 0 var(--button-padding-x-xs);
   font-size: var(--button-font-size-xs);
   gap: var(--button-gap-xs);
@@ -52,22 +54,28 @@
 .sm {
   @include touch-hit-area;
 
-  height: var(--button-height-sm);
-  min-height: var(--button-height-sm);
+  --button-height-current: var(--button-height-sm);
+
+  height: var(--button-height-current);
+  min-height: var(--button-height-current);
   padding: 0 var(--button-padding-x-sm);
   font-size: var(--button-font-size-sm);
 }
 
 .md {
-  height: var(--button-height-md);
-  min-height: var(--button-height-md);
+  --button-height-current: var(--button-height-md);
+
+  height: var(--button-height-current);
+  min-height: var(--button-height-current);
   padding: 0 var(--button-padding-x-md);
   font-size: var(--button-font-size-md);
 }
 
 .lg {
-  height: var(--button-height-lg);
-  min-height: var(--button-height-lg);
+  --button-height-current: var(--button-height-lg);
+
+  height: var(--button-height-current);
+  min-height: var(--button-height-current);
   padding: 0 var(--button-padding-x-lg);
   font-size: var(--button-font-size-lg);
 }
@@ -81,11 +89,13 @@
 // Layout opt-ins (DS-38): 100% of the container is the intrinsic-width
 // exception Rule 4 allows; the parent still owns placement. A full-width
 // label wraps instead of spilling past the border: the size's height becomes
-// a minimum (set on each size class above) and the box grows per line.
+// a minimum (set on each size class above) and the box grows per line. The
+// block padding is what centres ONE line in that height, so a one-line
+// fullWidth button keeps the size's exact height at every size (xs included).
 .fullWidth {
   inline-size: 100%;
   height: auto;
-  padding-block: var(--button-padding-y-wrap);
+  padding-block: max(0px, calc((var(--button-height-current) - 1lh) / 2 - var(--border-width)));
   white-space: normal;
   overflow-wrap: anywhere;
 }
