@@ -95,6 +95,7 @@
 .fullWidth {
   inline-size: 100%;
   height: auto;
+  line-height: var(--line-height-normal); // pinned so 1lh below is deterministic, reset or not
   padding-block: max(0px, calc((var(--button-height-current) - 1lh) / 2 - var(--border-width)));
   white-space: normal;
   overflow-wrap: anywhere;

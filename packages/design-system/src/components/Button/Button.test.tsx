@@ -74,6 +74,21 @@ describe('Button', () => {
     }
   });
 
+  it('fullWidth centres one line in the size height (DS-38): padding from --button-height-current and 1lh', () => {
+    const scss = readFileSync(resolve(__dirname, 'Button.module.scss'), 'utf8');
+    const rule = scss.match(/\.fullWidth\s*\{([^}]*)\}/)![1];
+    expect(rule).toMatch(
+      /padding-block:\s*max\(0px,\s*calc\(\(var\(--button-height-current\)\s*-\s*1lh\)/,
+    );
+    expect(rule).toMatch(/line-height:\s*var\(--line-height-normal\)/);
+    for (const size of ['xs', 'sm', 'md', 'lg'])
+      expect(scss).toMatch(
+        new RegExp(
+          `\\.${size}\\s*\\{[^}]*--button-height-current:\\s*var\\(--button-height-${size}\\)`,
+        ),
+      );
+  });
+
   it('applies selected paint only to secondary and ghost variants', () => {
     render(
       <>

@@ -51,8 +51,8 @@ const PLACES = [
   'Central Library · Study',
 ];
 
-function SelectableRows() {
-  const [picked, setPicked] = useState(PLACES[0]);
+function MasterDetailRows() {
+  const [current, setCurrent] = useState(PLACES[0]);
   return (
     <List variant="plain" aria-label="Places">
       {PLACES.map((place) => (
@@ -61,9 +61,9 @@ function SelectableRows() {
             variant="ghost"
             fullWidth
             align="start"
-            selected={picked === place}
-            aria-current={picked === place ? 'true' : undefined}
-            onClick={() => setPicked(place)}
+            selected={current === place}
+            aria-current={current === place ? 'true' : undefined}
+            onClick={() => setCurrent(place)}
           >
             {place}
           </Button>
@@ -246,8 +246,8 @@ const PLACES = [
   'Central Library · Study',
 ];
 
-export function SelectableRows() {
-  const [picked, setPicked] = useState(PLACES[0]);
+export function MasterDetailRows() {
+  const [current, setCurrent] = useState(PLACES[0]);
   return (
     <List variant="plain" aria-label="Places">
       {PLACES.map((place) => (
@@ -256,9 +256,9 @@ export function SelectableRows() {
             variant="ghost"
             fullWidth
             align="start"
-            selected={picked === place}
-            aria-current={picked === place ? 'true' : undefined}
-            onClick={() => setPicked(place)}
+            selected={current === place}
+            aria-current={current === place ? 'true' : undefined}
+            onClick={() => setCurrent(place)}
           >
             {place}
           </Button>
@@ -268,7 +268,7 @@ export function SelectableRows() {
   );
 }`}
       >
-        <SelectableRows />
+        <MasterDetailRows />
       </Example>
 
       <Example

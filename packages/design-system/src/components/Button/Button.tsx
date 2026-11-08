@@ -93,7 +93,7 @@ interface ButtonOwnProps {
    * Fill the container's inline size (`inline-size: 100%`). Content stays
    * centred unless `align="start"`. A label too long for the width wraps and
    * the button grows (the size's height becomes a minimum). For a full-width
-   * submit on a narrow form, or (with `align="start"`) a selectable list row.
+   * submit on a narrow form, or (with `align="start"`) a master–detail / navigation list row.
    * Ignored with `iconOnly`. Defaults to `false` (content width).
    */
   fullWidth?: boolean;
