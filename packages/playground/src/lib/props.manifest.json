@@ -350,7 +350,7 @@
       "props": [
         {
           "name": "name",
-          "type": "\"google\" | \"yandex\"",
+          "type": "\"google\" | \"yandex\" | \"github\"",
           "required": true,
           "default": "",
           "description": "Which brand mark to render."
@@ -439,6 +439,20 @@
           "required": false,
           "default": "",
           "description": "Paint the button with a palette color's soft pair\n(`--color-palette-<color>-bg` fill, `-fg` text) — the same pair a\npalette-colored `<PillMenu>` or `<Badge color>` uses, in both themes.\nFor a quick action that moves a record to a status and must look like\nthat status's pill (amber \"No show\" beside an amber status PillMenu).\nNot a decorative stand-in for `danger`/`success`: palette colors carry\nno meaning. When set it wins over `variant` and `selected` (like\n`<Badge color>` over `tone`). Hover/pressed darken via\n`filter: brightness()`. Defaults to `undefined` (use `variant`)."
+        },
+        {
+          "name": "fullWidth",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Fill the container's inline size (`inline-size: 100%`). Content stays\ncentred unless `align=\"start\"`. A label too long for the width wraps and\nthe button grows (the size's height becomes a minimum). For a full-width\nsubmit on a narrow form, or (with `align=\"start\"`) a master–detail / navigation list row.\nIgnored with `iconOnly`. Defaults to `false` (content width)."
+        },
+        {
+          "name": "align",
+          "type": "\"start\" | \"center\"",
+          "required": false,
+          "default": "center",
+          "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\n(+ `aria-current=\"true\"` on the current row) for a master–detail or\nnavigation list whose labels line up; to choose a value use `RadioGroup`.\nIgnored with `iconOnly`."
         },
         {
           "name": "as",
@@ -6465,10 +6479,10 @@
       "props": [
         {
           "name": "provider",
-          "type": "\"google\" | \"yandex\"",
+          "type": "\"google\" | \"yandex\" | \"github\"",
           "required": true,
           "default": "",
-          "description": "Which provider's brand mark to show. Tied to `<BrandIcon>`'s set, so it\ngrows as BrandIcon does (today: `'google'` / `'yandex'`)."
+          "description": "Which provider's brand mark to show. Tied to `<BrandIcon>`'s set, so it\ngrows as BrandIcon does (today: `'google'` / `'yandex'` / `'github'`)."
         },
         {
           "name": "label",
@@ -6490,6 +6504,20 @@
           "required": false,
           "default": "md",
           "description": "Control height (matches the shared `--size-*` scale used by Input and Avatar).\n- `xs` (20px) — icon-only or very dense inline actions (row controls,\n  chip-adjacent buttons). Pass `aria-label` when icon-only. Below WCAG\n  2.5.5 Level AAA touch-target guidance; reserve for desktop-first surfaces.\n- `sm` (24px) — dense toolbars, tables, inline actions.\n- `md` (32px, default) — most contexts.\n- `lg` (40px) — marketing-style empty states or emphasized primary actions."
+        },
+        {
+          "name": "fullWidth",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Fill the container's inline size (`inline-size: 100%`). Content stays\ncentred unless `align=\"start\"`. A label too long for the width wraps and\nthe button grows (the size's height becomes a minimum). For a full-width\nsubmit on a narrow form, or (with `align=\"start\"`) a master–detail / navigation list row.\nIgnored with `iconOnly`. Defaults to `false` (content width)."
+        },
+        {
+          "name": "align",
+          "type": "\"start\" | \"center\"",
+          "required": false,
+          "default": "center",
+          "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\n(+ `aria-current=\"true\"` on the current row) for a master–detail or\nnavigation list whose labels line up; to choose a value use `RadioGroup`.\nIgnored with `iconOnly`."
         },
         {
           "name": "as",

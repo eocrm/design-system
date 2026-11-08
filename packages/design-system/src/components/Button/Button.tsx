@@ -89,6 +89,23 @@ interface ButtonOwnProps {
    * `filter: brightness()`. Defaults to `undefined` (use `variant`).
    */
   color?: PaletteColor;
+  /**
+   * Fill the container's inline size (`inline-size: 100%`). Content stays
+   * centred unless `align="start"`. A label too long for the width wraps and
+   * the button grows (the size's height becomes a minimum). For a full-width
+   * submit on a narrow form, or (with `align="start"`) a master–detail / navigation list row.
+   * Ignored with `iconOnly`. Defaults to `false` (content width).
+   */
+  fullWidth?: boolean;
+  /**
+   * Where the content sits when the button is wider than it: `center`
+   * (default) or `start` (the inline start — left in LTR, right in RTL).
+   * Pair `align="start"` with `fullWidth` and `variant="ghost"` + `selected`
+   * (+ `aria-current="true"` on the current row) for a master–detail or
+   * navigation list whose labels line up; to choose a value use `RadioGroup`.
+   * Ignored with `iconOnly`.
+   */
+  align?: 'start' | 'center';
 }
 
 /**
@@ -160,6 +177,8 @@ export const Button = forwardRef(function Button<C extends ElementType = 'button
     iconOnly = false,
     selected,
     color,
+    fullWidth = false,
+    align = 'center',
     className,
     style,
     ...props
@@ -187,6 +206,8 @@ export const Button = forwardRef(function Button<C extends ElementType = 'button
         styles[size],
         iconOnly && styles.iconOnly,
         paintsSelected && styles.selected,
+        !iconOnly && fullWidth && styles.fullWidth,
+        !iconOnly && align === 'start' && styles.alignStart,
         className,
       )}
       style={

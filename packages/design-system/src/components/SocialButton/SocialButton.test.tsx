@@ -42,6 +42,8 @@ describe('SocialButton', () => {
     expect(container.querySelector('svg')).toBeInTheDocument();
     rerender(<SocialButton provider="yandex" label="y" />);
     expect(container.querySelector('svg')).toBeInTheDocument();
+    rerender(<SocialButton provider="github" label="Sign in with GitHub" />);
+    expect(container.querySelector('svg path')).toHaveAttribute('fill', 'currentColor');
   });
 
   it('scales the brand mark with the button size (ICON_SIZE)', () => {

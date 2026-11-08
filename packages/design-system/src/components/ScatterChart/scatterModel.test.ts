@@ -140,9 +140,9 @@ describe('size and paint order', () => {
       ]),
     });
     const r = (i: number) => l.dots.find((d) => d.index === i)!.r;
-    expect(r(0)).toBeCloseTo(3);
     expect(r(2)).toBeCloseTo(12);
-    expect(r(1)).toBeCloseTo(3 + ((Math.sqrt(25) - 1) / 9) * 9);
+    expect(r(1)).toBeCloseTo(12 * Math.sqrt(0.25)); // area ∝ value: a quarter of the area
+    expect(r(0)).toBeCloseTo(3); // 1.2px by area, floored at the min radius
     const plain = computeScatterLayout({ ...base, series: resolve([{ x: 1, y: 1 }]) });
     expect(plain.dots[0].r).toBe(DOT_RADIUS);
   });
@@ -244,7 +244,31 @@ describe('fix round 1', () => {
     const small = l.dots.find((d) => d.r === 3)!;
     expect(small.cx - small.r).toBeGreaterThanOrEqual(l.plot.x);
   });
-  it('uses the midpoint radius for equal or single sizes', () => {
+  it('scales from 0, so near-equal sizes look near-equal (DS-41)', () => {
+    const l = computeScatterLayout({
+      ...base,
+      series: resolve([
+        { x: 1, y: 1, size: 20 },
+        { x: 2, y: 2, size: 22 },
+      ]),
+    });
+    const [big, small] = l.dots.map((d) => d.r);
+    expect((small / big) ** 2).toBeCloseTo(20 / 22);
+  });
+  it('floors zero, negative and all-zero sizes at the min radius', () => {
+    const l = computeScatterLayout({
+      ...base,
+      series: resolve([
+        { x: 1, y: 1, size: 0 },
+        { x: 2, y: 2, size: -5 },
+        { x: 3, y: 3, size: 100 },
+      ]),
+    });
+    expect(l.dots.map((d) => d.r)).toEqual([12, 3, 3]);
+    const zeros = computeScatterLayout({ ...base, series: resolve([{ x: 1, y: 1, size: 0 }]) });
+    expect(zeros.dots[0].r).toBe(3);
+  });
+  it('gives equal or single sizes the max radius', () => {
     const eq = computeScatterLayout({
       ...base,
       series: resolve([
@@ -252,20 +276,20 @@ describe('fix round 1', () => {
         { x: 2, y: 2, size: 5 },
       ]),
     });
-    expect(eq.dots.map((d) => d.r)).toEqual([7.5, 7.5]);
+    expect(eq.dots.map((d) => d.r)).toEqual([12, 12]);
     const one = computeScatterLayout({ ...base, series: resolve([{ x: 1, y: 1, size: 5 }]) });
-    expect(one.dots[0].r).toBe(7.5);
+    expect(one.dots[0].r).toBe(12);
   });
   it('takes the size domain from sizeDomain so hiding a series keeps radii', () => {
-    const a = resolve([{ x: 1, y: 1, size: 1 }], 'a');
-    const b = resolve([{ x: 2, y: 2, size: 100 }], 'b');
-    expect(scatterSizeDomain([...a, ...b])).toEqual([1, 100]);
+    const a = resolve([{ x: 1, y: 1, size: 100 }], 'a');
+    const b = resolve([{ x: 2, y: 2, size: 25 }], 'b');
+    expect(scatterSizeDomain([...a, ...b])).toEqual([0, 100]);
     const l = computeScatterLayout({
       ...base,
       series: b,
       sizeDomain: scatterSizeDomain([...a, ...b]),
     });
-    expect(l.dots[0].r).toBeCloseTo(12);
+    expect(l.dots[0].r).toBeCloseTo(6); // a quarter of the max area, not the max radius
   });
   it('drops non-finite reference points', () => {
     const l = computeScatterLayout({

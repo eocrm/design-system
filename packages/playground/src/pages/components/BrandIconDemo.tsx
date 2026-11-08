@@ -8,7 +8,7 @@ export function BrandIconDemo() {
     <DemoLayout
       name="BrandIcon"
       componentName="BrandIcon"
-      description="Full-color official brand marks for SSO buttons and brand chrome. Ships google + yandex; colors are brand-mandated (not themeable). For generic UI glyphs use lucide-react."
+      description="Official brand marks for SSO buttons and brand chrome. Ships google + yandex (full colour, brand-mandated, not themeable) and github (monochrome, follows the text colour). For generic UI glyphs use lucide-react."
       files={getComponentFiles('BrandIcon')}
     >
       <Example
@@ -19,7 +19,7 @@ export function BrandIconDemo() {
 export function Demo() {
   return (
     <Cluster gap="lg" align="center">
-      {(['google', 'yandex'] as const).map((name) => (
+      {(['google', 'yandex', 'github'] as const).map((name) => (
         <Stack key={name} gap="xs" align="center">
           <Cluster gap="sm" align="center">
             <BrandIcon name={name} size={16} />
@@ -36,7 +36,7 @@ export function Demo() {
 }`}
       >
         <Cluster gap="lg" align="center">
-          {(['google', 'yandex'] as const).map((name) => (
+          {(['google', 'yandex', 'github'] as const).map((name) => (
             <Stack key={name} gap="xs" align="center">
               <Cluster gap="sm" align="center">
                 <BrandIcon name={name} size={16} />

@@ -3,6 +3,7 @@ import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import {
   Button,
   Cluster,
+  List,
   PALETTE_COLORS,
   PillMenu,
   type PaletteColor,
@@ -41,6 +42,34 @@ function SaveWithSuccessFlash() {
         )}
       </Button>
     </Cluster>
+  );
+}
+
+const PLACES = [
+  'Seeded Park · Park',
+  'Riverside Café on the long embankment walk · Food and drinks',
+  'Central Library · Study',
+];
+
+function MasterDetailRows() {
+  const [current, setCurrent] = useState(PLACES[0]);
+  return (
+    <List variant="plain" aria-label="Places">
+      {PLACES.map((place) => (
+        <List.Item key={place}>
+          <Button
+            variant="ghost"
+            fullWidth
+            align="start"
+            selected={current === place}
+            aria-current={current === place ? 'true' : undefined}
+            onClick={() => setCurrent(place)}
+          >
+            {place}
+          </Button>
+        </List.Item>
+      ))}
+    </List>
   );
 }
 
@@ -203,6 +232,43 @@ export function AppliedFilters() {
 }`}
       >
         <AppliedFilters />
+      </Example>
+
+      <Example
+        title="Master–detail rows (fullWidth + align)"
+        description="fullWidth fills the container; align start puts the label at the inline start, so rows of different-length names line up and the whole row is the hit area; a long label wraps. Here the current row (whose details would show alongside) carries aria-current; to choose a value, use RadioGroup. Content stays centred without align (a full-width submit). Both are ignored with iconOnly."
+        code={`import { useState } from 'react';
+import { Button, List } from '@eocrm/design-system';
+
+const PLACES = [
+  'Seeded Park · Park',
+  'Riverside Café on the long embankment walk · Food and drinks',
+  'Central Library · Study',
+];
+
+export function MasterDetailRows() {
+  const [current, setCurrent] = useState(PLACES[0]);
+  return (
+    <List variant="plain" aria-label="Places">
+      {PLACES.map((place) => (
+        <List.Item key={place}>
+          <Button
+            variant="ghost"
+            fullWidth
+            align="start"
+            selected={current === place}
+            aria-current={current === place ? 'true' : undefined}
+            onClick={() => setCurrent(place)}
+          >
+            {place}
+          </Button>
+        </List.Item>
+      ))}
+    </List>
+  );
+}`}
+      >
+        <MasterDetailRows />
       </Example>
 
       <Example

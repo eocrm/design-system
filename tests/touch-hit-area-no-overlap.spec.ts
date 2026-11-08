@@ -53,10 +53,17 @@ for (const route of ROUTES) {
           const hit = document.elementFromPoint(x, y);
           if (!hit || el.contains(hit)) continue;
           const other = hit.closest(sel);
-          if (other && !other.contains(el)) {
-            out.push(`${label(el)} -> ${label(other)}`);
-            break;
-          }
+          if (!other || other.contains(el)) continue;
+          // Calendar timed events in one slot cascade over each other on purpose
+          // (demo data is relative to today, so this shows some weeks only). Only
+          // a point inside the other event's own box is exempt; a ::before
+          // overhang steal lands outside it and still counts.
+          const cascaded = '[style*="--cal-block-left"]';
+          const or = other.getBoundingClientRect();
+          const insideOther = x >= or.left && x <= or.right && y >= or.top && y <= or.bottom;
+          if (insideOther && el.matches(cascaded) && other.matches(cascaded)) continue;
+          out.push(`${label(el)} -> ${label(other)}`);
+          break;
         }
       }
       return out;

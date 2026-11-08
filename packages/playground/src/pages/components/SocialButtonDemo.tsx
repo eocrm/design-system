@@ -21,6 +21,7 @@ export function Demo() {
     <Stack gap="sm">
       <SocialButton provider="google" label="Continue with Google" />
       <SocialButton provider="yandex" label="Continue with Yandex" />
+      <SocialButton provider="github" label="Continue with GitHub" />
     </Stack>
   );
 }`}
@@ -28,6 +29,7 @@ export function Demo() {
         <Stack gap="sm">
           <SocialButton provider="google" label="Continue with Google" />
           <SocialButton provider="yandex" label="Continue with Yandex" />
+          <SocialButton provider="github" label="Continue with GitHub" />
         </Stack>
       </Example>
 
