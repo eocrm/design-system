@@ -282,6 +282,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
         icon: LayoutDashboard,
         end: false,
       },
+      { to: '/components/date-tile', label: 'DateTile', icon: CalendarDays, end: false },
       { to: '/components/icon-tile', label: 'IconTile', icon: Shapes, end: false },
       { to: '/components/image', label: 'Image', icon: ImageIcon, end: false },
       { to: '/components/media-tile', label: 'MediaTile', icon: GalleryThumbnails, end: false },

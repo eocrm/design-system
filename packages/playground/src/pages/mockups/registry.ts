@@ -32,6 +32,7 @@ export type ComponentName =
   | 'RelativeDateInput'
   | 'DateRangePicker'
   | 'DateStrip'
+  | 'DateTile'
   | 'DefinitionList'
   | 'Divider'
   | 'Dot'

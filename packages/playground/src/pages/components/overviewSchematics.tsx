@@ -409,6 +409,18 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Box>
     </Col>
   ),
+  DateTile: (
+    <Row gap={8}>
+      <Box w={34} h={40} style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: 4 }}>
+        <Bar w={18} />
+        <Outline w={14} h={14} />
+      </Box>
+      <Solid w={34} h={40} style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: 4 }}>
+        <Bar w={18} />
+        <Outline w={14} h={14} />
+      </Solid>
+    </Row>
+  ),
   IconTile: (
     <Row gap={8}>
       <Solid

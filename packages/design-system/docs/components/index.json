@@ -170,6 +170,11 @@
     "cluster": "Forms"
   },
   {
+    "name": "DateTile",
+    "summary": "calendar-style date display",
+    "cluster": "Display"
+  },
+  {
     "name": "DefinitionList",
     "summary": "semantic key/value pairs (dl / dt / dd)",
     "cluster": "Display"

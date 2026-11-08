@@ -155,6 +155,7 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`.
 - `CatalogPicker` — searchable, category-filtered card picker for choosing one catalog item (Add widget)
 - `EmptyState` — "nothing here" container
 - `ErrorState` — page-level status / result screen
+- `DateTile` — calendar-style date display
 - `IconTile` — palette-colored icon frame
 - `Progress` — linear progress bar; progress hard rule in its doc
 - `CircularProgress` — circular progress / spinner (progress hard rule: `Progress` doc)

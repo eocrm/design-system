@@ -21,6 +21,12 @@ export const en: Messages = {
     cancel: 'Cancel',
     confirm: 'Confirm',
   },
+  dateTile: {
+    today: 'Today',
+    tomorrow: 'Tomorrow',
+    yesterday: 'Yesterday',
+    ongoing: 'Ongoing',
+  },
   mediaTile: {
     selectNamed: ({ name }) => `Select ${name as string}`,
     select: 'Select',

@@ -22,6 +22,12 @@ export const ru: Messages = {
     cancel: 'Отмена',
     confirm: 'Подтвердить',
   },
+  dateTile: {
+    today: 'Сегодня',
+    tomorrow: 'Завтра',
+    yesterday: 'Вчера',
+    ongoing: 'Идёт',
+  },
   mediaTile: {
     selectNamed: ({ name }) => `Выбрать ${name as string}`,
     select: 'Выбрать',

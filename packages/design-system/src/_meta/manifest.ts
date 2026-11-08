@@ -136,6 +136,7 @@ const CLUSTERS: Record<string, string> = {
   DataTable: 'Display',
   EmptyState: 'Display',
   ErrorState: 'Display',
+  DateTile: 'Display',
   IconTile: 'Display',
   FilterChip: 'Display',
   FlowCanvas: 'Display',

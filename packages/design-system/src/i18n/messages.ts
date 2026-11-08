@@ -48,6 +48,16 @@ export interface Messages {
     /** Label on the primary "Confirm" button inside the confirmation popover. */
     confirm: string;
   };
+  dateTile: {
+    /** DateTile relative word (also in its accessible name) for the current day. */
+    today: string;
+    /** DateTile relative word for the next day. */
+    tomorrow: string;
+    /** DateTile relative word for the previous day. */
+    yesterday: string;
+    /** DateTile word for a range that contains today. */
+    ongoing: string;
+  };
   mediaTile: {
     /**
      * Function leaf — the selection checkbox's accessible-name fallback when

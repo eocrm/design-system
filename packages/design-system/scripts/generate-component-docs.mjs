@@ -30,6 +30,7 @@ const TAGS = {
   FieldSet: 'fieldset',
   HR: 'hr',
   TableCaption: 'caption',
+  Time: 'time',
   TableCell: 'td',
   TableRow: 'tr',
   TableSection: 'tbody',

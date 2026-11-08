@@ -1,0 +1,126 @@
+@use './DateTile.tokens';
+
+.root {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-inline-size: var(--date-tile-size);
+  min-block-size: var(--date-tile-size);
+  padding-inline: var(--space-1);
+  line-height: var(--line-height-none);
+  color: var(--date-tile-fg);
+  border-radius: var(--date-tile-radius);
+  overflow: hidden;
+}
+
+.filled {
+  background: var(--date-tile-bg);
+  border: var(--border-width) solid var(--date-tile-border);
+}
+
+.plain {
+  background: transparent;
+}
+
+.size-sm {
+  --date-tile-size: var(--date-tile-size-sm);
+  --date-tile-month: var(--date-tile-month-sm);
+  --date-tile-day: var(--date-tile-day-sm);
+}
+
+.size-md {
+  --date-tile-size: var(--date-tile-size-md);
+  --date-tile-month: var(--date-tile-month-md);
+  --date-tile-day: var(--date-tile-day-md);
+  --date-tile-bottom: var(--date-tile-bottom-md);
+}
+
+.size-lg {
+  --date-tile-size: var(--date-tile-size-lg);
+  --date-tile-month: var(--date-tile-month-lg);
+  --date-tile-day: var(--date-tile-day-lg);
+  --date-tile-bottom: var(--date-tile-bottom-lg);
+}
+
+.month {
+  line-height: var(--line-height-tight);
+  font-size: var(--date-tile-month);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+  color: var(--date-tile-fg-secondary);
+  white-space: nowrap;
+}
+
+.day {
+  line-height: var(--line-height-tight);
+  font-size: var(--date-tile-day);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+
+.bottom {
+  line-height: var(--line-height-tight);
+  font-size: var(--date-tile-bottom);
+  color: var(--date-tile-fg-secondary);
+  white-space: nowrap;
+}
+
+// Page layout: coloured band on top carrying the month.
+.page {
+  align-items: stretch;
+  padding-inline: 0;
+  justify-content: flex-start;
+  text-align: center;
+
+  .month {
+    text-align: center;
+    padding-block: var(--space-05);
+    background: var(--date-tile-band-bg);
+    color: var(--date-tile-band-fg);
+  }
+
+  .day,
+  .bottom {
+    padding-inline: var(--space-1);
+  }
+}
+
+.today.stacked.filled {
+  background: var(--date-tile-today-bg);
+  border-color: var(--date-tile-today-bg);
+  color: var(--date-tile-today-fg);
+
+  .month,
+  .bottom {
+    color: var(--date-tile-today-fg);
+  }
+}
+
+.today.stacked.plain {
+  color: var(--date-tile-today-text);
+
+  .month,
+  .bottom {
+    color: inherit;
+  }
+}
+
+.page.today {
+  outline: var(--date-tile-today-ring-width) solid var(--date-tile-today-ring);
+  outline-offset: calc(var(--date-tile-today-ring-width) * -1);
+}
+
+// Muted via colour, not by fading (keeps contrast predictable). The page band
+// keeps its own band colours.
+.past {
+  color: var(--date-tile-past-fg);
+}
+
+.past.stacked .month,
+.past .bottom {
+  color: var(--date-tile-past-fg);
+}
