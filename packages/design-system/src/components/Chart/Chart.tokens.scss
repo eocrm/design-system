@@ -59,6 +59,9 @@
 
   --chart-ring: var(--ring-accent);
 
+  // Gap between a marker icon and the plot top (JS mirror: MARKER_ICON_GAP in chartModel.ts, keep in sync).
+  --chart-marker-icon-gap: var(--space-1);
+
   --chart-legend-gap: var(--space-3);
   --chart-legend-size: var(--font-size-sm);
   --chart-legend-fg: var(--color-fg);
@@ -77,6 +80,7 @@
   // Reference lines (`referenceLines`): neutral ink unless a palette `color` is set.
   --chart-reference-color: var(--color-fg-muted);
   --chart-reference-width: var(--chart-comparison-stroke);
+  --chart-reference-width-strong: var(--border-width-strong);
 
   // Annotations (`annotations`): status ink per tone; warning uses the strong ink (the bare one is < 3:1 on --color-bg, #481).
   --chart-annotation-success: var(--color-success);

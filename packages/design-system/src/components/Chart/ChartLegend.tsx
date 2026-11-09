@@ -17,6 +17,8 @@ export interface ChartLegendItem {
   static?: boolean;
   /** Dash pattern index (`--chart-reference-dash-N`): draws a line swatch (ScatterChart reference lines); omit for the box swatch. */
   dash?: number;
+  /** `'strong'` draws the line swatch at the strong reference width (reference lines with `emphasis: 'strong'`). */
+  emphasis?: 'strong';
 }
 
 const swatchStyle = (slot: number) =>
@@ -76,7 +78,12 @@ export function ChartLegend({
               />
             ) : (
               // A stroked line with the plot line's own dash, so references are told apart without colour.
-              <svg className={styles.swatchLine} data-dash={item.dash} aria-hidden="true">
+              <svg
+                className={styles.swatchLine}
+                data-dash={item.dash}
+                data-emphasis={item.emphasis}
+                aria-hidden="true"
+              >
                 <line x1="0" x2="100%" y1="50%" y2="50%" />
               </svg>
             )}

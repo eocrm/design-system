@@ -89,6 +89,11 @@ export interface ChartReferenceLine {
   label: string;
   /** Palette slot (1–8) the line strokes in. Default: neutral ink. */
   color?: ChartSeriesColor;
+  /**
+   * `'strong'` draws the line at `--chart-reference-width-strong` so one line stands out, e.g. today's pace over the
+   * usual. Default `'default'`.
+   */
+  emphasis?: 'default' | 'strong';
 }
 
 /** Annotation shape: a filled triangle pointing `up` or `down`, or a `dot`. The shape carries the meaning without colour. */
@@ -198,6 +203,7 @@ export interface ReferenceLineGeometry {
   dash: number;
   /** Palette slot 1..8; 0 = neutral ink. */
   slot: number;
+  emphasis?: 'strong';
 }
 
 /** Dash patterns reference lines cycle through (`--chart-reference-dash-0..2`). */
@@ -253,6 +259,10 @@ export function markerGutterRows(markers: readonly ResolvedMarker[]): 0 | 1 | 2 
   if (markers.some((m) => m.icon && topLabel(m))) return 2;
   return markers.some((m) => m.icon || topLabel(m)) ? 1 : 0;
 }
+
+/** Extra gutter height that keeps icons off the plot top: only when some marker has an icon. */
+export const markerGutterGap = (markers: readonly ResolvedMarker[]) =>
+  markers.some((m) => m.icon) ? MARKER_ICON_GAP : 0;
 
 /** Labels of the markers covering category `i`, in marker order. */
 export function markerLabelsAt(markers: readonly ResolvedMarker[], i: number): string[] {
@@ -338,6 +348,8 @@ export const DOT_RADIUS = 3;
 export const MARKER_RADIUS = 4;
 /** Baseline of marker labels below the plot top; also the height of one marker gutter row above the plot. */
 export const MARKER_LABEL_BASELINE = 12;
+/** Space between a marker icon and the plot top; mirrors `--chart-marker-icon-gap` (`--space-1`), keep in sync. */
+export const MARKER_ICON_GAP = 4;
 // ponytail: an icon is estimated as one emoji (~1.25em at --chart-marker-icon-size 14px) or
 // its 12px text estimate scaled to 14px, whichever is wider; measure if icons overlap in real fonts.
 const ICON_MIN_WIDTH = 18;
@@ -1019,6 +1031,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       x2: plot.x + plot.width,
       dash: i % REFERENCE_DASHES,
       slot: r.color ?? 0,
+      emphasis: r.emphasis === 'strong' ? 'strong' : undefined,
     })),
     annotations,
     valueAt: (py) => y.invert(Math.max(plot.y, Math.min(plot.y + plot.height, py))),

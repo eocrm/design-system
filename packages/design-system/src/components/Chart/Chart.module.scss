@@ -120,6 +120,10 @@
   &[data-dash='2'] {
     stroke-dasharray: var(--chart-reference-dash-2);
   }
+
+  &[data-emphasis='strong'] {
+    stroke-width: var(--chart-reference-width-strong);
+  }
 }
 
 .markerLine {
@@ -149,6 +153,11 @@
   fill: var(--chart-marker-label-fg);
   font-size: var(--chart-axis-size);
   pointer-events: none;
+}
+
+// Marker label in the marker's palette colour (halo kept).
+.markerLabels .markerLabelColored {
+  fill: var(--chart-series-color, var(--chart-marker-label-fg));
 }
 
 // Decorative marker icon in the gutter above the plot (no halo: it never overlaps data).
@@ -329,6 +338,10 @@
 
   &[data-dash='2'] {
     stroke-dasharray: var(--chart-reference-dash-2);
+  }
+
+  &[data-emphasis='strong'] {
+    stroke-width: var(--chart-reference-width-strong);
   }
 }
 

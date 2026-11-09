@@ -96,6 +96,10 @@
   &[data-dash='2'] {
     stroke-dasharray: var(--scatter-reference-dash-2);
   }
+
+  &[data-emphasis='strong'] {
+    stroke-width: var(--scatter-reference-width-strong);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

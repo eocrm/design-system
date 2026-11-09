@@ -2,6 +2,7 @@ import { createRef } from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Chart, type ChartProps } from './Chart';
+import { MARKER_ICON_GAP, MARKER_LABEL_BASELINE } from './chartModel';
 
 // LiveRegion writes after ANNOUNCE_DELAY_MS (50ms); wait past it or "empty" assertions pass vacuously.
 const PAST_ANNOUNCE_DELAY_MS = 120;
@@ -678,14 +679,73 @@ describe('marker colour, icon and top labels (DS-47)', () => {
     layout.fire();
     expect(lineY(container)).toBe(8);
     rerender(<Chart {...base} markers={[{ key: 'l', label: 'Launch', at: 'W2', icon: '🐱' }]} />);
-    expect(lineY(container)).toBe(20);
+    expect(lineY(container)).toBe(24); // + MARKER_ICON_GAP
     rerender(
       <Chart
         {...base}
         markers={[{ key: 'l', label: 'Launch', at: 'W2', icon: '🐱', labelPlacement: 'top' }]}
       />,
     );
-    expect(lineY(container)).toBe(32);
+    expect(lineY(container)).toBe(36);
+  });
+
+  const texts = (c: HTMLElement) => [...c.querySelectorAll('[class*="markerLabels"] text')];
+  const textY = (c: HTMLElement, t: string) =>
+    Number(
+      texts(c)
+        .find((x) => x.textContent === t)!
+        .getAttribute('y'),
+    );
+
+  it('keeps an icon clear of the plot top by MARKER_ICON_GAP, and above a stacked top label (DS-56)', () => {
+    const layout = stubLayout();
+    const { container, rerender } = render(
+      <Chart {...base} markers={[{ key: 'l', at: 'W2', icon: '🐱' }]} />,
+    );
+    layout.fire();
+    expect(lineY(container)).toBe(8 + MARKER_LABEL_BASELINE + MARKER_ICON_GAP);
+    expect(textY(container, '🐱') + MARKER_ICON_GAP).toBeLessThanOrEqual(lineY(container));
+    rerender(
+      <Chart
+        {...base}
+        markers={[{ key: 'l', label: 'Launch', at: 'W2', icon: '🐱', labelPlacement: 'top' }]}
+      />,
+    );
+    const label = textY(container, 'Launch');
+    expect(textY(container, '🐱')).toBeLessThan(label - MARKER_LABEL_BASELINE - 1);
+    expect(label).toBeLessThan(lineY(container));
+  });
+
+  it('adds no gap for a top label without icons (layout unchanged)', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart
+        {...base}
+        markers={[{ key: 'l', label: 'Launch', at: 'W2', labelPlacement: 'top' }]}
+      />,
+    );
+    layout.fire();
+    expect(lineY(container)).toBe(8 + MARKER_LABEL_BASELINE);
+  });
+
+  it('colours the marker label with its palette slot only when colour is set (DS-56)', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart
+        {...base}
+        markers={[
+          { key: 'a', label: 'Tinted', at: 'W2', color: 2 },
+          { key: 'b', label: 'Plain', at: 'W3' },
+        ]}
+      />,
+    );
+    layout.fire();
+    const tinted = texts(container).find((x) => x.textContent === 'Tinted') as SVGElement;
+    expect(tinted.getAttribute('class')).toMatch(/markerLabelColored/);
+    expect(tinted.style.getPropertyValue('--chart-series-color')).toBe('var(--chart-series-2)');
+    const plain = texts(container).find((x) => x.textContent === 'Plain') as SVGElement;
+    expect(plain.getAttribute('class') ?? '').not.toMatch(/markerLabelColored/);
+    expect(plain.style.getPropertyValue('--chart-series-color')).toBe('');
   });
 
   it('colours a marker with its palette slot', () => {
@@ -1954,6 +2014,24 @@ describe('referenceLines (DS-53)', () => {
     expect(
       lastBar.compareDocumentPosition(lines[0]) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it('emphasis strong marks exactly one line and one legend swatch (DS-57)', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart
+        {...props}
+        referenceLines={[
+          { value: 1, label: 'a' },
+          { value: 2, label: 'b', emphasis: 'strong' },
+        ]}
+      />,
+    );
+    layout.fire();
+    expect(
+      container.querySelectorAll('[data-reference-line][data-emphasis="strong"]'),
+    ).toHaveLength(1);
+    expect(container.querySelectorAll('svg[data-dash][data-emphasis="strong"]')).toHaveLength(1);
   });
 
   it('lists each line as a static legend entry with a dash swatch', () => {
