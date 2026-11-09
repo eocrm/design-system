@@ -38,7 +38,11 @@ import {
   layoutMarkers,
   markerGutterRows,
   markerLabelsAt,
+  annotationLabelsAt,
+  annotationPath,
+  resolveAnnotations,
   resolveMarkers,
+  REFERENCE_DASHES,
   DOT_RADIUS,
   PAD_TOP,
   MARKER_LABEL_BASELINE,
@@ -48,11 +52,14 @@ import {
   X_LABEL_BASELINE,
   resolveSeries,
   visibleSeries,
+  type ChartAnnotation,
   type ChartCurve,
   type ChartMarker,
+  type ChartReferenceLine,
   type ChartSeries,
   type ChartType,
   type ResolvedSeries,
+  type SeriesMarks,
 } from './chartModel';
 import {
   clampViewport,
@@ -66,10 +73,14 @@ import { useChartGestures } from './useChartGestures';
 import styles from './Chart.module.scss';
 
 export type {
+  ChartAnnotation,
+  ChartAnnotationGlyph,
+  ChartAnnotationTone,
   ChartCurve,
   ChartMarker,
   ChartMarkerLabelPlacement,
   ChartMarkerTone,
+  ChartReferenceLine,
   ChartSeries,
   ChartSeriesColor,
   ChartType,
@@ -134,6 +145,23 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
    * decorative. A marker naming an unknown category is ignored with a dev warning.
    */
   markers?: ChartMarker[];
+  /**
+   * Horizontal lines at constant values, e.g. `[{ value: 35, label: '30-day average' }]`: drawn across the full plot
+   * width, over bars and area fills and under line strokes, always inside the y domain (also when zoomed). Neutral ink unless `color`
+   * (palette slot 1–8) is set; each line's array index picks its dash pattern (cycling after three), so keep the
+   * order stable. Each gets a static legend entry, a muted "label: value" row (via `formatValue`) in the tooltip and
+   * the keyboard announcement, and a row in the data table's footer. A non-finite `value` is ignored with a dev warning.
+   */
+  referenceLines?: ChartReferenceLine[];
+  /**
+   * Status glyphs on categories, e.g. `[{ at: 'Sun', glyph: 'up', tone: 'success', label: 'Ahead of usual pace' }]`:
+   * a small triangle (`'up'` / `'down'`) or `'dot'` in the tone's status ink, drawn just after the value label (with
+   * `valueLabels`; centred over it when that would cross into the next bar) or above the category's tallest visible mark (below a negative one); the y scale reserves room for
+   * it. Several on one category sit side by side in array order. Decorative (`aria-hidden`): `label` is listed in the
+   * tooltip, the keyboard announcement and the data table's notes column. Every chart type. An unknown `at` is ignored
+   * with a dev warning.
+   */
+  annotations?: ChartAnnotation[];
   /**
    * Short note under the plot, e.g. "3 deals in other currencies not included" or why a comparison was omitted.
    * Takes its own row (wraps, never truncates) and the plot fills the rest; also describes the plot for
@@ -212,6 +240,8 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
 }
 
 const NO_MARKERS: ChartMarker[] = [];
+const NO_REFERENCES: ChartReferenceLine[] = [];
+const NO_ANNOTATIONS: ChartAnnotation[] = [];
 const NO_DROPPED: string[] = [];
 const identity = (i: number) => i;
 /** Span multiplier of one `+` key press (`-` divides by it). */
@@ -290,6 +320,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     hiddenSeries,
     onHiddenSeriesChange,
     markers = NO_MARKERS,
+    referenceLines = NO_REFERENCES,
+    annotations = NO_ANNOTATIONS,
     footnote,
     details,
     valueLabels,
@@ -373,6 +405,41 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     resolved.overflowCount,
     loaded ? resolvedMarkers.dropped : NO_DROPPED,
   );
+  // Finite lines with their index-based key and dash (the layout drops the rest the same way).
+  const references = referenceLines.flatMap((r, i) =>
+    Number.isFinite(r.value)
+      ? [{ ...r, key: r.key ?? String(i), dash: i % REFERENCE_DASHES, text: formatValue(r.value) }]
+      : [],
+  );
+  const brokenReferences = referenceLines
+    .filter((r) => !Number.isFinite(r.value))
+    .map((r) => r.label)
+    .join(', ');
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' || !brokenReferences) return;
+    console.warn(`[Chart] Ignored referenceLines (${brokenReferences}): value must be finite.`);
+  }, [brokenReferences]);
+  const referenceNotes = references.map((r) => `${r.label}: ${r.text}`);
+  // Resolved on the full categories (so an out-of-zoom one is not "unknown"), then shifted into the view.
+  const allAnnotations = useMemo(
+    () => resolveAnnotations(annotations, allCategories),
+    [annotations, allCategories],
+  );
+  const viewAnnotations = useMemo(() => {
+    const from = zoomFrom ?? 0;
+    return allAnnotations.annotations.flatMap((a) =>
+      a.index >= from && a.index - from < categories.length
+        ? [{ ...a, index: a.index - from }]
+        : [],
+    );
+  }, [allAnnotations, zoomFrom, categories.length]);
+  const droppedAnnotations = loaded ? allAnnotations.dropped.join(', ') : '';
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' || !droppedAnnotations) return;
+    console.warn(
+      `[Chart] Ignored annotations (${droppedAnnotations}): at must be one of categories.`,
+    );
+  }, [droppedAnnotations]);
 
   const [selection, setSelection] = useControllableState<ChartRange | null>({
     value: selectedRange,
@@ -495,6 +562,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             valueLabels,
             topGutter: gutterRows * MARKER_LABEL_BASELINE,
             viewport: vp,
+            referenceLines,
+            annotations: viewAnnotations,
           })
         : null,
     [
@@ -509,6 +578,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       valueLabels,
       gutterRows,
       vp,
+      referenceLines,
+      viewAnnotations,
     ],
   );
 
@@ -838,7 +909,14 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     [anchorX, anchorY],
   );
 
-  const notes = current === null ? [] : markerLabelsAt(resolvedMarkers.markers, current);
+  const notes =
+    current === null
+      ? []
+      : [
+          ...markerLabelsAt(resolvedMarkers.markers, current),
+          ...annotationLabelsAt(viewAnnotations, current),
+          ...referenceNotes,
+        ];
   // `details` takes original indices: both call sites (here and the table's `detailsAt`) map through `originalIndex`.
   const detailLines = current === null ? [] : (details?.(originalIndex(current)) ?? []);
   const liveText = selectionNote
@@ -875,18 +953,34 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       ? ''
       : undefined;
 
-  const legendItems = resolved.series.map((s) => ({
-    key: s.key,
-    label: s.label,
-    slot: s.slot,
-    comparison: s.comparisonOf !== undefined,
-    overflow: s.overflow,
-    locked:
-      s.comparisonOf === undefined && visiblePrimaries.length === 1 && visiblePrimaries[0] === s,
-    parentLabel: parentLabel(s),
-    parentHidden:
-      s.comparisonOf !== undefined && s.comparisonOf !== 'total' && hidden.includes(s.comparisonOf),
-  }));
+  const legendItems = [
+    ...resolved.series.map((s) => ({
+      key: s.key,
+      label: s.label,
+      slot: s.slot,
+      comparison: s.comparisonOf !== undefined,
+      overflow: s.overflow,
+      locked:
+        s.comparisonOf === undefined && visiblePrimaries.length === 1 && visiblePrimaries[0] === s,
+      parentLabel: parentLabel(s),
+      parentHidden:
+        s.comparisonOf !== undefined &&
+        s.comparisonOf !== 'total' &&
+        hidden.includes(s.comparisonOf),
+    })),
+    // Static, untoggleable entries with the line's own dash, as in ScatterChart.
+    ...references.map((r) => ({
+      key: `\0reference:${r.key}`,
+      label: r.label,
+      slot: r.color ?? 0,
+      dash: r.dash,
+      comparison: true,
+      overflow: false,
+      locked: false,
+      parentHidden: false,
+      static: true,
+    })),
+  ];
 
   const columns = visible.map((s) => ({
     key: s.key,
@@ -961,6 +1055,30 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     ) : (
       <span />
     );
+
+  // `part` splits an area's fill from its stroke so reference lines can paint between them; `data-series` stays
+  // on the stroke group only.
+  const seriesMarks = (m: SeriesMarks, part: 'all' | 'fill' | 'stroke' = 'all') => (
+    <g
+      key={m.key}
+      className={styles.series}
+      style={seriesStyle(m.slot)}
+      data-series={part === 'fill' ? undefined : m.key}
+      data-comparison={m.comparison || undefined}
+      data-overflow={m.overflow || undefined}
+      data-dimmed={dimmed(m.key)}
+    >
+      {m.area && part !== 'stroke' && <path className={styles.area} d={m.area} />}
+      {m.line && part !== 'fill' && <path className={styles.line} d={m.line} />}
+      {m.bars?.map((d, i) => d && <path key={i} className={styles.bar} d={d} />)}
+      {part !== 'fill' &&
+        m.dots.map((p, i) => (
+          <circle key={i} className={styles.dot} cx={p.x} cy={p.y} r={DOT_RADIUS} />
+        ))}
+    </g>
+  );
+  // Without reference lines the series pass is one group per series, as before.
+  const splitAreas = !!layout && layout.referenceLines.length > 0;
 
   if (empty) {
     return (
@@ -1158,24 +1276,26 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                     ),
                 )}
               </g>
-              {layout.marks.map((m) => (
-                <g
-                  key={m.key}
-                  className={styles.series}
-                  style={seriesStyle(m.slot)}
-                  data-series={m.key}
-                  data-comparison={m.comparison || undefined}
-                  data-overflow={m.overflow || undefined}
-                  data-dimmed={dimmed(m.key)}
-                >
-                  {m.area && <path className={styles.area} d={m.area} />}
-                  {m.line && <path className={styles.line} d={m.line} />}
-                  {m.bars?.map((d, i) => d && <path key={i} className={styles.bar} d={d} />)}
-                  {m.dots.map((p, i) => (
-                    <circle key={i} className={styles.dot} cx={p.x} cy={p.y} r={DOT_RADIUS} />
-                  ))}
-                </g>
+              {layout.marks.filter((m) => m.kind === 'bars').map((m) => seriesMarks(m))}
+              {splitAreas &&
+                layout.marks.filter((m) => m.kind === 'area').map((m) => seriesMarks(m, 'fill'))}
+              {/* Over bars and area fills, under line strokes, dots and inspection markers. */}
+              {layout.referenceLines.map((r) => (
+                <line
+                  key={r.key}
+                  className={styles.referenceLine}
+                  data-reference-line=""
+                  data-dash={r.dash}
+                  style={r.slot ? seriesStyle(r.slot) : undefined}
+                  x1={r.x1}
+                  x2={r.x2}
+                  y1={r.y}
+                  y2={r.y}
+                />
               ))}
+              {layout.marks
+                .filter((m) => m.kind !== 'bars')
+                .map((m) => seriesMarks(m, splitAreas ? 'stroke' : 'all'))}
               {layout.valueLabels.length > 0 && (
                 <g className={styles.valueLabels}>
                   {layout.valueLabels.map((v, i) => (
@@ -1192,6 +1312,20 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                   ))}
                 </g>
               )}
+              {/* Glyphs above the data marks, with the value labels. */}
+              {layout.annotations.map((a) => (
+                <g
+                  key={a.key}
+                  className={styles.annotation}
+                  data-annotation=""
+                  data-glyph={a.glyph}
+                  data-tone={a.tone}
+                  aria-hidden="true"
+                  transform={`translate(${a.x} ${a.y})`}
+                >
+                  <path d={annotationPath(a.glyph)} />
+                </g>
+              ))}
               {/* Inspection markers in their own pass: a later stacked area would paint over them. */}
               {current !== null &&
                 layout.marks.map(
@@ -1280,10 +1414,12 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         categories={categories}
         columns={columns}
         formatValue={formatValue}
-        markersHeader={t('chart.markers')}
+        notesHeader={t('chart.notes')}
         markers={resolvedMarkers.markers}
+        annotations={viewAnnotations}
         detailsHeader={details ? t('chart.details') : undefined}
         detailsAt={(i) => details?.(originalIndex(i)) ?? []}
+        references={references}
       />
     </figure>
   );

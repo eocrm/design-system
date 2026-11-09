@@ -941,6 +941,9 @@ export type {
   TreeViewView,
 } from './components/TreeView';
 export type {
+  ChartAnnotation,
+  ChartAnnotationGlyph,
+  ChartAnnotationTone,
   ChartCurve,
   ChartMarker,
   ChartMarkerLabelPlacement,
@@ -948,6 +951,7 @@ export type {
   ChartPlotPointerEvent,
   ChartProps,
   ChartRange,
+  ChartReferenceLine,
   ChartSeries,
   ChartSeriesColor,
   ChartType,

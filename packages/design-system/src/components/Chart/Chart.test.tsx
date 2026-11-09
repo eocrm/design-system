@@ -634,13 +634,13 @@ describe('markers', () => {
     stubLayout();
     const { rerender } = render(<Chart {...base} markers={markers} />);
     const table = screen.getByRole('table');
-    expect(within(table).getByRole('columnheader', { name: 'Markers' })).toBeInTheDocument();
+    expect(within(table).getByRole('columnheader', { name: 'Notes' })).toBeInTheDocument();
     const rows = within(table).getAllByRole('row');
     expect(rows[1].lastElementChild).toHaveTextContent(/^$/);
     expect(rows[2].lastElementChild).toHaveTextContent('Launch, Promo');
     expect(rows[3].lastElementChild).toHaveTextContent('Promo');
     rerender(<Chart {...base} markers={[{ key: 'weekend', from: 'W1', to: 'W1' }]} />);
-    expect(within(table).queryByRole('columnheader', { name: 'Markers' })).toBeNull();
+    expect(within(table).queryByRole('columnheader', { name: 'Notes' })).toBeNull();
   });
 
   it('names the markers of the inspected category in the tooltip and announcement', async () => {
@@ -1924,5 +1924,220 @@ describe('gestures and plot double-click (DS-48)', () => {
     expect(plotOf()).toHaveAccessibleDescription(
       'Use arrow keys to inspect values. All values are also in the data table. Plus and minus zoom in and out.',
     );
+  });
+});
+
+describe('referenceLines (DS-53)', () => {
+  const props: ChartProps = {
+    type: 'stacked-bar',
+    label: 'Eaten per day',
+    categories: ['Mon', 'Tue'],
+    series: [
+      { key: 'cat', label: 'Cat', values: [20, 30] },
+      { key: 'dog', label: 'Dog', values: [10, 15] },
+    ],
+    formatValue: (n) => `${n} g`,
+    referenceLines: [
+      { value: 35, label: '30-day average' },
+      { key: 'goal', value: 50, label: 'Goal', color: 2 },
+    ],
+  };
+
+  it('draws one dashed line per reference, each with its own dash', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...props} />);
+    layout.fire();
+    const lines = [...container.querySelectorAll('[data-reference-line]')];
+    expect(lines.map((l) => l.getAttribute('data-dash'))).toEqual(['0', '1']);
+    // Over the bars.
+    const lastBar = [...container.querySelectorAll('path[class*="bar"]')].at(-1)!;
+    expect(
+      lastBar.compareDocumentPosition(lines[0]) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('lists each line as a static legend entry with a dash swatch', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...props} />);
+    layout.fire();
+    const legend = container.querySelector('ul[class*="legend"]') as HTMLElement;
+    for (const [name, dash] of [
+      ['30-day average', '0'],
+      ['Goal', '1'],
+    ]) {
+      const entry = within(legend).getByText(name).closest('[data-static]')!;
+      expect(entry).not.toBeNull();
+      expect(entry.tagName).toBe('SPAN');
+      expect(entry.querySelector('svg')!.getAttribute('data-dash')).toBe(dash);
+    }
+  });
+
+  it('adds a muted row to the tooltip and the announcement', async () => {
+    const layout = stubLayout();
+    render(<Chart {...props} />);
+    layout.fire();
+    screen.getByRole('group', { name: 'Eaten per day' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent(
+      '30-day average: 35 g',
+    );
+    const live = document.querySelector('[aria-live="polite"]')!;
+    await waitFor(() => expect(live).toHaveTextContent(/30-day average: 35 g, Goal: 50 g$/));
+  });
+
+  it('lists each line as a table footer row', () => {
+    stubLayout();
+    render(<Chart {...props} />);
+    const table = screen.getByRole('table');
+    const foot = table.querySelector('tfoot')!;
+    const rows = within(foot as HTMLElement).getAllByRole('row');
+    const th = within(rows[0]).getByRole('rowheader', { name: '30-day average' });
+    expect(th).toHaveAttribute('scope', 'row');
+    const td = rows[0].querySelector('td')!;
+    expect(td).toHaveTextContent('35 g');
+    // Category + two series columns: the value spans the two after the row header.
+    expect(td).toHaveAttribute('colspan', '2');
+  });
+
+  it('spans the notes and details columns too', () => {
+    stubLayout();
+    render(
+      <Chart
+        {...props}
+        annotations={[{ at: 'Tue', glyph: 'up', tone: 'success', label: 'Ahead' }]}
+        details={() => ['note']}
+      />,
+    );
+    const table = screen.getByRole('table');
+    expect(within(table).getAllByRole('columnheader')).toHaveLength(5);
+    const td = table.querySelector('tfoot td')!;
+    // Two series columns + the notes column + the details column.
+    expect(td).toHaveAttribute('colspan', '4');
+  });
+
+  it('ignores a non-finite value with a dev warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart {...props} referenceLines={[{ value: NaN, label: 'Broken' }]} />,
+    );
+    layout.fire();
+    expect(container.querySelector('[data-reference-line]')).toBeNull();
+    expect(screen.queryByText('Broken')).toBeNull();
+    expect(warn.mock.calls.flat().join(' ')).toMatch(/Ignored referenceLines \(Broken\)/);
+  });
+});
+
+describe('referenceLines paint order (DS-53)', () => {
+  const areaProps: ChartProps = {
+    ...base,
+    type: 'area',
+    label: 'Area with reference',
+    series: [
+      { key: 'a', label: 'A', values: [1, 2, 3] },
+      { key: 'b', label: 'B', values: [3, 2, 1] },
+    ],
+  };
+
+  it('paints over area fills and under line strokes', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart {...areaProps} referenceLines={[{ value: 3, label: 'Target' }]} />,
+    );
+    layout.fire();
+    const ref = container.querySelector('[data-reference-line]')!;
+    const after = (a: Element, b: Element) =>
+      !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    for (const fill of container.querySelectorAll('path[class*="area"]'))
+      expect(after(fill, ref)).toBe(true);
+    for (const stroke of container.querySelectorAll('path[class*="line"]'))
+      expect(after(ref, stroke)).toBe(true);
+  });
+
+  it('keeps one group per series without reference lines', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...areaProps} />);
+    layout.fire();
+    const groups = [...container.querySelectorAll('g[class*="series"][data-series]')];
+    expect(groups.map((g) => g.getAttribute('data-series'))).toEqual(['a', 'b']);
+    for (const g of groups) {
+      expect(g.querySelector('path[class*="area"]')).not.toBeNull();
+      expect(g.querySelector('path[class*="line"]')).not.toBeNull();
+    }
+  });
+});
+
+describe('annotations (DS-52)', () => {
+  const props: ChartProps = {
+    type: 'bar',
+    label: 'Eaten per day',
+    categories: ['Mon', 'Tue', 'Wed', 'Thu'],
+    series: [{ key: 'cat', label: 'Cat', values: [20, 30, 25, 10] }],
+    formatValue: (n) => `${n} g`,
+    annotations: [{ at: 'Tue', glyph: 'up', tone: 'success', label: 'Ahead of usual pace' }],
+  };
+
+  it('draws a decorative glyph with its shape and tone', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...props} />);
+    layout.fire();
+    const glyph = container.querySelector('[data-annotation]')!;
+    expect(glyph).toHaveAttribute('aria-hidden', 'true');
+    expect(glyph).toHaveAttribute('data-glyph', 'up');
+    expect(glyph).toHaveAttribute('data-tone', 'success');
+  });
+
+  it('lists the label in the tooltip and the announcement', async () => {
+    const layout = stubLayout();
+    render(<Chart {...props} />);
+    layout.fire();
+    screen.getByRole('group', { name: 'Eaten per day' }).focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('Ahead of usual pace');
+    const live = document.querySelector('[aria-live="polite"]')!;
+    await waitFor(() => expect(live).toHaveTextContent(/^Tue: .*\. Ahead of usual pace$/));
+  });
+
+  it('adds the notes column when only annotations exist, after any marker labels', () => {
+    stubLayout();
+    const { rerender } = render(<Chart {...props} />);
+    const table = screen.getByRole('table');
+    expect(within(table).getByRole('columnheader', { name: 'Notes' })).toBeInTheDocument();
+    const rows = within(table).getAllByRole('row');
+    expect(rows[2].lastElementChild).toHaveTextContent('Ahead of usual pace');
+    expect(rows[1].lastElementChild).toHaveTextContent(/^$/);
+    rerender(<Chart {...props} markers={[{ key: 'm', at: 'Tue', label: 'Vet visit' }]} />);
+    expect(within(table).getAllByRole('row')[2].lastElementChild).toHaveTextContent(
+      'Vet visit, Ahead of usual pace',
+    );
+  });
+
+  it('ignores an unknown category with a dev warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart {...props} annotations={[{ at: 'Sun', glyph: 'dot', tone: 'neutral', label: 'X' }]} />,
+    );
+    layout.fire();
+    expect(container.querySelector('[data-annotation]')).toBeNull();
+    expect(warn.mock.calls.flat().join(' ')).toMatch(/Ignored annotations \(Sun\)/);
+  });
+
+  it('under a zoomRange excluding the category, draws no glyph and does not warn', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const layout = stubLayout();
+    const { container } = render(<Chart {...props} zoomRange={{ from: 'Wed', to: 'Thu' }} />);
+    layout.fire();
+    expect(container.querySelector('[data-annotation]')).toBeNull();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('under a viewport excluding the category, draws no glyph but keeps the label in the table (Review Focus 4)', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...props} defaultViewport={{ from: 0.5, to: 1 }} />);
+    layout.fire();
+    expect(container.querySelector('[data-annotation]')).toBeNull();
+    const rows = within(screen.getByRole('table')).getAllByRole('row');
+    expect(rows[2].lastElementChild).toHaveTextContent('Ahead of usual pace');
   });
 });

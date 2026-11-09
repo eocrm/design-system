@@ -8,8 +8,10 @@ import {
   Stack,
   Switch,
   Text,
+  type ChartAnnotation,
   type ChartMarker,
   type ChartRange,
+  type ChartReferenceLine,
   type ChartSeries,
   type ChartType,
   type ChartViewport,
@@ -110,6 +112,18 @@ const feedingMarkers: ChartMarker[] = [
   { key: 'fa2', label: 'Dinner', at: '18:00', color: 3, icon: '🐱', labelPlacement: 'top' },
 ];
 const eatenSeries: ChartSeries[] = [{ key: 'g', label: 'Eaten', values: [73, 98, 93, 30] }];
+const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const petSeries: ChartSeries[] = [
+  { key: 'luna', label: 'Luna', values: [22, 18, 25, 20, 16, 24, 28] },
+  { key: 'milo', label: 'Milo', values: [14, 17, 12, 15, 19, 13, 16] },
+];
+const averageLine: ChartReferenceLine[] = [{ value: 35, label: '30-day average' }];
+const perDaySeries: ChartSeries[] = [
+  { key: 'eaten', label: 'Eaten', values: [36, 35, 37, 35, 35, 37, 44] },
+];
+const todayAhead: ChartAnnotation[] = [
+  { at: 'Sun', glyph: 'up', tone: 'success', label: 'Ahead of usual pace' },
+];
 const mealDetails = (i: number) => [`${[190, 255, 240, 80][i]} kcal`, `${[3, 4, 4, 1][i]} times`];
 
 function RangeSelectionExample() {
@@ -309,6 +323,47 @@ export function ChartDemo() {
             formatValue={formatGrams}
             valueLabels
             details={mealDetails}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Reference lines"
+        description="referenceLines draws a horizontal line across the full plot at a constant value, e.g. a target or an average. Its value always joins the y axis; it gets a static legend entry, a muted row in the tooltip and announcement, and a footer row in the data table. Each line's index picks its dash pattern."
+        code={`<Chart type="stacked-bar" label="Eaten this week" categories={weekDays} series={pets}
+  formatValue={formatGrams}
+  referenceLines={[{ value: 35, label: '30-day average' }]}
+/>`}
+      >
+        <Cell title="Eaten this week">
+          <Chart
+            type="stacked-bar"
+            label="Eaten this week"
+            categories={weekDays}
+            series={petSeries}
+            formatValue={formatGrams}
+            referenceLines={averageLine}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Annotations"
+        description="annotations puts a small status glyph (up / down triangle or dot, in a success, danger, warning or neutral tone) on one category: after the value label with valueLabels, otherwise above the tallest mark. The y axis makes room for it. The glyph is decorative; its label is listed in the tooltip, the announcement and the data table."
+        code={`<Chart type="bar" label="Eaten per day" categories={weekDays} series={eaten}
+  formatValue={formatGrams} valueLabels
+  annotations={[{ at: 'Sun', glyph: 'up', tone: 'success', label: 'Ahead of usual pace' }]}
+/>`}
+      >
+        <Cell title="Eaten per day">
+          <Chart
+            type="bar"
+            label="Eaten per day"
+            categories={weekDays}
+            series={perDaySeries}
+            formatValue={formatGrams}
+            valueLabels
+            annotations={todayAhead}
           />
         </Cell>
       </Example>

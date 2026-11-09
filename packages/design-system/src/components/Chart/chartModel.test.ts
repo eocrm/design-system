@@ -13,11 +13,15 @@ import {
   markerLabelsAt,
   markerPath,
   markerShape,
+  resolveAnnotations,
   resolveMarkers,
   resolveSeries,
   thinLabels,
   visibleSeries,
+  ANNOTATION_SIZE,
+  type ChartAnnotation,
   type ChartSeries,
+  type ChartReferenceLine,
   type ChartSeriesColor,
   type LayoutInput,
 } from './chartModel';
@@ -1229,5 +1233,345 @@ describe('viewport (DS-48)', () => {
     expect(in1.top!.x).toBeGreaterThanOrEqual(l.plot.x);
     expect(band.top).toBeUndefined();
     expect(band.label).toBeUndefined();
+  });
+});
+
+describe('referenceLines (DS-53)', () => {
+  const one = (values: number[]) => resolveSeries('bar', [s('a', values)], values.length).series;
+  const ref = (value: number, extra: Partial<ChartReferenceLine> = {}): ChartReferenceLine => ({
+    value,
+    label: `R${value}`,
+    ...extra,
+  });
+
+  it('puts the reference value in the y domain', () => {
+    const l = layout({ type: 'bar', series: one([10, 20, 40, 30]), referenceLines: [ref(100)] });
+    expect(Math.max(...l.yTicks.map((t) => t.value))).toBeGreaterThanOrEqual(100);
+  });
+
+  it('spans the full plot width, not the outer category centres', () => {
+    const l = layout({ type: 'bar', series: one([10, 20, 40, 30]), referenceLines: [ref(25)] });
+    const [r] = l.referenceLines;
+    expect(r.x1).toBe(l.plot.x);
+    expect(r.x2).toBe(l.plot.x + l.plot.width);
+    expect(r.x1).toBeLessThan(l.categoryX[0]);
+    expect(l.valueAt(r.y)).toBeCloseTo(25);
+  });
+
+  it('includes a negative value and keeps the zero line', () => {
+    const l = layout({ type: 'bar', series: one([10, 20, 40, 30]), referenceLines: [ref(-15)] });
+    expect(Math.min(...l.yTicks.map((t) => t.value))).toBeLessThanOrEqual(-15);
+    expect(l.yTicks.some((t) => t.value === 0)).toBe(true);
+  });
+
+  it('drops a non-finite value but keeps dash and key by array index', () => {
+    const l = layout({
+      type: 'bar',
+      series: one([10, 20, 40, 30]),
+      referenceLines: [
+        ref(NaN),
+        ref(Infinity),
+        ref(15, { key: 'avg', color: 3 }),
+        ref(20),
+        ref(25),
+      ],
+    });
+    expect(l.referenceLines.map((r) => [r.key, r.dash, r.slot])).toEqual([
+      ['avg', 2, 3],
+      ['3', 0, 0],
+      ['4', 1, 0],
+    ]);
+  });
+
+  it('joins the y domain under a viewport too', () => {
+    const l = layout({
+      type: 'bar',
+      series: one([10, 20, 40, 30]),
+      referenceLines: [ref(100)],
+      viewport: { from: 0, to: 0.5 },
+    });
+    expect(Math.max(...l.yTicks.map((t) => t.value))).toBeGreaterThanOrEqual(100);
+  });
+
+  it('leaves the layout unchanged without reference lines', () => {
+    const plain = layout({ type: 'bar', series: one([10, 20, 40, 30]) });
+    const empty = layout({ type: 'bar', series: one([10, 20, 40, 30]), referenceLines: [] });
+    expect(empty).toEqual({ ...plain, valueAt: expect.any(Function) });
+    expect(plain.referenceLines).toEqual([]);
+  });
+});
+
+describe('annotations (DS-52)', () => {
+  const cats = ['a', 'b', 'c', 'd'];
+  const up = (at: string, extra: Partial<ChartAnnotation> = {}): ChartAnnotation => ({
+    at,
+    glyph: 'up',
+    tone: 'success',
+    label: `Note ${at}`,
+    ...extra,
+  });
+  const annotated = (
+    type: LayoutInput['type'],
+    series: ChartSeries[],
+    list: ChartAnnotation[],
+    over: Partial<LayoutInput> = {},
+  ) =>
+    layout({
+      type,
+      series: resolveSeries(type, series, cats.length).series,
+      annotations: resolveAnnotations(list, cats).annotations,
+      ...over,
+    });
+
+  it('keeps a glyph group on the first and last category of a dense chart inside the plot', () => {
+    const cats30 = Array.from({ length: 30 }, (_, i) => `c${i}`);
+    const glyphs = (at: string) =>
+      (['up', 'down', 'dot', 'up', 'down', 'dot'] as const).map((glyph) => ({
+        at,
+        glyph,
+        tone: 'neutral' as const,
+        label: at,
+      }));
+    for (const type of ['bar', 'line'] as const) {
+      const l = computeLayout({
+        type,
+        categories: cats30,
+        series: resolveSeries(
+          type,
+          [
+            s(
+              'x',
+              cats30.map((_, i) => 10 + i),
+            ),
+          ],
+          30,
+        ).series,
+        width: 300,
+        height: 200,
+        formatValue: fmt,
+        annotations: resolveAnnotations([...glyphs('c0'), ...glyphs('c29')], cats30).annotations,
+      });
+      expect(l.annotations).toHaveLength(12);
+      for (const g of l.annotations) {
+        expect(g.x - ANNOTATION_SIZE / 2).toBeGreaterThanOrEqual(l.plot.x - 1e-9);
+        expect(g.x + ANNOTATION_SIZE / 2).toBeLessThanOrEqual(l.plot.x + l.plot.width + 1e-9);
+      }
+    }
+  });
+
+  it('resolves `at` to an index and drops unknown categories', () => {
+    const r = resolveAnnotations([up('b'), up('zz', { key: 'k' })], cats);
+    expect(r.annotations).toEqual([
+      { key: '0', index: 1, glyph: 'up', tone: 'success', label: 'Note b' },
+    ]);
+    expect(r.dropped).toEqual(['zz']);
+  });
+
+  it('with valueLabels, sits after the label on its baseline', () => {
+    const l = annotated('bar', [s('x', [10, 40, 20, 5])], [up('b')], { valueLabels: true });
+    const label = l.valueLabels[1];
+    const [g] = l.annotations;
+    expect(g.index).toBe(1);
+    expect(g.x - ANNOTATION_SIZE / 2).toBeGreaterThan(label.x + estimateTextWidth(label.text) / 2);
+    expect(g.y).toBeCloseTo(label.y);
+  });
+
+  it('with valueLabels on a negative bar, sits beside the label below the bar, not over it', () => {
+    const l = annotated('bar', [s('x', [10, -40, 20, 5])], [up('b')], { valueLabels: true });
+    const label = l.valueLabels[1];
+    const [g] = l.annotations;
+    expect(g.below).toBe(true);
+    expect(g.y).toBeCloseTo(label.y);
+    expect(g.x - ANNOTATION_SIZE / 2).toBeGreaterThan(label.x + estimateTextWidth(label.text) / 2);
+    expect(g.y).toBeLessThanOrEqual(l.plot.y + l.plot.height);
+  });
+
+  it('without valueLabels, sits above the tallest visible bar of the group', () => {
+    const l = annotated('bar', [s('x', [10, 40, 20, 5]), s('y', [5, 60, 1, 1])], [up('b')]);
+    const [g] = l.annotations;
+    const top = l.marks[1].points[1]!;
+    expect(g.below).toBe(false);
+    expect(g.y).toBeLessThan(top.y);
+    // Over the right-hand (taller) bar of the group, not the category centre.
+    expect(g.x).toBeGreaterThan(l.categoryX[1]);
+    expect(g.x).toBeLessThan(l.categoryX[1] + l.bandWidth / 2);
+  });
+
+  it('sits above the stack top on stacked-bar', () => {
+    const l = annotated('stacked-bar', [s('x', [10, 40, 20, 5]), s('y', [5, 30, 1, 1])], [up('b')]);
+    const stackTop = l.marks[1].points[1]!.y;
+    expect(l.annotations[0].y).toBeLessThan(stackTop);
+    expect(l.annotations[0].x).toBeCloseTo(l.categoryX[1]);
+  });
+
+  it('sits above the point on line', () => {
+    const l = annotated('line', [s('x', [10, 40, 20, 5])], [up('b')]);
+    expect(l.annotations[0].y).toBeLessThan(l.marks[0].points[1]!.y);
+    expect(l.annotations[0].x).toBeCloseTo(l.categoryX[1]);
+  });
+
+  it('puts the glyph below a negative bar', () => {
+    const l = annotated('bar', [s('x', [10, -40, 20, 5])], [up('b')]);
+    const [g] = l.annotations;
+    expect(g.below).toBe(true);
+    expect(g.y - ANNOTATION_SIZE).toBeGreaterThan(l.marks[0].points[1]!.y);
+    expect(g.y).toBeLessThanOrEqual(l.plot.y + l.plot.height);
+  });
+
+  it('reserves room so the glyph never clips at the plot top', () => {
+    for (const type of ['bar', 'stacked-bar', 'line', 'area'] as const) {
+      const l = annotated(type, [s('x', [10, 40, 20, 5])], [up('b')]);
+      expect(l.annotations[0].y - ANNOTATION_SIZE).toBeGreaterThanOrEqual(l.plot.y);
+    }
+  });
+
+  it('sets glyphs on one category side by side, in array order', () => {
+    const l = annotated(
+      'bar',
+      [s('x', [10, 40, 20, 5])],
+      [up('b'), up('b', { glyph: 'dot', tone: 'neutral' })],
+    );
+    const [a, b] = l.annotations;
+    expect(b.x - a.x).toBeGreaterThanOrEqual(ANNOTATION_SIZE);
+    expect(a.y).toBe(b.y);
+    expect([a.glyph, b.glyph]).toEqual(['up', 'dot']);
+  });
+
+  it('skips a null category and a comparison-only chart has no NaN (Review Focus 2)', () => {
+    const l = annotated('bar', [s('x', [10, null, 20, 5])], [up('b'), up('c')]);
+    expect(l.annotations.map((g) => g.index)).toEqual([2]);
+    const cmp = layout({
+      type: 'bar',
+      series: [
+        { key: 'p', label: 'P', values: [1, 2, 3, 4], slot: 1, overflow: false, comparisonOf: 'x' },
+      ],
+      annotations: resolveAnnotations([up('b')], cats).annotations,
+    });
+    expect(Number.isFinite(cmp.annotations[0].x) && Number.isFinite(cmp.annotations[0].y)).toBe(
+      true,
+    );
+  });
+
+  it('omits glyphs on categories outside the viewport', () => {
+    const l = annotated('bar', [s('x', [10, 40, 20, 5])], [up('a'), up('d')], {
+      viewport: { from: 0.5, to: 1 },
+    });
+    expect(l.annotations.map((g) => g.index)).toEqual([3]);
+  });
+
+  const glyphBox = (g: { x: number; y: number }) => ({
+    left: g.x - ANNOTATION_SIZE / 2,
+    right: g.x + ANNOTATION_SIZE / 2,
+    top: g.y - ANNOTATION_SIZE,
+    bottom: g.y,
+  });
+  const labelBox = (v: { x: number; y: number; text: string }) => ({
+    left: v.x - estimateTextWidth(v.text) / 2,
+    right: v.x + estimateTextWidth(v.text) / 2,
+    top: v.y - 14,
+    bottom: v.y,
+  });
+  const overlaps = (a: ReturnType<typeof glyphBox>, b: ReturnType<typeof glyphBox>) =>
+    a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+  it('on a mixed-sign stack, sits beside the net-total label (positive net)', () => {
+    const l = annotated(
+      'stacked-bar',
+      [s('x', [10, 10, 20, 5]), s('y', [5, -3, 1, 1])],
+      [up('b')],
+      {
+        valueLabels: true,
+      },
+    );
+    const label = l.valueLabels.find((v) => v.text === '7')!;
+    const [g] = l.annotations;
+    expect(g.below).toBe(false);
+    expect(g.y).toBeCloseTo(label.y);
+    expect(overlaps(glyphBox(g), labelBox(label))).toBe(false);
+  });
+
+  it('on a stack with a negative net, goes below with the label', () => {
+    const l = annotated(
+      'stacked-bar',
+      [s('x', [10, -10, 20, 5]), s('y', [5, 3, 1, 1])],
+      [up('b')],
+      {
+        valueLabels: true,
+      },
+    );
+    const label = l.valueLabels.find((v) => v.text === '-7')!;
+    const [g] = l.annotations;
+    expect(label.anchor).toBe('below');
+    expect(g.below).toBe(true);
+    expect(overlaps(glyphBox(g), labelBox(label))).toBe(false);
+    expect(g.y).toBeLessThanOrEqual(l.plot.y + l.plot.height);
+  });
+
+  it('in a grouped bar with close values, stacks over its label instead of crossing into the neighbour bar', () => {
+    const l = annotated('bar', [s('x', [10, 40, 20, 5]), s('y', [5, 39, 1, 1])], [up('b')], {
+      valueLabels: true,
+    });
+    const [g] = l.annotations;
+    const own = l.valueLabels.find((v) => v.text === '40')!;
+    const other = l.valueLabels.find((v) => v.text === '39')!;
+    expect(overlaps(glyphBox(g), labelBox(other))).toBe(false);
+    expect(overlaps(glyphBox(g), labelBox(own))).toBe(false);
+    expect(g.x).toBeCloseTo(own.x);
+    expect(g.y).toBeLessThan(own.y - 14);
+    expect(g.y - ANNOTATION_SIZE).toBeGreaterThanOrEqual(l.plot.y);
+  });
+
+  it('on narrow single-series bars, stacks over the label and stays in its slot', () => {
+    const cats12 = Array.from({ length: 12 }, (_, i) => `c${i}`);
+    const l = computeLayout({
+      type: 'bar',
+      categories: cats12,
+      series: resolveSeries(
+        'bar',
+        [
+          s(
+            'x',
+            cats12.map((_, i) => 30 + i),
+          ),
+        ],
+        12,
+      ).series,
+      width: 300,
+      height: 200,
+      formatValue: fmt,
+      valueLabels: true,
+      annotations: resolveAnnotations([up('c4')], cats12).annotations,
+    });
+    const [g] = l.annotations;
+    expect(g.x).toBeCloseTo(l.categoryX[4]);
+    expect(g.x + ANNOTATION_SIZE / 2).toBeLessThanOrEqual(l.categoryX[4] + l.step / 2);
+    expect(g.y - ANNOTATION_SIZE).toBeGreaterThanOrEqual(l.plot.y);
+  });
+
+  it('on the last category, never runs past the plot right edge', () => {
+    const l = annotated('bar', [s('x', [10, 20, 30, 40])], [up('d'), up('d', { glyph: 'dot' })], {
+      valueLabels: true,
+      width: 160,
+    });
+    for (const g of l.annotations) {
+      expect(g.x + ANNOTATION_SIZE / 2).toBeLessThanOrEqual(l.plot.x + l.plot.width);
+      expect(g.y - ANNOTATION_SIZE).toBeGreaterThanOrEqual(l.plot.y);
+    }
+  });
+
+  it('leaves the layout unchanged without annotations', () => {
+    const series = resolveSeries('bar', [s('x', [10, 40, 20, 5])], 4).series;
+    const plain = layout({ type: 'bar', series, valueLabels: true });
+    const empty = layout({ type: 'bar', series, valueLabels: true, annotations: [] });
+    expect(plain.annotations).toEqual([]);
+    expect(empty.plot).toEqual(plain.plot);
+    expect(empty.yTicks).toEqual(plain.yTicks);
+    // An annotation does move the scale: the room is reserved only when one exists.
+    const withOne = annotated('line', [s('x', [10, 40, 20, 5])], [up('b')]);
+    const without = layout({
+      type: 'line',
+      series: resolveSeries('line', [s('x', [10, 40, 20, 5])], 4).series,
+    });
+    expect(withOne.marks[0].points[1]!.y).toBeGreaterThan(without.marks[0].points[1]!.y);
   });
 });

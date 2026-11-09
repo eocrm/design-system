@@ -108,6 +108,20 @@
   stroke-width: 1px;
 }
 
+.referenceLine {
+  stroke: var(--chart-series-color, var(--chart-reference-color));
+  stroke-width: var(--chart-reference-width);
+  stroke-dasharray: var(--chart-reference-dash-0);
+
+  &[data-dash='1'] {
+    stroke-dasharray: var(--chart-reference-dash-1);
+  }
+
+  &[data-dash='2'] {
+    stroke-dasharray: var(--chart-reference-dash-2);
+  }
+}
+
 .markerLine {
   stroke: var(--chart-marker-color);
   stroke-width: 1px;
@@ -147,6 +161,23 @@
   fill: var(--chart-value-label-fg);
   font-size: var(--chart-value-label-size);
   pointer-events: none;
+}
+
+.annotation {
+  fill: var(--chart-annotation-neutral);
+  pointer-events: none;
+
+  &[data-tone='success'] {
+    fill: var(--chart-annotation-success);
+  }
+
+  &[data-tone='danger'] {
+    fill: var(--chart-annotation-danger);
+  }
+
+  &[data-tone='warning'] {
+    fill: var(--chart-annotation-warning);
+  }
 }
 
 .crosshair {

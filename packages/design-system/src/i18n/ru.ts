@@ -493,6 +493,7 @@ export const ru: Messages = {
     category: 'Категория',
     noData: 'Нет данных',
     markers: 'Отметки',
+    notes: 'Заметки',
     details: 'Подробности',
     rangeHint: 'Shift+стрелки выделяют диапазон.',
     zoomHint: 'Плюс и минус увеличивают и уменьшают масштаб.',

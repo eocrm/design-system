@@ -1,5 +1,8 @@
 export { Chart } from './Chart';
 export type {
+  ChartAnnotation,
+  ChartAnnotationGlyph,
+  ChartAnnotationTone,
   ChartCurve,
   ChartMarker,
   ChartMarkerLabelPlacement,
@@ -7,6 +10,7 @@ export type {
   ChartPlotPointerEvent,
   ChartProps,
   ChartRange,
+  ChartReferenceLine,
   ChartSeries,
   ChartSeriesColor,
   ChartType,
