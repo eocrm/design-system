@@ -206,4 +206,73 @@ describe('DonutChart', () => {
     );
     expect(warn).toHaveBeenCalledTimes(1);
   });
+  it('describes the ring with the activate hint only when segments are activatable', () => {
+    const hint = 'Press Enter to open the selected segment.';
+    const { unmount } = renderDonut();
+    expect(plot()).not.toHaveAccessibleDescription(expect.stringContaining(hint));
+    unmount();
+    renderDonut({ onSegmentClick: vi.fn() });
+    expect(plot()).toHaveAccessibleDescription(expect.stringContaining(hint));
+  });
+
+  it('hides static legend entries from screen readers (the table is their copy)', () => {
+    const segs = [...segments, { key: 'none', label: 'Cancelled', value: 0 }];
+    const { unmount } = renderDonut({ segments: segs });
+    for (const s of segs) {
+      expect(
+        screen.getByText(s.label, { selector: 'ul span' }).closest('[aria-hidden]'),
+      ).not.toBeNull();
+    }
+    unmount();
+    renderDonut({ segments: segs, onSegmentClick: vi.fn() });
+    expect(
+      screen.getByText('Cancelled', { selector: 'ul span' }).closest('[aria-hidden]'),
+    ).not.toBeNull();
+    expect(screen.getByRole('button', { name: /^To do/ }).closest('[aria-hidden]')).toBeNull();
+  });
+
+  it('keeps the keyboard segment as the Enter/Space target while another is hovered', async () => {
+    const onSegmentClick = vi.fn();
+    renderDonut({ onSegmentClick });
+    plot().focus();
+    fireEvent.keyDown(plot(), { key: 'ArrowRight' }); // todo
+    fireEvent.pointerEnter(arcs()[2], { pointerType: 'mouse' });
+    expect(activeKey()).toBe('done'); // hover shows
+    expect(centerValue()).toBe('30');
+    await wait();
+    expect(live()).toHaveTextContent('To do: 12, 25.5%'); // announcement unchanged
+    fireEvent.keyDown(plot(), { key: 'Enter' });
+    expect(onSegmentClick).toHaveBeenLastCalledWith(segments[0]);
+    fireEvent.keyDown(plot(), { key: ' ' });
+    expect(onSegmentClick).toHaveBeenCalledTimes(2);
+    expect(onSegmentClick).toHaveBeenLastCalledWith(segments[0]);
+    // Pointer leave clears only the hover: the keyboard segment shows again and roving continues from it.
+    fireEvent.pointerLeave(plot(), { pointerType: 'mouse' });
+    expect(activeKey()).toBe('todo');
+    fireEvent.keyDown(plot(), { key: 'ArrowRight' });
+    expect(activeKey()).toBe('doing');
+  });
+
+  it('pointer leave clears a hover', () => {
+    renderDonut();
+    fireEvent.pointerEnter(arcs()[1], { pointerType: 'mouse' });
+    expect(activeKey()).toBe('doing');
+    fireEvent.pointerLeave(plot(), { pointerType: 'mouse' });
+    expect(activeKey()).toBeUndefined();
+    expect(centerValue()).toBe('47');
+  });
+
+  it('keeps the active segment by key when segments are reordered', () => {
+    const { rerender } = renderDonut();
+    fireEvent.keyDown(plot(), { key: 'ArrowRight' });
+    fireEvent.keyDown(plot(), { key: 'ArrowRight' });
+    expect(activeKey()).toBe('doing');
+    rerender(
+      <LocaleProvider locale="en-GB">
+        <DonutChart {...base} segments={[segments[1], segments[0], segments[2]]} />
+      </LocaleProvider>,
+    );
+    expect(activeKey()).toBe('doing');
+    expect(centerValue()).toBe('5');
+  });
 });

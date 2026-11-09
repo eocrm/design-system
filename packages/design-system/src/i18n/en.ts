@@ -510,6 +510,7 @@ export const en: Messages = {
   },
   donutChart: {
     keyboardHint: 'Use arrow keys to inspect segments. The data table lists every value.',
+    activateHint: 'Press Enter to open the selected segment.',
     total: 'Total',
     segment: 'Segment',
     value: 'Value',

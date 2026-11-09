@@ -960,6 +960,8 @@ export interface Messages {
   donutChart: {
     /** Accessible description of the focusable ring (its name is the chart label); says arrow keys inspect segments and that the data table lists every value. */
     keyboardHint: string;
+    /** Appended to the ring's description when segments are activatable (`onSegmentClick`): says Enter opens the inspected segment. */
+    activateHint: string;
     /** Default centre caption under the total when `centerLabel` is not given. */
     total: string;
     /** Header of the data table's segment column. */

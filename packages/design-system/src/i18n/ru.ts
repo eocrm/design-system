@@ -519,6 +519,7 @@ export const ru: Messages = {
   donutChart: {
     keyboardHint:
       'Используйте стрелки для просмотра сегментов. Все значения есть в таблице данных.',
+    activateHint: 'Нажмите Enter, чтобы открыть выбранный сегмент.',
     total: 'Всего',
     segment: 'Сегмент',
     value: 'Значение',

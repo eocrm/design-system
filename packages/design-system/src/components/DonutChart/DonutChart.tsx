@@ -71,8 +71,6 @@ function readPx(el: Element | null, name: string, fallback: number) {
 const slotStyle = (slot: number) =>
   ({ '--chart-series-color': `var(--chart-series-${slot})` }) as CSSProperties;
 
-type Source = 'pointer' | 'keyboard' | 'focus';
-
 /**
  * Ring of the parts of one whole, with the total in the centre and a legend of values and shares.
  * @see docs/components/DonutChart.md
@@ -118,6 +116,7 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
   }, [donut.overflow]);
 
   const hintId = useId();
+  const activateHintId = useId();
   const footnoteId = useId();
   const hasFootnote = footnote != null && footnote !== false && footnote !== '';
   const footnoteEl = hasFootnote && (
@@ -134,70 +133,74 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
   // padAngle * padRadius (d3's default sqrt(inner² + outer²)) is the gap's width in px.
   const padAngle = outer > 0 ? gap / Math.hypot(inner, outer) : 0;
 
-  const [active, setActive] = useState<number | null>(null);
-  const [source, setSource] = useState<Source | null>(null);
-  // Segments changed under the active index (gone or no longer drawn): drop it during render.
-  if (active !== null && !resolved[active]?.drawn) {
-    setActive(null);
-    setSource(null);
-  }
-  const current = active !== null && resolved[active]?.drawn ? resolved[active] : null;
-  const inspect = (index: number | null, from: Source | null) => {
-    setActive(index);
-    setSource(index === null ? null : from);
-  };
+  // Two independent inspections, tracked by key so a reorder can't move them: the keyboard's (the
+  // roving position, the Enter/Space target and the announcement) and a hover or legend focus, which
+  // only overrides what the ring shows while it lasts.
+  const [kbKey, setKbKey] = useState<string | null>(null);
+  const [hover, setHover] = useState<{ key: string; from: 'pointer' | 'focus' } | null>(null);
+  const indexOf = (key: string | null) =>
+    key === null ? -1 : resolved.findIndex((s) => s.drawn && s.segment.key === key);
+  // A key that is gone or no longer drawn: drop it during render, or regrowing would revive it.
+  if (kbKey !== null && indexOf(kbKey) < 0) setKbKey(null);
+  if (hover !== null && indexOf(hover.key) < 0) setHover(null);
+  const kbIndex = indexOf(kbKey);
+  const shownIndex = hover ? indexOf(hover.key) : kbIndex;
+  const current = shownIndex >= 0 ? resolved[shownIndex] : null;
+  const kbSegment = kbIndex >= 0 ? resolved[kbIndex] : null;
   const clickable = onSegmentClick !== undefined;
-  const drawnIdx = resolved.flatMap((s, i) => (s.drawn ? [i] : []));
+  const drawnKeys = resolved.flatMap((s) => (s.drawn ? [s.segment.key] : []));
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const pos = active === null ? -1 : drawnIdx.indexOf(active);
-    const m = drawnIdx.length;
-    let next: number | null;
+    const pos = kbKey === null ? -1 : drawnKeys.indexOf(kbKey);
+    const m = drawnKeys.length;
+    let next: string | null;
     switch (e.key) {
       case 'ArrowRight':
       case 'ArrowDown':
-        next = drawnIdx[(pos + 1) % m];
+        next = drawnKeys[(pos + 1) % m];
         break;
       case 'ArrowLeft':
       case 'ArrowUp':
-        next = drawnIdx[pos < 0 ? m - 1 : (pos - 1 + m) % m];
+        next = drawnKeys[pos < 0 ? m - 1 : (pos - 1 + m) % m];
         break;
       case 'Home':
-        next = drawnIdx[0];
+        next = drawnKeys[0];
         break;
       case 'End':
-        next = drawnIdx[m - 1];
+        next = drawnKeys[m - 1];
         break;
       case 'Enter':
       case ' ':
-        if (!current || !onSegmentClick) return;
+        if (!kbSegment || !onSegmentClick) return;
         e.preventDefault();
-        onSegmentClick(current.segment);
+        onSegmentClick(kbSegment.segment);
         return;
       case 'Escape':
-        if (active === null) return; // let a surrounding dialog close
+        if (kbKey === null && hover === null) return; // let a surrounding dialog close
+        setHover(null);
         next = null;
         break;
       default:
         return;
     }
     e.preventDefault();
-    inspect(next, 'keyboard');
+    setKbKey(next);
   };
 
   // A tap leaves the tooltip open (touch fires pointerleave right after pointerup); dismiss it on
   // the next press outside the ring, as Chart does.
-  const pointerActive = source === 'pointer' && active !== null;
+  const pointerActive = hover?.from === 'pointer';
   useEffect(() => {
     if (!pointerActive || !plotEl) return;
     const dismiss = (e: Event) => {
       if (e.composedPath().includes(plotEl)) return;
-      setActive(null);
-      setSource(null);
+      setHover(null);
     };
     document.addEventListener('pointerdown', dismiss, true);
     return () => document.removeEventListener('pointerdown', dismiss, true);
   }, [pointerActive, plotEl]);
+  const hoverOn = (key: string) => setHover({ key, from: 'pointer' });
+  const clearPointer = () => setHover((h) => (h?.from === 'pointer' ? null : h));
 
   const pct = (share: number) => percent.format(share);
   const summary = (i: number) =>
@@ -231,7 +234,7 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
   }
 
   const centerValue = formatValue(current ? current.value : donut.total);
-  const liveText = source === 'keyboard' && active !== null && current ? summary(active) : '';
+  const liveText = kbIndex >= 0 ? summary(kbIndex) : '';
 
   return (
     <figure
@@ -244,21 +247,24 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
       className={clsx(styles.root, className)}
     >
       <VisuallyHidden id={hintId}>{t('donutChart.keyboardHint')}</VisuallyHidden>
+      {clickable && (
+        <VisuallyHidden id={activateHintId}>{t('donutChart.activateHint')}</VisuallyHidden>
+      )}
       <div className={styles.body}>
         <div
           ref={setPlotEl}
           className={styles.plot}
           role="group"
           aria-label={label}
-          aria-describedby={[hintId, hasFootnote && footnoteId].filter(Boolean).join(' ')}
+          aria-describedby={[hintId, clickable && activateHintId, hasFootnote && footnoteId]
+            .filter(Boolean)
+            .join(' ')}
           tabIndex={0}
           data-clickable={clickable || undefined}
           onKeyDown={onKeyDown}
-          onBlur={() => source === 'keyboard' && inspect(null, null)}
+          onBlur={() => setKbKey(null)}
           // Touch fires pointerleave right after pointerup; keep the tapped tooltip (an outside press clears it).
-          onPointerLeave={(e) =>
-            e.pointerType !== 'touch' && source === 'pointer' && inspect(null, null)
-          }
+          onPointerLeave={(e) => e.pointerType !== 'touch' && clearPointer()}
         >
           {outer > 0 && (
             <svg
@@ -280,9 +286,9 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
                       d={donutArcPath(s.start, s.end, outer, inner, padAngle)}
                       data-segment={s.segment.key}
                       data-slot={s.slot}
-                      data-active={active === i ? '' : undefined}
-                      onPointerEnter={() => inspect(i, 'pointer')}
-                      onPointerDown={() => inspect(i, 'pointer')}
+                      data-active={shownIndex === i ? '' : undefined}
+                      onPointerEnter={() => hoverOn(s.segment.key)}
+                      onPointerDown={() => hoverOn(s.segment.key)}
                       onClick={onSegmentClick && (() => onSegmentClick(s.segment))}
                     />
                   ),
@@ -334,7 +340,7 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
                 key={s.segment.key}
                 className={styles.legendEntry}
                 data-legend={s.segment.key}
-                data-dimmed={current && active !== i ? '' : undefined}
+                data-dimmed={current && shownIndex !== i ? '' : undefined}
               >
                 {onSegmentClick && s.drawn ? (
                   <button
@@ -344,17 +350,17 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
                     aria-label={summary(i)}
                     onClick={() => onSegmentClick(s.segment)}
                     // Pointer events, not mouse: touch emulates mouseenter but never mouseleave.
-                    onPointerEnter={(e) => e.pointerType !== 'touch' && inspect(i, 'pointer')}
-                    onPointerLeave={(e) =>
-                      e.pointerType !== 'touch' && source === 'pointer' && inspect(null, null)
-                    }
-                    onFocus={() => inspect(i, 'focus')}
-                    onBlur={() => source === 'focus' && inspect(null, null)}
+                    onPointerEnter={(e) => e.pointerType !== 'touch' && hoverOn(s.segment.key)}
+                    onPointerLeave={(e) => e.pointerType !== 'touch' && clearPointer()}
+                    // Focus needs no announcement: the button's name already says it.
+                    onFocus={() => setHover({ key: s.segment.key, from: 'focus' })}
+                    onBlur={() => setHover((h) => (h?.from === 'focus' ? null : h))}
                   >
                     {content}
                   </button>
                 ) : (
-                  <span className={styles.legendItem} style={slotStyle(s.slot)}>
+                  // aria-hidden: the hidden data table is the screen reader's copy.
+                  <span className={styles.legendItem} style={slotStyle(s.slot)} aria-hidden="true">
                     {content}
                   </span>
                 )}
