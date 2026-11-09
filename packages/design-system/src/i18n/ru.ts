@@ -495,6 +495,7 @@ export const ru: Messages = {
     markers: 'Отметки',
     details: 'Подробности',
     rangeHint: 'Shift+стрелки выделяют диапазон.',
+    zoomHint: 'Плюс и минус увеличивают и уменьшают масштаб.',
     zoomToSelection: 'Увеличить выделенное',
     resetZoom: 'Сбросить масштаб',
     selected: ({ from, to }) => `Выделено: ${from as string} — ${to as string}`,

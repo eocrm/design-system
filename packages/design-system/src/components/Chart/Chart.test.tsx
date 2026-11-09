@@ -666,6 +666,75 @@ describe('markers', () => {
   });
 });
 
+describe('marker colour, icon and top labels (DS-47)', () => {
+  const lineY = (c: HTMLElement) =>
+    Number(c.querySelector('line[class*="markerLine"]')!.getAttribute('y1'));
+
+  it('keeps the plot top unchanged without icons or top labels; a gutter row pushes it down', () => {
+    const layout = stubLayout();
+    const { container, rerender } = render(
+      <Chart {...base} markers={[{ key: 'l', label: 'Launch', at: 'W2' }]} />,
+    );
+    layout.fire();
+    expect(lineY(container)).toBe(8);
+    rerender(<Chart {...base} markers={[{ key: 'l', label: 'Launch', at: 'W2', icon: '🐱' }]} />);
+    expect(lineY(container)).toBe(20);
+    rerender(
+      <Chart
+        {...base}
+        markers={[{ key: 'l', label: 'Launch', at: 'W2', icon: '🐱', labelPlacement: 'top' }]}
+      />,
+    );
+    expect(lineY(container)).toBe(32);
+  });
+
+  it('colours a marker with its palette slot', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart
+        {...base}
+        markers={[
+          { key: 'l', at: 'W2', color: 2 },
+          { key: 'b', from: 'W1', to: 'W1', color: 3 },
+        ]}
+      />,
+    );
+    layout.fire();
+    const line = container.querySelector('line[class*="markerLine"]') as SVGElement;
+    expect(line).toHaveAttribute('data-slot', '2');
+    expect(line.style.getPropertyValue('--chart-series-color')).toBe('var(--chart-series-2)');
+    expect(container.querySelector('rect[class*="markerBand"]')).toHaveAttribute('data-slot', '3');
+  });
+
+  it('draws the icon as decorative text, kept out of the table and tooltip', async () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart {...base} markers={[{ key: 'f', label: 'Fed', at: 'W2', icon: '🐱' }]} />,
+    );
+    layout.fire();
+    const icon = [...container.querySelectorAll('[class*="markerLabels"] text')].find(
+      (t) => t.textContent === '🐱',
+    );
+    expect(icon).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByRole('table')).not.toHaveTextContent('🐱');
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    const tip = document.querySelector('[data-chart-tooltip]')!;
+    await waitFor(() => expect(tip).toHaveTextContent('Fed'));
+    expect(tip).not.toHaveTextContent('🐱');
+  });
+
+  it('compact charts draw no icons and reserve no gutter', () => {
+    const layout = stubLayout(400, 100);
+    const { container } = render(
+      <Chart {...base} markers={[{ key: 'f', label: 'Fed', at: 'W2', icon: '🐱' }]} />,
+    );
+    layout.fire();
+    expect(container).not.toHaveTextContent('🐱');
+    expect(lineY(container)).toBe(8);
+  });
+});
+
 it('inspection markers paint after every series, so a later stacked area cannot cover them', async () => {
   const layout = stubLayout();
   const { container } = render(
@@ -1232,6 +1301,628 @@ describe('range selection and zoom', () => {
     render(<Chart {...sel} onSelectedRangeChange={() => {}} />);
     expect(plotOf()).toHaveAccessibleDescription(
       'Use arrow keys to inspect values. All values are also in the data table. Shift+arrows select a range.',
+    );
+  });
+});
+
+describe('viewport (DS-48)', () => {
+  const cats = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'];
+  const vp: ChartProps = {
+    ...base,
+    type: 'bar',
+    categories: cats,
+    series: [{ key: 'won', label: 'Deals won', values: [1, 2, 3, 4, 5, 6, 7, 8] }],
+  };
+  const plotOf = () => screen.getByRole('group', { name: 'Deals won per week' });
+  const reset = () => screen.queryByRole('button', { name: 'Reset zoom' });
+
+  it('clips marks, markers, selection and value labels to the plot and says zoomed', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart
+        {...vp}
+        valueLabels
+        markers={[{ key: 'm', at: 'c5', label: 'Launch' }]}
+        defaultSelectedRange={{ from: 'c4', to: 'c5' }}
+        defaultViewport={{ from: 0.5, to: 1 }}
+      />,
+    );
+    layout.fire();
+    const clip = container.querySelector('clipPath');
+    expect(clip).not.toBeNull();
+    const url = `url(#${clip!.id})`;
+    const clipped = (el: Element | null) =>
+      expect(el?.closest('[clip-path]')?.getAttribute('clip-path')).toBe(url);
+    clipped(container.querySelector('[data-series="won"]'));
+    clipped(container.querySelector('[data-selection]'));
+    clipped(container.querySelector('[data-value-label]'));
+    clipped(container.querySelector('line[data-tone]'));
+    expect(plotOf()).toHaveAccessibleDescription(/^Zoomed to c4–c7\. Selected c4 to c5\./);
+  });
+
+  it('draws no clipPath without a viewport', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...vp} />);
+    layout.fire();
+    expect(container.querySelector('clipPath')).toBeNull();
+  });
+
+  it('keeps every category of the domain in the data table', () => {
+    const layout = stubLayout();
+    render(<Chart {...vp} defaultViewport={{ from: 0.5, to: 1 }} />);
+    layout.fire();
+    const table = screen.getByRole('table', { name: 'Deals won per week' });
+    for (const c of cats) expect(within(table).getByRole('rowheader', { name: c })).toBeTruthy();
+  });
+
+  it('Reset zoom shows for a viewport alone and clears only what is set', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const onZoom = vi.fn();
+    const { unmount } = render(
+      <Chart
+        {...vp}
+        defaultViewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+        onZoomRangeChange={onZoom}
+      />,
+    );
+    layout.fire();
+    await userEvent.click(reset()!);
+    expect(onViewport).toHaveBeenCalledWith(null, { end: true });
+    expect(onZoom).not.toHaveBeenCalled();
+    expect(reset()).toBeNull();
+    unmount();
+
+    onViewport.mockClear();
+    render(
+      <Chart
+        {...vp}
+        defaultZoomRange={{ from: 'c2', to: 'c7' }}
+        defaultViewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+        onZoomRangeChange={onZoom}
+      />,
+    );
+    layout.fire();
+    await userEvent.click(reset()!);
+    expect(onZoom).toHaveBeenCalledWith(null);
+    expect(onViewport).toHaveBeenCalledTimes(1);
+    expect(onViewport).toHaveBeenCalledWith(null, { end: true });
+  });
+
+  it('a zoomRange change resets a non-null viewport', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { rerender } = render(
+      <Chart {...vp} viewport={{ from: 0.5, to: 1 }} onViewportChange={onViewport} />,
+    );
+    layout.fire();
+    rerender(
+      <Chart
+        {...vp}
+        zoomRange={{ from: 'c1', to: 'c5' }}
+        viewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    expect(onViewport).toHaveBeenCalledWith(null, { end: true });
+  });
+
+  it('Zoom to selection resets an uncontrolled viewport', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    render(
+      <Chart
+        {...vp}
+        defaultSelectedRange={{ from: 'c5', to: 'c6' }}
+        defaultViewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    layout.fire();
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom to selection' }));
+    expect(onViewport).toHaveBeenCalledWith(null, { end: true });
+    expect(plotOf()).toHaveAccessibleDescription(/^Zoomed to c5–c6\./);
+  });
+
+  it('an uncontrolled viewport resets silently when the categories change content', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { rerender } = render(
+      <Chart {...vp} defaultViewport={{ from: 0.5, to: 1 }} onViewportChange={onViewport} />,
+    );
+    layout.fire();
+    rerender(
+      <Chart
+        {...vp}
+        categories={[...cats]}
+        defaultViewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    expect(reset()).not.toBeNull();
+    rerender(
+      <Chart
+        {...vp}
+        categories={cats.map((c) => `${c}!`)}
+        defaultViewport={{ from: 0.5, to: 1 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    expect(reset()).toBeNull();
+    expect(onViewport).not.toHaveBeenCalled();
+  });
+
+  it('keeps defaultViewport when the first categories arrive after loading', () => {
+    const layout = stubLayout();
+    const { rerender } = render(
+      <Chart {...vp} categories={[]} series={[]} defaultViewport={{ from: 0.5, to: 1 }} />,
+    );
+    layout.fire();
+    rerender(<Chart {...vp} defaultViewport={{ from: 0.5, to: 1 }} />);
+    expect(reset()).not.toBeNull();
+    expect(plotOf()).toHaveAccessibleDescription(/^Zoomed to c4–c7\./);
+  });
+
+  it('keyboard zoom announces the new window in the live region', async () => {
+    const layout = stubLayout();
+    render(<Chart {...vp} zoomGestures />);
+    layout.fire();
+    plotOf().focus();
+    const live = document.querySelector('[aria-live="polite"]')!;
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}+');
+    await waitFor(() => expect(live).toHaveTextContent('Zoomed to c1–c5'));
+    await userEvent.keyboard('-');
+    await waitFor(() => expect(live).toHaveTextContent('Zoomed to c0–c7'));
+  });
+
+  it('keyboard zoom that changes nothing announces nothing', async () => {
+    const layout = stubLayout();
+    const { unmount } = render(<Chart {...vp} zoomGestures />);
+    layout.fire();
+    plotOf().focus();
+    const quiet = async () => {
+      await userEvent.keyboard(key);
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, PAST_ANNOUNCE_DELAY_MS));
+      });
+      expect(document.querySelector('[aria-live="polite"]')).toBeEmptyDOMElement();
+    };
+    let key = '-'; // already at full extent
+    await quiet();
+    unmount();
+    // Already at the minimum span (2 of 8 categories).
+    const at = render(<Chart {...vp} zoomGestures defaultViewport={{ from: 0, to: 0.25 }} />);
+    layout.fire();
+    plotOf().focus();
+    key = '+';
+    await quiet();
+    at.unmount();
+    // Controlled, and the app keeps its window: what is rendered did not change.
+    render(<Chart {...vp} zoomGestures viewport={null} onViewportChange={() => {}} />);
+    layout.fire();
+    plotOf().focus();
+    await quiet();
+  });
+
+  it('another viewport change clears the keyboard zoom note, so the same text is heard again', async () => {
+    const layout = stubLayout();
+    render(<Chart {...vp} zoomGestures />);
+    layout.fire();
+    plotOf().focus();
+    const live = document.querySelector('[aria-live="polite"]')!;
+    await userEvent.keyboard('+');
+    await waitFor(() => expect(live).toHaveTextContent('Zoomed to c2–c5'));
+    await userEvent.click(reset()!);
+    await waitFor(() => expect(live).not.toHaveTextContent('Zoomed'));
+    plotOf().focus();
+    await userEvent.keyboard('+');
+    await waitFor(() => expect(live).toHaveTextContent('Zoomed to c2–c5'));
+  });
+
+  it('keyboard: +/= and - zoom around the inspected category', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    render(<Chart {...vp} zoomGestures onViewportChange={onViewport} />);
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}');
+    await userEvent.keyboard('+');
+    // c2's centre (2.5 / 8) stays put while the span halves.
+    const [zoomed, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: true });
+    expect(zoomed.from).toBeCloseTo(0.15625);
+    expect(zoomed.to).toBeCloseTo(0.65625);
+    await userEvent.keyboard('-');
+    expect(onViewport).toHaveBeenLastCalledWith(null, { end: true });
+    await userEvent.keyboard('=');
+    expect(onViewport.mock.lastCall![0]).not.toBeNull();
+  });
+
+  it('keyboard: inspecting past the right edge pans the window', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    render(
+      <Chart
+        {...vp}
+        zoomGestures
+        defaultViewport={{ from: 0, to: 0.25 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    expect(onViewport).not.toHaveBeenCalled();
+    await userEvent.keyboard('{ArrowRight}');
+    const [next, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: true });
+    expect(next.from).toBeCloseTo(0.125);
+    expect(next.to).toBeCloseTo(0.375);
+  });
+
+  it('keyboard zoom keys are off without zoomGestures; inspection still pans the window', async () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    render(<Chart {...vp} defaultViewport={{ from: 0, to: 0.25 }} onViewportChange={onViewport} />);
+    layout.fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}+-=');
+    expect(onViewport).not.toHaveBeenCalled();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    const [next, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: true });
+    expect(next.from).toBeCloseTo(0.125);
+    expect(next.to).toBeCloseTo(0.375);
+    expect(plotOf()).toHaveAccessibleDescription(/^Zoomed to c1–c2\./);
+  });
+
+  it('renders no NaN while loading or with one category', () => {
+    const layout = stubLayout();
+    const noNaN = (container: HTMLElement) => {
+      for (const el of container.querySelectorAll('svg *'))
+        for (const a of el.attributes) expect(`${a.name}=${a.value}`).not.toContain('NaN');
+    };
+    const { container, rerender } = render(
+      <Chart {...vp} categories={[]} series={[]} viewport={{ from: 0.5, to: 1 }} />,
+    );
+    layout.fire();
+    noNaN(container);
+    rerender(
+      <Chart
+        {...vp}
+        categories={['only']}
+        series={[{ key: 'won', label: 'Deals won', values: [3] }]}
+        viewport={{ from: 0.5, to: 1 }}
+      />,
+    );
+    expect(container.querySelector('svg')).not.toBeNull();
+    noNaN(container);
+  });
+});
+
+describe('gestures and plot double-click (DS-48)', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+  const cats = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'];
+  const vp: ChartProps = {
+    ...base,
+    type: 'bar',
+    categories: cats,
+    series: [{ key: 'won', label: 'Deals won', values: [1, 2, 3, 4, 5, 6, 7, 8] }],
+  };
+  const plotOf = () => screen.getByRole('group', { name: 'Deals won per week' });
+  const xOf = (container: HTMLElement, category: string) =>
+    Number(
+      [...container.querySelectorAll('svg text')]
+        .find((t) => t.textContent === category)!
+        .getAttribute('x'),
+    );
+  // Middle of the plot, from a grid line's ends.
+  const centreOf = (container: HTMLElement) => {
+    const line = container.querySelector('svg line')!;
+    return (Number(line.getAttribute('x1')) + Number(line.getAttribute('x2'))) / 2;
+  };
+  /** Dispatches a cancelable touch event; returns true when it was cancelled. */
+  const touch = (type: string, points: { x: number; y: number }[]) => {
+    const e = new Event(type, { bubbles: true, cancelable: true });
+    const list = points.map((p) => ({ clientX: p.x, clientY: p.y }));
+    Object.defineProperty(e, 'touches', { value: list });
+    act(() => {
+      plotOf().dispatchEvent(e);
+    });
+    return e.defaultPrevented;
+  };
+  const span = (v: { from: number; to: number }) => v.to - v.from;
+
+  it('ctrl+wheel zooms around the pointer, then settles with end after WHEEL_END_MS', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { container } = render(<Chart {...vp} zoomGestures onViewportChange={onViewport} />);
+    layout.fire();
+    const notCancelled = fireEvent.wheel(plotOf(), {
+      ctrlKey: true,
+      deltaY: -100,
+      clientX: centreOf(container),
+    });
+    expect(notCancelled).toBe(false);
+    const [next, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: false });
+    expect(span(next)).toBeLessThan(1);
+    expect((next.from + next.to) / 2).toBeCloseTo(0.5, 2);
+    act(() => vi.advanceTimersByTime(200));
+    expect(onViewport).toHaveBeenCalledTimes(2);
+    expect(onViewport).toHaveBeenLastCalledWith(next, { end: true });
+  });
+
+  it('plain wheel scrolls the page; shift or horizontal wheel pans while zoomed', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { container } = render(
+      <Chart
+        {...vp}
+        zoomGestures
+        defaultViewport={{ from: 0.25, to: 0.5 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    layout.fire();
+    const x = centreOf(container);
+    expect(fireEvent.wheel(plotOf(), { deltaY: 100, clientX: x })).toBe(true);
+    expect(onViewport).not.toHaveBeenCalled();
+    expect(fireEvent.wheel(plotOf(), { shiftKey: true, deltaY: 100, clientX: x })).toBe(false);
+    expect(onViewport.mock.lastCall![0].from).toBeGreaterThan(0.25);
+    onViewport.mockClear();
+    fireEvent.wheel(plotOf(), { deltaX: -100, deltaY: 1, clientX: x });
+    expect(onViewport.mock.lastCall![0].from).toBeLessThan(0.25 + 0.01);
+    expect(span(onViewport.mock.lastCall![0])).toBeCloseTo(0.25);
+  });
+
+  it('ctrl+wheel does nothing without zoomGestures', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { container } = render(<Chart {...vp} onViewportChange={onViewport} />);
+    layout.fire();
+    expect(
+      fireEvent.wheel(plotOf(), { ctrlKey: true, deltaY: -100, clientX: centreOf(container) }),
+    ).toBe(true);
+    act(() => vi.advanceTimersByTime(500));
+    expect(onViewport).not.toHaveBeenCalled();
+  });
+
+  it('a controlled viewport without onViewportChange stays put', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...vp} zoomGestures viewport={{ from: 0, to: 0.5 }} />);
+    layout.fire();
+    const before = xOf(container, 'c1');
+    fireEvent.wheel(plotOf(), { ctrlKey: true, deltaY: -300, clientX: centreOf(container) });
+    act(() => vi.advanceTimersByTime(500));
+    expect(xOf(container, 'c1')).toBe(before);
+  });
+
+  it('touch: a two-finger pinch zooms and ends on the last lift', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { container } = render(<Chart {...vp} zoomGestures onViewportChange={onViewport} />);
+    layout.fire();
+    const c = centreOf(container);
+    touch('touchstart', [
+      { x: c - 20, y: 100 },
+      { x: c + 20, y: 100 },
+    ]);
+    expect(
+      touch('touchmove', [
+        { x: c - 60, y: 100 },
+        { x: c + 60, y: 100 },
+      ]),
+    ).toBe(true);
+    const [zoomed, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: false });
+    expect(span(zoomed)).toBeLessThan(0.5);
+    touch('touchend', [{ x: c + 60, y: 100 }]);
+    expect(onViewport.mock.lastCall![1]).toEqual({ end: false });
+    touch('touchend', []);
+    expect(onViewport).toHaveBeenLastCalledWith(zoomed, { end: true });
+  });
+
+  it('touch: one-finger horizontal pan while zoomed; vertical swipe is left to the page', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const { container } = render(
+      <Chart
+        {...vp}
+        zoomGestures
+        defaultViewport={{ from: 0.25, to: 0.5 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    layout.fire();
+    const c = centreOf(container);
+    touch('touchstart', [{ x: c, y: 100 }]);
+    expect(touch('touchmove', [{ x: c, y: 140 }])).toBe(false);
+    touch('touchmove', [{ x: c - 60, y: 140 }]);
+    touch('touchend', []);
+    expect(onViewport).not.toHaveBeenCalled();
+
+    touch('touchstart', [{ x: c, y: 100 }]);
+    expect(touch('touchmove', [{ x: c - 60, y: 102 }])).toBe(true);
+    expect(onViewport.mock.lastCall![0].from).toBeGreaterThan(0.25);
+    touch('touchend', []);
+    expect(onViewport.mock.lastCall![1]).toEqual({ end: true });
+  });
+
+  it('touch: a lifted long-press keeps the touch; a pinch first cancels the pending long-press', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const onSelect = vi.fn();
+    const { container } = render(
+      <Chart {...vp} zoomGestures onViewportChange={onViewport} onSelectedRangeChange={onSelect} />,
+    );
+    layout.fire();
+    const c = centreOf(container);
+    const finger = { pointerId: 5, pointerType: 'touch', clientX: c, clientY: 100 };
+    const pinch = () => {
+      touch('touchstart', [
+        { x: c, y: 100 },
+        { x: c + 40, y: 100 },
+      ]);
+      touch('touchmove', [
+        { x: c - 40, y: 100 },
+        { x: c + 80, y: 100 },
+      ]);
+      touch('touchend', []);
+    };
+    fireEvent.pointerDown(plotOf(), finger);
+    act(() => vi.advanceTimersByTime(300));
+    pinch();
+    fireEvent.pointerUp(plotOf(), finger);
+    expect(onViewport).not.toHaveBeenCalled();
+    expect(onSelect).toHaveBeenCalledTimes(1);
+
+    fireEvent.pointerDown(plotOf(), finger);
+    pinch();
+    act(() => vi.advanceTimersByTime(300));
+    fireEvent.pointerUp(plotOf(), finger);
+    expect(onViewport).toHaveBeenCalled();
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('mouse drag pans while zoomed when selection is off; selects when it is on', () => {
+    const layout = stubLayout();
+    const onViewport = vi.fn();
+    const mouse = { pointerId: 1, pointerType: 'mouse', button: 0 };
+    const { container, unmount } = render(
+      <Chart
+        {...vp}
+        zoomGestures
+        defaultViewport={{ from: 0.25, to: 0.5 }}
+        onViewportChange={onViewport}
+      />,
+    );
+    layout.fire();
+    const c = centreOf(container);
+    fireEvent.pointerDown(plotOf(), { ...mouse, clientX: c });
+    fireEvent.pointerMove(plotOf(), { ...mouse, clientX: c - 50 });
+    const [next, info] = onViewport.mock.lastCall!;
+    expect(info).toEqual({ end: false });
+    expect(next.from).toBeGreaterThan(0.25);
+    fireEvent.pointerUp(plotOf(), { ...mouse, clientX: c - 50 });
+    expect(onViewport).toHaveBeenLastCalledWith(next, { end: true });
+    unmount();
+
+    onViewport.mockClear();
+    const onSelect = vi.fn();
+    const r = render(
+      <Chart
+        {...vp}
+        zoomGestures
+        defaultViewport={{ from: 0.25, to: 0.5 }}
+        onViewportChange={onViewport}
+        onSelectedRangeChange={onSelect}
+      />,
+    );
+    layout.fire();
+    const x2 = xOf(r.container, 'c2');
+    const x3 = xOf(r.container, 'c3');
+    fireEvent.pointerDown(plotOf(), { ...mouse, clientX: x2 });
+    fireEvent.pointerMove(plotOf(), { ...mouse, clientX: x3 });
+    fireEvent.pointerUp(plotOf(), { ...mouse, clientX: x3 });
+    expect(onSelect).toHaveBeenLastCalledWith({ from: 'c2', to: 'c3' });
+    expect(onViewport).not.toHaveBeenCalled();
+  });
+
+  it('dblclick reports the original category index, a domain fraction and the value at the pointer', () => {
+    const layout = stubLayout();
+    const onDbl = vi.fn();
+    const { container, rerender } = render(<Chart {...vp} onPlotDoubleClick={onDbl} />);
+    layout.fire();
+    fireEvent.doubleClick(plotOf(), { clientX: xOf(container, 'c2'), clientY: 120 });
+    expect(onDbl).toHaveBeenCalledTimes(1);
+    const e = onDbl.mock.lastCall![0];
+    expect(e).toMatchObject({ index: 2, source: 'mouse', clientY: 120 });
+    expect(e.fraction).toBeGreaterThan(0);
+    expect(e.fraction).toBeLessThan(1);
+    expect(e.fraction).toBeCloseTo(2.5 / 8);
+    expect(typeof e.value).toBe('number');
+    rerender(<Chart {...vp} zoomRange={{ from: 'c2', to: 'c6' }} onPlotDoubleClick={onDbl} />);
+    fireEvent.doubleClick(plotOf(), { clientX: xOf(container, 'c4'), clientY: 120 });
+    expect(onDbl.mock.lastCall![0]).toMatchObject({ index: 4, source: 'mouse' });
+  });
+
+  it('hover and dblclick over the axis gutter or right padding stay on the visible window', () => {
+    const layout = stubLayout();
+    const onDbl = vi.fn();
+    render(<Chart {...vp} defaultViewport={{ from: 0.25, to: 0.5 }} onPlotDoubleClick={onDbl} />);
+    layout.fire();
+    fireEvent.pointerMove(plotOf(), { pointerType: 'mouse', clientX: 0, clientY: 50 });
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('c2');
+    fireEvent.pointerMove(plotOf(), { pointerType: 'mouse', clientX: 400, clientY: 50 });
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('c3');
+    fireEvent.doubleClick(plotOf(), { clientX: 0, clientY: -500 });
+    const left = onDbl.mock.lastCall![0];
+    expect(left.index).toBe(2);
+    expect(left.fraction).toBeCloseTo(0.25);
+    fireEvent.doubleClick(plotOf(), { clientX: 400, clientY: 120 });
+    const right = onDbl.mock.lastCall![0];
+    expect(right.index).toBe(3);
+    expect(right.fraction).toBeCloseTo(0.5);
+    // Outside the plot's height the value stops at the y range's ends instead of extrapolating.
+    fireEvent.doubleClick(plotOf(), { clientX: 200, clientY: -400 });
+    expect(onDbl.mock.lastCall![0].value).toBeCloseTo(left.value);
+    fireEvent.doubleClick(plotOf(), { clientX: 200, clientY: 10_000 });
+    const below = onDbl.mock.lastCall![0].value;
+    fireEvent.doubleClick(plotOf(), { clientX: 200, clientY: 20_000 });
+    expect(onDbl.mock.lastCall![0].value).toBeCloseTo(below);
+  });
+
+  it('a touch double-tap fires once; taps 400ms apart do not', () => {
+    const layout = stubLayout();
+    const onDbl = vi.fn();
+    const { container } = render(<Chart {...vp} onPlotDoubleClick={onDbl} />);
+    layout.fire();
+    const at = { pointerId: 3, pointerType: 'touch', clientX: xOf(container, 'c1'), clientY: 90 };
+    const tap = () => {
+      fireEvent.pointerDown(plotOf(), at);
+      fireEvent.pointerUp(plotOf(), at);
+    };
+    tap();
+    act(() => vi.advanceTimersByTime(400));
+    tap();
+    expect(onDbl).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(100));
+    tap();
+    expect(onDbl).toHaveBeenCalledTimes(1);
+    expect(onDbl.mock.lastCall![0]).toMatchObject({ index: 1, source: 'touch' });
+    // The synthesized dblclick after a double-tap is not a second report.
+    fireEvent.doubleClick(plotOf(), at);
+    expect(onDbl).toHaveBeenCalledTimes(1);
+  });
+
+  it('Enter on the inspected category fires it from the keyboard', () => {
+    const layout = stubLayout();
+    const onDbl = vi.fn();
+    render(<Chart {...vp} onPlotDoubleClick={onDbl} />);
+    layout.fire();
+    plotOf().focus();
+    for (let i = 0; i < 3; i++) fireEvent.keyDown(plotOf(), { key: 'ArrowRight' });
+    fireEvent.keyDown(plotOf(), { key: 'Enter' });
+    expect(onDbl).toHaveBeenCalledTimes(1);
+    expect(onDbl.mock.lastCall![0]).toMatchObject({ index: 2, source: 'keyboard', value: null });
+  });
+
+  it('keeps the pan-y plot (no browser double-tap zoom) and hints the zoom keys only with zoomGestures', () => {
+    const layout = stubLayout();
+    const { rerender } = render(<Chart {...vp} />);
+    layout.fire();
+    expect(plotOf().className).toMatch(/plot/);
+    expect(plotOf()).toHaveAccessibleDescription(
+      'Use arrow keys to inspect values. All values are also in the data table.',
+    );
+    rerender(<Chart {...vp} zoomGestures onPlotDoubleClick={() => {}} />);
+    expect(plotOf().className).toMatch(/plot/);
+    expect(plotOf()).toHaveAccessibleDescription(
+      'Use arrow keys to inspect values. All values are also in the data table. Plus and minus zoom in and out.',
     );
   });
 });

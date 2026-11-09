@@ -52,6 +52,7 @@
 <!-- props:end -->
 
 - **One of `columns` or `minColumnWidth`, not both.** TypeScript enforces it.
+- **`as="ul"` / `as="ol"` resets the bullets and indent** (`list-style: none; padding: 0`), like `List`.
 
 **`<Grid.Item span>` — per-cell column span:**
 

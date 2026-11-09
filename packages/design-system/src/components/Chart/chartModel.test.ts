@@ -9,6 +9,7 @@ import {
   isEmpty,
   layoutMarkers,
   smoothStack,
+  markerGutterRows,
   markerLabelsAt,
   markerPath,
   markerShape,
@@ -20,6 +21,7 @@ import {
   type ChartSeriesColor,
   type LayoutInput,
 } from './chartModel';
+import { clampViewport, visibleIndexRange } from './chartViewport';
 
 const fmt = (n: number) => String(n);
 const s = (key: string, values: (number | null)[], comparisonOf?: string): ChartSeries => ({
@@ -749,9 +751,36 @@ describe('markers', () => {
       cats,
     );
     expect(r.markers).toEqual([
-      { key: 'l', label: 'L', tone: 'neutral', kind: 'line', from: 1, to: 1 },
-      { key: 'r', label: undefined, tone: 'subtle', kind: 'band', from: 2, to: 3 },
-      { key: 'e', label: undefined, tone: 'neutral', kind: 'line', from: 0, to: 0 },
+      {
+        key: 'l',
+        label: 'L',
+        tone: 'neutral',
+        kind: 'line',
+        from: 1,
+        to: 1,
+        slot: 0,
+        placement: 'beside',
+      },
+      {
+        key: 'r',
+        label: undefined,
+        tone: 'subtle',
+        kind: 'band',
+        from: 2,
+        to: 3,
+        slot: 0,
+        placement: 'beside',
+      },
+      {
+        key: 'e',
+        label: undefined,
+        tone: 'neutral',
+        kind: 'line',
+        from: 0,
+        to: 0,
+        slot: 0,
+        placement: 'beside',
+      },
     ]);
     expect(r.dropped).toEqual(['x']);
     expect(markerLabelsAt(r.markers, 1)).toEqual(['L']);
@@ -795,6 +824,107 @@ describe('markers', () => {
     );
     expect(narrow[0].label?.anchor).toBe('end');
     expect(narrow[0].label!.x).toBeLessThan(l.categoryX[3]);
+  });
+});
+
+describe('marker colour, icon and top labels (DS-47)', () => {
+  const cats = ['a', 'b', 'c', 'd'];
+  const l = layout({ type: 'line', series: [] });
+  const iconHalf = (icon: string) => Math.max(18, (estimateTextWidth(icon) * 14) / 12) / 2;
+
+  it('resolves colour to a slot, icon and placement (default beside)', () => {
+    const { markers } = resolveMarkers(
+      [
+        { key: 'f', label: 'Fed', at: 'b', color: 2, icon: '🐱', labelPlacement: 'top' },
+        { key: 'g', at: 'c' },
+      ],
+      cats,
+    );
+    expect(markers[0]).toMatchObject({ slot: 2, icon: '🐱', placement: 'top' });
+    expect(markers[1]).toMatchObject({ slot: 0, placement: 'beside' });
+    expect(markers[1].icon).toBeUndefined();
+  });
+
+  it('counts gutter rows: none 0, icon 1, top label 1, icon + top label 2', () => {
+    const rows = (m: Parameters<typeof resolveMarkers>[0]) =>
+      markerGutterRows(resolveMarkers(m, cats).markers);
+    expect(rows([{ key: 'a', label: 'A', at: 'a' }])).toBe(0);
+    expect(rows([{ key: 'a', label: 'A', at: 'a', icon: '🐱' }])).toBe(1);
+    expect(rows([{ key: 'a', label: 'A', at: 'a', labelPlacement: 'top' }])).toBe(1);
+    expect(
+      rows([
+        { key: 'a', at: 'a', icon: '🐱' },
+        { key: 'b', label: 'B', at: 'c', icon: '🐱', labelPlacement: 'top' },
+      ]),
+    ).toBe(2);
+  });
+
+  it('reserves the top gutter above the plot; topGutter 0 equals omitted', () => {
+    expect(layout({ type: 'line', series: [], topGutter: 0 }).plot).toEqual(l.plot);
+    const g = layout({ type: 'line', series: [], topGutter: 24 });
+    expect(g.plot.y).toBe(l.plot.y + 24);
+    expect(g.plot.y + g.plot.height).toBe(l.plot.y + l.plot.height);
+  });
+
+  it('shifts top items inward at the plot edges', () => {
+    const tight = layout({ type: 'line', series: [], categories: cats, width: 160 });
+    const tr = tight.plot.x + tight.plot.width;
+    const [first, last] = layoutMarkers(
+      resolveMarkers(
+        [
+          { key: 'a', at: 'a', icon: '🐱', label: 'Breakfast', labelPlacement: 'top' },
+          { key: 'd', at: 'd', icon: 'Done!' },
+        ],
+        cats,
+      ).markers,
+      tight,
+    );
+    expect(first.top!.x).toBeGreaterThanOrEqual(tight.plot.x + estimateTextWidth('Breakfast') / 2);
+    expect(first.top!.x).toBeGreaterThan(tight.categoryX[0]);
+    expect(last.top!.x).toBeLessThanOrEqual(tr - iconHalf('Done!'));
+    expect(last.top!.x).toBeLessThan(tight.categoryX[3]);
+  });
+
+  it('drops a later top item that collides with an earlier one', () => {
+    const many = layout({ type: 'line', series: [], categories: 'abcdefghijklmnopqrst'.split('') });
+    const g = layoutMarkers(
+      resolveMarkers(
+        [
+          { key: 'x', at: 'c', icon: '🐱' },
+          { key: 'y', at: 'd', icon: '🐱' },
+        ],
+        'abcdefghijklmnopqrst'.split(''),
+      ).markers,
+      many,
+    );
+    expect(g[0].top?.icon).toBe('🐱');
+    expect(g[1].top).toBeUndefined();
+  });
+
+  it('a top marker has no beside label; a beside marker with an icon keeps both', () => {
+    const [top, beside] = layoutMarkers(
+      resolveMarkers(
+        [
+          { key: 't', at: 'a', label: 'Fed', labelPlacement: 'top' },
+          { key: 'b', at: 'c', label: 'Fed', icon: '🐱' },
+        ],
+        cats,
+      ).markers,
+      l,
+    );
+    expect(top.label).toBeUndefined();
+    expect(top.top).toEqual({ x: l.categoryX[0], label: 'Fed' });
+    expect(beside.top).toEqual({ x: l.categoryX[2], icon: '🐱' });
+    expect(beside.label?.text).toBe('Fed');
+  });
+
+  it('centres a band icon on the band, and carries the slot', () => {
+    const [band] = layoutMarkers(
+      resolveMarkers([{ key: 'r', from: 'b', to: 'c', icon: '🐱', color: 3 }], cats).markers,
+      l,
+    );
+    expect(band.top!.x).toBeCloseTo((l.categoryX[1] + l.categoryX[2]) / 2);
+    expect(band.slot).toBe(3);
   });
 });
 
@@ -974,5 +1104,130 @@ describe('valueLabels (DS-12b)', () => {
     const l = bar([52, 48]);
     const top = Math.min(...l.valueLabels.map((v) => v.y));
     expect(top - 14).toBeGreaterThanOrEqual(l.plot.y);
+  });
+});
+
+describe('viewport (DS-48)', () => {
+  const vp = { from: 0.5, to: 1 };
+  const one = (values: number[]) => resolveSeries('line', [s('a', values)], values.length).series;
+
+  it('renders the window: step widens and the first visible band starts at the plot edge', () => {
+    const l = layout({ type: 'line', series: one([1, 2, 3, 4]), viewport: vp });
+    expect(l.step).toBeCloseTo(l.plot.width / 2);
+    expect(l.categoryX[2]).toBeCloseTo(l.plot.x + l.step / 2);
+    expect(l.categoryX[0]).toBeLessThan(l.plot.x);
+  });
+
+  it('scales y to the visible values only', () => {
+    const l = layout({ type: 'bar', series: one([1000, 2, 3, 4]), viewport: vp });
+    expect(Math.max(...l.yTicks.map((t) => t.value))).toBeLessThan(100);
+    const full = layout({ type: 'bar', series: one([1000, 2, 3, 4]) });
+    expect(Math.max(...full.yTicks.map((t) => t.value))).toBeGreaterThanOrEqual(1000);
+  });
+
+  it('picks x labels from the visible categories only', () => {
+    const l = layout({ type: 'line', series: one([1, 2, 3, 4]), viewport: vp });
+    expect(l.xLabels.map((x) => x.index)).toEqual([2, 3]);
+  });
+
+  it('maps x to categories through the shifted origin', () => {
+    const l = layout({ type: 'line', series: one([1, 2, 3, 4]), viewport: vp });
+    expect(categoryIndexAt(l, l.plot.x + 1)).toBe(2);
+    expect(categoryIndexAt(l, l.plot.x + l.plot.width - 1)).toBe(3);
+  });
+
+  it('maps x outside the plot (axis gutter, right padding) to the edge visible categories', () => {
+    const half = { from: 0.25, to: 0.75 };
+    const l = layout({ type: 'bar', series: one([1, 2, 3, 4]), viewport: half });
+    expect(categoryIndexAt(l, 0)).toBe(1);
+    expect(categoryIndexAt(l, l.plot.x + l.plot.width)).toBe(2);
+    expect(categoryIndexAt(l, 10_000)).toBe(2);
+  });
+
+  it('maps the plot edges to the visible edge categories on band-aligned windows (float error)', () => {
+    for (const n of [3, 5, 7, 10, 13])
+      for (const width of [400, 401.7, 333.3, 517.9, 289.1])
+        for (let k = 0; k + 2 <= n; k++)
+          for (const span of [2, 3]) {
+            if (k + span > n) continue;
+            const v = clampViewport({ from: k / n, to: (k + span) / n }, n);
+            const cats = Array.from({ length: n }, (_, i) => `c${i}`);
+            const l = computeLayout({
+              type: 'bar',
+              categories: cats,
+              series: resolveSeries(
+                'bar',
+                [
+                  s(
+                    'a',
+                    cats.map((_, i) => i + 1),
+                  ),
+                ],
+                n,
+              ).series,
+              width,
+              height: 200,
+              formatValue: fmt,
+              viewport: v,
+            });
+            const shown = visibleIndexRange(v, n);
+            expect(categoryIndexAt(l, l.plot.x)).toBe(shown.from);
+            expect(categoryIndexAt(l, l.plot.x - 30)).toBe(shown.from);
+            expect(categoryIndexAt(l, l.plot.x + l.plot.width)).toBe(shown.to);
+            expect(categoryIndexAt(l, l.plot.x + l.plot.width + 30)).toBe(shown.to);
+          }
+  });
+
+  it('valueAt clamps to the plot height', () => {
+    const l = layout({ type: 'line', series: one([1, 2, 3, 4]) });
+    expect(l.valueAt(-1000)).toBeCloseTo(l.valueAt(l.plot.y));
+    expect(l.valueAt(10_000)).toBeCloseTo(l.valueAt(l.plot.y + l.plot.height));
+  });
+
+  it('a null viewport and the full window equal no viewport', () => {
+    const plain = layout({ type: 'line', series: one([1, 2, 3, 4]) });
+    const nulled = layout({ type: 'line', series: one([1, 2, 3, 4]), viewport: null });
+    expect(nulled).toEqual({ ...plain, valueAt: expect.any(Function) });
+    expect(nulled.valueAt(50)).toBe(plain.valueAt(50));
+  });
+
+  it('valueAt inverts the y scale at the ticks', () => {
+    const l = layout({ type: 'line', series: one([1, 2, 3, 4]) });
+    for (const tick of l.yTicks) expect(l.valueAt(tick.y)).toBeCloseTo(tick.value);
+  });
+
+  it('has no NaN with no categories or one', () => {
+    for (const categories of [[], ['a']]) {
+      // Series arrive fitted to the categories (resolveSeries).
+      const l = layout({
+        type: 'bar',
+        categories,
+        series: one(categories.map(() => 5)),
+        viewport: vp,
+      });
+      expect(JSON.stringify(l, (_, v) => (Number.isNaN(v) ? 'NaN' : v))).not.toContain('NaN');
+    }
+  });
+
+  it('never clamps a marker outside the window into view', () => {
+    const cats = ['a', 'b', 'c', 'd'];
+    const l = layout({ type: 'line', series: [], viewport: vp });
+    const [off, in1, band] = layoutMarkers(
+      resolveMarkers(
+        [
+          { key: 'off', at: 'a', label: 'Off', icon: '🐱' },
+          { key: 'in', at: 'c', label: 'In', icon: '🐱', labelPlacement: 'top' },
+          { key: 'band', from: 'a', to: 'b', label: 'Band', icon: '🐱' },
+        ],
+        cats,
+      ).markers,
+      l,
+    );
+    expect(off.x).toBeLessThan(l.plot.x);
+    expect(off.top).toBeUndefined();
+    expect(off.label).toBeUndefined();
+    expect(in1.top!.x).toBeGreaterThanOrEqual(l.plot.x);
+    expect(band.top).toBeUndefined();
+    expect(band.label).toBeUndefined();
   });
 });

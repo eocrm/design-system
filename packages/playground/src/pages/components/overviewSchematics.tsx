@@ -1868,6 +1868,18 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       <Solid w={38} h={4} style={{ position: 'absolute', bottom: -1, left: 0, borderRadius: 2 }} />
     </Col>
   ),
+  TabNav: (
+    <Col style={{ position: 'relative', gap: 8, alignItems: 'flex-start' }}>
+      <Row gap={10} style={{ alignItems: 'center' }}>
+        <Bar w={30} />
+        <Bar w={34} />
+        <Bar w={38} />
+        <Bar w={30} />
+      </Row>
+      <Box w={180} h={2} />
+      <Solid w={34} h={4} style={{ position: 'absolute', bottom: -1, left: 40, borderRadius: 2 }} />
+    </Col>
+  ),
   Text: (
     <Col gap={6} style={{ alignItems: 'flex-start' }}>
       <Bar w={150} />

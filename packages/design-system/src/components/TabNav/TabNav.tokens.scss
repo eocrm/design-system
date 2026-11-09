@@ -1,0 +1,38 @@
+// TabNav.tokens.scss — component tokens for <TabNav>. Every value aliases the
+// matching Tabs token, so theming Tabs themes TabNav and the two strips look
+// identical. Convention: --tab-nav-<part>-<state>.
+@use '../Tabs/Tabs.tokens';
+
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
+  // Strip
+  --tab-nav-gap: var(--tabs-gap);
+  --tab-nav-border-color: var(--tabs-border-color);
+
+  // Link
+  --tab-nav-link-padding-y: var(--tabs-tab-padding-y);
+  --tab-nav-link-padding-x: var(--tabs-tab-padding-x);
+  --tab-nav-link-gap: var(--tabs-tab-gap);
+  --tab-nav-link-fg: var(--tabs-tab-fg);
+  --tab-nav-link-fg-hover: var(--tabs-tab-fg-hover);
+  --tab-nav-link-fg-active: var(--tabs-tab-fg-active);
+  --tab-nav-link-font-size: var(--tabs-tab-font-size);
+  --tab-nav-link-font-weight: var(--tabs-tab-font-weight);
+  --tab-nav-link-ring: var(--tabs-tab-ring);
+  --tab-nav-link-radius: var(--tabs-tab-radius);
+
+  // Indicator
+  --tab-nav-indicator-bg: var(--tabs-indicator-bg);
+
+  // Touch target: link min height (44px on coarse pointers)
+  --tab-nav-link-min-height: auto;
+}
+
+// Touch devices: 44px targets. Opt out by overriding this in your own
+// `@media (pointer: coarse)` block.
+@media (pointer: coarse) {
+  :root,
+  :where(:root [data-theme='light'], :root [data-theme='dark']) {
+    --tab-nav-link-min-height: var(--size-touch);
+  }
+}

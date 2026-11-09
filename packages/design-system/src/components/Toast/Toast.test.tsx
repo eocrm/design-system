@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { Suspense, StrictMode } from 'react';
 import { render, screen, act, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -377,5 +379,19 @@ describe('<ToastViewport>', () => {
     });
     expect(screen.getAllByText('handover')).toHaveLength(1);
     errSpy.mockRestore();
+  });
+});
+
+describe('Toast viewport safe-area insets (DS-44)', () => {
+  const scss = readFileSync(resolve(__dirname, 'Toast.module.scss'), 'utf8');
+  it.each(['top', 'bottom', 'left', 'right'])('anchored %s edge respects the safe area', (side) => {
+    expect(scss).toContain(
+      `${side}: max(var(--toast-viewport-inset), env(safe-area-inset-${side}));`,
+    );
+  });
+  it('max-width subtracts both side insets', () => {
+    expect(scss).toMatch(
+      /max-width: calc\(\s*100vw - max\(\s*var\(--toast-viewport-inset\),\s*env\(safe-area-inset-left\)\s*\) - max\(\s*var\(--toast-viewport-inset\),\s*env\(safe-area-inset-right\)\s*\)\s*\)/,
+    );
   });
 });

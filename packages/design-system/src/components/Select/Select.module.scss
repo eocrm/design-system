@@ -238,6 +238,7 @@
 }
 
 .option {
+  min-block-size: var(--select-option-min-height);
   padding: var(--select-option-padding-y) var(--select-option-padding-x);
   font-size: var(--select-option-font-size);
   color: var(--select-option-fg);

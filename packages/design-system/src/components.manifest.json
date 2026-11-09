@@ -1053,6 +1053,12 @@
     ],
     "composedBy": []
   },
+  "TabNav": {
+    "tier": "primitive",
+    "cluster": "Navigation",
+    "composes": [],
+    "composedBy": []
+  },
   "Tabs": {
     "tier": "primitive",
     "cluster": "Navigation",

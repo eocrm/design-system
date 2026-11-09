@@ -196,6 +196,7 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
         justifyItems && justifyItemsClass[justifyItems],
         // String form only: those rules query descendants, so the grid can be
         // its own container. The map form's container is the wrapper below.
+        (as === 'ul' || as === 'ol') && styles.list,
         typeof collapseBelow === 'string' && styles.collapsible,
         typeof collapseBelow === 'string' && collapseClass[collapseBelow],
         ...collapseKeys.map((b) => stepClass[b]),

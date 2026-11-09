@@ -18,5 +18,10 @@
 
   --scatter-reference-color: var(--color-fg-muted);
   --scatter-reference-width: var(--chart-comparison-stroke);
-  --scatter-reference-dash: var(--chart-marker-dash);
+
+  // Dash patterns the reference lines cycle through (index = line order); 0 is the single-line look.
+  // Chart's, so the legend's line swatches match.
+  --scatter-reference-dash-0: var(--chart-reference-dash-0);
+  --scatter-reference-dash-1: var(--chart-reference-dash-1);
+  --scatter-reference-dash-2: var(--chart-reference-dash-2);
 }

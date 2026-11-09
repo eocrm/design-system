@@ -1,5 +1,6 @@
 import { scaleLinear } from 'd3-scale';
 import { stack, stackOffsetDiverging, stackOffsetNone, type Series } from 'd3-shape';
+import { clampViewport, EPS, visibleIndexRange, type ChartViewport } from './chartViewport';
 
 /** Chart form. `area` is always stacked. */
 export type ChartType = 'line' | 'bar' | 'stacked-bar' | 'area';
@@ -34,6 +35,13 @@ export interface ChartSeries {
  */
 export type ChartMarkerTone = 'neutral' | 'subtle';
 
+/**
+ * Where a marker's `label` is drawn.
+ * - `'beside'` — default; on the plot, just right of the line / inside the band's left edge.
+ * - `'top'` — centred above the plot, under the `icon` when there is one.
+ */
+export type ChartMarkerLabelPlacement = 'beside' | 'top';
+
 interface ChartMarkerBase {
   /** Stable identity (React key). */
   key: string;
@@ -41,6 +49,12 @@ interface ChartMarkerBase {
   label?: string;
   /** Visual weight. Default `'neutral'`. */
   tone?: ChartMarkerTone;
+  /** Palette slot (1–8) the line strokes / band tints in, e.g. to match a series. Default: neutral ink. */
+  color?: ChartSeriesColor;
+  /** Short text or emoji drawn centred above the marker, in the gutter above the plot. Decorative: never read out (`label` carries meaning). */
+  icon?: string;
+  /** Where `label` is drawn. Default `'beside'`. */
+  labelPlacement?: ChartMarkerLabelPlacement;
 }
 
 /**
@@ -70,6 +84,10 @@ export interface ResolvedMarker {
   /** Category index range, inclusive; `from === to` for a line. */
   from: number;
   to: number;
+  /** Palette slot 1..8; 0 = neutral ink. */
+  slot: number;
+  icon?: string;
+  placement: ChartMarkerLabelPlacement;
 }
 
 /** Maps markers onto category indices; markers naming an unknown category are dropped. */
@@ -93,9 +111,20 @@ export function resolveMarkers(
       kind: m.at === undefined ? 'band' : 'line',
       from: Math.min(a, b),
       to: Math.max(a, b),
+      slot: m.color ?? 0,
+      icon: m.icon || undefined,
+      placement: m.labelPlacement ?? 'beside',
     });
   }
   return { markers: resolved, dropped };
+}
+
+const topLabel = (m: ResolvedMarker) => (m.placement === 'top' ? m.label : undefined);
+
+/** Rows of the gutter above the plot: 2 when a marker stacks an icon over a top label, 1 for an icon or a top label alone. */
+export function markerGutterRows(markers: readonly ResolvedMarker[]): 0 | 1 | 2 {
+  if (markers.some((m) => m.icon && topLabel(m))) return 2;
+  return markers.some((m) => m.icon || topLabel(m)) ? 1 : 0;
 }
 
 /** Labels of the markers covering category `i`, in marker order. */
@@ -107,12 +136,16 @@ export interface MarkerGeometry {
   key: string;
   kind: 'line' | 'band';
   tone: ChartMarkerTone;
+  /** Palette slot 1..8; 0 = neutral ink. */
+  slot: number;
   /** Line x, or band left edge. */
   x: number;
   /** Band width; 0 for a line. */
   width: number;
   /** Label to draw, or undefined when absent or it would collide/clip. */
   label?: { text: string; x: number; anchor: 'start' | 'end' };
+  /** Icon and/or top label above the plot, centred on `x` (shifted inward at the edges); undefined when absent or it would collide. */
+  top?: { x: number; icon?: string; label?: string };
 }
 
 /** Marker geometry in svg coordinates. Labels that would overlap an earlier label or leave the plot are dropped. */
@@ -123,11 +156,30 @@ export function layoutMarkers(
   const { plot, categoryX, step } = layout;
   const right = plot.x + plot.width;
   const taken: [number, number][] = [];
+  const takenTop: [number, number][] = [];
+  const free = (spans: [number, number][], [a0, a1]: [number, number]) =>
+    spans.every(([a, b]) => a1 + LABEL_GAP <= a || b + LABEL_GAP <= a0);
   return markers.map((m) => {
     const x = m.kind === 'line' ? categoryX[m.from] : categoryX[m.from] - step / 2;
     const width = m.kind === 'line' ? 0 : (m.to - m.from + 1) * step;
-    const g: MarkerGeometry = { key: m.key, kind: m.kind, tone: m.tone, x, width };
-    if (!m.label) return g;
+    const g: MarkerGeometry = { key: m.key, kind: m.kind, tone: m.tone, slot: m.slot, x, width };
+    const above = topLabel(m);
+    // Centre on the visible part of the marker; a marker wholly outside the plot (a viewport scrolled
+    // past it) has no top item and no label: never pull it into view.
+    const lo = Math.max(x, plot.x);
+    const hi = Math.min(x + width, right);
+    const shown = m.kind === 'line' ? lo <= hi : hi - lo > EDGE_SLACK;
+    if ((m.icon || above) && shown) {
+      const half = Math.max(m.icon ? iconWidth(m.icon) : 0, above ? textWidth(above) : 0) / 2;
+      const cx = Math.max(plot.x + half, Math.min(right - half, (lo + hi) / 2));
+      const span: [number, number] = [cx - half, cx + half];
+      if (free(takenTop, span)) {
+        takenTop.push(span);
+        g.top = { x: cx, ...(m.icon && { icon: m.icon }), ...(above && { label: above }) };
+      }
+    }
+    // A beside label starts at the line / band's left edge, so that edge must be on the plot.
+    if (!m.label || above || x < plot.x - EDGE_SLACK || x > right) return g;
     const w = textWidth(m.label);
     // Start just right of the line / inside the band's left edge; flip left of a line near the right edge.
     let anchor: 'start' | 'end' = 'start';
@@ -138,8 +190,7 @@ export function layoutMarkers(
     }
     const span: [number, number] = anchor === 'start' ? [lx, lx + w] : [lx - w, lx];
     const fits = span[0] >= plot.x && span[1] <= right;
-    const free = taken.every(([a, b]) => span[1] + LABEL_GAP <= a || b + LABEL_GAP <= span[0]);
-    if (fits && free) {
+    if (fits && free(taken, span)) {
       taken.push(span);
       g.label = { text: m.label, x: lx, anchor };
     }
@@ -158,12 +209,18 @@ export const X_LABEL_BASELINE = 4;
 export const DOT_RADIUS = 3;
 /** Radius of the keyboard/hover inspection marker on a line point. */
 export const MARKER_RADIUS = 4;
-/** Baseline of marker labels below the plot top. */
+/** Baseline of marker labels below the plot top; also the height of one marker gutter row above the plot. */
 export const MARKER_LABEL_BASELINE = 12;
+// ponytail: an icon is estimated as one emoji (~1.25em at --chart-marker-icon-size 14px) or
+// its 12px text estimate scaled to 14px, whichever is wider; measure if icons overlap in real fonts.
+const ICON_MIN_WIDTH = 18;
+const iconWidth = (icon: string) => Math.max(ICON_MIN_WIDTH, (textWidth(icon) * 14) / 12);
 /** Below this root height the legend collapses to one row with a "+N" counter. */
 export const COMPACT_HEIGHT = 120;
 
 const MARK_GAP = 2;
+/** Sub-pixel tolerance for float drift at the plot edges. */
+const EDGE_SLACK = 0.5;
 const MARKER_LABEL_INSET = 4;
 const BAR_RADIUS = 4;
 const BAND_RATIO = 0.65;
@@ -327,6 +384,27 @@ export function thinLabels(categories: readonly string[], step: number): number[
   return kept;
 }
 
+/**
+ * Viewport x labels: categories whose centre is on the plot, thinned on absolute indices (every k-th, k from the
+ * widest label of all categories) so labels don't hop between neighbours while the window pans.
+ */
+function windowLabels(
+  categories: readonly string[],
+  categoryX: readonly number[],
+  plot: Rect,
+  step: number,
+): number[] {
+  const onPlot = categories.flatMap((_, i) =>
+    categoryX[i] >= plot.x - EDGE_SLACK && categoryX[i] <= plot.x + plot.width + EDGE_SLACK
+      ? [i]
+      : [],
+  );
+  if (onPlot.length === 0) return [];
+  const every = Math.max(1, Math.ceil((Math.max(...categories.map(textWidth)) + LABEL_GAP) / step));
+  const kept = onPlot.filter((i) => i % every === 0);
+  return kept.length > 0 ? kept : [onPlot[0]];
+}
+
 /** How many legend items fit on one row of `width`, leaving room for a "+N" counter. At least 1. */
 export function fitLegend(labels: readonly string[], width: number): number {
   let used = 0;
@@ -420,6 +498,14 @@ export interface LayoutInput {
   curve?: ChartCurve;
   /** Label each bar (`bar`) or stack total (`stacked-bar`) with its value; ignored on line/area. */
   valueLabels?: boolean;
+  /** Pixels reserved above the plot for marker icons / top labels; default 0. */
+  topGutter?: number;
+  /**
+   * Render window (fractions of the categories, band edges); `null` = all. x positions shift and stretch so the
+   * window fills the plot (marks outside it are the renderer's to clip), the y domain and the x labels come from
+   * the visible categories only. Clamped with `clampViewport`.
+   */
+  viewport?: ChartViewport | null;
 }
 
 export interface ChartLayout {
@@ -433,6 +519,8 @@ export interface ChartLayout {
   marks: SeriesMarks[];
   /** Bar value labels; empty unless requested on a bar type. A label wider than its bar is omitted. */
   valueLabels: ValueLabel[];
+  /** The y value at an svg y (inverse of the y scale). */
+  valueAt: (svgY: number) => number;
 }
 
 type StackRow = Record<string, number>;
@@ -443,6 +531,12 @@ const isolated = (values: readonly (number | null)[], i: number) =>
 export function computeLayout(input: LayoutInput): ChartLayout {
   const { type, categories, series, width, height, formatValue } = input;
   const n = categories.length;
+  const vp = input.viewport ? clampViewport(input.viewport, n) : null;
+  // Categories in view, by band; only their values set the y domain.
+  const shown = visibleIndexRange(vp, n);
+  const inView = (i: number) => i >= shown.from && i <= shown.to;
+  /** Domain width the plot shows: 1 = all categories. */
+  const span = vp ? vp.to - vp.from : 1;
   const stacked = isStacked(type);
   const primaries = series.filter((x) => x.comparisonOf === undefined);
   const comparisons = series.filter((x) => x.comparisonOf !== undefined);
@@ -465,17 +559,23 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     if (v < min) min = v;
     if (v > max) max = v;
   };
+  const takeShown = (values: readonly (number | null)[]) =>
+    values.forEach((v, i) => inView(i) && take(v));
   if (layers)
     for (const layer of layers)
-      for (const [y0, y1] of layer) {
+      layer.forEach(([y0, y1], i) => {
+        if (!inView(i)) return;
         take(y0);
         take(y1);
-      }
-  else for (const p of primaries) p.values.forEach(take);
-  for (const c of comparisons) c.values.forEach(take);
+      });
+  else for (const p of primaries) takeShown(p.values);
+  for (const c of comparisons) takeShown(c.values);
 
   const linear = input.curve === 'linear';
-  const samples = Math.max(2, Math.min(MAX_SAMPLES, Math.ceil(width / Math.max(1, n) / SAMPLE_PX)));
+  const samples = Math.max(
+    2,
+    Math.min(MAX_SAMPLES, Math.ceil(width / Math.max(1, n * span) / SAMPLE_PX)),
+  );
   const smoothed = new Map(
     (type === 'line' ? series : stacked ? comparisons : []).map((x) => [
       x.key,
@@ -492,10 +592,11 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       : null;
   // Each layer stays within its own values, but layers trading places can lift the stacked top past
   // the largest real total: keep that inside the plot.
-  for (const layer of areaStack ?? []) for (const seg of layer) seg.forEach(take);
+  for (const layer of areaStack ?? [])
+    layer.forEach((seg, i) => inView(i) && inView(i + 1) && seg.forEach(take));
   if (min === max) max = min + 1;
 
-  const plotTop = PAD_TOP;
+  const plotTop = PAD_TOP + (input.topGutter ?? 0);
   const plotBottom = Math.max(plotTop + 1, height - X_AXIS_HEIGHT);
   const tickCount = Math.max(2, Math.floor((plotBottom - plotTop) / Y_TICK_SPACING));
   const labelled = !!input.valueLabels && (type === 'bar' || type === 'stacked-bar');
@@ -513,14 +614,17 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     width: Math.max(1, width - left - PAD_RIGHT),
     height: plotBottom - plotTop,
   };
-  const step = plot.width / Math.max(1, n);
+  const step = plot.width / Math.max(1, n * span);
   const bandWidth = step * BAND_RATIO;
-  const categoryX = categories.map((_, i) => plot.x + step * (i + 0.5));
+  const shift = (vp?.from ?? 0) * n * step;
+  const categoryX = categories.map((_, i) => plot.x + step * (i + 0.5) - shift);
   const zeroY = y(0);
 
   const yTicks = tickValues.map((value, i) => ({ value, y: y(value), label: tickLabels[i] }));
   // Clamp end labels inside the svg, then drop any label the clamping made collide.
-  const boxes = thinLabels(categories, step).map((index) => {
+  const boxes = (
+    vp ? windowLabels(categories, categoryX, plot, step) : thinLabels(categories, step)
+  ).map((index) => {
     const half = textWidth(categories[index]) / 2;
     const x = Math.min(Math.max(categoryX[index], half), Math.max(half, width - half));
     return { index, x, label: categories[index], half };
@@ -671,6 +775,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     bandWidth,
     marks,
     valueLabels,
+    valueAt: (py) => y.invert(Math.max(plot.y, Math.min(plot.y + plot.height, py))),
   };
 }
 
@@ -788,8 +893,18 @@ function sampledRuns(
   return runs;
 }
 
-/** Category index under svg x coordinate `x`, clamped to the data (0 when there are no categories). */
+/**
+ * Category index under svg x coordinate `x`, clamped to the categories visible in the plot (0 when there are none):
+ * the axis gutter and right padding map to the window's edge categories, never off-screen ones. Viewport-aware.
+ */
 export function categoryIndexAt(layout: ChartLayout, x: number): number {
   const n = layout.categoryX.length;
-  return Math.max(0, Math.min(n - 1, Math.max(0, Math.floor((x - layout.plot.x) / layout.step))));
+  if (n === 0) return 0;
+  const { plot, step } = layout;
+  const at = (px: number) => (px - (layout.categoryX[0] - step / 2)) / step;
+  // Band edges: the right edge belongs to the band left of it. EPS as in `visibleIndexRange`, so a window edge on a
+  // band edge never picks the off-screen neighbour through float error.
+  const lo = Math.max(0, Math.floor(at(plot.x) + EPS));
+  const hi = Math.min(n - 1, Math.ceil(at(plot.x + plot.width) - EPS) - 1);
+  return Math.max(lo, Math.min(hi, Math.floor(at(x))));
 }

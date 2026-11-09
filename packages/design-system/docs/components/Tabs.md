@@ -81,7 +81,7 @@ Implements the WAI-ARIA Tabs pattern: roving `tabIndex`, arrow keys (Left/Right 
 
 **When NOT to use**
 
-- Navigation between pages: use the sidebar or breadcrumbs. Tabs switch views within a page.
+- Page navigation (each tab is its own route/URL): use `TabNav`, which is tab-styled links with `aria-current`. Tabs switch views within a page.
 - 5+ tabs: usually the entity is doing too much; split the page or rethink the IA.
 - When the user may want two views at once: use side-by-side panels.
 

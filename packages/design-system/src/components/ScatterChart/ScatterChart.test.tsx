@@ -234,6 +234,75 @@ describe('ScatterChart', () => {
     expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toContain('Recommended');
   });
 
+  it('several references: one path, dash and legend entry each; swatch dash matches', () => {
+    const layout = stubLayout();
+    const pts = [
+      { x: 0, y: 0 },
+      { x: 40, y: 20 },
+    ];
+    const { container } = render(
+      <ScatterChart
+        {...base}
+        reference={[
+          { label: 'Usual pace', points: pts },
+          { label: "Today's pace", points: pts, color: 2 },
+        ]}
+      />,
+    );
+    layout.fire();
+    const paths = container.querySelectorAll('[data-scatter-reference]');
+    expect(paths).toHaveLength(2);
+    expect(paths[0].getAttribute('data-dash')).toBe('0');
+    expect(paths[1].getAttribute('data-dash')).not.toBe('0');
+    const items = screen.getAllByRole('listitem').map((li) => li.textContent);
+    expect(items).toContain('Usual pace');
+    expect(items).toContain("Today's pace");
+    const swatch = screen.getByText("Today's pace").querySelector('[data-dash]');
+    expect(swatch?.getAttribute('data-dash')).toBe(paths[1].getAttribute('data-dash'));
+  });
+
+  it('reference swatches are stroked lines with their plot line dash (identifiable without colour)', () => {
+    const layout = stubLayout();
+    const pts = [
+      { x: 0, y: 0 },
+      { x: 40, y: 20 },
+    ];
+    render(
+      <ScatterChart
+        {...base}
+        reference={['A', 'B', 'C'].map((label) => ({ label, points: pts }))}
+      />,
+    );
+    layout.fire();
+    ['A', 'B', 'C'].forEach((label, i) => {
+      const swatch = screen.getByText(label).querySelector('[data-dash]');
+      expect(swatch?.tagName.toLowerCase()).toBe('svg');
+      expect(swatch?.getAttribute('data-dash')).toBe(String(i));
+      expect(swatch?.querySelector('line')).not.toBeNull();
+    });
+  });
+
+  it('a single reference keeps data-dash 0', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <ScatterChart
+        {...base}
+        reference={{
+          label: 'Recommended',
+          points: [
+            { x: 0, y: 0 },
+            { x: 40, y: 20 },
+          ],
+        }}
+      />,
+    );
+    layout.fire();
+    expect(container.querySelectorAll('[data-scatter-reference]')).toHaveLength(1);
+    expect(container.querySelector('[data-scatter-reference]')?.getAttribute('data-dash')).toBe(
+      '0',
+    );
+  });
+
   it('has no Size column when only hidden series carry sizes', () => {
     stubLayout();
     render(

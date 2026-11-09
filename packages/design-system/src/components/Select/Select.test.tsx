@@ -2025,3 +2025,17 @@ it('re-points the chip remove min width to size-touch on coarse pointers (DS-35)
     /@media \(pointer: coarse\)[\s\S]*--select-chip-remove-min-inline-size:\s*var\(--size-touch\)/,
   );
 });
+
+describe('Select option touch height (DS-42)', () => {
+  const tokens = readTouchTokens(resolveTouchTokens(__dirname, 'Select.tokens.scss'), 'utf8');
+  const module = readTouchTokens(resolveTouchTokens(__dirname, 'Select.module.scss'), 'utf8');
+  it('is auto by default and --size-touch on coarse pointers', () => {
+    expect(tokens).toMatch(/--select-option-min-height:\s*auto;/);
+    expect(tokens).toMatch(
+      /@media \(pointer: coarse\)[\s\S]*--select-option-min-height:\s*var\(--size-touch\)/,
+    );
+  });
+  it('the option rule applies it as a min block size', () => {
+    expect(module).toMatch(/\.option \{[^}]*min-block-size:\s*var\(--select-option-min-height\)/);
+  });
+});

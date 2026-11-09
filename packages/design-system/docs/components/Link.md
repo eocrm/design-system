@@ -34,7 +34,7 @@ import { Link as RouterLink } from 'react-router-dom';
 | `underline` | `'hover' \| 'always' \| 'none'` | no | Underline behavior. See `LinkUnderline` for descriptions. Default: `'hover'`. |
 | `hitArea` | `'text' \| 'touch'` | no | Touch hit area. `'touch'` grows the tap target to ≥44px on coarse pointers without changing layout; use for standalone links (list-row names, card or widget titles), leave unset for links inside running text. Default `'text'`. |
 | `children` | `ReactNode` | no |  |
-| `as` | `ElementType` | no |  |
+| `as` | `ElementType` | no | Element or component to render the link as (e.g. a router `Link`); its props are typed and forwarded. Default `'a'`. |
 | …native | | | plus native attributes of the `as` element (default `<a>`) |
 
 <!-- props:end -->

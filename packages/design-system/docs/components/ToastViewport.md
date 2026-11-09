@@ -49,6 +49,7 @@ timer. `toast.update` and `toast.promise` never bring back a dismissed toast.
 - **Five tones.** `info`, `success`, `warning`, `error`, `loading`. `error` is `role="alert"` (assertive); the rest are `role="status"` (polite).
 - **Auto-dismiss defaults to 4000ms.** Per-call `duration` (ms or `'persistent'`). `loading` defaults to `'persistent'`.
 - **Pause on hover / focus / hidden tab.** Hovering the toast or tabbing into its action pauses the timer; document `visibilitychange` to `hidden` pauses all timers globally.
+- **Safe area.** Each anchored edge is `max(--toast-viewport-inset, env(safe-area-inset-<side>))`, so toasts clear notches and home indicators; `--toast-viewport-inset` remains the consumer knob.
 
 #### When NOT to use
 

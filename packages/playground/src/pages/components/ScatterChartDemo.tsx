@@ -51,12 +51,22 @@ const todaySeries: ScatterSeries[] = [
 const usualPace: ScatterReference = {
   label: 'Usual pace',
   points: [
-    { x: at(6), y: 0 },
+    { x: at(0), y: 0 },
     { x: at(12), y: 60 },
     { x: at(18), y: 120 },
     { x: at(22), y: 160 },
   ],
 };
+// A straight line from midnight to "now" at the grams eaten so far.
+const todayPace: ScatterReference = {
+  label: "Today's pace",
+  color: 3,
+  points: [
+    { x: at(0), y: 0 },
+    { x: at(20), y: 150 },
+  ],
+};
+const paces = [usualPace, todayPace];
 
 // ~60 meals, deterministic pseudo-random (LCG): bowl contents at meal start vs grams eaten.
 function lcg(seed: number) {
@@ -109,14 +119,14 @@ export function ScatterChartDemo() {
     >
       <Example
         title="Meals today"
-        description="A time axis: x is the meal time, y the grams eaten so far, dot area the meal's grams. Two bowls are series with an explicit colour; the dashed line is the app-computed usual pace."
+        description="A time axis: x is the meal time, y the grams eaten so far, dot area the meal's grams. Two bowls are series with an explicit colour; the dashed lines are the app-computed usual pace and today's pace (each line gets its own dash pattern and legend entry)."
         code={`<ScatterChart
   label="Meals today" xScale="time"
   series={[
     { key: 'a', label: 'Bowl A', color: 1, points: bowlA }, // { x: Date, y: cumulativeG, size: mealG }
     { key: 'b', label: 'Bowl B', color: 2, points: bowlB },
   ]}
-  reference={{ label: 'Usual pace', points: usualPace }}
+  reference={[usualPace, todayPace]} // each { label, points, color? }
   xLabel="Time" yLabel="Eaten so far" sizeLabel="Meal"
   formatX={formatTime} formatY={formatGrams} formatSize={formatGrams}
 />`}
@@ -126,7 +136,7 @@ export function ScatterChartDemo() {
             label="Meals today"
             xScale="time"
             series={todaySeries}
-            reference={usualPace}
+            reference={paces}
             xLabel="Time"
             yLabel="Eaten so far"
             sizeLabel="Meal"

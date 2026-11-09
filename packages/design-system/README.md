@@ -217,6 +217,7 @@ Grouped for navigation. Per-component contracts are in `docs/components/<Name>.m
 - `Rail` — collapsible left-side navigation
 - `TopBar` — sticky application top bar
 - `Tabs` — horizontal tab strip
+- `TabNav` — tab-styled route navigation (links, not tabs)
 - `Breadcrumb` — navigation trail
 - `Pagination` — numbered nav with windowing
 - `CursorPagination` — prev / next for streams without a total

@@ -235,6 +235,9 @@ export type {
   TabsOrientation,
 } from './components/Tabs';
 
+export { TabNav } from './components/TabNav';
+export type { TabNavProps, TabNavLinkProps } from './components/TabNav';
+
 export { DropdownMenu } from './components/DropdownMenu';
 export type {
   DropdownMenuProps,
@@ -940,10 +943,13 @@ export type {
 export type {
   ChartCurve,
   ChartMarker,
+  ChartMarkerLabelPlacement,
   ChartMarkerTone,
+  ChartPlotPointerEvent,
   ChartProps,
   ChartRange,
   ChartSeries,
   ChartSeriesColor,
   ChartType,
+  ChartViewport,
 } from './components/Chart';

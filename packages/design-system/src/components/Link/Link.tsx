@@ -62,10 +62,10 @@ interface LinkOwnProps {
  * Polymorphic props helper. Intersects the component's own props with the
  * underlying element's props (minus what we own), plus the `as` selector.
  */
-type PolymorphicProps<C extends ElementType, P> = P & { as?: C } & Omit<
-    ComponentPropsWithoutRef<C>,
-    keyof P | 'as'
-  >;
+type PolymorphicProps<C extends ElementType, P> = P & {
+  /** Element or component to render the link as (e.g. a router `Link`); its props are typed and forwarded. Default `'a'`. */
+  as?: C;
+} & Omit<ComponentPropsWithoutRef<C>, keyof P | 'as'>;
 
 /**
  * Public Link prop type. Generic `C` defaults to `'a'`. When the consumer

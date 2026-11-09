@@ -37,6 +37,8 @@
   overflow: hidden;
   border-radius: var(--chart-plot-radius);
   outline: none;
+
+  // A vertical swipe scrolls the page; no browser pinch or double-tap zoom (the chart owns them, DS-48).
   touch-action: pan-y;
 
   &:focus-visible {
@@ -47,6 +49,17 @@
   &[data-selectable] {
     user-select: none;
     -webkit-touch-callout: none;
+  }
+
+  // Zoomed with gestures on and selection off: a mouse drag pans the window.
+  &[data-pannable] {
+    cursor: grab;
+    user-select: none;
+
+    // Held down: the drag is (or is about to be) a pan.
+    &:active {
+      cursor: grabbing;
+    }
   }
 }
 
@@ -81,6 +94,11 @@
   &[data-tone='subtle'] {
     fill-opacity: var(--chart-marker-band-subtle-opacity);
   }
+
+  // `color`: the palette slot tints the band; the tone still sets the strength.
+  &[data-slot] {
+    fill: var(--chart-series-color, currentColor);
+  }
 }
 
 .selection {
@@ -98,6 +116,14 @@
   &[data-tone='subtle'] {
     stroke: var(--chart-marker-subtle-color);
   }
+
+  &[data-slot] {
+    stroke: var(--chart-series-color, currentColor);
+  }
+
+  &[data-slot][data-tone='subtle'] {
+    stroke-opacity: var(--chart-marker-line-subtle-opacity);
+  }
 }
 
 .markerLabels text {
@@ -109,6 +135,12 @@
   fill: var(--chart-marker-label-fg);
   font-size: var(--chart-axis-size);
   pointer-events: none;
+}
+
+// Decorative marker icon in the gutter above the plot (no halo: it never overlaps data).
+.markerLabels .markerIcon {
+  stroke: none;
+  font-size: var(--chart-marker-icon-size);
 }
 
 .valueLabels text {
@@ -247,6 +279,25 @@
     border-top-color: var(--chart-series-color, currentColor);
     border-radius: 0;
     background: transparent;
+  }
+}
+
+// ScatterChart reference lines: the same dash patterns as their plot lines.
+.swatchLine {
+  flex-shrink: 0;
+  width: var(--chart-swatch-line);
+  height: var(--chart-swatch-dash-width);
+  overflow: visible;
+  stroke: var(--chart-series-color, currentColor);
+  stroke-width: var(--chart-swatch-dash-width);
+  stroke-dasharray: var(--chart-reference-dash-0);
+
+  &[data-dash='1'] {
+    stroke-dasharray: var(--chart-reference-dash-1);
+  }
+
+  &[data-dash='2'] {
+    stroke-dasharray: var(--chart-reference-dash-2);
   }
 }
 

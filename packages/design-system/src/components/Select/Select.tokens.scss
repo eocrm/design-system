@@ -75,6 +75,7 @@
 
   // Options
   --select-option-padding-y: var(--space-2);
+  --select-option-min-height: auto;
   --select-option-padding-x: var(--space-3);
   --select-option-font-size: var(--font-size-md);
   --select-option-fg: var(--color-fg);
@@ -154,6 +155,7 @@
     --select-trigger-font-size-md: var(--font-size-lg);
     --select-trigger-font-size-lg: var(--font-size-lg);
     --select-popover-search-font-size: var(--font-size-lg);
+    --select-option-min-height: var(--size-touch);
   }
 }
 

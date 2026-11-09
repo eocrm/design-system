@@ -822,7 +822,7 @@
           "type": "ChartMarker[]",
           "required": false,
           "default": "",
-          "description": "Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,\n`{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:\n`'neutral'` for events (the tone default) or `'subtle'` for recurring context. Labelled markers are also listed in the\ntooltip, the keyboard announcement and the data table; unlabelled ones are decorative. A marker naming an\nunknown category is ignored with a dev warning."
+          "description": "Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,\n`{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:\n`'neutral'` for events (the tone default) or `'subtle'` for recurring context. `color` (palette slot 1–8) strokes /\ntints the marker, e.g. to match a series. `icon` (short text or emoji, decorative) is drawn centred above the plot;\n`labelPlacement: 'top'` moves the label there too, under the icon (default `'beside'`, on the plot). Labelled\nmarkers are also listed in the tooltip, the keyboard announcement and the data table; unlabelled ones are\ndecorative. A marker naming an unknown category is ignored with a dev warning."
         },
         {
           "name": "footnote",
@@ -886,6 +886,41 @@
           "required": false,
           "default": "",
           "description": "Called with the next zoomed range (or `null` on reset) when the user clicks a zoom button."
+        },
+        {
+          "name": "viewport",
+          "type": "ChartViewport | null",
+          "required": false,
+          "default": "",
+          "description": "Controlled render window inside the current domain (the `zoomRange` slice, else all categories): fractions\n`{ from, to }` of the domain's band edges (0 = left edge of the first category, 1 = right edge of the last).\n`null` = everything. Only the plot follows it (continuous x positions, marks clipped to the plot, x labels\nand y axis from the visible categories); the data table, tooltip contents, keyboard inspection and markers\nkeep every category of the domain. Clamped to 0..1 and at least two categories. Any `zoomRange` change resets\nit to `null`. Omit for uncontrolled."
+        },
+        {
+          "name": "defaultViewport",
+          "type": "ChartViewport | null",
+          "required": false,
+          "default": "",
+          "description": "Initial render window when uncontrolled. Default `null`. Resets to `null` when `categories` change content (new data)."
+        },
+        {
+          "name": "onViewportChange",
+          "type": "((next: ChartViewport | null, info: { end: boolean; }) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called with the next window (`null` = everything) when the user zooms or pans, \"Reset zoom\" clears it, or a\n`zoomRange` change resets it. `end: true` once the change settles (each keyboard step, a button, a reset):\nrefetch finer data then."
+        },
+        {
+          "name": "zoomGestures",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Turns on interactive zooming of the `viewport`: Ctrl/⌘ + wheel and trackpad pinch zoom around the pointer;\nShift + wheel or a horizontal wheel pans while zoomed; a plain vertical wheel always scrolls the page. Touch:\ntwo-finger pinch zooms and two-finger drag pans; a one-finger horizontal drag pans while zoomed; a vertical\nswipe scrolls the page; a long-press still selects. Mouse drag pans while zoomed only when selection is off.\nWith the plot focused: `+` / `=` zoom in and `-` zooms out around the inspected category. (Moving the inspected\ncategory past the window's edge pans to keep it visible whenever a viewport is set, with or without this.)\n`onViewportChange` fires with `end: false` during a gesture and `end: true` when it settles. Default `false`."
+        },
+        {
+          "name": "onPlotDoubleClick",
+          "type": "((e: ChartPlotPointerEvent) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called on a mouse double-click or a touch double-tap (two taps within 300ms and 24px) on the plot, and on\nEnter while a category is inspected from the keyboard (`value: null`). Reports the nearest category's original\nindex, the domain fraction and the y value at the pointer, e.g. to add a marker there."
         }
       ]
     },
@@ -4140,7 +4175,7 @@
           "type": "C",
           "required": false,
           "default": "",
-          "description": ""
+          "description": "Element or component to render the link as (e.g. a router `Link`); its props are typed and forwarded. Default `'a'`."
         }
       ]
     },
@@ -5898,10 +5933,10 @@
         },
         {
           "name": "reference",
-          "type": "ScatterReference",
+          "type": "ScatterReference | ScatterReference[]",
           "required": false,
           "default": "",
-          "description": "App-computed reference line (e.g. a recommended ratio), drawn dashed in neutral ink and listed in the legend."
+          "description": "App-computed reference line(s) (e.g. a recommended ratio), drawn dashed (a different pattern per line) and each listed in the legend."
         },
         {
           "name": "trendLine",
@@ -6946,6 +6981,24 @@
         }
       ]
     },
+    "TabNav": {
+      "props": [
+        {
+          "name": "aria-label",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Accessible name of the `<nav>` landmark (e.g. `\"Pet Control\"`,\n`\"Record sections\"`). Required in practice — pass this or\n`aria-labelledby`; a dev warning fires when neither is set."
+        },
+        {
+          "name": "children",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "`TabNav.Link` children, in display order."
+        }
+      ]
+    },
     "Table": {
       "props": [
         {
@@ -7911,7 +7964,7 @@
     "StatGroupVariant": "\"filled\" | \"card\"",
     "FunnelShape": "\"taper\" | \"sharp\"",
     "FunnelStage": "{ key: string; label: string; value: number; color?: FunnelSlot }",
-    "ScatterReference": "{ label: string; points: { x: number | Date; y: number; }[] }",
+    "ScatterReference": "{ key?: string; label: string; points: { x: number | Date; y: number; }[]; color?: ChartSeriesColor }",
     "ScatterSeries": "{ key: string; label: string; points: ScatterPoint[]; color?: ChartSeriesColor }",
     "ScatterXScale": "\"number\" | \"time\"",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",
@@ -7920,7 +7973,9 @@
     "TreeViewView": "\"list\" | \"chart\"",
     "ChartCurve": "\"smooth\" | \"linear\"",
     "ChartMarker": "(ChartMarkerBase & { at: string; from?: undefined; to?: undefined; }) | (ChartMarkerBase & { from: string; to: string; at?: undefined; })",
+    "ChartPlotPointerEvent": "{ index: number; fraction: number; value: number | null; clientX: number; clientY: number; source: \"touch\" | \"mouse\" | \"keyboard\" }",
     "ChartRange": "{ from: string; to: string }",
-    "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string; color?: ChartSeriesColor }"
+    "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string; color?: ChartSeriesColor }",
+    "ChartViewport": "{ from: number; to: number }"
   }
 }

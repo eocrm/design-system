@@ -12,6 +12,7 @@ import {
   type ChartRange,
   type ChartSeries,
   type ChartType,
+  type ChartViewport,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -97,6 +98,17 @@ const pinnedSeries: ChartSeries[] = [
   { key: 'a', label: 'Bowl A', color: 3, values: [45, 38, 52, 30] },
   { key: 'b', label: 'Bowl B', color: 5, values: [28, 60, 41, null] },
 ];
+// Pet Control: bowl weight on two scales over a day, with each feeding marked in its scale's colour.
+const dayHours = Array.from({ length: 17 }, (_, i) => `${String(6 + i).padStart(2, '0')}:00`);
+const scaleSeries: ChartSeries[] = [
+  { key: 'a', label: 'Scale A', color: 3, values: dayHours.map((_, i) => 40 + ((i * 13) % 50)) },
+  { key: 'b', label: 'Scale B', color: 5, values: dayHours.map((_, i) => 30 + ((i * 7) % 40)) },
+];
+const feedingMarkers: ChartMarker[] = [
+  { key: 'fa1', label: 'Breakfast', at: '07:00', color: 3, icon: '🐱' },
+  { key: 'fb1', label: 'Snack', at: '11:00', color: 5, icon: '🐱' },
+  { key: 'fa2', label: 'Dinner', at: '18:00', color: 3, icon: '🐱', labelPlacement: 'top' },
+];
 const eatenSeries: ChartSeries[] = [{ key: 'g', label: 'Eaten', values: [73, 98, 93, 30] }];
 const mealDetails = (i: number) => [`${[190, 255, 240, 80][i]} kcal`, `${[3, 4, 4, 1][i]} times`];
 
@@ -117,6 +129,45 @@ function RangeSelectionExample() {
       </Cell>
       <Text size="sm" tone="muted" data-testid="chart-range-readout">
         {range ? `Selected ${range.from} – ${range.to}` : ''}
+      </Text>
+    </Stack>
+  );
+}
+
+const fmtViewport = (v: ChartViewport | null) =>
+  v ? `${v.from.toFixed(2)}–${v.to.toFixed(2)}` : 'everything';
+
+function ZoomGesturesExample() {
+  const [viewport, setViewport] = useState<ChartViewport | null>(null);
+  const [log, setLog] = useState('');
+  const [notes, setNotes] = useState<ChartMarker[]>([]);
+  return (
+    <Stack gap="sm">
+      <Cell title="Bowl weight">
+        <Chart
+          type="line"
+          label="Bowl weight, zoomable"
+          categories={minutes}
+          series={bowlSeries}
+          formatValue={formatGrams}
+          markers={notes}
+          zoomGestures
+          viewport={viewport}
+          onViewportChange={(next, { end }) => {
+            setViewport(next);
+            setLog(`onViewportChange(${fmtViewport(next)}, { end: ${end} })`);
+          }}
+          onPlotDoubleClick={({ index, source }) =>
+            setNotes((m) =>
+              m.some((n) => n.key === `note-${index}`)
+                ? m
+                : [...m, { key: `note-${index}`, label: `Note (${source})`, at: minutes[index] }],
+            )
+          }
+        />
+      </Cell>
+      <Text size="sm" tone="muted" data-testid="chart-viewport-log">
+        {log || 'Zoom or pan the chart'}
       </Text>
     </Stack>
   );
@@ -200,6 +251,24 @@ export function ChartDemo() {
 <Text size="sm" tone="muted">{range ? \`Selected \${range.from} – \${range.to}\` : ''}</Text>`}
       >
         <RangeSelectionExample />
+      </Example>
+
+      <Example
+        title="Zoom gestures"
+        description="zoomGestures with a controlled viewport. Ctrl/⌘ + wheel or a trackpad pinch zooms around the pointer; Shift + wheel or a horizontal swipe pans; a plain wheel scrolls the page. Touch: pinch, two-finger drag, or a one-finger horizontal drag while zoomed. Mouse drag pans while zoomed (selection is off here). Keyboard: + and -. The line below logs onViewportChange; apps refetch on end: true. Double-click, double-tap or Enter on an inspected point adds a marker there (onPlotDoubleClick)."
+        code={`const [viewport, setViewport] = useState<ChartViewport | null>(null);
+<Chart type="line" label="Bowl weight, zoomable" categories={minutes} series={bowl}
+  formatValue={formatGrams} markers={notes} zoomGestures viewport={viewport}
+  onViewportChange={(next, { end }) => {
+    setViewport(next);
+    if (end) refetchFor(next);
+  }}
+  onPlotDoubleClick={({ index }) =>
+    setNotes((m) => [...m, { key: \`note-\${index}\`, label: 'Note', at: minutes[index] }])
+  }
+/>`}
+      >
+        <ZoomGesturesExample />
       </Example>
 
       <Example
@@ -366,6 +435,33 @@ export function ChartDemo() {
             series={markerSeries}
             markers={eventMarkers}
             formatValue={formatCount}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Marker colour, icon and top labels"
+        description="color strokes a marker in a palette slot, e.g. the scale it belongs to. icon (short text or emoji, decorative) is drawn above the plot; labelPlacement 'top' moves the label there too, under the icon. Without icons or top labels the plot keeps its size."
+        code={`<Chart type="line" label="Bowl weight per scale" categories={hours}
+  series={[
+    { key: 'a', label: 'Scale A', color: 3, values: scaleA },
+    { key: 'b', label: 'Scale B', color: 5, values: scaleB },
+  ]}
+  markers={[
+    { key: 'fa1', label: 'Breakfast', at: '07:00', color: 3, icon: '🐱' },
+    { key: 'fb1', label: 'Snack', at: '11:00', color: 5, icon: '🐱' },
+    { key: 'fa2', label: 'Dinner', at: '18:00', color: 3, icon: '🐱', labelPlacement: 'top' },
+  ]}
+/>`}
+      >
+        <Cell title="Feedings">
+          <Chart
+            type="line"
+            label="Bowl weight per scale"
+            categories={dayHours}
+            series={scaleSeries}
+            markers={feedingMarkers}
+            formatValue={formatGrams}
           />
         </Cell>
       </Example>

@@ -440,12 +440,12 @@ describe('ButtonGroup touch tokens (DS-35)', () => {
   const scss = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.tokens.scss'), 'utf8');
   it('re-points --button-group-item-height-md to size-touch on coarse pointers', () => {
     expect(scss).toMatch(
-      /@media \(pointer: coarse\)[\s\S]*--button-group-item-height-md:\s*var\(\-\-size\-touch\)/,
+      /@media \(pointer: coarse\)[\s\S]*--button-group-item-height-md:\s*calc\(\s*var\(--size-touch\)/,
     );
   });
   it('re-points --button-group-item-height-lg to size-touch on coarse pointers', () => {
     expect(scss).toMatch(
-      /@media \(pointer: coarse\)[\s\S]*--button-group-item-height-lg:\s*var\(\-\-size\-touch\)/,
+      /@media \(pointer: coarse\)[\s\S]*--button-group-item-height-lg:\s*calc\(\s*var\(--size-touch\)/,
     );
   });
 });
@@ -459,8 +459,28 @@ it('segmented xs and sm items are real 44px controls on touch, not overlapping h
   for (const size of ['xs', 'sm']) {
     expect(tokens).toMatch(
       new RegExp(
-        `@media \\(pointer: coarse\\)[\\s\\S]*--button-group-item-height-${size}:\\s*var\\(--size-touch\\)`,
+        `@media \\(pointer: coarse\\)[\\s\\S]*--button-group-item-height-${size}:\\s*calc\\(\\s*var\\(--size-touch\\)`,
       ),
     );
   }
+});
+
+describe('ButtonGroup segmented items are 44px both axes on touch (DS-42)', () => {
+  const tokens = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.tokens.scss'), 'utf8');
+  const module = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.module.scss'), 'utf8');
+  const coarse = tokens.slice(tokens.indexOf('@media (pointer: coarse)'));
+  it('grows the track by its padding so the ITEM (track - 2 * padding) is --size-touch tall', () => {
+    for (const size of ['xs', 'sm', 'md', 'lg']) {
+      expect(coarse).toMatch(
+        new RegExp(
+          `--button-group-item-height-${size}:\\s*calc\\(\\s*var\\(--size-touch\\) \\+ 2 \\* var\\(--button-group-segmented-padding\\)\\s*\\);`,
+        ),
+      );
+    }
+  });
+  it('item min width is auto by default and --size-touch on coarse, applied to items', () => {
+    expect(tokens).toMatch(/--button-group-item-min-width:\s*auto;/);
+    expect(coarse).toContain('--button-group-item-min-width: var(--size-touch);');
+    expect(module).toMatch(/\.item \{[^}]*min-inline-size:\s*var\(--button-group-item-min-width\)/);
+  });
 });

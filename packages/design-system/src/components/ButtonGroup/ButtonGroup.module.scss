@@ -79,6 +79,7 @@
   cursor: pointer;
   font: inherit;
   white-space: nowrap;
+  min-inline-size: var(--button-group-item-min-width);
   border-radius: calc(var(--button-group-segmented-radius) - var(--button-group-segmented-padding));
   transition:
     background var(--transition-fast),
@@ -106,8 +107,8 @@
 
 // Size variants — the TRACK matches Button's --size-* height, so a segmented
 // control lines up with a same-size Button. Items give back the track's
-// padding on both sides. On coarse pointers every track is --size-touch
-// (ButtonGroup.tokens.scss): adjacent items are real controls, never
+// padding on both sides. On coarse pointers every ITEM is --size-touch tall and wide
+// (the track grows by its padding; ButtonGroup.tokens.scss): adjacent items are real controls, never
 // touch-hit-area hosts, whose overhangs would steal each other's taps.
 .sizeXs {
   height: calc(var(--button-group-item-height-xs) - 2 * var(--button-group-segmented-padding));
