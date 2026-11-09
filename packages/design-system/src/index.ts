@@ -941,6 +941,9 @@ export type {
   TreeViewView,
 } from './components/TreeView';
 export type {
+  ChartAnnotation,
+  ChartAnnotationGlyph,
+  ChartAnnotationTone,
   ChartCurve,
   ChartMarker,
   ChartMarkerLabelPlacement,

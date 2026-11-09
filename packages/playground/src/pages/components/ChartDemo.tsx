@@ -8,6 +8,7 @@ import {
   Stack,
   Switch,
   Text,
+  type ChartAnnotation,
   type ChartMarker,
   type ChartRange,
   type ChartReferenceLine,
@@ -117,6 +118,12 @@ const petSeries: ChartSeries[] = [
   { key: 'milo', label: 'Milo', values: [14, 17, 12, 15, 19, 13, 16] },
 ];
 const averageLine: ChartReferenceLine[] = [{ value: 35, label: '30-day average' }];
+const perDaySeries: ChartSeries[] = [
+  { key: 'eaten', label: 'Eaten', values: [36, 35, 37, 35, 35, 37, 44] },
+];
+const todayAhead: ChartAnnotation[] = [
+  { at: 'Sun', glyph: 'up', tone: 'success', label: 'Ahead of usual pace' },
+];
 const mealDetails = (i: number) => [`${[190, 255, 240, 80][i]} kcal`, `${[3, 4, 4, 1][i]} times`];
 
 function RangeSelectionExample() {
@@ -336,6 +343,27 @@ export function ChartDemo() {
             series={petSeries}
             formatValue={formatGrams}
             referenceLines={averageLine}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Annotations"
+        description="annotations puts a small status glyph (up / down triangle or dot, in a success, danger, warning or neutral tone) on one category: after the value label with valueLabels, otherwise above the tallest mark. The y axis makes room for it. The glyph is decorative; its label is listed in the tooltip, the announcement and the data table."
+        code={`<Chart type="bar" label="Eaten per day" categories={weekDays} series={eaten}
+  formatValue={formatGrams} valueLabels
+  annotations={[{ at: 'Sun', glyph: 'up', tone: 'success', label: 'Ahead of usual pace' }]}
+/>`}
+      >
+        <Cell title="Eaten per day">
+          <Chart
+            type="bar"
+            label="Eaten per day"
+            categories={weekDays}
+            series={perDaySeries}
+            formatValue={formatGrams}
+            valueLabels
+            annotations={todayAhead}
           />
         </Cell>
       </Example>

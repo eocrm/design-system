@@ -163,6 +163,27 @@
   pointer-events: none;
 }
 
+.annotation {
+  fill: var(--chart-annotation-neutral);
+  pointer-events: none;
+
+  path {
+    scale: var(--chart-annotation-size);
+  }
+
+  &[data-tone='success'] {
+    fill: var(--chart-annotation-success);
+  }
+
+  &[data-tone='danger'] {
+    fill: var(--chart-annotation-danger);
+  }
+
+  &[data-tone='warning'] {
+    fill: var(--chart-annotation-warning);
+  }
+}
+
 .crosshair {
   stroke: var(--chart-crosshair);
   stroke-width: 1px;

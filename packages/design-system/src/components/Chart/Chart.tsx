@@ -38,6 +38,9 @@ import {
   layoutMarkers,
   markerGutterRows,
   markerLabelsAt,
+  annotationLabelsAt,
+  annotationPath,
+  resolveAnnotations,
   resolveMarkers,
   REFERENCE_DASHES,
   DOT_RADIUS,
@@ -49,6 +52,7 @@ import {
   X_LABEL_BASELINE,
   resolveSeries,
   visibleSeries,
+  type ChartAnnotation,
   type ChartCurve,
   type ChartMarker,
   type ChartReferenceLine,
@@ -69,6 +73,9 @@ import { useChartGestures } from './useChartGestures';
 import styles from './Chart.module.scss';
 
 export type {
+  ChartAnnotation,
+  ChartAnnotationGlyph,
+  ChartAnnotationTone,
   ChartCurve,
   ChartMarker,
   ChartMarkerLabelPlacement,
@@ -146,6 +153,15 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
    * the keyboard announcement, and a row in the data table's footer. A non-finite `value` is ignored with a dev warning.
    */
   referenceLines?: ChartReferenceLine[];
+  /**
+   * Status glyphs on categories, e.g. `[{ at: 'Sun', glyph: 'up', tone: 'success', label: 'Ahead of usual pace' }]`:
+   * a small triangle (`'up'` / `'down'`) or `'dot'` in the tone's status ink, drawn just after the value label (with
+   * `valueLabels`) or above the category's tallest visible mark (below a negative one); the y scale reserves room for
+   * it. Several on one category sit side by side in array order. Decorative (`aria-hidden`): `label` is listed in the
+   * tooltip, the keyboard announcement and the data table's notes column. Every chart type. An unknown `at` is ignored
+   * with a dev warning.
+   */
+  annotations?: ChartAnnotation[];
   /**
    * Short note under the plot, e.g. "3 deals in other currencies not included" or why a comparison was omitted.
    * Takes its own row (wraps, never truncates) and the plot fills the rest; also describes the plot for
@@ -225,6 +241,7 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
 
 const NO_MARKERS: ChartMarker[] = [];
 const NO_REFERENCES: ChartReferenceLine[] = [];
+const NO_ANNOTATIONS: ChartAnnotation[] = [];
 const NO_DROPPED: string[] = [];
 const identity = (i: number) => i;
 /** Span multiplier of one `+` key press (`-` divides by it). */
@@ -304,6 +321,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     onHiddenSeriesChange,
     markers = NO_MARKERS,
     referenceLines = NO_REFERENCES,
+    annotations = NO_ANNOTATIONS,
     footnote,
     details,
     valueLabels,
@@ -402,6 +420,26 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     console.warn(`[Chart] Ignored referenceLines (${brokenReferences}): value must be finite.`);
   }, [brokenReferences]);
   const referenceNotes = references.map((r) => `${r.label}: ${r.text}`);
+  // Resolved on the full categories (so an out-of-zoom one is not "unknown"), then shifted into the view.
+  const allAnnotations = useMemo(
+    () => resolveAnnotations(annotations, allCategories),
+    [annotations, allCategories],
+  );
+  const viewAnnotations = useMemo(() => {
+    const from = zoomFrom ?? 0;
+    return allAnnotations.annotations.flatMap((a) =>
+      a.index >= from && a.index - from < categories.length
+        ? [{ ...a, index: a.index - from }]
+        : [],
+    );
+  }, [allAnnotations, zoomFrom, categories.length]);
+  const droppedAnnotations = loaded ? allAnnotations.dropped.join(', ') : '';
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' || !droppedAnnotations) return;
+    console.warn(
+      `[Chart] Ignored annotations (${droppedAnnotations}): at must be one of categories.`,
+    );
+  }, [droppedAnnotations]);
 
   const [selection, setSelection] = useControllableState<ChartRange | null>({
     value: selectedRange,
@@ -525,6 +563,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             topGutter: gutterRows * MARKER_LABEL_BASELINE,
             viewport: vp,
             referenceLines,
+            annotations: viewAnnotations,
           })
         : null,
     [
@@ -540,6 +579,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       gutterRows,
       vp,
       referenceLines,
+      viewAnnotations,
     ],
   );
 
@@ -872,7 +912,11 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const notes =
     current === null
       ? []
-      : [...markerLabelsAt(resolvedMarkers.markers, current), ...referenceNotes];
+      : [
+          ...markerLabelsAt(resolvedMarkers.markers, current),
+          ...annotationLabelsAt(viewAnnotations, current),
+          ...referenceNotes,
+        ];
   // `details` takes original indices: both call sites (here and the table's `detailsAt`) map through `originalIndex`.
   const detailLines = current === null ? [] : (details?.(originalIndex(current)) ?? []);
   const liveText = selectionNote
@@ -1268,6 +1312,21 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                   ))}
                 </g>
               )}
+              {/* Glyphs above the data marks, with the value labels. */}
+              {layout.annotations.map((a) => (
+                // Translate on the group: the path's CSS `scale` (the size token) would otherwise scale it too.
+                <g
+                  key={a.key}
+                  className={styles.annotation}
+                  data-annotation=""
+                  data-glyph={a.glyph}
+                  data-tone={a.tone}
+                  aria-hidden="true"
+                  transform={`translate(${a.x} ${a.y})`}
+                >
+                  <path d={annotationPath(a.glyph)} />
+                </g>
+              ))}
               {/* Inspection markers in their own pass: a later stacked area would paint over them. */}
               {current !== null &&
                 layout.marks.map(
@@ -1358,6 +1417,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         formatValue={formatValue}
         markersHeader={t('chart.markers')}
         markers={resolvedMarkers.markers}
+        annotations={viewAnnotations}
         detailsHeader={details ? t('chart.details') : undefined}
         detailsAt={(i) => details?.(originalIndex(i)) ?? []}
         references={references}

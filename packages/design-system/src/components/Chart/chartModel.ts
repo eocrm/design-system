@@ -91,6 +91,88 @@ export interface ChartReferenceLine {
   color?: ChartSeriesColor;
 }
 
+/** Annotation shape: a filled triangle pointing `up` or `down`, or a `dot`. The shape carries the meaning without colour. */
+export type ChartAnnotationGlyph = 'up' | 'down' | 'dot';
+
+/** Annotation colour: the semantic status ink (`neutral` is muted ink). */
+export type ChartAnnotationTone = 'success' | 'danger' | 'warning' | 'neutral';
+
+/** A small status glyph drawn above (below, for negatives) one category's tallest mark, e.g. "ahead of pace". */
+export interface ChartAnnotation {
+  /** Stable identity (React key). Default: the array index. */
+  key?: string;
+  /** Category the glyph sits on; one of `categories`. An unknown category is ignored with a dev warning. */
+  at: string;
+  /** Shape: `'up'` / `'down'` triangle for a trend, `'dot'` for a plain flag. */
+  glyph: ChartAnnotationGlyph;
+  /** Colour: `'success'`, `'danger'`, `'warning'`, or `'neutral'` (muted ink). */
+  tone: ChartAnnotationTone;
+  /** What the glyph means, e.g. "Ahead of usual pace". Listed in the tooltip, keyboard announcement and data table. */
+  label: string;
+}
+
+export interface ResolvedAnnotation {
+  key: string;
+  /** Category index. */
+  index: number;
+  glyph: ChartAnnotationGlyph;
+  tone: ChartAnnotationTone;
+  label: string;
+}
+
+/** Maps annotations onto category indices; ones naming an unknown category are dropped (their `at` reported). */
+export function resolveAnnotations(
+  annotations: readonly ChartAnnotation[],
+  categories: readonly string[],
+): { annotations: ResolvedAnnotation[]; dropped: string[] } {
+  const resolved: ResolvedAnnotation[] = [];
+  const dropped: string[] = [];
+  annotations.forEach((a, i) => {
+    const index = categories.indexOf(a.at);
+    if (index < 0) dropped.push(a.at);
+    else
+      resolved.push({
+        key: a.key ?? String(i),
+        index,
+        glyph: a.glyph,
+        tone: a.tone,
+        label: a.label,
+      });
+  });
+  return { annotations: resolved, dropped };
+}
+
+/** Labels of the annotations on category `i`, in array order. */
+export function annotationLabelsAt(
+  annotations: readonly ResolvedAnnotation[],
+  i: number,
+): string[] {
+  return annotations.flatMap((a) => (a.index === i ? [a.label] : []));
+}
+
+/** One annotation glyph: `x` its centre, `y` its bottom edge (it spans `y - ANNOTATION_SIZE`..`y`). */
+export interface AnnotationGeometry {
+  key: string;
+  index: number;
+  x: number;
+  y: number;
+  glyph: ChartAnnotationGlyph;
+  tone: ChartAnnotationTone;
+  /** True when it hangs below a negative mark. */
+  below: boolean;
+}
+
+/** Glyph box side in px; mirrors `--chart-annotation-size`, which scales the unit glyph path. */
+export const ANNOTATION_SIZE = 12;
+const ANNOTATION_GAP = 2;
+
+/** Unit glyph path (1px box), bottom-centre at the origin; the renderer scales it by `--chart-annotation-size`. */
+export function annotationPath(glyph: ChartAnnotationGlyph): string {
+  if (glyph === 'up') return 'M-0.5,-0.1L0.5,-0.1L0,-0.95Z';
+  if (glyph === 'down') return 'M-0.5,-0.95L0.5,-0.95L0,-0.1Z';
+  return 'M-0.35,-0.5a0.35,0.35 0 1,0 0.7,0a0.35,0.35 0 1,0 -0.7,0';
+}
+
 /** Geometry of one reference line in svg coordinates. */
 export interface ReferenceLineGeometry {
   key: string;
@@ -540,6 +622,8 @@ export interface LayoutInput {
   viewport?: ChartViewport | null;
   /** Horizontal reference lines; finite values join the y domain (also under a viewport), the rest are dropped. */
   referenceLines?: readonly ChartReferenceLine[];
+  /** Resolved annotations; the scale reserves glyph room above (below, for negatives) the annotated in-view marks. */
+  annotations?: readonly ResolvedAnnotation[];
 }
 
 export interface ChartLayout {
@@ -555,6 +639,8 @@ export interface ChartLayout {
   valueLabels: ValueLabel[];
   /** Reference lines with a finite value, in input order. */
   referenceLines: ReferenceLineGeometry[];
+  /** Annotation glyphs on in-view, non-null categories, in input order. */
+  annotations: AnnotationGeometry[];
   /** The y value at an svg y (inverse of the y scale). */
   valueAt: (svgY: number) => number;
 }
@@ -641,9 +727,31 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   const tickCount = Math.max(2, Math.floor((plotBottom - plotTop) / Y_TICK_SPACING));
   const labelled = !!input.valueLabels && (type === 'bar' || type === 'stacked-bar');
   const room = labelled ? VALUE_LABEL_HEIGHT + VALUE_LABEL_GAP : 0;
+  const posTotal = layers && categories.map((_, i) => Math.max(0, ...layers.map((l) => l[i][1])));
+  const negTotal = layers && categories.map((_, i) => Math.min(0, ...layers.map((l) => l[i][0])));
+  // The mark an annotation sits on: the stack's end on stacked types, else the extreme visible value; null when empty.
+  const annotationEnd = (i: number): { end: number; below: boolean } | null => {
+    const vals = (layers ? primaries : series).flatMap((x) =>
+      x.values[i] === null ? [] : [x.values[i]!],
+    );
+    if (vals.length === 0) return null;
+    const hi = posTotal ? posTotal[i] : Math.max(...vals);
+    const lo = negTotal ? negTotal[i] : Math.min(...vals);
+    const below = lo < 0 && hi <= 0;
+    return { end: below ? lo : hi, below };
+  };
+  const ends = (input.annotations ?? []).flatMap((a) => {
+    const e = inView(a.index) ? annotationEnd(a.index) : null;
+    return e ? [{ a, ...e }] : [];
+  });
+  // Line points carry a dot / inspection marker: clear it too.
+  const pointLift = type === 'line' || type === 'area' ? MARKER_RADIUS : 0;
+  const glyphRoom = ANNOTATION_SIZE + ANNOTATION_GAP + pointLift;
+  const topRoom = Math.max(room, ends.some((e) => !e.below) ? glyphRoom : 0);
+  const bottomRoom = Math.max(min < 0 ? room : 0, ends.some((e) => e.below) ? glyphRoom : 0);
   const y = scaleLinear()
     .domain([min, max])
-    .range([plotBottom - (min < 0 ? room : 0), plotTop + room])
+    .range([plotBottom - bottomRoom, plotTop + topRoom])
     .nice(tickCount);
   const tickValues = y.ticks(tickCount);
   const tickLabels = tickValues.map(formatValue);
@@ -707,17 +815,23 @@ export function computeLayout(input: LayoutInput): ChartLayout {
 
   const marks: SeriesMarks[] = [];
   const valueLabels: ValueLabel[] = [];
-  const addLabel = (x: number, end: number, value: number, avail: number) => {
+  // Per category, the drawn value labels with their value (annotations sit after the one on their mark).
+  const labelsAt = new Map<number, { value: number; label: ValueLabel }[]>();
+  const addLabel = (i: number, x: number, end: number, value: number, avail: number) => {
     const text = formatValue(value);
     if (textWidth(text) > avail) return;
     const above = value >= 0;
-    valueLabels.push({
+    const label: ValueLabel = {
       x,
       y: above ? end - VALUE_LABEL_GAP : end + VALUE_LABEL_GAP + VALUE_LABEL_HEIGHT,
       text,
       anchor: above ? 'above' : 'below',
-    });
+    };
+    valueLabels.push(label);
+    labelsAt.set(i, [...(labelsAt.get(i) ?? []), { value, label }]);
   };
+  // Centre x of each category's annotated mark (the tallest bar of a group); the category centre otherwise.
+  const markX = new Map<number, number>();
 
   if (type === 'line') {
     for (const x of series) marks.push(lineMarks(x));
@@ -731,7 +845,9 @@ export function computeLayout(input: LayoutInput): ChartLayout {
         if (v === null) return null;
         const bx = categoryX[i] - bandWidth / 2 + j * (barWidth + gap);
         // A zero gets no bar but still its label, at the zero line.
-        if (labelled) addLabel(bx + barWidth / 2, y(v), v, barWidth);
+        if (labelled) addLabel(i, bx + barWidth / 2, y(v), v, barWidth);
+        const e = annotationEnd(i);
+        if (e && v === e.end && !markX.has(i)) markX.set(i, bx + barWidth / 2);
         if (v === 0) return null;
         const top = Math.min(y(v), zeroY);
         const h = Math.max(1, Math.abs(zeroY - y(v)));
@@ -740,8 +856,8 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       marks.push({ ...base(x), kind: 'bars', bars, points: pointsOf(x.values), dots: [] });
     });
   } else if (layers) {
-    const posTotal = categories.map((_, i) => Math.max(0, ...layers.map((l) => l[i][1])));
-    const negTotal = categories.map((_, i) => Math.min(0, ...layers.map((l) => l[i][0])));
+    const pos = posTotal!;
+    const neg = negTotal!;
     primaries.forEach((x, j) => {
       const layer = layers[j];
       const points = x.values.map((v, i) =>
@@ -758,7 +874,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
           if (v > 0 && y0 !== 0) bottom -= MARK_GAP;
           if (v < 0 && y1 !== 0) top += MARK_GAP;
           const end: BarEnd =
-            v > 0 && y1 === posTotal[i] ? 'top' : v < 0 && y0 === negTotal[i] ? 'bottom' : null;
+            v > 0 && y1 === pos[i] ? 'top' : v < 0 && y0 === neg[i] ? 'bottom' : null;
           return barPath(
             {
               x: categoryX[i] - bandWidth / 2,
@@ -802,9 +918,33 @@ export function computeLayout(input: LayoutInput): ChartLayout {
         const vals = primaries.map((p) => p.values[i]).filter((v) => v !== null) as number[];
         const total = vals.reduce((a, b) => a + b, 0);
         if (vals.length === 0) return;
-        addLabel(categoryX[i], y(total >= 0 ? posTotal[i] : negTotal[i]), total, bandWidth);
+        addLabel(i, categoryX[i], y(total >= 0 ? pos[i] : neg[i]), total, bandWidth);
       });
   }
+
+  const STEP = ANNOTATION_SIZE + ANNOTATION_GAP;
+  const counts = new Map<number, number>();
+  for (const { a } of ends) counts.set(a.index, (counts.get(a.index) ?? 0) + 1);
+  const placed = new Map<number, number>();
+  const annotations: AnnotationGeometry[] = ends.map(({ a, end, below }) => {
+    const k = placed.get(a.index) ?? 0;
+    placed.set(a.index, k + 1);
+    const g = { key: a.key, index: a.index, glyph: a.glyph, tone: a.tone, below };
+    const label = labelsAt
+      .get(a.index)
+      ?.find((l) => l.value === end && (l.label.anchor === 'below') === below)?.label;
+    // After the value label, on its baseline.
+    if (label) {
+      const x0 = label.x + textWidth(label.text) / 2 + ANNOTATION_GAP + ANNOTATION_SIZE / 2;
+      return { ...g, x: x0 + k * STEP, y: label.y };
+    }
+    // Centred over (under) the mark, the group side by side.
+    const cx =
+      (markX.get(a.index) ?? categoryX[a.index]) +
+      (k - ((counts.get(a.index) ?? 1) - 1) / 2) * STEP;
+    const lift = ANNOTATION_GAP + pointLift;
+    return { ...g, x: cx, y: below ? y(end) + lift + ANNOTATION_SIZE : y(end) - lift };
+  });
 
   return {
     plot,
@@ -823,6 +963,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       dash: i % REFERENCE_DASHES,
       slot: r.color ?? 0,
     })),
+    annotations,
     valueAt: (py) => y.invert(Math.max(plot.y, Math.min(plot.y + plot.height, py))),
   };
 }

@@ -1,5 +1,10 @@
 import { VisuallyHidden } from '../VisuallyHidden';
-import { markerLabelsAt, type ResolvedMarker } from './chartModel';
+import {
+  annotationLabelsAt,
+  markerLabelsAt,
+  type ResolvedAnnotation,
+  type ResolvedMarker,
+} from './chartModel';
 
 export interface ChartTableColumn {
   key: string;
@@ -17,6 +22,7 @@ export function ChartTable({
   formatValue,
   markersHeader,
   markers,
+  annotations = [],
   detailsHeader,
   detailsAt,
   references = [],
@@ -29,14 +35,16 @@ export function ChartTable({
   formatValue: (n: number) => string;
   markersHeader: string;
   markers: readonly ResolvedMarker[];
+  /** Annotations; their labels share the notes column with marker labels. */
+  annotations?: readonly ResolvedAnnotation[];
   /** Set only when the chart has `details`; omitted means no details column. */
   detailsHeader?: string;
   detailsAt: (categoryIndex: number) => string[];
   /** Reference lines, one footer row each: the label as row header, the formatted value spanning the rest. */
   references?: { key: string; label: string; text: string }[];
 }) {
-  // Only labelled markers carry meaning; decorative bands add no column.
-  const hasNotes = markers.some((m) => m.label);
+  // Only labelled markers carry meaning; decorative bands add no column. Annotations always have a label.
+  const hasNotes = markers.some((m) => m.label) || annotations.length > 0;
   return (
     <VisuallyHidden as="div">
       <table>
@@ -61,7 +69,13 @@ export function ChartTable({
                 const v = c.values[i];
                 return <td key={c.key}>{v === null ? noData : formatValue(v)}</td>;
               })}
-              {hasNotes && <td>{markerLabelsAt(markers, i).join(', ')}</td>}
+              {hasNotes && (
+                <td>
+                  {[...markerLabelsAt(markers, i), ...annotationLabelsAt(annotations, i)].join(
+                    ', ',
+                  )}
+                </td>
+              )}
               {detailsHeader && <td>{detailsAt(i).join('; ')}</td>}
             </tr>
           ))}
