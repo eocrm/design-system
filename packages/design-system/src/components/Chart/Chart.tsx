@@ -156,7 +156,7 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   /**
    * Status glyphs on categories, e.g. `[{ at: 'Sun', glyph: 'up', tone: 'success', label: 'Ahead of usual pace' }]`:
    * a small triangle (`'up'` / `'down'`) or `'dot'` in the tone's status ink, drawn just after the value label (with
-   * `valueLabels`) or above the category's tallest visible mark (below a negative one); the y scale reserves room for
+   * `valueLabels`; centred over it when that would cross into the next bar) or above the category's tallest visible mark (below a negative one); the y scale reserves room for
    * it. Several on one category sit side by side in array order. Decorative (`aria-hidden`): `label` is listed in the
    * tooltip, the keyboard announcement and the data table's notes column. Every chart type. An unknown `at` is ignored
    * with a dev warning.

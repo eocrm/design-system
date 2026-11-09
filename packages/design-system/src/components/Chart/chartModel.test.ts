@@ -1423,6 +1423,106 @@ describe('annotations (DS-52)', () => {
     expect(l.annotations.map((g) => g.index)).toEqual([3]);
   });
 
+  const glyphBox = (g: { x: number; y: number }) => ({
+    left: g.x - ANNOTATION_SIZE / 2,
+    right: g.x + ANNOTATION_SIZE / 2,
+    top: g.y - ANNOTATION_SIZE,
+    bottom: g.y,
+  });
+  const labelBox = (v: { x: number; y: number; text: string }) => ({
+    left: v.x - estimateTextWidth(v.text) / 2,
+    right: v.x + estimateTextWidth(v.text) / 2,
+    top: v.y - 14,
+    bottom: v.y,
+  });
+  const overlaps = (a: ReturnType<typeof glyphBox>, b: ReturnType<typeof glyphBox>) =>
+    a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+  it('on a mixed-sign stack, sits beside the net-total label (positive net)', () => {
+    const l = annotated(
+      'stacked-bar',
+      [s('x', [10, 10, 20, 5]), s('y', [5, -3, 1, 1])],
+      [up('b')],
+      {
+        valueLabels: true,
+      },
+    );
+    const label = l.valueLabels.find((v) => v.text === '7')!;
+    const [g] = l.annotations;
+    expect(g.below).toBe(false);
+    expect(g.y).toBeCloseTo(label.y);
+    expect(overlaps(glyphBox(g), labelBox(label))).toBe(false);
+  });
+
+  it('on a stack with a negative net, goes below with the label', () => {
+    const l = annotated(
+      'stacked-bar',
+      [s('x', [10, -10, 20, 5]), s('y', [5, 3, 1, 1])],
+      [up('b')],
+      {
+        valueLabels: true,
+      },
+    );
+    const label = l.valueLabels.find((v) => v.text === '-7')!;
+    const [g] = l.annotations;
+    expect(label.anchor).toBe('below');
+    expect(g.below).toBe(true);
+    expect(overlaps(glyphBox(g), labelBox(label))).toBe(false);
+    expect(g.y).toBeLessThanOrEqual(l.plot.y + l.plot.height);
+  });
+
+  it('in a grouped bar with close values, stacks over its label instead of crossing into the neighbour bar', () => {
+    const l = annotated('bar', [s('x', [10, 40, 20, 5]), s('y', [5, 39, 1, 1])], [up('b')], {
+      valueLabels: true,
+    });
+    const [g] = l.annotations;
+    const own = l.valueLabels.find((v) => v.text === '40')!;
+    const other = l.valueLabels.find((v) => v.text === '39')!;
+    expect(overlaps(glyphBox(g), labelBox(other))).toBe(false);
+    expect(overlaps(glyphBox(g), labelBox(own))).toBe(false);
+    expect(g.x).toBeCloseTo(own.x);
+    expect(g.y).toBeLessThan(own.y - 14);
+    expect(g.y - ANNOTATION_SIZE).toBeGreaterThanOrEqual(l.plot.y);
+  });
+
+  it('on narrow single-series bars, stacks over the label and stays in its slot', () => {
+    const cats12 = Array.from({ length: 12 }, (_, i) => `c${i}`);
+    const l = computeLayout({
+      type: 'bar',
+      categories: cats12,
+      series: resolveSeries(
+        'bar',
+        [
+          s(
+            'x',
+            cats12.map((_, i) => 30 + i),
+          ),
+        ],
+        12,
+      ).series,
+      width: 300,
+      height: 200,
+      formatValue: fmt,
+      valueLabels: true,
+      annotations: resolveAnnotations([up('c4')], cats12).annotations,
+    });
+    const [g] = l.annotations;
+    expect(g.x).toBeCloseTo(l.categoryX[4]);
+    expect(g.x + ANNOTATION_SIZE / 2).toBeLessThanOrEqual(l.categoryX[4] + l.step / 2);
+    expect(g.y - ANNOTATION_SIZE).toBeGreaterThanOrEqual(l.plot.y);
+  });
+
+  it('on the last category, never runs past the plot right edge', () => {
+    const l = annotated('bar', [s('x', [10, 20, 30, 40])], [up('d'), up('d', { glyph: 'dot' })], {
+      valueLabels: true,
+      width: 160,
+    });
+    for (const g of l.annotations) {
+      expect(g.x + ANNOTATION_SIZE / 2).toBeLessThanOrEqual(l.plot.x + l.plot.width);
+      expect(g.y - ANNOTATION_SIZE).toBeGreaterThanOrEqual(l.plot.y);
+    }
+  });
+
   it('leaves the layout unchanged without annotations', () => {
     const series = resolveSeries('bar', [s('x', [10, 40, 20, 5])], 4).series;
     const plain = layout({ type: 'bar', series, valueLabels: true });

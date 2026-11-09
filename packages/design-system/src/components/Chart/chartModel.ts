@@ -111,6 +111,7 @@ export interface ChartAnnotation {
   label: string;
 }
 
+/** Internal (not in the public API): an annotation mapped onto a category index. */
 export interface ResolvedAnnotation {
   key: string;
   /** Category index. */
@@ -160,6 +161,17 @@ export interface AnnotationGeometry {
   tone: ChartAnnotationTone;
   /** True when it hangs below a negative mark. */
   below: boolean;
+}
+
+/** Where an annotated category's glyphs go: after its value label, centred over (under) it, or over the mark. */
+interface AnnotationPlan {
+  end: number;
+  below: boolean;
+  /** Centre x of the mark (the tallest bar of a group) and of its value label. */
+  x: number;
+  /** The value label's text; '' when there is none. */
+  text: string;
+  mode: 'beside' | 'stacked' | 'mark';
 }
 
 /** Glyph box side in px; mirrors `--chart-annotation-size`, which scales the unit glyph path. */
@@ -729,30 +741,9 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   const room = labelled ? VALUE_LABEL_HEIGHT + VALUE_LABEL_GAP : 0;
   const posTotal = layers && categories.map((_, i) => Math.max(0, ...layers.map((l) => l[i][1])));
   const negTotal = layers && categories.map((_, i) => Math.min(0, ...layers.map((l) => l[i][0])));
-  // The mark an annotation sits on: the stack's end on stacked types, else the extreme visible value; null when empty.
-  const annotationEnd = (i: number): { end: number; below: boolean } | null => {
-    const vals = (layers ? primaries : series).flatMap((x) =>
-      x.values[i] === null ? [] : [x.values[i]!],
-    );
-    if (vals.length === 0) return null;
-    const hi = posTotal ? posTotal[i] : Math.max(...vals);
-    const lo = negTotal ? negTotal[i] : Math.min(...vals);
-    const below = lo < 0 && hi <= 0;
-    return { end: below ? lo : hi, below };
-  };
-  const ends = (input.annotations ?? []).flatMap((a) => {
-    const e = inView(a.index) ? annotationEnd(a.index) : null;
-    return e ? [{ a, ...e }] : [];
-  });
-  // Line points carry a dot / inspection marker: clear it too.
-  const pointLift = type === 'line' || type === 'area' ? MARKER_RADIUS : 0;
-  const glyphRoom = ANNOTATION_SIZE + ANNOTATION_GAP + pointLift;
-  const topRoom = Math.max(room, ends.some((e) => !e.below) ? glyphRoom : 0);
-  const bottomRoom = Math.max(min < 0 ? room : 0, ends.some((e) => e.below) ? glyphRoom : 0);
-  const y = scaleLinear()
-    .domain([min, max])
-    .range([plotBottom - bottomRoom, plotTop + topRoom])
-    .nice(tickCount);
+  // The y scale's domain and ticks don't depend on its range: fix them first, so the plot (and the bar slots the
+  // annotation placement needs) is known before the range reserves room.
+  const y = scaleLinear().domain([min, max]).nice(tickCount);
   const tickValues = y.ticks(tickCount);
   const tickLabels = tickValues.map(formatValue);
   const left = Math.max(0, ...tickLabels.map(textWidth)) + LABEL_GAP;
@@ -766,6 +757,69 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   const bandWidth = step * BAND_RATIO;
   const shift = (vp?.from ?? 0) * n * step;
   const categoryX = categories.map((_, i) => plot.x + step * (i + 0.5) - shift);
+  const groups = series.length;
+  // Shrink the gap with the slot so a group never spills into its neighbours.
+  const gap = Math.min(MARK_GAP, bandWidth / (2 * groups));
+  const barWidth = (bandWidth - gap * (groups - 1)) / groups;
+
+  // Annotations: per in-view, non-null annotated category, the mark it sits on and where.
+  const annotated = (input.annotations ?? []).filter((a) => inView(a.index));
+  const count = new Map<number, number>();
+  for (const a of annotated) count.set(a.index, (count.get(a.index) ?? 0) + 1);
+  const plans = new Map<number, AnnotationPlan>();
+  for (const i of count.keys()) {
+    const vals = (layers ? primaries : series).flatMap((x) =>
+      x.values[i] === null ? [] : [x.values[i]!],
+    );
+    if (vals.length === 0) continue;
+    let end: number;
+    let below: boolean;
+    let x = categoryX[i];
+    // Right edge of the mark's slot: half the gap to the next bar, or to the next category.
+    let limit = categoryX[i] + step / 2;
+    let label: number | null = null;
+    if (layers) {
+      // The side follows the net total, as the stack's value label does.
+      const total = vals.reduce((a, b) => a + b, 0);
+      below = total < 0;
+      end = below ? negTotal![i] : posTotal![i];
+      if (labelled) label = total;
+    } else {
+      const hi = Math.max(...vals);
+      const lo = Math.min(...vals);
+      below = lo < 0 && hi <= 0;
+      end = below ? lo : hi;
+      if (type === 'bar') {
+        const j = series.findIndex((x) => x.values[i] === end);
+        x = categoryX[i] - bandWidth / 2 + j * (barWidth + gap) + barWidth / 2;
+        if (j < groups - 1) limit = x + barWidth / 2 + gap / 2;
+        if (labelled) label = end;
+      }
+    }
+    const text = label === null ? '' : formatValue(label);
+    const avail = type === 'bar' ? barWidth : bandWidth;
+    const k = count.get(i)!;
+    let mode: AnnotationPlan['mode'] = 'mark';
+    if (text && textWidth(text) <= avail) {
+      const right = x + textWidth(text) / 2 + k * (ANNOTATION_SIZE + ANNOTATION_GAP);
+      mode = right <= Math.min(limit, plot.x + plot.width) ? 'beside' : 'stacked';
+    }
+    plans.set(i, { end, below, x, text, mode });
+  }
+  // Line points carry a dot / inspection marker: clear it too.
+  const pointLift = type === 'line' || type === 'area' ? MARKER_RADIUS : 0;
+  const glyphRoom = ANNOTATION_SIZE + ANNOTATION_GAP + pointLift;
+  const roomFor = (below: boolean) =>
+    Math.max(
+      0,
+      ...[...plans.values()].map((pl) =>
+        pl.below !== below ? 0 : pl.mode === 'stacked' ? room + glyphRoom : glyphRoom,
+      ),
+    );
+  y.range([
+    plotBottom - Math.max(min < 0 ? room : 0, roomFor(true)),
+    plotTop + Math.max(room, roomFor(false)),
+  ]);
   const zeroY = y(0);
 
   const yTicks = tickValues.map((value, i) => ({ value, y: y(value), label: tickLabels[i] }));
@@ -815,39 +869,27 @@ export function computeLayout(input: LayoutInput): ChartLayout {
 
   const marks: SeriesMarks[] = [];
   const valueLabels: ValueLabel[] = [];
-  // Per category, the drawn value labels with their value (annotations sit after the one on their mark).
-  const labelsAt = new Map<number, { value: number; label: ValueLabel }[]>();
-  const addLabel = (i: number, x: number, end: number, value: number, avail: number) => {
+  const addLabel = (x: number, end: number, value: number, avail: number) => {
     const text = formatValue(value);
     if (textWidth(text) > avail) return;
     const above = value >= 0;
-    const label: ValueLabel = {
+    valueLabels.push({
       x,
       y: above ? end - VALUE_LABEL_GAP : end + VALUE_LABEL_GAP + VALUE_LABEL_HEIGHT,
       text,
       anchor: above ? 'above' : 'below',
-    };
-    valueLabels.push(label);
-    labelsAt.set(i, [...(labelsAt.get(i) ?? []), { value, label }]);
+    });
   };
-  // Centre x of each category's annotated mark (the tallest bar of a group); the category centre otherwise.
-  const markX = new Map<number, number>();
 
   if (type === 'line') {
     for (const x of series) marks.push(lineMarks(x));
   } else if (type === 'bar') {
-    const groups = series.length;
-    // Shrink the gap with the slot so a group never spills into its neighbours.
-    const gap = Math.min(MARK_GAP, bandWidth / (2 * groups));
-    const barWidth = (bandWidth - gap * (groups - 1)) / groups;
     series.forEach((x, j) => {
       const bars = x.values.map((v, i) => {
         if (v === null) return null;
         const bx = categoryX[i] - bandWidth / 2 + j * (barWidth + gap);
         // A zero gets no bar but still its label, at the zero line.
-        if (labelled) addLabel(i, bx + barWidth / 2, y(v), v, barWidth);
-        const e = annotationEnd(i);
-        if (e && v === e.end && !markX.has(i)) markX.set(i, bx + barWidth / 2);
+        if (labelled) addLabel(bx + barWidth / 2, y(v), v, barWidth);
         if (v === 0) return null;
         const top = Math.min(y(v), zeroY);
         const h = Math.max(1, Math.abs(zeroY - y(v)));
@@ -918,32 +960,43 @@ export function computeLayout(input: LayoutInput): ChartLayout {
         const vals = primaries.map((p) => p.values[i]).filter((v) => v !== null) as number[];
         const total = vals.reduce((a, b) => a + b, 0);
         if (vals.length === 0) return;
-        addLabel(i, categoryX[i], y(total >= 0 ? pos[i] : neg[i]), total, bandWidth);
+        addLabel(categoryX[i], y(total >= 0 ? pos[i] : neg[i]), total, bandWidth);
       });
   }
 
   const STEP = ANNOTATION_SIZE + ANNOTATION_GAP;
-  const counts = new Map<number, number>();
-  for (const { a } of ends) counts.set(a.index, (counts.get(a.index) ?? 0) + 1);
   const placed = new Map<number, number>();
-  const annotations: AnnotationGeometry[] = ends.map(({ a, end, below }) => {
+  const annotations: AnnotationGeometry[] = annotated.flatMap((a) => {
+    const pl = plans.get(a.index);
+    if (!pl) return [];
     const k = placed.get(a.index) ?? 0;
     placed.set(a.index, k + 1);
+    const { end, below, mode } = pl;
     const g = { key: a.key, index: a.index, glyph: a.glyph, tone: a.tone, below };
-    const label = labelsAt
-      .get(a.index)
-      ?.find((l) => l.value === end && (l.label.anchor === 'below') === below)?.label;
+    // The value label's baseline, as `addLabel` sets it.
+    const baseline = below
+      ? y(end) + VALUE_LABEL_GAP + VALUE_LABEL_HEIGHT
+      : y(end) - VALUE_LABEL_GAP;
     // After the value label, on its baseline.
-    if (label) {
-      const x0 = label.x + textWidth(label.text) / 2 + ANNOTATION_GAP + ANNOTATION_SIZE / 2;
-      return { ...g, x: x0 + k * STEP, y: label.y };
+    if (mode === 'beside') {
+      const x0 = pl.x + textWidth(pl.text) / 2 + ANNOTATION_GAP + ANNOTATION_SIZE / 2;
+      return [{ ...g, x: x0 + k * STEP, y: baseline }];
     }
-    // Centred over (under) the mark, the group side by side.
-    const cx =
-      (markX.get(a.index) ?? categoryX[a.index]) +
-      (k - ((counts.get(a.index) ?? 1) - 1) / 2) * STEP;
+    // Otherwise centred over (under) the label or the mark, a group side by side.
+    const x = pl.x + (k - (count.get(a.index)! - 1) / 2) * STEP;
+    if (mode === 'stacked') {
+      return [
+        {
+          ...g,
+          x,
+          y: below
+            ? baseline + ANNOTATION_GAP + ANNOTATION_SIZE
+            : baseline - VALUE_LABEL_HEIGHT - ANNOTATION_GAP,
+        },
+      ];
+    }
     const lift = ANNOTATION_GAP + pointLift;
-    return { ...g, x: cx, y: below ? y(end) + lift + ANNOTATION_SIZE : y(end) - lift };
+    return [{ ...g, x, y: below ? y(end) + lift + ANNOTATION_SIZE : y(end) - lift }];
   });
 
   return {
