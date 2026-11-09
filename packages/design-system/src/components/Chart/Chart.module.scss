@@ -167,10 +167,6 @@
   fill: var(--chart-annotation-neutral);
   pointer-events: none;
 
-  path {
-    scale: var(--chart-annotation-size);
-  }
-
   &[data-tone='success'] {
     fill: var(--chart-annotation-success);
   }

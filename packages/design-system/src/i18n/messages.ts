@@ -914,8 +914,10 @@ export interface Messages {
     category: string;
     /** Data-table cell text for a null value. */
     noData: string;
-    /** Header of the data table's marker column (labels of the annotations covering each category). */
+    /** @deprecated Unused since the data table's notes column took `notes`; kept so existing overrides still type-check. */
     markers: string;
+    /** Header of the data table's notes column (the labels of the markers and annotations on each category). */
+    notes: string;
     /** Header of the data table's details column (the strings `details` returns for each category). */
     details: string;
     /** Appended to `keyboardHint` when range selection is enabled: says Shift+arrows select a range. */

@@ -79,9 +79,6 @@
   --chart-reference-width: var(--chart-comparison-stroke);
 
   // Annotations (`annotations`): status ink per tone; warning uses the strong ink (the bare one is < 3:1 on --color-bg, #481).
-  // Size is unitless px: it scales a unit glyph path. It MUST match chartModel's ANNOTATION_SIZE, which places the
-  // glyph and reserves its room: a larger override clips or overlaps, so don't theme it.
-  --chart-annotation-size: 12;
   --chart-annotation-success: var(--color-success);
   --chart-annotation-danger: var(--color-danger);
   --chart-annotation-warning: var(--color-warning-strong);

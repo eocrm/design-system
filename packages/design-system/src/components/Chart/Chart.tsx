@@ -1314,7 +1314,6 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
               )}
               {/* Glyphs above the data marks, with the value labels. */}
               {layout.annotations.map((a) => (
-                // Translate on the group: the path's CSS `scale` (the size token) would otherwise scale it too.
                 <g
                   key={a.key}
                   className={styles.annotation}
@@ -1415,7 +1414,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         categories={categories}
         columns={columns}
         formatValue={formatValue}
-        markersHeader={t('chart.markers')}
+        notesHeader={t('chart.notes')}
         markers={resolvedMarkers.markers}
         annotations={viewAnnotations}
         detailsHeader={details ? t('chart.details') : undefined}

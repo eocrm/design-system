@@ -486,6 +486,7 @@ export const en: Messages = {
     category: 'Category',
     noData: 'No data',
     markers: 'Markers',
+    notes: 'Notes',
     details: 'Details',
     rangeHint: 'Shift+arrows select a range.',
     zoomHint: 'Plus and minus zoom in and out.',

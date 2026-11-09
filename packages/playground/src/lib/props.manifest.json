@@ -825,6 +825,20 @@
           "description": "Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,\n`{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:\n`'neutral'` for events (the tone default) or `'subtle'` for recurring context. `color` (palette slot 1–8) strokes /\ntints the marker, e.g. to match a series. `icon` (short text or emoji, decorative) is drawn centred above the plot;\n`labelPlacement: 'top'` moves the label there too, under the icon (default `'beside'`, on the plot). Labelled\nmarkers are also listed in the tooltip, the keyboard announcement and the data table; unlabelled ones are\ndecorative. A marker naming an unknown category is ignored with a dev warning."
         },
         {
+          "name": "referenceLines",
+          "type": "ChartReferenceLine[]",
+          "required": false,
+          "default": "",
+          "description": "Horizontal lines at constant values, e.g. `[{ value: 35, label: '30-day average' }]`: drawn across the full plot\nwidth, over bars and area fills and under line strokes, always inside the y domain (also when zoomed). Neutral ink unless `color`\n(palette slot 1–8) is set; each line's array index picks its dash pattern (cycling after three), so keep the\norder stable. Each gets a static legend entry, a muted \"label: value\" row (via `formatValue`) in the tooltip and\nthe keyboard announcement, and a row in the data table's footer. A non-finite `value` is ignored with a dev warning."
+        },
+        {
+          "name": "annotations",
+          "type": "ChartAnnotation[]",
+          "required": false,
+          "default": "",
+          "description": "Status glyphs on categories, e.g. `[{ at: 'Sun', glyph: 'up', tone: 'success', label: 'Ahead of usual pace' }]`:\na small triangle (`'up'` / `'down'`) or `'dot'` in the tone's status ink, drawn just after the value label (with\n`valueLabels`; centred over it when that would cross into the next bar) or above the category's tallest visible mark (below a negative one); the y scale reserves room for\nit. Several on one category sit side by side in array order. Decorative (`aria-hidden`): `label` is listed in the\ntooltip, the keyboard announcement and the data table's notes column. Every chart type. An unknown `at` is ignored\nwith a dev warning."
+        },
+        {
           "name": "footnote",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
@@ -7971,10 +7985,12 @@
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",
     "TreeViewOverflow": "{ label: string; onLoadMore?: (() => void); loading?: boolean }",
     "TreeViewView": "\"list\" | \"chart\"",
+    "ChartAnnotation": "{ key?: string; at: string; glyph: \"up\" | \"down\" | \"dot\"; tone: \"success\" | \"warning\" | \"neutral\" | \"danger\"; label: string }",
     "ChartCurve": "\"smooth\" | \"linear\"",
     "ChartMarker": "(ChartMarkerBase & { at: string; from?: undefined; to?: undefined; }) | (ChartMarkerBase & { from: string; to: string; at?: undefined; })",
     "ChartPlotPointerEvent": "{ index: number; fraction: number; value: number | null; clientX: number; clientY: number; source: \"touch\" | \"mouse\" | \"keyboard\" }",
     "ChartRange": "{ from: string; to: string }",
+    "ChartReferenceLine": "{ key?: string; value: number; label: string; color?: ChartSeriesColor }",
     "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string; color?: ChartSeriesColor }",
     "ChartViewport": "{ from: number; to: number }"
   }

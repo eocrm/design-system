@@ -20,7 +20,7 @@ export function ChartTable({
   categories,
   columns,
   formatValue,
-  markersHeader,
+  notesHeader,
   markers,
   annotations = [],
   detailsHeader,
@@ -33,7 +33,7 @@ export function ChartTable({
   categories: readonly string[];
   columns: ChartTableColumn[];
   formatValue: (n: number) => string;
-  markersHeader: string;
+  notesHeader: string;
   markers: readonly ResolvedMarker[];
   /** Annotations; their labels share the notes column with marker labels. */
   annotations?: readonly ResolvedAnnotation[];
@@ -57,7 +57,7 @@ export function ChartTable({
                 {c.header}
               </th>
             ))}
-            {hasNotes && <th scope="col">{markersHeader}</th>}
+            {hasNotes && <th scope="col">{notesHeader}</th>}
             {detailsHeader && <th scope="col">{detailsHeader}</th>}
           </tr>
         </thead>

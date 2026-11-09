@@ -634,13 +634,13 @@ describe('markers', () => {
     stubLayout();
     const { rerender } = render(<Chart {...base} markers={markers} />);
     const table = screen.getByRole('table');
-    expect(within(table).getByRole('columnheader', { name: 'Markers' })).toBeInTheDocument();
+    expect(within(table).getByRole('columnheader', { name: 'Notes' })).toBeInTheDocument();
     const rows = within(table).getAllByRole('row');
     expect(rows[1].lastElementChild).toHaveTextContent(/^$/);
     expect(rows[2].lastElementChild).toHaveTextContent('Launch, Promo');
     expect(rows[3].lastElementChild).toHaveTextContent('Promo');
     rerender(<Chart {...base} markers={[{ key: 'weekend', from: 'W1', to: 'W1' }]} />);
-    expect(within(table).queryByRole('columnheader', { name: 'Markers' })).toBeNull();
+    expect(within(table).queryByRole('columnheader', { name: 'Notes' })).toBeNull();
   });
 
   it('names the markers of the inspected category in the tooltip and announcement', async () => {
@@ -1999,6 +1999,22 @@ describe('referenceLines (DS-53)', () => {
     expect(td).toHaveAttribute('colspan', '2');
   });
 
+  it('spans the notes and details columns too', () => {
+    stubLayout();
+    render(
+      <Chart
+        {...props}
+        annotations={[{ at: 'Tue', glyph: 'up', tone: 'success', label: 'Ahead' }]}
+        details={() => ['note']}
+      />,
+    );
+    const table = screen.getByRole('table');
+    expect(within(table).getAllByRole('columnheader')).toHaveLength(5);
+    const td = table.querySelector('tfoot td')!;
+    // Two series columns + the notes column + the details column.
+    expect(td).toHaveAttribute('colspan', '4');
+  });
+
   it('ignores a non-finite value with a dev warning', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const layout = stubLayout();
@@ -2086,7 +2102,7 @@ describe('annotations (DS-52)', () => {
     stubLayout();
     const { rerender } = render(<Chart {...props} />);
     const table = screen.getByRole('table');
-    expect(within(table).getByRole('columnheader', { name: 'Markers' })).toBeInTheDocument();
+    expect(within(table).getByRole('columnheader', { name: 'Notes' })).toBeInTheDocument();
     const rows = within(table).getAllByRole('row');
     expect(rows[2].lastElementChild).toHaveTextContent('Ahead of usual pace');
     expect(rows[1].lastElementChild).toHaveTextContent(/^$/);

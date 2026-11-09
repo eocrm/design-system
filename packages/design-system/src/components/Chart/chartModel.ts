@@ -174,15 +174,16 @@ interface AnnotationPlan {
   mode: 'beside' | 'stacked' | 'mark';
 }
 
-/** Glyph box side in px; mirrors `--chart-annotation-size`, which scales the unit glyph path. */
+/** Glyph box side in px: the glyph path is drawn at this size, and the layout places it and reserves its room. */
 export const ANNOTATION_SIZE = 12;
 const ANNOTATION_GAP = 2;
 
-/** Unit glyph path (1px box), bottom-centre at the origin; the renderer scales it by `--chart-annotation-size`. */
+/** Glyph path in an `ANNOTATION_SIZE` box, bottom-centre at the origin. */
 export function annotationPath(glyph: ChartAnnotationGlyph): string {
-  if (glyph === 'up') return 'M-0.5,-0.1L0.5,-0.1L0,-0.95Z';
-  if (glyph === 'down') return 'M-0.5,-0.95L0.5,-0.95L0,-0.1Z';
-  return 'M-0.35,-0.5a0.35,0.35 0 1,0 0.7,0a0.35,0.35 0 1,0 -0.7,0';
+  const [h, lo, hi, r] = [0.5, -0.1, -0.95, 0.35].map((f) => +(f * ANNOTATION_SIZE).toFixed(2));
+  if (glyph === 'up') return `M${-h},${lo}L${h},${lo}L0,${hi}Z`;
+  if (glyph === 'down') return `M${-h},${hi}L${h},${hi}L0,${lo}Z`;
+  return `M${-r},${-h}a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0`;
 }
 
 /** Geometry of one reference line in svg coordinates. */
@@ -982,8 +983,11 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       const x0 = pl.x + textWidth(pl.text) / 2 + ANNOTATION_GAP + ANNOTATION_SIZE / 2;
       return [{ ...g, x: x0 + k * STEP, y: baseline }];
     }
-    // Otherwise centred over (under) the label or the mark, a group side by side.
-    const x = pl.x + (k - (count.get(a.index)! - 1) / 2) * STEP;
+    // Otherwise centred over (under) the label or the mark, a group side by side, the group kept inside the plot.
+    const n = count.get(a.index)!;
+    const half = (n * STEP - ANNOTATION_GAP) / 2;
+    const centre = Math.min(Math.max(pl.x, plot.x + half), plot.x + plot.width - half);
+    const x = centre + (k - (n - 1) / 2) * STEP;
     if (mode === 'stacked') {
       return [
         {

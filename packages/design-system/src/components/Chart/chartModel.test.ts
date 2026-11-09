@@ -1323,6 +1323,42 @@ describe('annotations (DS-52)', () => {
       ...over,
     });
 
+  it('keeps a glyph group on the first and last category of a dense chart inside the plot', () => {
+    const cats30 = Array.from({ length: 30 }, (_, i) => `c${i}`);
+    const glyphs = (at: string) =>
+      (['up', 'down', 'dot', 'up', 'down', 'dot'] as const).map((glyph) => ({
+        at,
+        glyph,
+        tone: 'neutral' as const,
+        label: at,
+      }));
+    for (const type of ['bar', 'line'] as const) {
+      const l = computeLayout({
+        type,
+        categories: cats30,
+        series: resolveSeries(
+          type,
+          [
+            s(
+              'x',
+              cats30.map((_, i) => 10 + i),
+            ),
+          ],
+          30,
+        ).series,
+        width: 300,
+        height: 200,
+        formatValue: fmt,
+        annotations: resolveAnnotations([...glyphs('c0'), ...glyphs('c29')], cats30).annotations,
+      });
+      expect(l.annotations).toHaveLength(12);
+      for (const g of l.annotations) {
+        expect(g.x - ANNOTATION_SIZE / 2).toBeGreaterThanOrEqual(l.plot.x - 1e-9);
+        expect(g.x + ANNOTATION_SIZE / 2).toBeLessThanOrEqual(l.plot.x + l.plot.width + 1e-9);
+      }
+    }
+  });
+
   it('resolves `at` to an index and drops unknown categories', () => {
     const r = resolveAnnotations([up('b'), up('zz', { key: 'k' })], cats);
     expect(r.annotations).toEqual([
