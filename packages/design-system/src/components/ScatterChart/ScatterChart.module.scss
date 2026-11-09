@@ -10,6 +10,9 @@
   height: 100%;
   min-width: 0;
   min-height: 0;
+
+  // The shared ChartLegend's strong swatch follows this chart's strong reference width.
+  --chart-legend-swatch-width-strong: var(--scatter-reference-width-strong);
 }
 
 .root[data-empty] {
@@ -95,6 +98,10 @@
 
   &[data-dash='2'] {
     stroke-dasharray: var(--scatter-reference-dash-2);
+  }
+
+  &[data-emphasis='strong'] {
+    stroke-width: var(--scatter-reference-width-strong);
   }
 }
 

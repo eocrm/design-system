@@ -46,6 +46,11 @@ export interface ScatterReference {
   points: { x: number | Date; y: number }[];
   /** Pins a palette slot (1–8); default is neutral ink. */
   color?: ChartSeriesColor;
+  /**
+   * `'strong'` draws the line at `--chart-reference-width-strong` so one line stands out, e.g. today's pace over the
+   * usual. Default `'default'`.
+   */
+  emphasis?: 'default' | 'strong';
 }
 
 /** X-axis kind: `'number'` (linear) or `'time'` (x as `Date` or epoch ms). */
@@ -102,7 +107,7 @@ export interface ScatterLayout {
   yTicks: ScatterTick[];
   dots: ScatterDot[];
   /** One entry per reference line with points: its key, path, dash pattern index and palette slot (0 = neutral ink). */
-  references: { key: string; path: string; dash: number; slot: number }[];
+  references: { key: string; path: string; dash: number; slot: number; emphasis?: 'strong' }[];
   trends: { seriesKey: string; slot: number; path: string }[];
 }
 
@@ -298,6 +303,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
               .join(''),
             dash: i % REFERENCE_DASHES,
             slot: r.color ?? 0,
+            emphasis: r.emphasis === 'strong' ? ('strong' as const) : undefined,
           },
         ]
       : [],

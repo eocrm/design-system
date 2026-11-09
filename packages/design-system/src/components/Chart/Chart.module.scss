@@ -120,6 +120,10 @@
   &[data-dash='2'] {
     stroke-dasharray: var(--chart-reference-dash-2);
   }
+
+  &[data-emphasis='strong'] {
+    stroke-width: var(--chart-reference-width-strong);
+  }
 }
 
 .markerLine {
@@ -149,6 +153,19 @@
   fill: var(--chart-marker-label-fg);
   font-size: var(--chart-axis-size);
   pointer-events: none;
+}
+
+// Marker label tinted with the marker's palette colour (halo kept). Raw slot ink is
+// only 2.3-4.3:1 at 12px, so it is mixed toward --color-fg to read as text.
+.markerLabels .markerLabelColored {
+  // Declared here, not in tokens.scss: it mixes the per-marker colour set inline.
+  --chart-marker-label-colored-fg: color-mix(
+    in oklab,
+    var(--chart-series-color, var(--chart-marker-label-fg)) var(--chart-marker-label-colored-mix),
+    var(--color-fg)
+  );
+
+  fill: var(--chart-marker-label-colored-fg);
 }
 
 // Decorative marker icon in the gutter above the plot (no halo: it never overlaps data).
@@ -329,6 +346,11 @@
 
   &[data-dash='2'] {
     stroke-dasharray: var(--chart-reference-dash-2);
+  }
+
+  // ScatterChart sets --chart-legend-swatch-width-strong to its own token; Chart uses the fallback.
+  &[data-emphasis='strong'] {
+    stroke-width: var(--chart-legend-swatch-width-strong, var(--chart-reference-width-strong));
   }
 }
 

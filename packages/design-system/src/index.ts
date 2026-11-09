@@ -920,6 +920,8 @@ export type {
   FunnelSlot,
   FunnelStage,
 } from './components/FunnelChart';
+export { DonutChart } from './components/DonutChart';
+export type { DonutChartProps, DonutSegment } from './components/DonutChart';
 export { ScatterChart } from './components/ScatterChart';
 export type {
   ScatterChartProps,

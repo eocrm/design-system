@@ -234,6 +234,28 @@ describe('ScatterChart', () => {
     expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toContain('Recommended');
   });
 
+  it('emphasis strong marks exactly one reference path and legend swatch (DS-57)', () => {
+    const layout = stubLayout();
+    const pts = [
+      { x: 0, y: 0 },
+      { x: 40, y: 20 },
+    ];
+    const { container } = render(
+      <ScatterChart
+        {...base}
+        reference={[
+          { label: 'Usual pace', points: pts },
+          { label: "Today's pace", points: pts, emphasis: 'strong' },
+        ]}
+      />,
+    );
+    layout.fire();
+    expect(
+      container.querySelectorAll('[data-scatter-reference][data-emphasis="strong"]'),
+    ).toHaveLength(1);
+    expect(container.querySelectorAll('svg[data-dash][data-emphasis="strong"]')).toHaveLength(1);
+  });
+
   it('several references: one path, dash and legend entry each; swatch dash matches', () => {
     const layout = stubLayout();
     const pts = [

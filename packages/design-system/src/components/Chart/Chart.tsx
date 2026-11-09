@@ -46,6 +46,7 @@ import {
   DOT_RADIUS,
   PAD_TOP,
   MARKER_LABEL_BASELINE,
+  markerGutterGap,
   MARKER_RADIUS,
   LABEL_GAP,
   PALETTE_SIZE,
@@ -273,6 +274,10 @@ const seriesStyle = (slot: number) =>
     '--chart-series-color':
       slot === 0 ? 'var(--chart-total-comparison)' : `var(--chart-series-${slot})`,
   }) as CSSProperties;
+
+// Marker label text in the marker's palette colour (class + variable); untouched without `color`.
+const labelColor = (slot: number) =>
+  slot ? { className: styles.markerLabelColored, 'data-slot': slot, style: seriesStyle(slot) } : {};
 
 function useDevWarnings(dropped: string[], overflowCount: number, droppedMarkers: string[]) {
   const droppedKey = dropped.join('|');
@@ -548,6 +553,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const compact = rootSize.height > 0 && rootSize.height < COMPACT_HEIGHT;
   // Compact charts hide marker text, icons included, so they reserve no gutter for it.
   const gutterRows = compact ? 0 : markerGutterRows(resolvedMarkers.markers);
+  const gutterGap = compact ? 0 : markerGutterGap(resolvedMarkers.markers);
   const layout = useMemo(
     () =>
       !empty && size.width > 0 && size.height > 0
@@ -560,7 +566,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             formatValue,
             curve,
             valueLabels,
-            topGutter: gutterRows * MARKER_LABEL_BASELINE,
+            topGutter: gutterRows * MARKER_LABEL_BASELINE + gutterGap,
             viewport: vp,
             referenceLines,
             annotations: viewAnnotations,
@@ -577,6 +583,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       curve,
       valueLabels,
       gutterRows,
+      gutterGap,
       vp,
       referenceLines,
       viewAnnotations,
@@ -974,6 +981,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       label: r.label,
       slot: r.color ?? 0,
       dash: r.dash,
+      emphasis: r.emphasis === 'strong' ? ('strong' as const) : undefined,
       comparison: true,
       overflow: false,
       locked: false,
@@ -1286,6 +1294,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                   className={styles.referenceLine}
                   data-reference-line=""
                   data-dash={r.dash}
+                  data-emphasis={r.emphasis}
                   style={r.slot ? seriesStyle(r.slot) : undefined}
                   x1={r.x1}
                   x2={r.x2}
@@ -1362,6 +1371,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                           x={m.label.x}
                           y={layout.plot.y + MARKER_LABEL_BASELINE}
                           textAnchor={m.label.anchor}
+                          {...labelColor(m.slot)}
                         >
                           {m.label.text}
                         </text>
@@ -1385,7 +1395,12 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                           </text>
                         )}
                         {m.top.label && (
-                          <text x={m.top.x} y={gutterBaseline(gutterRows)} textAnchor="middle">
+                          <text
+                            x={m.top.x}
+                            y={gutterBaseline(gutterRows) + gutterGap}
+                            textAnchor="middle"
+                            {...labelColor(m.slot)}
+                          >
                             {m.top.label}
                           </text>
                         )}

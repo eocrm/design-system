@@ -26,6 +26,9 @@
   // Matches Progress size="sm" track height (Progress.module.scss).
   --stat-tile-progress-height: 4px;
 
+  // link: hover fill for the whole tile when its body is a link (focus ring reuses --ring-*).
+  --stat-tile-link-hover-bg: var(--color-bg-muted-hover);
+
   // variant="card": the Card surface. Follows --card-* (tokens @used above), so a
   // Card theme override reaches the tiles too.
   --stat-tile-card-bg: var(--card-bg);

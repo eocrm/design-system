@@ -334,6 +334,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
               label: r.label,
               slot: r.color ?? 0,
               dash: i % REFERENCE_DASHES,
+              emphasis: r.emphasis === 'strong' ? ('strong' as const) : undefined,
               comparison: true,
               overflow: false,
               locked: false,
@@ -475,6 +476,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                   d={r.path}
                   data-scatter-reference=""
                   data-dash={r.dash}
+                  data-emphasis={r.emphasis}
                 />
               ))}
               {visible.map((s) => (

@@ -1587,6 +1587,20 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Row>
     </Col>
   ),
+  DonutChart: (
+    <svg width={44} height={44} viewBox="0 0 44 44" fill="none" aria-hidden="true">
+      <circle cx={22} cy={22} r={16} stroke="var(--color-accent-subtle-bg)" strokeWidth={8} />
+      <circle
+        cx={22}
+        cy={22}
+        r={16}
+        stroke="var(--color-accent)"
+        strokeWidth={8}
+        strokeDasharray="34 100"
+        transform="rotate(-90 22 22)"
+      />
+    </svg>
+  ),
   ScatterChart: (
     <svg width={84} height={44} viewBox="0 0 84 44" fill="none" aria-hidden="true">
       {[

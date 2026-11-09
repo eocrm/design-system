@@ -87,10 +87,11 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`.
 - `DashboardCanvas` — 2D snap-grid dashboard
 - `DashboardWidget` — DashboardCanvas cell card: standard / list / kpi / chart / stats (StatGroup strip), with loading skeletons
 - `StatGroup` — responsive grid of KPI tiles for a dashboard widget, with loading skeletons
-- `StatTile` — one KPI tile (label, value, trend, footnote, icon, sparkline, quota `progress`) inside a StatGroup (`filled` or `card` surface)
+- `StatTile` — one KPI tile (label, value, trend, footnote, icon, sparkline, quota `progress`, optional `link` element for a clickable tile) inside a StatGroup (`filled` or `card` surface)
 - `Sparkline` — compact static line / area / bar trend for KPI cards (StatTile slot, kpi DashboardWidget child); no axes, summary in the accessible name
 - `Chart` — line / bar / stacked bar / area time-series chart for a chart DashboardWidget (smoothed lines, static markers, reference lines, status annotations, legend, tooltip, keyboard, data table, empty state)
 - `FunnelChart` — stage funnel for pipeline / campaign conversion: height = drop-off, pill = step conversion, one-hue ramp with a hero first stage; optional stage click drill-through, vertical slices plus a table when narrow
+- `DonutChart` — part-of-whole donut with the total in the centre and a legend of values and shares; optional segment click drill-through, keyboard inspection, hidden data table
 - `ScatterChart` — scatter plot of two measures or events on a time axis: series colours + marker shapes, dot size, optional trend line and reference line, legend, tooltip, keyboard, data table, empty state
 - `Heatmap` — rows × columns grid coloured by value in up to five sequential steps with legend; `null` = no data; tooltip, keyboard, data table, empty state
 - `TreeView` — lazily loaded hierarchy (WAI-ARIA tree) as a file-explorer list or a top-down org chart, with loading / error-retry / load-more rows

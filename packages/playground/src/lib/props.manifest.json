@@ -2485,6 +2485,66 @@
         }
       ]
     },
+    "DonutChart": {
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Accessible name of the figure and caption of its data table, e.g. \"Work items by stage\". Required."
+        },
+        {
+          "name": "segments",
+          "type": "DonutSegment[]",
+          "required": true,
+          "default": "",
+          "description": "Segments of the whole, drawn clockwise from 12 o'clock in array order. `color` pins a palette slot\n(`--chart-series-N`); segments without one fill the free slots in order. Values of 0 are listed in\nthe legend and table but draw no arc; negative or non-finite values count as 0 (dev warning).\nMore than 8 segments repeat colours (dev warning): group the smallest into \"Other\"."
+        },
+        {
+          "name": "formatValue",
+          "type": "(n: number) => string",
+          "required": true,
+          "default": "",
+          "description": "Formats a value for the centre, legend, tooltip, announcement and data table (the app owns i18n). Required."
+        },
+        {
+          "name": "centerLabel",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Caption under the total in the centre, e.g. \"work items\". Default: translated \"Total\"."
+        },
+        {
+          "name": "showTotal",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Shows the formatted total and `centerLabel` in the centre; hovering or focusing a segment swaps\nthem for its value, share and label. `false` leaves the centre empty. Default `true`."
+        },
+        {
+          "name": "onSegmentClick",
+          "type": "((segment: DonutSegment) => void)",
+          "required": false,
+          "default": "",
+          "description": "Makes every non-zero segment activatable (arc click, Enter or Space on the focused ring, and a\nlegend button), called with the consumer's original segment, e.g. to open a filtered list. Omit\nfor an inspect-only donut with a plain-text legend."
+        },
+        {
+          "name": "emptyMessage",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "EmptyState title when there are no segments or every value is 0. Default: translated \"No data\"."
+        },
+        {
+          "name": "footnote",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Short note under the donut, e.g. \"Open items only\". Takes its own row; also describes the ring\nfor screen readers. Shown in the empty state too."
+        }
+      ]
+    },
     "Dot": {
       "props": [
         {
@@ -7978,7 +8038,8 @@
     "StatGroupVariant": "\"filled\" | \"card\"",
     "FunnelShape": "\"taper\" | \"sharp\"",
     "FunnelStage": "{ key: string; label: string; value: number; color?: FunnelSlot }",
-    "ScatterReference": "{ key?: string; label: string; points: { x: number | Date; y: number; }[]; color?: ChartSeriesColor }",
+    "DonutSegment": "{ key: string; label: string; value: number; color?: ChartSeriesColor }",
+    "ScatterReference": "{ key?: string; label: string; points: { x: number | Date; y: number; }[]; color?: ChartSeriesColor; emphasis?: \"strong\" | \"default\" }",
     "ScatterSeries": "{ key: string; label: string; points: ScatterPoint[]; color?: ChartSeriesColor }",
     "ScatterXScale": "\"number\" | \"time\"",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",
@@ -7990,7 +8051,7 @@
     "ChartMarker": "(ChartMarkerBase & { at: string; from?: undefined; to?: undefined; }) | (ChartMarkerBase & { from: string; to: string; at?: undefined; })",
     "ChartPlotPointerEvent": "{ index: number; fraction: number; value: number | null; clientX: number; clientY: number; source: \"touch\" | \"mouse\" | \"keyboard\" }",
     "ChartRange": "{ from: string; to: string }",
-    "ChartReferenceLine": "{ key?: string; value: number; label: string; color?: ChartSeriesColor }",
+    "ChartReferenceLine": "{ key?: string; value: number; label: string; color?: ChartSeriesColor; emphasis?: \"strong\" | \"default\" }",
     "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string; color?: ChartSeriesColor }",
     "ChartViewport": "{ from: number; to: number }"
   }

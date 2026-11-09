@@ -508,6 +508,15 @@ export const en: Messages = {
     noData: '—',
     vsPrevious: 'vs previous',
   },
+  donutChart: {
+    keyboardHint: 'Use arrow keys to inspect segments. The data table lists every value.',
+    activateHint: 'Press Enter to open the selected segment.',
+    total: 'Total',
+    segment: 'Segment',
+    value: 'Value',
+    share: 'Share',
+    empty: 'No data',
+  },
   scatterChart: {
     keyboardHint:
       'Use arrow keys to inspect points in order of x. All values are also in the data table.',

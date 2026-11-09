@@ -46,13 +46,17 @@ TL;DR: label, large value, optional trend, footnote and icon, on a filled tile (
 | `icon` | `ReactNode` | no | Decorative icon before the label, typically `<IconTile size="sm" … />`. Hidden in very narrow tiles. |
 | `sparkline` | `ReactNode` | no | Trend graphic under the value/trend, typically `<Sparkline label=… values=… />`. Replaced by a sparkline-height skeleton while the group is loading. |
 | `progress` | `StatProgress` | no | Quota meter under the value/trend: "used / limit" tiles, e.g. `value="1.2 GB / 5 GB" progress={{ value: 1.2, max: 5 }}`. Renders a small `Progress` named by the tile `label` (no `aria-label` needed); progress-height skeleton while the group is loading. Put the readable "used / limit" text in `value`. Over the limit, the bar shows full (ARIA value clamped to `max`); the text in `value` carries the overage. No meter renders when `max` is not positive or a number is not finite (an unlimited plan, a limit still loading). |
+| `link` | `ReactElement<{ className?: string; children?: ReactNode; }, string \| JSXElementConstructor<any>>` | no | An empty link element (`<a href>`, a router `Link`, the DS `Link`) that makes the tile body one click target. StatTile clones it, merges its class and sets the body as its children. The footnote stays outside, so it can hold a secondary `Link`. |
 | …native | | | plus native `<li>` attributes |
 
 <!-- props:end -->
+
+**Secondary link:** the footnote sits outside the tile `link`, so it can hold its own `Link` (e.g. "View report"); the two links are siblings, never nested.
 
 **When NOT to use:** a single KPI card (`DashboardWidget variant="kpi"`), or a standalone tile outside a group.
 
 #### Anti-patterns
 
 - ❌ Wrapping `StatTile` in another element inside `StatGroup`: the `<li>` must be a direct child of the `<ul>`.
-- ❌ Putting interactive controls in a tile. Tiles are read-only; link out from the widget's actions instead.
+- ❌ Putting buttons or inputs in a tile. Only navigation is supported: pass `link={<a href="/deals" />}` to make the tile body one link.
+- ❌ Giving the `link` element children. They are replaced by the tile body (dev warning). Pass it empty.

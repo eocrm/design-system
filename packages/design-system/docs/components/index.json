@@ -185,6 +185,11 @@
     "cluster": "Layout"
   },
   {
+    "name": "DonutChart",
+    "summary": "part-of-whole donut with a centre total and drill-through segments",
+    "cluster": "Display"
+  },
+  {
     "name": "Dot",
     "summary": "bare palette/tone colored circle",
     "cluster": "Display"

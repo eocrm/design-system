@@ -1,7 +1,26 @@
 import { createRef } from 'react';
 import { render, screen, within } from '@testing-library/react';
+import { Link } from '../Link';
 import { Sparkline } from '../Sparkline';
 import { StatGroup, StatTile } from './index';
+import tileStyles from './StatTile.module.scss';
+import linkStyles from '../Link/Link.module.scss';
+
+function Fake({
+  to,
+  className,
+  children,
+}: {
+  to: string;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <a href={to} className={className}>
+      {children}
+    </a>
+  );
+}
 
 const UP = { label: '12.4% vs previous period', direction: 'up' } as const;
 
@@ -265,5 +284,121 @@ describe('StatTile', () => {
       </StatGroup>,
     );
     expect(screen.getByRole('progressbar')).toHaveAccessibleName('Storage used');
+  });
+});
+
+describe('StatTile link', () => {
+  it('wraps the body in the link, keeps the footnote outside, li keeps ref and data-*', () => {
+    const ref = createRef<HTMLLIElement>();
+    render(
+      <StatGroup aria-label="g">
+        <StatTile
+          ref={ref}
+          data-x="1"
+          label="Open deals"
+          value="48"
+          footnote="note"
+          link={<a href="/x" />}
+        />
+      </StatGroup>,
+    );
+    const a = screen.getByRole('link', { name: /Open deals.*48/ });
+    expect(a).toHaveAttribute('href', '/x');
+    expect(a).not.toHaveTextContent('note');
+    expect(screen.getByText('note')).toBeInTheDocument();
+    expect(ref.current).toBe(screen.getByRole('listitem'));
+    expect(ref.current).toHaveAttribute('data-x', '1');
+    expect(ref.current?.contains(a)).toBe(true);
+  });
+
+  it('merges StatTile class with a custom link component className', () => {
+    render(
+      <StatGroup aria-label="g">
+        <StatTile label="a" value="1" link={<Fake to="/y" className="mine" />} />
+      </StatGroup>,
+    );
+    const a = screen.getByRole('link');
+    expect(a).toHaveAttribute('href', '/y');
+    expect(a).toHaveClass('mine');
+    expect(a.className.split(' ').length).toBeGreaterThan(1);
+  });
+
+  // jsdom can't resolve the cascade; this pins the structure `.linked > .link`
+  // relies on to outrank the DS Link's own rules (checked visually in the demo).
+  it('takes the DS Link as link: both class sets merge, anchor is the tile root child', () => {
+    render(
+      <StatGroup aria-label="g">
+        <StatTile label="a" value="1" trend={UP} link={<Link href="/z" />} />
+      </StatGroup>,
+    );
+    const a = screen.getByRole('link');
+    expect(a).toHaveAttribute('href', '/z');
+    expect(a).toHaveClass(tileStyles.link, linkStyles.link, linkStyles.default);
+    expect(a.parentElement).toBe(screen.getByRole('listitem'));
+    expect(a.parentElement).toHaveClass(tileStyles.linked);
+  });
+
+  it('allows a secondary Link in the footnote without nesting', () => {
+    render(
+      <StatGroup aria-label="g">
+        <StatTile
+          label="a"
+          value="1"
+          link={<a href="/x" />}
+          footnote={<Link href="/more">More</Link>}
+        />
+      </StatGroup>,
+    );
+    const links = screen.getAllByRole('link');
+    expect(links).toHaveLength(2);
+    expect(links[0]).not.toContainElement(links[1]);
+  });
+
+  it('renders no link while loading', () => {
+    render(
+      <StatGroup aria-label="g" loading>
+        <StatTile label="a" value="1" link={<a href="/x" />} />
+      </StatGroup>,
+    );
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('warns once (not on rerender) when the link has children, and replaces them', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const ui = (
+      <StatGroup aria-label="g">
+        <StatTile label="a" value="1" link={<a href="/x">ignored</a>} />
+      </StatGroup>
+    );
+    const { rerender } = render(ui);
+    rerender(ui);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('[StatTile] `link` must be an empty'),
+    );
+    expect(screen.getByRole('link')).not.toHaveTextContent('ignored');
+    warn.mockRestore();
+  });
+
+  it('warns and ignores a non-element link', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <StatGroup aria-label="g">
+        <StatTile label="a" value="1" link={'/x' as never} />
+      </StatGroup>,
+    );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('must be a React element'));
+    expect(screen.queryByRole('link')).toBeNull();
+    warn.mockRestore();
+  });
+
+  it('without link: no anchor, body unchanged', () => {
+    render(
+      <StatGroup aria-label="g">
+        <StatTile label="a" value="1" />
+      </StatGroup>,
+    );
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(screen.getByText('1').className).toMatch(/value/);
   });
 });

@@ -117,7 +117,10 @@ const petSeries: ChartSeries[] = [
   { key: 'luna', label: 'Luna', values: [22, 18, 25, 20, 16, 24, 28] },
   { key: 'milo', label: 'Milo', values: [14, 17, 12, 15, 19, 13, 16] },
 ];
-const averageLine: ChartReferenceLine[] = [{ value: 35, label: '30-day average' }];
+const averageLine: ChartReferenceLine[] = [
+  { value: 35, label: '30-day average' },
+  { value: 45, label: 'Daily goal', emphasis: 'strong' },
+];
 const perDaySeries: ChartSeries[] = [
   { key: 'eaten', label: 'Eaten', values: [36, 35, 37, 35, 35, 37, 44] },
 ];
@@ -329,10 +332,13 @@ export function ChartDemo() {
 
       <Example
         title="Reference lines"
-        description="referenceLines draws a horizontal line across the full plot at a constant value, e.g. a target or an average. Its value always joins the y axis; it gets a static legend entry, a muted row in the tooltip and announcement, and a footer row in the data table. Each line's index picks its dash pattern."
+        description="referenceLines draws a horizontal line across the full plot at a constant value, e.g. a target or an average. Its value always joins the y axis; it gets a static legend entry, a muted row in the tooltip and announcement, and a footer row in the data table. Each line's index picks its dash pattern; emphasis: 'strong' draws one line thicker."
         code={`<Chart type="stacked-bar" label="Eaten this week" categories={weekDays} series={pets}
   formatValue={formatGrams}
-  referenceLines={[{ value: 35, label: '30-day average' }]}
+  referenceLines={[
+    { value: 35, label: '30-day average' },
+    { value: 45, label: 'Daily goal', emphasis: 'strong' }, // thicker: stands out
+  ]}
 />`}
       >
         <Cell title="Eaten this week">

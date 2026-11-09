@@ -153,6 +153,7 @@
       "VisuallyHidden"
     ],
     "composedBy": [
+      "DonutChart",
       "FunnelChart",
       "Heatmap",
       "ScatterChart"
@@ -358,6 +359,17 @@
     "composes": [],
     "composedBy": []
   },
+  "DonutChart": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Chart",
+      "EmptyState",
+      "LiveRegion",
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
   "Dot": {
     "tier": "composition",
     "cluster": "Display",
@@ -409,6 +421,7 @@
       "CatalogPicker",
       "Chart",
       "DataTable",
+      "DonutChart",
       "FunnelChart",
       "Heatmap",
       "ScatterChart"
@@ -650,6 +663,7 @@
       "Chart",
       "CodeBlock",
       "DateStrip",
+      "DonutChart",
       "FunnelChart",
       "Heatmap",
       "RichTextEditor",
@@ -1190,6 +1204,7 @@
       "DashboardWidget",
       "DateStrip",
       "DateTile",
+      "DonutChart",
       "FunnelChart",
       "Heatmap",
       "LiveRegion",

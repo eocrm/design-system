@@ -61,6 +61,7 @@ const usualPace: ScatterReference = {
 const todayPace: ScatterReference = {
   label: "Today's pace",
   color: 3,
+  emphasis: 'strong',
   points: [
     { x: at(0), y: 0 },
     { x: at(20), y: 150 },
@@ -126,7 +127,7 @@ export function ScatterChartDemo() {
     { key: 'a', label: 'Bowl A', color: 1, points: bowlA }, // { x: Date, y: cumulativeG, size: mealG }
     { key: 'b', label: 'Bowl B', color: 2, points: bowlB },
   ]}
-  reference={[usualPace, todayPace]} // each { label, points, color? }
+  reference={[usualPace, todayPace]} // each { label, points, color?, emphasis? }
   xLabel="Time" yLabel="Eaten so far" sizeLabel="Meal"
   formatX={formatTime} formatY={formatGrams} formatSize={formatGrams}
 />`}

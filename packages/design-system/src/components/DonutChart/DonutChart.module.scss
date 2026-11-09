@@ -1,0 +1,173 @@
+@use './DonutChart.tokens';
+@use '../../styles/mixins' as *;
+
+// Inline-size container so the body can put the legend beside the ring when there is room.
+.root {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--donut-layout-gap);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  container-type: inline-size;
+}
+
+.root[data-empty] {
+  place-items: center;
+}
+
+.root[data-footnote] {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.footnote {
+  color: var(--chart-footnote-fg);
+  font-size: var(--chart-footnote-size);
+  line-height: var(--chart-footnote-line-height);
+}
+
+// Narrow: ring above, legend below.
+.body {
+  display: grid;
+  grid-template-rows: minmax(var(--donut-min-size), 1fr) auto;
+  gap: var(--donut-layout-gap);
+  min-height: 0;
+}
+
+// Wide: legend beside the ring. A literal, as container queries can't read custom properties.
+@container (min-width: 28rem) {
+  .body {
+    grid-template-rows: minmax(var(--donut-min-size), 1fr);
+    grid-template-columns: minmax(var(--donut-min-size), 1fr) minmax(0, max-content);
+    align-items: center;
+  }
+}
+
+// The ring is a square of side min(width, height), centred. Size containment keeps the SVG's own
+// size out of the row, so the cell follows the parent (or the min size) rather than only growing.
+.plot {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: var(--donut-min-size);
+  contain: size;
+  border-radius: var(--chart-plot-radius);
+  outline: none;
+
+  &:focus-visible {
+    @include focus-ring(var(--donut-ring));
+  }
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+}
+
+.arc {
+  fill: var(--chart-series-color, currentColor);
+  transition: opacity var(--donut-transition);
+}
+
+.plot[data-clickable] .arc {
+  cursor: pointer;
+}
+
+.svg[data-inspecting] .arc:not([data-active]) {
+  opacity: var(--donut-dim-opacity);
+}
+
+.centerValue,
+.centerCaption {
+  dominant-baseline: central;
+  text-anchor: middle;
+}
+
+.centerValue {
+  fill: var(--donut-center-value-fg);
+  font-size: var(--donut-center-value-size);
+  font-weight: var(--donut-center-value-weight);
+  font-variant-numeric: tabular-nums;
+}
+
+.centerCaption {
+  fill: var(--donut-center-label-fg);
+  font-size: var(--donut-center-label-size);
+}
+
+.legend {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--donut-legend-size);
+}
+
+.legendEntry {
+  display: flex;
+  min-width: 0;
+  transition: opacity var(--donut-transition);
+
+  &[data-dimmed] {
+    opacity: var(--donut-dim-opacity);
+  }
+
+  // A focused entry stays readable when another segment is hovered (WCAG 2.4.7).
+  &:has(:focus-visible) {
+    opacity: initial;
+  }
+}
+
+// Swatch, label, value, share.
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--donut-legend-fg);
+  font: inherit;
+  text-align: start;
+
+  &:is(button) {
+    cursor: pointer;
+  }
+
+  &:focus-visible {
+    @include focus-ring(var(--donut-ring));
+  }
+}
+
+.swatch {
+  flex-shrink: 0;
+  width: var(--chart-swatch);
+  height: var(--chart-swatch);
+  border-radius: var(--radius-sm);
+  background: var(--chart-series-color, currentColor);
+}
+
+.legendLabel {
+  overflow-wrap: anywhere;
+}
+
+.legendValue {
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.legendShare {
+  color: var(--donut-legend-muted-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arc,
+  .legendEntry {
+    transition: none;
+  }
+}
