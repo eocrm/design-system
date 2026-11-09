@@ -19,7 +19,13 @@ import { useControllableState } from '../_internal/useControllableState';
 import { useSize } from '../_internal/useSize';
 import { ChartLegend } from '../Chart/ChartLegend';
 import { ChartTooltip } from '../Chart/ChartTooltip';
-import { LABEL_GAP, MARKER_RADIUS, markerPath, markerShape } from '../Chart/chartModel';
+import {
+  LABEL_GAP,
+  MARKER_RADIUS,
+  markerPath,
+  markerShape,
+  REFERENCE_DASHES,
+} from '../Chart/chartModel';
 import {
   computeScatterLayout,
   inspectionOrder,
@@ -29,7 +35,6 @@ import {
   type ScatterReference,
   type ScatterSeries,
   type ScatterXScale,
-  REFERENCE_DASHES,
 } from './scatterModel';
 import styles from './ScatterChart.module.scss';
 

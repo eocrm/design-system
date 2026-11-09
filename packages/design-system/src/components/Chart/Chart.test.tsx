@@ -2011,3 +2011,42 @@ describe('referenceLines (DS-53)', () => {
     expect(warn.mock.calls.flat().join(' ')).toMatch(/Ignored referenceLines \(Broken\)/);
   });
 });
+
+describe('referenceLines paint order (DS-53)', () => {
+  const areaProps: ChartProps = {
+    ...base,
+    type: 'area',
+    label: 'Area with reference',
+    series: [
+      { key: 'a', label: 'A', values: [1, 2, 3] },
+      { key: 'b', label: 'B', values: [3, 2, 1] },
+    ],
+  };
+
+  it('paints over area fills and under line strokes', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart {...areaProps} referenceLines={[{ value: 3, label: 'Target' }]} />,
+    );
+    layout.fire();
+    const ref = container.querySelector('[data-reference-line]')!;
+    const after = (a: Element, b: Element) =>
+      !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    for (const fill of container.querySelectorAll('path[class*="area"]'))
+      expect(after(fill, ref)).toBe(true);
+    for (const stroke of container.querySelectorAll('path[class*="line"]'))
+      expect(after(ref, stroke)).toBe(true);
+  });
+
+  it('keeps one group per series without reference lines', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...areaProps} />);
+    layout.fire();
+    const groups = [...container.querySelectorAll('g[class*="series"][data-series]')];
+    expect(groups.map((g) => g.getAttribute('data-series'))).toEqual(['a', 'b']);
+    for (const g of groups) {
+      expect(g.querySelector('path[class*="area"]')).not.toBeNull();
+      expect(g.querySelector('path[class*="line"]')).not.toBeNull();
+    }
+  });
+});

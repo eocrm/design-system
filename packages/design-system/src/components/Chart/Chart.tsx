@@ -140,7 +140,7 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   markers?: ChartMarker[];
   /**
    * Horizontal lines at constant values, e.g. `[{ value: 35, label: '30-day average' }]`: drawn across the full plot
-   * width, over bars and under lines/areas, always inside the y domain (also when zoomed). Neutral ink unless `color`
+   * width, over bars and area fills and under line strokes, always inside the y domain (also when zoomed). Neutral ink unless `color`
    * (palette slot 1–8) is set; each line's array index picks its dash pattern (cycling after three), so keep the
    * order stable. Each gets a static legend entry, a muted "label: value" row (via `formatValue`) in the tooltip and
    * the keyboard announcement, and a row in the data table's footer. A non-finite `value` is ignored with a dev warning.
@@ -1012,24 +1012,29 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       <span />
     );
 
-  const seriesMarks = (m: SeriesMarks) => (
+  // `part` splits an area's fill from its stroke so reference lines can paint between them; `data-series` stays
+  // on the stroke group only.
+  const seriesMarks = (m: SeriesMarks, part: 'all' | 'fill' | 'stroke' = 'all') => (
     <g
       key={m.key}
       className={styles.series}
       style={seriesStyle(m.slot)}
-      data-series={m.key}
+      data-series={part === 'fill' ? undefined : m.key}
       data-comparison={m.comparison || undefined}
       data-overflow={m.overflow || undefined}
       data-dimmed={dimmed(m.key)}
     >
-      {m.area && <path className={styles.area} d={m.area} />}
-      {m.line && <path className={styles.line} d={m.line} />}
+      {m.area && part !== 'stroke' && <path className={styles.area} d={m.area} />}
+      {m.line && part !== 'fill' && <path className={styles.line} d={m.line} />}
       {m.bars?.map((d, i) => d && <path key={i} className={styles.bar} d={d} />)}
-      {m.dots.map((p, i) => (
-        <circle key={i} className={styles.dot} cx={p.x} cy={p.y} r={DOT_RADIUS} />
-      ))}
+      {part !== 'fill' &&
+        m.dots.map((p, i) => (
+          <circle key={i} className={styles.dot} cx={p.x} cy={p.y} r={DOT_RADIUS} />
+        ))}
     </g>
   );
+  // Without reference lines the series pass is one group per series, as before.
+  const splitAreas = !!layout && layout.referenceLines.length > 0;
 
   if (empty) {
     return (
@@ -1227,8 +1232,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                     ),
                 )}
               </g>
-              {layout.marks.filter((m) => m.kind === 'bars').map(seriesMarks)}
-              {/* Over bars, under lines and areas. */}
+              {layout.marks.filter((m) => m.kind === 'bars').map((m) => seriesMarks(m))}
+              {splitAreas &&
+                layout.marks.filter((m) => m.kind === 'area').map((m) => seriesMarks(m, 'fill'))}
+              {/* Over bars and area fills, under line strokes, dots and inspection markers. */}
               {layout.referenceLines.map((r) => (
                 <line
                   key={r.key}
@@ -1242,7 +1249,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                   y2={r.y}
                 />
               ))}
-              {layout.marks.filter((m) => m.kind !== 'bars').map(seriesMarks)}
+              {layout.marks
+                .filter((m) => m.kind !== 'bars')
+                .map((m) => seriesMarks(m, splitAreas ? 'stroke' : 'all'))}
               {layout.valueLabels.length > 0 && (
                 <g className={styles.valueLabels}>
                   {layout.valueLabels.map((v, i) => (

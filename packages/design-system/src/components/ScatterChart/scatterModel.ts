@@ -7,6 +7,7 @@ import {
   PAD_RIGHT,
   X_LABEL_BASELINE,
   PAD_TOP,
+  REFERENCE_DASHES,
   X_AXIS_HEIGHT,
   Y_TICK_SPACING,
   type ChartSeriesColor,
@@ -47,8 +48,6 @@ export interface ScatterReference {
   color?: ChartSeriesColor;
 }
 
-/** Number of distinct dash patterns reference lines cycle through. */
-export const REFERENCE_DASHES = 3;
 /** X-axis kind: `'number'` (linear) or `'time'` (x as `Date` or epoch ms). */
 export type ScatterXScale = 'number' | 'time';
 
