@@ -363,6 +363,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['FunnelChart'],
   },
   {
+    to: '/components/donut-chart',
+    name: 'DonutChart',
+    description:
+      'Part-of-whole donut with the total in the centre and a legend of values and shares, optional segment click.',
+    preview: SCHEMATICS['DonutChart'],
+  },
+  {
     to: '/components/scatter-chart',
     name: 'ScatterChart',
     description:
