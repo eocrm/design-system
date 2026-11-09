@@ -957,6 +957,20 @@ export interface Messages {
     /** Header of the vertical layout's visible step-conversion column ("vs previous"). */
     vsPrevious: string;
   };
+  donutChart: {
+    /** Accessible description of the focusable ring (its name is the chart label); says arrow keys inspect segments and that the data table lists every value. */
+    keyboardHint: string;
+    /** Default centre caption under the total when `centerLabel` is not given. */
+    total: string;
+    /** Header of the data table's segment column. */
+    segment: string;
+    /** Header of the data table's value column and the tooltip's value row label. */
+    value: string;
+    /** Header of the data table's share column (segment / total) and the tooltip's share line. */
+    share: string;
+    /** EmptyState title when there are no segments or every value is 0 and `emptyMessage` is not given. */
+    empty: string;
+  };
   scatterChart: {
     /** Accessible description of the focusable plot (its name is the chart label); says arrow keys walk the points in order of x and that the data table lists every value. */
     keyboardHint: string;

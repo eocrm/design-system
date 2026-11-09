@@ -1,0 +1,27 @@
+// DonutChart.tokens.scss — component tokens for <DonutChart>. Segments use the Chart palette
+// (--chart-series-N); everything else defaults to primitives or chart tokens.
+@use '../Chart/Chart.tokens';
+
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
+  // Ring thickness and the gap between segments; both read by the component in px.
+  --donut-thickness: var(--space-6);
+  --donut-gap: var(--space-05);
+
+  // Smallest the ring gets when the parent gives no height (and the narrowest it gets beside the legend).
+  --donut-min-size: calc(var(--space-16) * 2);
+  --donut-layout-gap: var(--space-4);
+
+  --donut-center-value-size: var(--font-size-2xl);
+  --donut-center-value-weight: var(--font-weight-semibold);
+  --donut-center-value-fg: var(--color-fg);
+  --donut-center-label-size: var(--font-size-sm);
+  --donut-center-label-fg: var(--color-fg-muted);
+
+  --donut-legend-size: var(--chart-legend-size);
+  --donut-legend-fg: var(--chart-legend-fg);
+  --donut-legend-muted-fg: var(--color-fg-muted);
+  --donut-dim-opacity: var(--chart-dim-opacity);
+  --donut-ring: var(--chart-ring);
+  --donut-transition: var(--transition-slow);
+}
