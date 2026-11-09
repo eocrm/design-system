@@ -89,7 +89,7 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`.
 - `StatGroup` — responsive grid of KPI tiles for a dashboard widget, with loading skeletons
 - `StatTile` — one KPI tile (label, value, trend, footnote, icon, sparkline, quota `progress`) inside a StatGroup (`filled` or `card` surface)
 - `Sparkline` — compact static line / area / bar trend for KPI cards (StatTile slot, kpi DashboardWidget child); no axes, summary in the accessible name
-- `Chart` — line / bar / stacked bar / area time-series chart for a chart DashboardWidget (smoothed lines, static markers, legend, tooltip, keyboard, data table, empty state)
+- `Chart` — line / bar / stacked bar / area time-series chart for a chart DashboardWidget (smoothed lines, static markers, reference lines, legend, tooltip, keyboard, data table, empty state)
 - `FunnelChart` — stage funnel for pipeline / campaign conversion: height = drop-off, pill = step conversion, one-hue ramp with a hero first stage; optional stage click drill-through, vertical slices plus a table when narrow
 - `ScatterChart` — scatter plot of two measures or events on a time axis: series colours + marker shapes, dot size, optional trend line and reference line, legend, tooltip, keyboard, data table, empty state
 - `Heatmap` — rows × columns grid coloured by value in up to five sequential steps with legend; `null` = no data; tooltip, keyboard, data table, empty state

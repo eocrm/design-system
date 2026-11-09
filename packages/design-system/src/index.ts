@@ -948,6 +948,7 @@ export type {
   ChartPlotPointerEvent,
   ChartProps,
   ChartRange,
+  ChartReferenceLine,
   ChartSeries,
   ChartSeriesColor,
   ChartType,

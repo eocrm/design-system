@@ -1926,3 +1926,88 @@ describe('gestures and plot double-click (DS-48)', () => {
     );
   });
 });
+
+describe('referenceLines (DS-53)', () => {
+  const props: ChartProps = {
+    type: 'stacked-bar',
+    label: 'Eaten per day',
+    categories: ['Mon', 'Tue'],
+    series: [
+      { key: 'cat', label: 'Cat', values: [20, 30] },
+      { key: 'dog', label: 'Dog', values: [10, 15] },
+    ],
+    formatValue: (n) => `${n} g`,
+    referenceLines: [
+      { value: 35, label: '30-day average' },
+      { key: 'goal', value: 50, label: 'Goal', color: 2 },
+    ],
+  };
+
+  it('draws one dashed line per reference, each with its own dash', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...props} />);
+    layout.fire();
+    const lines = [...container.querySelectorAll('[data-reference-line]')];
+    expect(lines.map((l) => l.getAttribute('data-dash'))).toEqual(['0', '1']);
+    // Over the bars.
+    const lastBar = [...container.querySelectorAll('path[class*="bar"]')].at(-1)!;
+    expect(
+      lastBar.compareDocumentPosition(lines[0]) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('lists each line as a static legend entry with a dash swatch', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...props} />);
+    layout.fire();
+    const legend = container.querySelector('ul[class*="legend"]') as HTMLElement;
+    for (const [name, dash] of [
+      ['30-day average', '0'],
+      ['Goal', '1'],
+    ]) {
+      const entry = within(legend).getByText(name).closest('[data-static]')!;
+      expect(entry).not.toBeNull();
+      expect(entry.tagName).toBe('SPAN');
+      expect(entry.querySelector('svg')!.getAttribute('data-dash')).toBe(dash);
+    }
+  });
+
+  it('adds a muted row to the tooltip and the announcement', async () => {
+    const layout = stubLayout();
+    render(<Chart {...props} />);
+    layout.fire();
+    screen.getByRole('group', { name: 'Eaten per day' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent(
+      '30-day average: 35 g',
+    );
+    const live = document.querySelector('[aria-live="polite"]')!;
+    await waitFor(() => expect(live).toHaveTextContent(/30-day average: 35 g, Goal: 50 g$/));
+  });
+
+  it('lists each line as a table footer row', () => {
+    stubLayout();
+    render(<Chart {...props} />);
+    const table = screen.getByRole('table');
+    const foot = table.querySelector('tfoot')!;
+    const rows = within(foot as HTMLElement).getAllByRole('row');
+    const th = within(rows[0]).getByRole('rowheader', { name: '30-day average' });
+    expect(th).toHaveAttribute('scope', 'row');
+    const td = rows[0].querySelector('td')!;
+    expect(td).toHaveTextContent('35 g');
+    // Category + two series columns: the value spans the two after the row header.
+    expect(td).toHaveAttribute('colspan', '2');
+  });
+
+  it('ignores a non-finite value with a dev warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart {...props} referenceLines={[{ value: NaN, label: 'Broken' }]} />,
+    );
+    layout.fire();
+    expect(container.querySelector('[data-reference-line]')).toBeNull();
+    expect(screen.queryByText('Broken')).toBeNull();
+    expect(warn.mock.calls.flat().join(' ')).toMatch(/Ignored referenceLines \(Broken\)/);
+  });
+});

@@ -108,6 +108,20 @@
   stroke-width: 1px;
 }
 
+.referenceLine {
+  stroke: var(--chart-series-color, var(--chart-reference-color));
+  stroke-width: var(--chart-reference-width);
+  stroke-dasharray: var(--chart-reference-dash-0);
+
+  &[data-dash='1'] {
+    stroke-dasharray: var(--chart-reference-dash-1);
+  }
+
+  &[data-dash='2'] {
+    stroke-dasharray: var(--chart-reference-dash-2);
+  }
+}
+
 .markerLine {
   stroke: var(--chart-marker-color);
   stroke-width: 1px;

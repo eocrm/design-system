@@ -19,6 +19,7 @@ export function ChartTable({
   markers,
   detailsHeader,
   detailsAt,
+  references = [],
 }: {
   caption: string;
   categoryHeader: string;
@@ -31,6 +32,8 @@ export function ChartTable({
   /** Set only when the chart has `details`; omitted means no details column. */
   detailsHeader?: string;
   detailsAt: (categoryIndex: number) => string[];
+  /** Reference lines, one footer row each: the label as row header, the formatted value spanning the rest. */
+  references?: { key: string; label: string; text: string }[];
 }) {
   // Only labelled markers carry meaning; decorative bands add no column.
   const hasNotes = markers.some((m) => m.label);
@@ -63,6 +66,18 @@ export function ChartTable({
             </tr>
           ))}
         </tbody>
+        {references.length > 0 && (
+          <tfoot>
+            {references.map((r) => (
+              <tr key={r.key}>
+                <th scope="row">{r.label}</th>
+                <td colSpan={columns.length + (hasNotes ? 1 : 0) + (detailsHeader ? 1 : 0)}>
+                  {r.text}
+                </td>
+              </tr>
+            ))}
+          </tfoot>
+        )}
       </table>
     </VisuallyHidden>
   );

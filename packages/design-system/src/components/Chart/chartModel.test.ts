@@ -18,6 +18,7 @@ import {
   thinLabels,
   visibleSeries,
   type ChartSeries,
+  type ChartReferenceLine,
   type ChartSeriesColor,
   type LayoutInput,
 } from './chartModel';
@@ -1229,5 +1230,70 @@ describe('viewport (DS-48)', () => {
     expect(in1.top!.x).toBeGreaterThanOrEqual(l.plot.x);
     expect(band.top).toBeUndefined();
     expect(band.label).toBeUndefined();
+  });
+});
+
+describe('referenceLines (DS-53)', () => {
+  const one = (values: number[]) => resolveSeries('bar', [s('a', values)], values.length).series;
+  const ref = (value: number, extra: Partial<ChartReferenceLine> = {}): ChartReferenceLine => ({
+    value,
+    label: `R${value}`,
+    ...extra,
+  });
+
+  it('puts the reference value in the y domain', () => {
+    const l = layout({ type: 'bar', series: one([10, 20, 40, 30]), referenceLines: [ref(100)] });
+    expect(Math.max(...l.yTicks.map((t) => t.value))).toBeGreaterThanOrEqual(100);
+  });
+
+  it('spans the full plot width, not the outer category centres', () => {
+    const l = layout({ type: 'bar', series: one([10, 20, 40, 30]), referenceLines: [ref(25)] });
+    const [r] = l.referenceLines;
+    expect(r.x1).toBe(l.plot.x);
+    expect(r.x2).toBe(l.plot.x + l.plot.width);
+    expect(r.x1).toBeLessThan(l.categoryX[0]);
+    expect(l.valueAt(r.y)).toBeCloseTo(25);
+  });
+
+  it('includes a negative value and keeps the zero line', () => {
+    const l = layout({ type: 'bar', series: one([10, 20, 40, 30]), referenceLines: [ref(-15)] });
+    expect(Math.min(...l.yTicks.map((t) => t.value))).toBeLessThanOrEqual(-15);
+    expect(l.yTicks.some((t) => t.value === 0)).toBe(true);
+  });
+
+  it('drops a non-finite value but keeps dash and key by array index', () => {
+    const l = layout({
+      type: 'bar',
+      series: one([10, 20, 40, 30]),
+      referenceLines: [
+        ref(NaN),
+        ref(Infinity),
+        ref(15, { key: 'avg', color: 3 }),
+        ref(20),
+        ref(25),
+      ],
+    });
+    expect(l.referenceLines.map((r) => [r.key, r.dash, r.slot])).toEqual([
+      ['avg', 2, 3],
+      ['3', 0, 0],
+      ['4', 1, 0],
+    ]);
+  });
+
+  it('joins the y domain under a viewport too', () => {
+    const l = layout({
+      type: 'bar',
+      series: one([10, 20, 40, 30]),
+      referenceLines: [ref(100)],
+      viewport: { from: 0, to: 0.5 },
+    });
+    expect(Math.max(...l.yTicks.map((t) => t.value))).toBeGreaterThanOrEqual(100);
+  });
+
+  it('leaves the layout unchanged without reference lines', () => {
+    const plain = layout({ type: 'bar', series: one([10, 20, 40, 30]) });
+    const empty = layout({ type: 'bar', series: one([10, 20, 40, 30]), referenceLines: [] });
+    expect(empty).toEqual({ ...plain, valueAt: expect.any(Function) });
+    expect(plain.referenceLines).toEqual([]);
   });
 });

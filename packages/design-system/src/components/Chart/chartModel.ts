@@ -76,6 +76,38 @@ export type ChartMarker =
       at?: never;
     });
 
+/**
+ * A horizontal line at a constant y value across the full plot width, e.g. a target or a 30-day average.
+ * Each line's array index picks its dash pattern, so keep the order stable.
+ */
+export interface ChartReferenceLine {
+  /** Stable identity (React key). Default: the array index. */
+  key?: string;
+  /** Y value the line sits at; always inside the y domain. A non-finite value is ignored with a dev warning. */
+  value: number;
+  /** Name shown in the legend, tooltip, keyboard announcement and data table, e.g. "30-day average". */
+  label: string;
+  /** Palette slot (1–8) the line strokes in. Default: neutral ink. */
+  color?: ChartSeriesColor;
+}
+
+/** Geometry of one reference line in svg coordinates. */
+export interface ReferenceLineGeometry {
+  key: string;
+  y: number;
+  /** The plot's left edge. */
+  x1: number;
+  /** The plot's right edge. */
+  x2: number;
+  /** Dash pattern index (`--chart-reference-dash-N`): the line's array index mod 3. */
+  dash: number;
+  /** Palette slot 1..8; 0 = neutral ink. */
+  slot: number;
+}
+
+/** Dash patterns reference lines cycle through (`--chart-reference-dash-0..2`). */
+export const REFERENCE_DASHES = 3;
+
 export interface ResolvedMarker {
   key: string;
   label?: string;
@@ -506,6 +538,8 @@ export interface LayoutInput {
    * the visible categories only. Clamped with `clampViewport`.
    */
   viewport?: ChartViewport | null;
+  /** Horizontal reference lines; finite values join the y domain (also under a viewport), the rest are dropped. */
+  referenceLines?: readonly ChartReferenceLine[];
 }
 
 export interface ChartLayout {
@@ -519,6 +553,8 @@ export interface ChartLayout {
   marks: SeriesMarks[];
   /** Bar value labels; empty unless requested on a bar type. A label wider than its bar is omitted. */
   valueLabels: ValueLabel[];
+  /** Reference lines with a finite value, in input order. */
+  referenceLines: ReferenceLineGeometry[];
   /** The y value at an svg y (inverse of the y scale). */
   valueAt: (svgY: number) => number;
 }
@@ -570,6 +606,10 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       });
   else for (const p of primaries) takeShown(p.values);
   for (const c of comparisons) takeShown(c.values);
+  const references = (input.referenceLines ?? []).flatMap((r, i) =>
+    Number.isFinite(r.value) ? [{ r, i }] : [],
+  );
+  for (const { r } of references) take(r.value);
 
   const linear = input.curve === 'linear';
   const samples = Math.max(
@@ -775,6 +815,14 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     bandWidth,
     marks,
     valueLabels,
+    referenceLines: references.map(({ r, i }) => ({
+      key: r.key ?? String(i),
+      y: y(r.value),
+      x1: plot.x,
+      x2: plot.x + plot.width,
+      dash: i % REFERENCE_DASHES,
+      slot: r.color ?? 0,
+    })),
     valueAt: (py) => y.invert(Math.max(plot.y, Math.min(plot.y + plot.height, py))),
   };
 }
