@@ -4,7 +4,7 @@
 
 :root,
 :where(:root [data-theme='light'], :root [data-theme='dark']) {
-  // Ring thickness and the gap between segments; both read by the component in px.
+  // Ring thickness and the gap between segments; read by the component as a px or rem length (calc() or em falls back to 24px / 2px).
   --donut-thickness: var(--space-6);
   --donut-gap: var(--space-05);
 

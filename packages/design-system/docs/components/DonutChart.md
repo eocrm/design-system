@@ -48,7 +48,7 @@ const segments: DonutSegment[] = [
 - **Zero-value segments** are listed in the legend and data table but draw no arc: they cannot be focused or clicked. Negative or non-finite values count as 0 (dev warning).
 - **Colour** comes from the chart palette (`--chart-series-N`). `color` pins a slot; segments without one fill the free slots in order. Slot hues follow `data-accent` and carry no meaning.
 - **More than 8 segments** repeat colours and a dev warning fires. Group the tail into an "Other" segment in the app.
-- **Clickable segments.** `onSegmentClick(segment)` makes every non-zero arc and legend entry a button and receives your original segment. Omit it for an inspect-only donut with a plain-text legend.
+- **Clickable segments.** `onSegmentClick(segment)` receives your original segment. It makes every non-zero legend entry a button; the arcs stay hidden from assistive tech, clicking one calls `onSegmentClick`, and keyboard users press Enter on the ring. Omit it for an inspect-only donut with a plain-text legend (hidden from screen readers; the data table carries the values).
 - **Keyboard.** The ring is one tab stop: arrows, Home and End choose a segment (announced), Escape clears. Enter or Space activates only the segment chosen with the arrow keys; hovering shows details but does not choose a segment for Enter.
 - **Tooltip** follows hover, focus and tap. **Screen readers** get a visually hidden data table (caption = `label`) with exact values and shares.
 - **Centre text** is `centerLabel` (default "Total") under the total; `showTotal={false}` leaves the centre empty. A long segment label can overrun a very small ring: keep labels short.

@@ -41,6 +41,10 @@
   --chart-marker-label-halo: var(--color-bg);
   --chart-marker-label-halo-width: 3px;
 
+  // A coloured marker label is the slot ink pulled toward --color-fg (darker in light,
+  // lighter in dark) so every slot clears 4.5:1 text contrast on --color-bg; contrast.test.ts pins it.
+  --chart-marker-label-colored-mix: 60%;
+
   // A coloured (`color`) subtle line: the palette ink, faded.
   --chart-marker-line-subtle-opacity: 0.5;
   --chart-marker-icon-size: var(--font-size-md);

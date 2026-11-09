@@ -62,9 +62,16 @@ const THICKNESS = 24;
 const GAP = 2;
 
 // ponytail: read once per plot element; a theme that changes these tokens at runtime needs a remount.
+/** Reads a length custom property in px; px and rem are understood, anything else (calc(), em) falls back. */
 function readPx(el: Element | null, name: string, fallback: number) {
   if (!el) return fallback;
-  const v = parseFloat(getComputedStyle(el).getPropertyValue(name));
+  const raw = getComputedStyle(el).getPropertyValue(name).trim();
+  const unit = raw.endsWith('rem')
+    ? parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+    : raw.endsWith('px')
+      ? 1
+      : NaN;
+  const v = parseFloat(raw) * unit;
   return Number.isFinite(v) && v >= 0 ? v : fallback;
 }
 
@@ -325,7 +332,8 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
             </svg>
           )}
         </div>
-        <ul className={styles.legend}>
+        {/* Read-only: aria-hidden, the hidden data table is the screen reader's copy. */}
+        <ul className={styles.legend} aria-hidden={onSegmentClick ? undefined : true}>
           {resolved.map((s, i) => {
             const content = (
               <>
@@ -341,6 +349,8 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
                 className={styles.legendEntry}
                 data-legend={s.segment.key}
                 data-dimmed={current && shownIndex !== i ? '' : undefined}
+                // A zero-value entry in a clickable legend has no button: hide the whole item.
+                aria-hidden={onSegmentClick && !s.drawn ? true : undefined}
               >
                 {onSegmentClick && s.drawn ? (
                   <button
@@ -359,8 +369,7 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
                     {content}
                   </button>
                 ) : (
-                  // aria-hidden: the hidden data table is the screen reader's copy.
-                  <span className={styles.legendItem} style={slotStyle(s.slot)} aria-hidden="true">
+                  <span className={styles.legendItem} style={slotStyle(s.slot)}>
                     {content}
                   </span>
                 )}

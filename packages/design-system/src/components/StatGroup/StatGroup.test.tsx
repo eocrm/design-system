@@ -3,6 +3,8 @@ import { render, screen, within } from '@testing-library/react';
 import { Link } from '../Link';
 import { Sparkline } from '../Sparkline';
 import { StatGroup, StatTile } from './index';
+import tileStyles from './StatTile.module.scss';
+import linkStyles from '../Link/Link.module.scss';
 
 function Fake({
   to,
@@ -319,6 +321,21 @@ describe('StatTile link', () => {
     expect(a).toHaveAttribute('href', '/y');
     expect(a).toHaveClass('mine');
     expect(a.className.split(' ').length).toBeGreaterThan(1);
+  });
+
+  // jsdom can't resolve the cascade; this pins the structure `.linked > .link`
+  // relies on to outrank the DS Link's own rules (checked visually in the demo).
+  it('takes the DS Link as link: both class sets merge, anchor is the tile root child', () => {
+    render(
+      <StatGroup aria-label="g">
+        <StatTile label="a" value="1" trend={UP} link={<Link href="/z" />} />
+      </StatGroup>,
+    );
+    const a = screen.getByRole('link');
+    expect(a).toHaveAttribute('href', '/z');
+    expect(a).toHaveClass(tileStyles.link, linkStyles.link, linkStyles.default);
+    expect(a.parentElement).toBe(screen.getByRole('listitem'));
+    expect(a.parentElement).toHaveClass(tileStyles.linked);
   });
 
   it('allows a secondary Link in the footnote without nesting', () => {

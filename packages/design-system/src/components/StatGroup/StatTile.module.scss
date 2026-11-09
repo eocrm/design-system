@@ -21,16 +21,22 @@
 }
 
 // The link wraps the body; it stays the tile's colour and never underlines.
-.link {
+// `.linked >` lifts these above any link component's own rules (the DS Link's
+// `.link:has(svg)` is 0,1,1 and `.default:hover` 0,2,0), so <a>, a router Link
+// and the DS Link render the same tile.
+.linked > .link {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: var(--stat-tile-gap);
   min-width: 0;
   color: inherit;
+  font-weight: inherit;
   text-decoration: none;
 }
 
-.link:hover {
+.linked > .link:hover {
+  color: inherit;
   text-decoration: none;
 }
 

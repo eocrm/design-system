@@ -147,13 +147,13 @@ describe('DonutChart', () => {
       'In progress: 5, 10.6%',
       'Done: 30, 63.8%',
     ]);
-    expect(within(legend).getAllByRole('listitem')).toHaveLength(4);
+    expect(legend.querySelectorAll('li')).toHaveLength(4);
     expect(within(legend).getByText('Cancelled').closest('button')).toBeNull();
     await userEvent.click(buttons[1]);
     expect(onSegmentClick).toHaveBeenCalledWith(segs[1]);
     unmount();
     renderDonut();
-    expect(within(screen.getByRole('list')).queryByRole('button')).toBeNull();
+    expect(document.querySelector('ul button')).toBeNull();
   });
 
   it('lists every segment, including zero ones, in the data table', () => {
@@ -215,19 +215,39 @@ describe('DonutChart', () => {
     expect(plot()).toHaveAccessibleDescription(expect.stringContaining(hint));
   });
 
-  it('hides static legend entries from screen readers (the table is their copy)', () => {
+  it('reads --donut-thickness / --donut-gap in px or rem (16px root in jsdom)', () => {
+    const ring = (thickness: string, gap: string) => {
+      const { unmount } = render(
+        <div style={{ '--donut-thickness': thickness, '--donut-gap': gap } as React.CSSProperties}>
+          <DonutChart {...base} />
+        </div>,
+      );
+      const d = arcs().map((a) => a.getAttribute('d'));
+      unmount();
+      return d;
+    };
+    const px = ring('24px', '2px');
+    expect(ring('1.5rem', '0.125rem')).toEqual(px);
+    expect(ring('3rem', '0.125rem')).not.toEqual(px);
+    // Unsupported units fall back to the 24px / 2px defaults.
+    expect(ring('calc(1px + 1px)', '2em')).toEqual(ring('', ''));
+  });
+
+  it('hides a read-only legend whole, and only zero-value items of a clickable one', () => {
     const segs = [...segments, { key: 'none', label: 'Cancelled', value: 0 }];
     const { unmount } = renderDonut({ segments: segs });
-    for (const s of segs) {
-      expect(
-        screen.getByText(s.label, { selector: 'ul span' }).closest('[aria-hidden]'),
-      ).not.toBeNull();
-    }
+    // Read-only: the table is the screen reader's copy, so no list of blank items.
+    expect(document.querySelector('ul')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.queryByRole('list')).toBeNull();
     unmount();
     renderDonut({ segments: segs, onSegmentClick: vi.fn() });
-    expect(
-      screen.getByText('Cancelled', { selector: 'ul span' }).closest('[aria-hidden]'),
-    ).not.toBeNull();
+    const list = screen.getByRole('list');
+    expect(list).not.toHaveAttribute('aria-hidden');
+    expect(screen.getByText('Cancelled', { selector: 'ul span' }).closest('li')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
+    expect(within(list).getAllByRole('listitem')).toHaveLength(segments.length);
     expect(screen.getByRole('button', { name: /^To do/ }).closest('[aria-hidden]')).toBeNull();
   });
 

@@ -64,7 +64,7 @@ export function DonutChartDemo() {
       <Example
         title="Small segments"
         description="Percentages come from the real total; tiny segments get a minimum visible angle. A zero-value segment is listed but cannot be focused or clicked."
-        code={`<DonutChart label="Deals by outcome" segments={segments} formatValue={formatCount} onSegmentClick={...} />`}
+        code={`<DonutChart label="Deals by outcome" segments={small} formatValue={formatCount} onSegmentClick={...} footnote="Closed deals only" />`}
       >
         <div style={{ height: 300, maxWidth: 640 }}>
           <DonutChart

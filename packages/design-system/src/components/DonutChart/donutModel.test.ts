@@ -57,6 +57,12 @@ describe('resolveDonut', () => {
     expect(r.segments.every((s) => !s.drawn && s.share === 0 && !Number.isNaN(s.start))).toBe(true);
   });
 
+  it('treats a total that overflows to Infinity as no data', () => {
+    const r = resolveDonut([seg('a', Number.MAX_VALUE), seg('b', Number.MAX_VALUE)]);
+    expect(r.total).toBe(0);
+    expect(r.segments.every((s) => !s.drawn && s.share === 0 && s.start === s.end)).toBe(true);
+  });
+
   it('flags overflow past 8 uncoloured segments', () => {
     expect(resolveDonut(Array.from({ length: 9 }, (_, i) => seg(`k${i}`, 1))).overflow).toBe(true);
     expect(resolveDonut([seg('a', 1), seg('b', 1)]).overflow).toBe(false);

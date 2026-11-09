@@ -33,7 +33,7 @@ export interface ResolvedSegment {
 
 /** Result of {@link resolveDonut}. */
 export interface ResolvedDonut {
-  /** Sum of sanitised values. */
+  /** Sum of sanitised values; 0 (nothing drawn) when that sum overflows to Infinity. */
   total: number;
   /** One entry per input segment, in input order. */
   segments: ResolvedSegment[];
@@ -56,7 +56,12 @@ export function resolveDonut(segments: readonly DonutSegment[]): ResolvedDonut {
     invalid.push(s.key);
     return 0;
   });
-  const total = values.reduce((a, b) => a + b, 0);
+  let total = values.reduce((a, b) => a + b, 0);
+  // A sum that overflows to Infinity has no meaningful shares: treat it as no data.
+  if (!Number.isFinite(total)) {
+    values.fill(0);
+    total = 0;
+  }
   const slots = assignSlots(segments.map((s) => s.color));
 
   // Spans: proportional, with any span under the minimum pinned to it and the rest rescaled.

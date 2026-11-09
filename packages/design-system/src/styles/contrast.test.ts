@@ -571,6 +571,29 @@ describe.each(THEMED_ACCENTS)(
 );
 
 /**
+ * Chart's coloured marker label (`.markerLabelColored`): the slot ink mixed toward
+ * --color-fg, `color-mix(in oklab, slot mix, --color-fg)`. It is 12px body text, so 4.5:1
+ * on the card surface for every slot, theme and accent. The mix is read from Chart.tokens.scss.
+ */
+describe.each(THEMED_ACCENTS)(
+  'Chart coloured marker label in %s theme, %s accent',
+  (_theme, _accent, source) => {
+    const chart = stripComments(
+      readFileSync(resolve(__dirname, '../components/Chart/Chart.tokens.scss'), 'utf8'),
+    );
+    const mix = parseFloat(chart.match(/--chart-marker-label-colored-mix:\s*([\d.]+)%/)![1]!) / 100;
+    it.each(CHART_SLOTS)('slot %i clears 4.5:1 on the card surface', (n) => {
+      const [ink, fg] = [`--color-chart-series-${n}`, '--color-fg'].map((name) =>
+        toOklab(tokenValue(name, source)),
+      );
+      const label = fromOklab(ink!.map((c, i) => fg![i]! + (c - fg![i]!) * mix));
+      expect(mix).toBeGreaterThan(0);
+      expect(contrast(label, tokenValue('--color-bg', source))).toBeGreaterThanOrEqual(4.5);
+    });
+  },
+);
+
+/**
  * StagePath's hovered stage is `color-mix(in srgb, fill, text hover-mix)` — the
  * fill moved toward its own text colour, which LOWERS that pair's contrast. The
  * mix is a straight sRGB lerp, i.e. `composite(fg, mix, bg)`. The percentage is
