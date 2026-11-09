@@ -261,3 +261,44 @@ geometry. Reuse `ChartTooltip` and `ChartLegend` from `../Chart` where their pro
 - [ ] **Step 3:** From the repo root, run `make test && make build-lib && make lint && npm run format:check`, and
       `npm run test:focus-geometry` (Playwright; it must stay green).
 - [ ] **Step 4:** Commit `docs(donut-chart): docs, playground demo and manifest (DS-55)`.
+
+### Task 5: DS-59 linkable `StatTile`
+
+**Files:**
+
+- In `packages/design-system/src/components/StatGroup/`: `StatTile.tsx`, `StatTile.module.scss`,
+  `StatTile.tokens.scss` and `StatGroup.test.tsx`. Also `docs/components/StatTile.md` (then `npm run build:docs`)
+  and the StatGroup line in `AI-PRIMER.md` if it says tiles are read-only.
+- Demo: `packages/playground/src/pages/components/StatGroupDemo.tsx`. Add a "Linked tiles" example using `<a href>`
+  plus a footnote `Link`.
+
+**Interfaces (produces):**
+
+- `link?: ReactElement` on `StatTileProps`, with JSDoc: "An empty link element (`<a href>`, a router `Link`, the DS
+  `Link`) that makes the tile body one click target. StatTile clones it, merges its class and sets the body as its
+  children. The footnote stays outside, so it can hold a secondary `Link`."
+- Rendering:
+  - Without `link`, the DOM is unchanged.
+  - With `link`, the `<li>` contains the cloned element, which wraps the existing body. The footnote is a sibling
+    after it.
+  - While the group is loading, the tile renders as if there were no `link`.
+- New tokens: `--stat-tile-link-hover-bg` (the builder maps it to the existing surface-hover primitive, in keeping
+  with LinkCard) and a focus ring that reuses the ring tokens LinkCard uses.
+- A dev warning, once per tile: "[StatTile] `link` must be an empty element; its children are replaced."
+
+- [ ] **Step 1: Failing tests** in `StatGroup.test.tsx`:
+  - `link={<a href="/x" />}`: the tile has one link with `href` "/x". Its accessible name contains the label and the
+    value. The footnote text is not inside the link. The `<li>` is still the ref target and keeps the `data-*` from
+    the props.
+  - A custom component `link={<Fake to="/y" />}` (a test component rendering `<a href={to}>`): its `className`
+    receives StatTile's class merged with its own `className="mine"`.
+  - A footnote containing a `Link`: two links in the tile, not nested.
+  - `StatGroup loading`: no link is rendered.
+  - A `link` with children: a dev warning fires, and the body replaces them.
+  - Without `link`: no link, and the markup is otherwise the same as before (assert there's no `a` and the body
+    class is present).
+- [ ] **Step 2:** Run the tests and confirm they FAIL.
+- [ ] **Step 3:** Implement. Update the docs: replace the read-only anti-pattern, add the footnote-link pattern and
+      the "link with children" anti-pattern. Update the demo.
+- [ ] **Step 4:** Run the tests and confirm they PASS. Run the gates, then commit
+      `feat(stat-tile): linkable tile via link element slot (DS-59)`.

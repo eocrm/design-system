@@ -118,6 +118,47 @@ Home Hub's `useChartMarkerColors.ts` shim can then be deleted.
 
 Home Hub's `scatterReference.module.css` shim can then be deleted.
 
+## DS-59 — linkable `StatTile`
+
+Need: eocrm's space Overview counters (EO-77) open the task list filtered to exactly those tasks. Today eocrm wraps
+only the value in a `Link`, which goes against the documented "tiles are read-only" rule.
+
+**Decided by the user:** an element slot.
+
+```tsx
+<StatTile
+  label="Done"
+  value="30"
+  link={<RouterLink to="/tasks?stage=done" />}
+  footnote={
+    <Link as={RouterLink} to="/tasks?overdue">
+      2 overdue
+    </Link>
+  }
+/>
+```
+
+- **`link?: ReactElement`:** an empty link element: `<a href>`, a router `Link`, or the DS `Link`.
+  - StatTile clones it with `cloneElement`. It merges its own class into the element's `className`, and sets the
+    children to the tile body: icon, label, value, trend, progress meter and sparkline.
+  - The whole body is the click target. The accessible name comes from the content (label, value, and the trend's
+    hidden words).
+  - The `<li>` root, the forwarded ref and the native `<li>` props spread stay as they are today.
+- **The footnote stays outside the link**, so a secondary link (`<Link>`) in `footnote` is valid, with no nested
+  interactive elements. The docs give this as the pattern for "2 overdue".
+- **Affordance:**
+  - The linked body gets a hover state (the tile-surface hover token, plus `cursor: pointer` from the anchor) and a
+    `:focus-visible` ring with the shared focus-ring tokens.
+  - Text colour stays the tile's own, so the link doesn't turn the text blue or underline it.
+- **Loading:** while the `StatGroup` is loading, the tile renders without the link, so there are no focusable
+  skeletons.
+- **Docs:**
+  - Replace the "tiles are read-only" anti-pattern with: "one link per tile via `link`; no buttons or other controls
+    inside the tile".
+  - Add the footnote-link pattern.
+  - Add an anti-pattern: "❌ `link` with its own children: they are replaced".
+  - A dev warning fires when `link` isn't a valid element, or when it has its own children.
+
 ## My calls (the user can overrule)
 
 - DonutChart has no legend toggle, because the shares are of a fixed whole.
