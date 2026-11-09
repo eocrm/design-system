@@ -51,6 +51,8 @@ TL;DR: label, large value, optional trend, footnote and icon, on a filled tile (
 
 <!-- props:end -->
 
+**Secondary link:** the footnote sits outside the tile `link`, so it can hold its own `Link` (e.g. "View report"); the two links are siblings, never nested.
+
 **When NOT to use:** a single KPI card (`DashboardWidget variant="kpi"`), or a standalone tile outside a group.
 
 #### Anti-patterns
@@ -58,4 +60,3 @@ TL;DR: label, large value, optional trend, footnote and icon, on a filled tile (
 - ❌ Wrapping `StatTile` in another element inside `StatGroup`: the `<li>` must be a direct child of the `<ul>`.
 - ❌ Putting buttons or inputs in a tile. Only navigation is supported: pass `link={<a href="/deals" />}` to make the tile body one link.
 - ❌ Giving the `link` element children. They are replaced by the tile body (dev warning). Pass it empty.
-- ❌ Putting a `Link` in `footnote` and also passing `link`, expecting one target: the footnote sits outside the tile link, so you get two separate links (valid, not nested). Use it for a secondary "See details" link.

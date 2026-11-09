@@ -95,11 +95,18 @@ export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTi
   const linkEl = !loading && isValidElement(link) ? link : undefined;
   const linkHasChildren = linkEl?.props.children != null;
 
+  const linkInvalid = link != null && !isValidElement(link);
+
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production' && linkHasChildren) {
+    if (process.env.NODE_ENV === 'production') return;
+    if (linkInvalid) {
+      console.warn(
+        '[StatTile] `link` must be a React element (e.g. <a href> or a router Link); ignored.',
+      );
+    } else if (linkHasChildren) {
       console.warn('[StatTile] `link` must be an empty element; its children are replaced.');
     }
-  }, [linkHasChildren]);
+  }, [linkInvalid, linkHasChildren]);
 
   const bodyContent = (
     <>

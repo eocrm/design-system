@@ -346,17 +346,32 @@ describe('StatTile link', () => {
     expect(screen.queryByRole('link')).toBeNull();
   });
 
-  it('warns once when the link has children, and replaces them', () => {
+  it('warns once (not on rerender) when the link has children, and replaces them', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    render(
+    const ui = (
       <StatGroup aria-label="g">
         <StatTile label="a" value="1" link={<a href="/x">ignored</a>} />
-      </StatGroup>,
+      </StatGroup>
     );
+    const { rerender } = render(ui);
+    rerender(ui);
+    expect(warn).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining('[StatTile] `link` must be an empty'),
     );
     expect(screen.getByRole('link')).not.toHaveTextContent('ignored');
+    warn.mockRestore();
+  });
+
+  it('warns and ignores a non-element link', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <StatGroup aria-label="g">
+        <StatTile label="a" value="1" link={'/x' as never} />
+      </StatGroup>,
+    );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('must be a React element'));
+    expect(screen.queryByRole('link')).toBeNull();
     warn.mockRestore();
   });
 
