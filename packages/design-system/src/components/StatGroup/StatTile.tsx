@@ -1,4 +1,14 @@
-import { forwardRef, useContext, useId, type HTMLAttributes, type ReactNode } from 'react';
+import {
+  cloneElement,
+  forwardRef,
+  isValidElement,
+  useContext,
+  useEffect,
+  useId,
+  type HTMLAttributes,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import clsx from 'clsx';
 import { Progress, type ProgressTone } from '../Progress';
 import { Skeleton } from '../Skeleton';
@@ -56,6 +66,12 @@ export interface StatTileProps extends Omit<HTMLAttributes<HTMLLIElement>, 'chil
    * number is not finite (an unlimited plan, a limit still loading).
    */
   progress?: StatProgress;
+  /**
+   * An empty link element (`<a href>`, a router `Link`, the DS `Link`) that makes the tile body one
+   * click target. StatTile clones it, merges its class and sets the body as its children. The
+   * footnote stays outside, so it can hold a secondary `Link`.
+   */
+  link?: ReactElement<{ className?: string; children?: ReactNode }>;
 }
 
 /** A meter needs a finite amount and a positive limit; otherwise Progress would go indeterminate ("Loading…"). */
@@ -69,20 +85,24 @@ function meterable(p: StatProgress | undefined): p is StatProgress {
  */
 // {...rest} last (Pattern A) so the consumer can add data-* / handlers to the <li>.
 export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTile(
-  { label, value, trend, footnote, icon, sparkline, progress, className, ...rest },
+  { label, value, trend, footnote, icon, sparkline, progress, link, className, ...rest },
   ref,
 ) {
   const t = useTranslation();
   const { loading, variant } = useContext(StatGroupContext);
   const labelId = useId();
   const meter = meterable(progress) ? progress : undefined;
+  const linkEl = !loading && isValidElement(link) ? link : undefined;
+  const linkHasChildren = linkEl?.props.children != null;
 
-  return (
-    <li
-      ref={ref}
-      className={clsx(styles.root, variant === 'card' && styles.card, className)}
-      {...rest}
-    >
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' && linkHasChildren) {
+      console.warn('[StatTile] `link` must be an empty element; its children are replaced.');
+    }
+  }, [linkHasChildren]);
+
+  const bodyContent = (
+    <>
       <div className={styles.label}>
         {icon != null && <span className={styles.icon}>{icon}</span>}
         <span id={labelId}>{label}</span>
@@ -135,9 +155,30 @@ export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTi
             />
           )}
           {sparkline != null && <div className={styles.sparkline}>{sparkline}</div>}
-          {footnote != null && <div className={styles.footnote}>{footnote}</div>}
         </>
       )}
+    </>
+  );
+
+  return (
+    <li
+      ref={ref}
+      className={clsx(
+        styles.root,
+        variant === 'card' && styles.card,
+        linkEl && styles.linked,
+        className,
+      )}
+      {...rest}
+    >
+      {linkEl
+        ? cloneElement(
+            linkEl,
+            { className: clsx(styles.link, linkEl.props.className) },
+            bodyContent,
+          )
+        : bodyContent}
+      {!loading && footnote != null && <div className={styles.footnote}>{footnote}</div>}
     </li>
   );
 });

@@ -3,6 +3,7 @@ import {
   DashboardWidget,
   Cluster,
   IconTile,
+  Link,
   Sparkline,
   Stack,
   StatGroup,
@@ -113,6 +114,30 @@ export function StatGroupDemo() {
             label="API calls today"
             value="10,412 / 10,000"
             progress={{ value: 10412, max: 10000, tone: 'danger' }}
+          />
+        </StatGroup>
+      </Example>
+
+      <Example
+        title="Linked tiles"
+        description="link={<a href />} makes the tile body one click target (router Links work too). The footnote stays outside, so it can hold its own secondary Link."
+        code={`<StatGroup aria-label="Linked metrics">
+  <StatTile label="Open deals" value="48" link={<a href="#deals" />} />
+  <StatTile
+    label="Overdue tasks"
+    value="17"
+    link={<a href="#tasks" />}
+    footnote={<Link href="#report">View report</Link>}
+  />
+</StatGroup>`}
+      >
+        <StatGroup aria-label="Linked metrics">
+          <StatTile label="Open deals" value="48" link={<a href="#deals" />} />
+          <StatTile
+            label="Overdue tasks"
+            value="17"
+            link={<a href="#tasks" />}
+            footnote={<Link href="#report">View report</Link>}
           />
         </StatGroup>
       </Example>
