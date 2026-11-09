@@ -49,7 +49,7 @@ interface ChartMarkerBase {
   label?: string;
   /** Visual weight. Default `'neutral'`. */
   tone?: ChartMarkerTone;
-  /** Palette slot (1–8) the line strokes / band tints in, e.g. to match a series. Default: neutral ink. */
+  /** Palette slot (1–8) the line strokes / band tints in, and the label text too, e.g. to match a series. Default: neutral ink. */
   color?: ChartSeriesColor;
   /** Short text or emoji drawn centred above the marker, in the gutter above the plot. Decorative: never read out (`label` carries meaning). */
   icon?: string;
