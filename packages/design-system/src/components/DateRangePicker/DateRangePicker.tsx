@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type FocusEvent,
@@ -177,20 +178,24 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
     const t = useTranslation();
     const resolvedCycle = resolveHourCycle(hourCycle, locale);
     // DS-66: a format hint, not a sample date that reads as a real value.
-    const formatHint = dateFormatHint(
-      locale,
-      {
-        day: t('datePicker.placeholderDay'),
-        month: t('datePicker.placeholderMonth'),
-        year: t('datePicker.placeholderYear'),
-      },
-      granularity === 'minute'
-        ? t(
-            resolvedCycle === '24'
-              ? 'datePicker.timePlaceholder24'
-              : 'datePicker.timePlaceholder12',
-          )
-        : undefined,
+    const formatHint = useMemo(
+      () =>
+        dateFormatHint(
+          locale,
+          {
+            day: t('datePicker.placeholderDay'),
+            month: t('datePicker.placeholderMonth'),
+            year: t('datePicker.placeholderYear'),
+          },
+          granularity === 'minute'
+            ? t(
+                resolvedCycle === '24'
+                  ? 'datePicker.timePlaceholder24'
+                  : 'datePicker.timePlaceholder12',
+              )
+            : undefined,
+        ),
+      [locale, t, granularity, resolvedCycle],
     );
     const generatedId = useId();
     const inputId = idProp ?? generatedId;

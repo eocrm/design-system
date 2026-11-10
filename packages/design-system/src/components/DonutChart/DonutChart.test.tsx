@@ -1,4 +1,10 @@
-import { createRef, type MouseEvent, type ReactElement, type RefAttributes } from 'react';
+import {
+  createRef,
+  type MouseEvent,
+  type ReactElement,
+  type ReactNode,
+  type RefAttributes,
+} from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
@@ -348,6 +354,43 @@ describe('DonutChart', () => {
       renderDonut({ segments: segs });
       fireEvent.click(arcs()[0]);
       expect(onLinkClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('mixed linked/unlinked without onSegmentClick: only linked segments are activatable', () => {
+      const { onLinkClick, segs } = linked();
+      const onRootClick = vi.fn();
+      renderDonut({ segments: segs, onClick: onRootClick });
+      expect(arcs()[0]).toHaveAttribute('data-clickable');
+      expect(arcs()[1]).not.toHaveAttribute('data-clickable');
+      // The unlinked entry can't be activated: hidden like a read-only legend's, the table reads it.
+      expect(document.querySelector('[data-legend="doing"]')).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      );
+      fireEvent.keyDown(plot(), { key: 'ArrowRight' });
+      fireEvent.keyDown(plot(), { key: 'ArrowRight' });
+      fireEvent.keyDown(plot(), { key: 'Enter' });
+      expect(onLinkClick).not.toHaveBeenCalled();
+      // One arc click reaches a root onClick once (via the followed link), not twice.
+      fireEvent.click(arcs()[0]);
+      expect(onLinkClick).toHaveBeenCalledTimes(1);
+      expect(onRootClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('follows a link component that drops data-* props; a held Enter follows it once', () => {
+      const onLinkClick = vi.fn((e: MouseEvent) => e.preventDefault());
+      const Bare = ({ className, children }: { className?: string; children?: ReactNode }) => (
+        <a href="/bare" className={className} onClick={onLinkClick}>
+          {children}
+        </a>
+      );
+      renderDonut({ segments: [{ ...segments[0], link: <Bare /> }, segments[1]] });
+      fireEvent.click(arcs()[0]);
+      expect(onLinkClick).toHaveBeenCalledTimes(1);
+      fireEvent.keyDown(plot(), { key: 'ArrowRight' });
+      fireEvent.keyDown(plot(), { key: 'Enter' });
+      fireEvent.keyDown(plot(), { key: 'Enter', repeat: true });
+      expect(onLinkClick).toHaveBeenCalledTimes(2);
     });
 
     it('warns in dev for a non-element or non-empty link', () => {

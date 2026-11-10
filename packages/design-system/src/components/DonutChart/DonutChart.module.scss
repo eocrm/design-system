@@ -70,7 +70,7 @@
   transition: opacity var(--donut-transition);
 }
 
-.plot[data-clickable] .arc {
+.arc[data-clickable] {
   cursor: pointer;
 }
 
@@ -141,6 +141,17 @@
 
   &:focus-visible {
     @include focus-ring(var(--donut-ring));
+  }
+}
+
+// A link legend entry keeps the legend look even when it is the DS <Link>, whose
+// .default / .default:hover colour and underline would otherwise win on hover.
+.legend .legendEntry > .legendItem {
+  &,
+  &:hover {
+    color: var(--donut-legend-fg);
+    font: inherit;
+    text-decoration: none;
   }
 }
 

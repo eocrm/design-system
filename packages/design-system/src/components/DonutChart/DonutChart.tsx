@@ -167,8 +167,11 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
     isValidElement(s.link)
       ? (s.link as ReactElement<HTMLAttributes<HTMLElement> & { 'data-segment-link'?: string }>)
       : undefined;
-  const clickable =
-    onSegmentClick !== undefined || resolved.some((s) => s.drawn && linkOf(s.segment));
+  // A segment is activatable when it is drawn and has a link or an onSegmentClick to call. With
+  // mixed linked/unlinked segments and no onSegmentClick, the unlinked ones stay inspect-only.
+  const canActivate = (s: (typeof resolved)[number]) =>
+    s.drawn && (onSegmentClick !== undefined || linkOf(s.segment) !== undefined);
+  const clickable = resolved.some(canActivate);
   const legendRef = useRef<HTMLUListElement>(null);
   // A linked segment is followed by clicking its legend link, so a router Link navigates via its own
   // onClick and modifier keys (new tab) work; that link's onClick also calls onSegmentClick.
@@ -176,9 +179,12 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
     segment: DonutSegment,
     e: Pick<MouseEvent, 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey'> & { button?: number },
   ) => {
-    const linkEl = [...(legendRef.current?.querySelectorAll('[data-segment-link]') ?? [])].find(
-      (el) => el.getAttribute('data-segment-link') === segment.key,
-    );
+    // Found through our own <li>, so a link component that drops data-* props still works.
+    const linkEl = linkOf(segment)
+      ? [...(legendRef.current?.children ?? [])].find(
+          (li) => li.getAttribute('data-legend') === segment.key,
+        )?.firstElementChild
+      : undefined;
     if (!linkEl) return onSegmentClick?.(segment);
     const { ctrlKey, metaKey, shiftKey, altKey, button = 0 } = e;
     linkEl.dispatchEvent(
@@ -216,8 +222,9 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
         break;
       case 'Enter':
       case ' ':
-        if (!kbSegment || !clickable) return;
+        if (!kbSegment || !canActivate(kbSegment)) return;
         e.preventDefault();
+        if (e.repeat) return; // holding Enter must not open the link once per key repeat
         activate(kbSegment.segment, e);
         return;
       case 'Escape':
@@ -334,7 +341,16 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
                       data-active={shownIndex === i ? '' : undefined}
                       onPointerEnter={() => hoverOn(s.segment.key)}
                       onPointerDown={() => hoverOn(s.segment.key)}
-                      onClick={clickable ? (e) => activate(s.segment, e) : undefined}
+                      data-clickable={canActivate(s) || undefined}
+                      onClick={
+                        canActivate(s)
+                          ? (e) => {
+                              // The followed link's click bubbles itself; don't bubble this one too.
+                              if (linkOf(s.segment)) e.stopPropagation();
+                              activate(s.segment, e);
+                            }
+                          : undefined
+                      }
                     />
                   ),
               )}
@@ -401,8 +417,9 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
                 className={styles.legendEntry}
                 data-legend={s.segment.key}
                 data-dimmed={current && shownIndex !== i ? '' : undefined}
-                // A zero-value entry in a clickable legend has no button: hide the whole item.
-                aria-hidden={clickable && !s.drawn ? true : undefined}
+                // In an interactive legend, entries that can't be activated (zero-value, or unlinked
+                // with no onSegmentClick) stay hidden: the data table is their screen-reader copy.
+                aria-hidden={clickable && !canActivate(s) ? true : undefined}
               >
                 {link ? (
                   cloneElement(
