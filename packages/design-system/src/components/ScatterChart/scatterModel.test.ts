@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DOT_RADIUS, estimateTextWidth } from '../Chart/chartModel';
+import { DOT_RADIUS, estimateTextWidth, MARKER_RADIUS } from '../Chart/chartModel';
 import {
   computeScatterLayout,
   inspectionOrder,
@@ -364,5 +364,55 @@ describe('axis titles', () => {
     expect(layout.xTitle.y).toBeGreaterThan(layout.xTickBaseline);
     expect(layout.xTitle.y).toBeLessThanOrEqual(base.height);
     expect(layout.xTitle.x).toBe(layout.plot.x + layout.plot.width);
+  });
+});
+
+describe('sized markers on narrow plots (DS-68)', () => {
+  const meals = resolve([
+    { x: 0, y: 10, size: 10 },
+    { x: 5, y: 60, size: 50 },
+    { x: 10, y: 100, size: 40 },
+  ]);
+  const largest = (l: { dots: { r: number }[] }) => Math.max(...l.dots.map((d) => d.r));
+  it('caps the max radius at 1/25 of the chart width, never below the min', () => {
+    const phone = {
+      ...base,
+      width: 250,
+      height: 260,
+      series: meals,
+      sizeRange: [4, 16] as [number, number],
+    };
+    expect(largest(computeScatterLayout(phone))).toBeCloseTo(10);
+    expect(largest(computeScatterLayout({ ...phone, width: 60 }))).toBe(4);
+    // Height doesn't cap: a short, wide card keeps the token's max.
+    expect(largest(computeScatterLayout({ ...phone, width: 800, height: 120 }))).toBe(16);
+  });
+  it('a legend toggle that changes the y-tick width does not resize the remaining dots', () => {
+    const a = resolve([{ x: 0, y: 100000, size: 50 }], 'a');
+    const b = resolve([{ x: 1, y: 5, size: 50 }], 'b');
+    const common = { ...base, width: 200, height: 500, sizeRange: [4, 16] as [number, number] };
+    const sizeDomain = scatterSizeDomain([...a, ...b]);
+    const both = computeScatterLayout({ ...common, series: [...a, ...b], sizeDomain });
+    const onlyB = computeScatterLayout({ ...common, series: b, sizeDomain });
+    expect(onlyB.plot.width).not.toBe(both.plot.width); // the y labels did change
+    expect(onlyB.dots[0].r).toBe(both.dots.find((d) => d.seriesKey === 'b')!.r);
+  });
+  it('keeps the largest dot’s hover ring (r + 1, plus the half-stroke outside it) inside the plot', () => {
+    for (const series of [
+      meals,
+      resolve([
+        { x: 0, y: 0 },
+        { x: 10, y: 100 },
+      ]),
+    ]) {
+      const l = computeScatterLayout({ ...base, xDomain: [0, 10], yDomain: [0, 100], series });
+      for (const d of l.dots) {
+        const ring = Math.max(d.r, MARKER_RADIUS) + 2;
+        expect(d.cy - ring).toBeGreaterThanOrEqual(l.plot.y);
+        expect(d.cy + ring).toBeLessThanOrEqual(l.plot.y + l.plot.height);
+        expect(d.cx - ring).toBeGreaterThanOrEqual(l.plot.x);
+        expect(d.cx + ring).toBeLessThanOrEqual(l.plot.x + l.plot.width);
+      }
+    }
   });
 });
