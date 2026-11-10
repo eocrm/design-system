@@ -123,7 +123,7 @@ export interface ScatterLayoutInput {
   formatY: (y: number) => string;
   reference?: ScatterReference | ScatterReference[];
   trendLine?: boolean;
-  /** Min and max dot radius for points with `size`; the max also shrinks to 1/20 of the plot's shorter side. */
+  /** Min and max dot radius for points with `size`; the max also shrinks to 1/25 of the chart width. */
   sizeRange: [number, number];
   /** Domain of `size` values; pass `scatterSizeDomain(allSeries)` so hiding a series doesn't resize the rest. Defaults to `series`. */
   sizeDomain?: [number, number];
@@ -148,10 +148,12 @@ const Y_TITLE_BASELINE = 12;
 /** Space kept between the dot edge and the plot's domain bounds: the 1px ring. */
 const DOT_RING = 1;
 /**
- * Largest dot radius as a share of the plot's shorter side (DS-68): a phone-width plot (~200px)
- * caps sized dots near 10px instead of the token's 16px, so they stop overlapping their neighbours.
+ * Largest dot radius as a share of the chart's width (DS-68): a phone-width chart (~250px) caps
+ * sized dots at a 10px radius instead of the token's 16px, so they stop overlapping their
+ * neighbours. Width only, so a short wide desktop card keeps the token size; and the input width,
+ * not the plot's, which moves with the y-tick labels when a legend toggle hides a series.
  */
-const MAX_DOT_SHARE = 1 / 20;
+const MAX_DOT_SHARE = 1 / 25;
 
 const num = (x: number | Date) => (x instanceof Date ? x.getTime() : x);
 
@@ -243,10 +245,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
   };
 
   const [rMin, tokenMax] = input.sizeRange;
-  const rMax = Math.max(
-    rMin,
-    Math.min(tokenMax, Math.min(plot.width, plot.height) * MAX_DOT_SHARE),
-  );
+  const rMax = Math.max(rMin, Math.min(tokenMax, width * MAX_DOT_SHARE));
   // Inset the pixel ranges by the largest dot's hover ring (radius + 1, see ScatterChart's marker)
   // so neither a dot nor its ring at the domain bounds is clipped by the plot (DS-68).
   const largest = all.some((p) => validSize(p.size)) ? Math.max(rMax, DOT_RADIUS) : DOT_RADIUS;
