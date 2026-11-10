@@ -1,4 +1,4 @@
-import { buildVariableTree, collapseChains } from './variableTree';
+import { buildVariableTree, collapseChains, dropSharedRoot } from './variableTree';
 
 const v = (...codes: string[]) => codes.map((code) => ({ code }));
 
@@ -88,5 +88,31 @@ describe('collapseChains (#750)', () => {
     expect(shape(run('record', 'record.status.name'))).toEqual([
       ['record', 'v', [['status.name', 'v', []]]],
     ]);
+  });
+});
+
+describe('dropSharedRoot (DS-67)', () => {
+  const run = (...codes: string[]) =>
+    dropSharedRoot(collapseChains(buildVariableTree(v(...codes)))).map((n) => n.path);
+
+  it("returns a shared undeclared root's children", () => {
+    expect(run('record.id', 'record.title', 'record.status.name')).toEqual([
+      'record.id',
+      'record.title',
+      'record.status.name',
+    ]);
+    expect(run('record.id', 'record.status.id', 'record.status.name')).toEqual([
+      'record.id',
+      'record.status',
+    ]);
+  });
+
+  it('keeps a declared root', () => {
+    expect(run('record', 'record.id', 'record.title')).toEqual(['record']);
+  });
+
+  it('keeps several roots and a lone leaf', () => {
+    expect(run('record.id', 'event.type')).toEqual(['record.id', 'event.type']);
+    expect(run('score')).toEqual(['score']);
   });
 });

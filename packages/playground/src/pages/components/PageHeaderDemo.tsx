@@ -24,6 +24,17 @@ function WithSubtitleAndActions() {
   );
 }
 
+function InlineActionsDemo() {
+  return (
+    <PageHeader actionsPlacement="inline">
+      <PageHeader.Title>Feedings</PageHeader.Title>
+      <PageHeader.Actions>
+        <Button size="sm">Add feeding</Button>
+      </PageHeader.Actions>
+    </PageHeader>
+  );
+}
+
 function FullDemo() {
   return (
     <PageHeader>
@@ -150,6 +161,25 @@ export function WithSubtitleAndActions() {
 }`}
       >
         <WithSubtitleAndActions />
+      </Example>
+
+      <Example
+        title="Actions inline on phones"
+        description='actionsPlacement="inline" keeps a compact action beside the title below 640px instead of on its own row. The actions column stays capped so the title keeps --page-header-title-min; extra actions wrap inside it. Resize below 640px to compare with the example above.'
+        code={`import { Button, PageHeader } from '@eocrm/design-system';
+
+export function InlineActionsDemo() {
+  return (
+    <PageHeader actionsPlacement="inline">
+      <PageHeader.Title>Feedings</PageHeader.Title>
+      <PageHeader.Actions>
+        <Button size="sm">Add feeding</Button>
+      </PageHeader.Actions>
+    </PageHeader>
+  );
+}`}
+      >
+        <InlineActionsDemo />
       </Example>
 
       <Example

@@ -6,6 +6,7 @@ import {
   isValidPhone,
   isoToFlag,
   countryDisplayLabel,
+  formatPhoneDisplay,
 } from './phone';
 import type { CountryOption } from './phone';
 
@@ -104,6 +105,23 @@ describe('phone engine', () => {
       expect(countryDisplayLabel(us, 'iso')).toBe('US +1');
       expect(countryDisplayLabel(us, 'name')).toBe('United States +1');
       expect(countryDisplayLabel(us, 'flag')).toBe('🇺🇸 +1');
+    });
+  });
+
+  describe('formatPhoneDisplay', () => {
+    it('formats a default-country number nationally', () => {
+      expect(formatPhoneDisplay('02071838750', 'GB')).toBe('020 7183 8750');
+      expect(formatPhoneDisplay('+442071838750', 'GB')).toBe('020 7183 8750');
+    });
+
+    it('formats another country internationally', () => {
+      expect(formatPhoneDisplay('+12025550123', 'GB')).toBe('+1 202 555 0123');
+    });
+
+    it('returns unparseable or impossible input unchanged', () => {
+      expect(formatPhoneDisplay('abc', 'GB')).toBe('abc');
+      expect(formatPhoneDisplay('123', 'GB')).toBe('123');
+      expect(formatPhoneDisplay('', 'GB')).toBe('');
     });
   });
 });

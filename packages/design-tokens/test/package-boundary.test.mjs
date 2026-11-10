@@ -35,6 +35,13 @@ test('preserves the design-system package and TypeScript export surfaces', async
       '@eocrm/source': './src/styles/global.scss',
       default: './dist/styles/global.css',
     },
+    // DS-62: the ru catalogue alone, so apps can `await import()` it for ru users only.
+    './i18n/ru': {
+      '@eocrm/source': './src/i18n/ru.ts',
+      types: './dist/i18n/ru.d.ts',
+      import: './dist/i18n/ru.js',
+      default: './dist/i18n/ru.js',
+    },
     './styles/tokens.css': './dist/styles/tokens.css',
     './styles.css': './dist/styles.css',
     './package.json': './package.json',

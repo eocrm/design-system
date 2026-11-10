@@ -229,3 +229,18 @@ it('ships no *.module.css file and imports none', () => {
     .map((f) => relative(dist, f));
   expect(offenders).toEqual([]);
 });
+
+// DS-62: every `exports` target a consumer can resolve (e.g. the lazily
+// importable `./i18n/ru` catalogue) must exist in the built package.
+it('ships every package.json exports target', () => {
+  const pkg = JSON.parse(read(join(root, 'package.json')));
+  const targets = Object.values(pkg.exports).flatMap((entry) =>
+    typeof entry === 'string'
+      ? [entry]
+      : Object.entries(entry as Record<string, string>)
+          .filter(([condition]) => condition !== '@eocrm/source')
+          .map(([, target]) => target),
+  );
+  expect(targets).toContain('./dist/i18n/ru.js');
+  for (const target of targets) expect(existsSync(join(root, target)), target).toBe(true);
+});

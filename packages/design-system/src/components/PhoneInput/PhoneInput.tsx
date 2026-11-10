@@ -19,6 +19,7 @@ import {
   toE164,
   isoToFlag,
   countryDisplayLabel,
+  formatPhoneDisplay,
   type CountryCode,
   type CountryOption,
   type CountryDisplay,
@@ -32,13 +33,33 @@ export interface PhoneInputProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'defaultValue'
 > {
-  /** Controlled E.164 value (e.g. `"+442071838750"`); `null` = empty. */
+  /**
+   * Controlled value; `null` = empty.
+   * - Picker mode (default): E.164 (e.g. `"+442071838750"`).
+   * - `picker={false}`: the raw string as typed/stored (e.g. `"020 7183 8750"` or `"+1 202…"`).
+   */
   value: string | null;
-  /** Fires with canonical E.164 on every edit; `null` when empty. */
-  onChange: (e164: string | null) => void;
-  /** ISO 3166-1 alpha-2 country used to seed the picker when `value` is empty. Default `"US"`. */
+  /**
+   * Fires on every edit; `null` when empty.
+   * - Picker mode (default): canonical E.164, or `null` while the number is still partial.
+   * - `picker={false}`: the RAW string exactly as typed (untrimmed, no E.164 forcing),
+   *   or `null` when empty/whitespace-only. Normalise to E.164 server-side.
+   */
+  onChange: (value: string | null) => void;
+  /**
+   * Show the country picker. Default `true`.
+   * - `true` — searchable country picker + national number input; emits E.164.
+   * - `false` — ONE plain `type="tel"` input; emits the raw string (see `onChange`).
+   *   A value starting with `+` is international, anything else is read in
+   *   `defaultCountry`. While focused the raw value shows; when blurred it is
+   *   formatted — national for `defaultCountry` numbers, international otherwise.
+   *   `countries`, `countryDisplay` and `countryLabel` are ignored, and the root
+   *   `<div>` has no `role="group"` (labels go straight to the input).
+   */
+  picker?: boolean;
+  /** ISO 3166-1 alpha-2 country used to seed the picker when `value` is empty (with `picker={false}`: the country a number without `+` is read in, and the one shown in national format). Default `"US"`. */
   defaultCountry?: string;
-  /** Restrict the picker to this ISO-code subset. Defaults to all libphonenumber-js countries. An empty array is treated as all countries. */
+  /** Restrict the picker to this ISO-code subset. Defaults to all libphonenumber-js countries. An empty array is treated as all countries. Ignored with `picker={false}`. */
   countries?: string[];
   /**
    * How the SELECTED country renders in the picker trigger. Default `"code"`.
@@ -50,6 +71,7 @@ export interface PhoneInputProps extends Omit<
    *
    * The dropdown rows always show the full country name + code (plus a flag in
    * `"flag"` mode) so they stay searchable + identifiable regardless of this.
+   * Ignored with `picker={false}`.
    */
   countryDisplay?: CountryDisplay;
   /**
@@ -57,6 +79,7 @@ export interface PhoneInputProps extends Omit<
    * is named after the group — "<group label> Country" (e.g. "Phone Country") —
    * so it never collides with a form's own Country field; with no group label
    * it is just "Country". Set this when that composed name reads badly.
+   * Ignored with `picker={false}`.
    */
   countryLabel?: string;
   /** Control size, forwarded to the Select + Input. Default `"md"`. */
@@ -100,12 +123,10 @@ function seedNational(value: string | null): string {
   return parsed ? parsed.national : value;
 }
 
-/**
- * International phone field: a searchable country picker plus a national-number input that emits E.164.
- * @see docs/components/PhoneInput.md
- */
-export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function PhoneInput(
+/** Picker mode: country Select + national Input, emits E.164. */
+const PickerPhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function PickerPhoneInput(
   {
+    picker: _picker,
     value,
     onChange,
     defaultCountry = 'US',
@@ -269,3 +290,70 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
     </div>
   );
 });
+
+/** Plain mode: one tel Input, emits the raw string; formatted for display while blurred. */
+const PlainPhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function PlainPhoneInput(
+  {
+    picker: _picker,
+    countries: _countries,
+    countryDisplay: _countryDisplay,
+    countryLabel: _countryLabel,
+    locale: _locale,
+    value,
+    onChange,
+    defaultCountry = 'US',
+    size = 'md',
+    invalid,
+    disabled,
+    required,
+    id,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledby,
+    'aria-describedby': ariaDescribedby,
+    className,
+    ...rest
+  },
+  ref,
+) {
+  const t = useTranslation();
+  const [focused, setFocused] = useState(false);
+  const raw = value ?? '';
+  return (
+    // No root class / role=group: one control, so labels and state go on the input.
+    <div {...rest} ref={ref} className={className}>
+      <Input
+        className={styles.number}
+        id={id}
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel"
+        value={focused ? raw : formatPhoneDisplay(raw, defaultCountry)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onChange={(e) => onChange(e.target.value.trim() ? e.target.value : null)}
+        size={size}
+        invalid={invalid}
+        disabled={disabled}
+        required={required}
+        aria-label={ariaLabelledby ? undefined : ariaLabel || t('phoneInput.numberLabel')}
+        aria-labelledby={ariaLabelledby}
+        aria-describedby={ariaDescribedby}
+        placeholder={t('phoneInput.numberPlaceholder')}
+      />
+    </div>
+  );
+});
+
+/**
+ * Phone field: a country picker plus national input that emits E.164, or (`picker={false}`) one plain tel input that emits the raw string.
+ * @see docs/components/PhoneInput.md
+ */
+export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
+  function PhoneInput(props, ref) {
+    return props.picker === false ? (
+      <PlainPhoneInput {...props} ref={ref} />
+    ) : (
+      <PickerPhoneInput {...props} ref={ref} />
+    );
+  },
+);

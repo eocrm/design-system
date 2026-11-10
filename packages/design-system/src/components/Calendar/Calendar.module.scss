@@ -14,6 +14,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  // DS-65: on a narrow container the controls wrap under the title instead of
+  // squeezing it onto several lines beside them.
+  flex-wrap: wrap;
   gap: var(--calendar-header-gap);
 }
 

@@ -8,6 +8,7 @@ export function PhoneInputDemo() {
   const [phone, setPhone] = useState<string | null>(null);
   const [gb, setGb] = useState<string | null>('+442071838750');
   const [dv, setDv] = useState<string | null>('+12025550123');
+  const [plain, setPlain] = useState<string | null>('02071838750');
 
   return (
     <DemoLayout
@@ -130,6 +131,36 @@ export function Demo() {
         >
           <PhoneInput value={phone} onChange={setPhone} />
         </Field>
+      </Example>
+
+      <Example
+        title="Plain mode (picker={false})"
+        description="One tel input, no picker. Emits the raw string as typed (null when blank) — the server normalises to E.164. Blur to see it formatted: national for the default country, international for a + number from elsewhere."
+        code={`import { useState } from 'react';
+import { PhoneInput, Field, Stack, Text, Code } from '@eocrm/design-system';
+
+export function Demo() {
+  const [phone, setPhone] = useState<string | null>('02071838750');
+  return (
+    <Stack gap="sm">
+      <Field label="Phone">
+        <PhoneInput picker={false} value={phone} onChange={setPhone} defaultCountry="GB" />
+      </Field>
+      <Text size="sm" tone="muted">
+        onChange: <Code>{JSON.stringify(phone)}</Code>
+      </Text>
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="sm">
+          <Field label="Phone">
+            <PhoneInput picker={false} value={plain} onChange={setPlain} defaultCountry="GB" />
+          </Field>
+          <Text size="sm" tone="muted">
+            onChange: <Code>{JSON.stringify(plain)}</Code>
+          </Text>
+        </Stack>
       </Example>
 
       <Example

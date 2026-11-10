@@ -23,8 +23,7 @@ import { DatePickerGrid } from '../DatePicker/DatePickerGrid';
 import { TimeField } from '../TimeField';
 import {
   combineDateAndTime,
-  formatDate,
-  formatDateTime,
+  dateFormatHint,
   isDateOutOfRange,
   resolveHourCycle,
   roundTimeToStep,
@@ -51,6 +50,11 @@ export interface DateRangePickerProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
   'value' | 'defaultValue' | 'onChange' | 'type' | 'min' | 'max' | 'name' | 'size'
 > {
+  /**
+   * Text shown while the field is empty. Default: the locale's format hint for both ends,
+   * e.g. `DD/MM/YYYY — DD/MM/YYYY` (en-GB).
+   */
+  placeholder?: string;
   /** Selected range. `null` = no range. Pair with `onChange` for controlled use. */
   value?: DateRange | null;
   /** Initial range for uncontrolled use. */
@@ -170,8 +174,24 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
   ) {
     const contextLocale = useLocale();
     const locale = localeOverride ?? contextLocale;
-    const resolvedCycle = resolveHourCycle(hourCycle, locale);
     const t = useTranslation();
+    const resolvedCycle = resolveHourCycle(hourCycle, locale);
+    // DS-66: a format hint, not a sample date that reads as a real value.
+    const formatHint = dateFormatHint(
+      locale,
+      {
+        day: t('datePicker.placeholderDay'),
+        month: t('datePicker.placeholderMonth'),
+        year: t('datePicker.placeholderYear'),
+      },
+      granularity === 'minute'
+        ? t(
+            resolvedCycle === '24'
+              ? 'datePicker.timePlaceholder24'
+              : 'datePicker.timePlaceholder12',
+          )
+        : undefined,
+    );
     const generatedId = useId();
     const inputId = idProp ?? generatedId;
 
@@ -529,12 +549,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           aria-describedby={ariaDescribedBy}
           aria-haspopup="dialog"
           aria-expanded={open}
-          placeholder={
-            placeholder ??
-            (granularity === 'minute'
-              ? `${formatDateTime(new Date(2000, 0, 2, 9, 0), locale, resolvedCycle)} — ${formatDateTime(new Date(2000, 0, 9, 17, 30), locale, resolvedCycle)}`
-              : `${formatDate(new Date(2000, 0, 2), locale)} — ${formatDate(new Date(2000, 0, 9), locale)}`)
-          }
+          placeholder={placeholder ?? `${formatHint} — ${formatHint}`}
           autoComplete="off"
         />
         {showClear && (

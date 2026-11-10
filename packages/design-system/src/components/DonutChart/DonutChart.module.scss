@@ -133,8 +133,9 @@
   color: var(--donut-legend-fg);
   font: inherit;
   text-align: start;
+  text-decoration: none;
 
-  &:is(button) {
+  &:is(button, [data-segment-link]) {
     cursor: pointer;
   }
 

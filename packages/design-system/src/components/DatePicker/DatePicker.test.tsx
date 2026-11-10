@@ -14,6 +14,18 @@ function wrap(locale = 'en-US') {
 }
 
 describe('DatePicker', () => {
+  it('shows a locale format hint, not a sample date, when empty; placeholder overrides it (DS-66)', () => {
+    const { rerender } = render(
+      <DatePicker value={null} onChange={() => {}} granularity="minute" aria-label="Date" />,
+      { wrapper: wrap('en-GB') },
+    );
+    expect(screen.getByLabelText('Date')).toHaveAttribute('placeholder', 'DD/MM/YYYY HH:mm');
+    rerender(
+      <DatePicker value={null} onChange={() => {}} placeholder="Pick a day" aria-label="Date" />,
+    );
+    expect(screen.getByLabelText('Date')).toHaveAttribute('placeholder', 'Pick a day');
+  });
+
   it('renders the formatted defaultValue in the input (uncontrolled)', () => {
     render(<DatePicker defaultValue={new Date(2026, 4, 21)} aria-label="Date" />, {
       wrapper: wrap(),

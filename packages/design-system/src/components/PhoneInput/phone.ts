@@ -126,3 +126,15 @@ export function isValidPhone(e164: string | null | undefined): boolean {
     return false;
   }
 }
+
+/**
+ * Display form of a raw phone string: national format when it parses to
+ * `defaultCountry`, international otherwise (a leading `+` is international;
+ * anything else is read in `defaultCountry`). Unparseable or not-possible
+ * input is returned unchanged.
+ */
+export function formatPhoneDisplay(value: string, defaultCountry: string): string {
+  const parsed = parsePhoneNumberFromString(value, defaultCountry as CountryCode);
+  if (!parsed || !parsed.isPossible()) return value;
+  return parsed.country === defaultCountry ? parsed.formatNational() : parsed.formatInternational();
+}

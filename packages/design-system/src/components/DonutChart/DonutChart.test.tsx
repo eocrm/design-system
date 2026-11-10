@@ -1,4 +1,4 @@
-import { createRef, type RefAttributes } from 'react';
+import { createRef, type MouseEvent, type ReactElement, type RefAttributes } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
@@ -294,5 +294,79 @@ describe('DonutChart', () => {
     );
     expect(activeKey()).toBe('doing');
     expect(centerValue()).toBe('5');
+  });
+
+  describe('segment links', () => {
+    const linked = () => {
+      const onLinkClick = vi.fn((e: MouseEvent) => e.preventDefault());
+      const segs = [
+        { ...segments[0], link: <a href="/items?s=todo" onClick={onLinkClick} /> },
+        segments[1],
+        { ...segments[2], link: <a href="/items?s=done" className="mine" /> },
+      ];
+      return { onLinkClick, segs };
+    };
+    const linkFor = (key: string) =>
+      document.querySelector<HTMLAnchorElement>(`[data-segment-link="${key}"]`)!;
+
+    it('renders a linked legend entry as the link, with href, summary name and merged className', () => {
+      const { segs } = linked();
+      renderDonut({ segments: segs });
+      const legend = screen.getByRole('list');
+      expect(legend).not.toHaveAttribute('aria-hidden');
+      const links = within(legend).getAllByRole('link');
+      expect(links.map((l) => l.getAttribute('href'))).toEqual(['/items?s=todo', '/items?s=done']);
+      expect(links[0]).toHaveAccessibleName('To do: 12, 25.5%');
+      expect(links[1]).toHaveClass('mine');
+      expect(within(legend).queryByRole('button')).toBeNull(); // no onSegmentClick
+      expect(plot()).toHaveAccessibleDescription(
+        expect.stringContaining('Press Enter to open the selected segment.'),
+      );
+    });
+
+    it('Enter on the ring and an arc click follow the link (with modifiers), and onSegmentClick still fires', () => {
+      const { onLinkClick, segs } = linked();
+      const onSegmentClick = vi.fn();
+      renderDonut({ segments: segs, onSegmentClick });
+      fireEvent.keyDown(plot(), { key: 'ArrowRight' });
+      fireEvent.keyDown(plot(), { key: 'Enter' });
+      expect(onLinkClick).toHaveBeenCalledTimes(1);
+      expect(onSegmentClick).toHaveBeenLastCalledWith(segs[0]);
+      fireEvent.click(arcs()[0], { ctrlKey: true });
+      expect(onLinkClick).toHaveBeenCalledTimes(2);
+      expect(onLinkClick.mock.calls[1][0].ctrlKey).toBe(true);
+      expect(onSegmentClick).toHaveBeenCalledTimes(2);
+      // Unlinked segment keeps the plain onSegmentClick path.
+      fireEvent.click(arcs()[1]);
+      expect(onSegmentClick).toHaveBeenLastCalledWith(segs[1]);
+      expect(onLinkClick).toHaveBeenCalledTimes(2);
+      expect(linkFor('doing')).toBeNull();
+    });
+
+    it('arc click follows a link without onSegmentClick', () => {
+      const { onLinkClick, segs } = linked();
+      renderDonut({ segments: segs });
+      fireEvent.click(arcs()[0]);
+      expect(onLinkClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('warns in dev for a non-element or non-empty link', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      renderDonut({
+        segments: [
+          { ...segments[0], link: <a href="/x">text</a> },
+          { ...segments[1], link: '/y' as unknown as ReactElement },
+          segments[2],
+        ],
+      });
+      expect(warn).toHaveBeenCalledWith(
+        '[DonutChart] `link` must be an empty element; its children are replaced for segment(s) todo.',
+      );
+      expect(warn).toHaveBeenCalledWith(
+        '[DonutChart] `link` must be a React element (e.g. <a href> or a router Link); ignored for segment(s) doing.',
+      );
+      expect(linkFor('todo')).toHaveTextContent('To do');
+      expect(linkFor('doing')).toBeNull();
+    });
   });
 });

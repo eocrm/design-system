@@ -191,7 +191,7 @@ export function Demo() {
 
       <Example
         title="Nested (dotted) variables"
-        description="Dotted codes become nested sub-menus in Insert variable (record › status › name). Single-child chains flatten, and the declared parent record.status is the first item in its own sub-menu, named by its label."
+        description="Dotted codes become nested sub-menus in Insert variable. Every variable in the Record group shares the record root, so its children (Status, Assignee) sit directly under the group label. The declared parent record.status is the first item in its own sub-menu, named by its label; the undeclared record.assignee is named via variablePathLabels."
         code={`import { useState } from 'react';
 import { LiquidEditor, type LiquidVariable } from '@eocrm/design-system';
 
@@ -208,10 +208,22 @@ const VARS: LiquidVariable[] = [
 export function Demo() {
   const [value, setValue] = useState('{{ record.status.name }}');
 
-  return <LiquidEditor value={value} onChange={setValue} variables={VARS} />;
+  return (
+    <LiquidEditor
+      value={value}
+      onChange={setValue}
+      variables={VARS}
+      variablePathLabels={{ 'record.assignee': 'Assignee' }}
+    />
+  );
 }`}
       >
-        <LiquidEditor value={nested} onChange={setNested} variables={NESTED_VARS} />
+        <LiquidEditor
+          value={nested}
+          onChange={setNested}
+          variables={NESTED_VARS}
+          variablePathLabels={{ 'record.assignee': 'Assignee' }}
+        />
       </Example>
 
       <Example

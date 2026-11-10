@@ -7,6 +7,15 @@ const [phone, setPhone] = useState<string | null>(null);
 <PhoneInput value={phone} onChange={setPhone} defaultCountry="GB" />;
 ```
 
+**Plain mode (`picker={false}`)** — one `<Input type="tel">`, no country picker. Use it when the server normalises to E.164 and rejects what it can't parse (e.g. a CRM contact form with a single phone field). `onChange` emits the RAW string exactly as typed (untrimmed, never forced to E.164), or `null` when blank. A value starting with `+` is international; anything else is read in `defaultCountry`. While focused the raw value shows; when blurred it is formatted — national for `defaultCountry` numbers, international otherwise; unparseable text shows as typed. `countries`, `countryDisplay` and `countryLabel` are ignored, and labels/`aria-*`/`invalid` go straight to the input (no `role="group"`).
+
+```tsx
+const [phone, setPhone] = useState<string | null>(null);
+<Field label="Phone">
+  <PhoneInput picker={false} value={phone} onChange={setPhone} defaultCountry="GB" />
+</Field>;
+```
+
 <!-- props:start -->
 
 ## Props
@@ -14,12 +23,13 @@ const [phone, setPhone] = useState<string | null>(null);
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `value` | `string \| null` | yes | Controlled E.164 value (e.g. `"+442071838750"`); `null` = empty. |
-| `onChange` | `(e164: string \| null) => void` | yes | Fires with canonical E.164 on every edit; `null` when empty. |
-| `defaultCountry` | `string` | no | ISO 3166-1 alpha-2 country used to seed the picker when `value` is empty. Default `"US"`. |
-| `countries` | `string[]` | no | Restrict the picker to this ISO-code subset. Defaults to all libphonenumber-js countries. An empty array is treated as all countries. |
-| `countryDisplay` | `'flag' \| 'iso' \| 'name' \| 'code'` | no | How the SELECTED country renders in the picker trigger. Default `"code"`. - `"code"` — calling code only (`+1`). - `"iso"` — ISO code + code (`US +1`). - `"name"` — full country name + code (`United States +1`). - `"flag"` — emoji flag + code (`🇺🇸 +1`). Note: emoji flags don't render on Windows Chrome/Edge (they show the letters), so prefer `"iso"` there. The dropdown rows always show the full country name + code (plus a flag in `"flag"` mode) so they stay searchable + identifiable regardless of this. |
-| `countryLabel` | `string` | no | Overrides the country picker's full accessible name. By default the picker is named after the group — "<group label> Country" (e.g. "Phone Country") — so it never collides with a form's own Country field; with no group label it is just "Country". Set this when that composed name reads badly. |
+| `value` | `string \| null` | yes | Controlled value; `null` = empty. - Picker mode (default): E.164 (e.g. `"+442071838750"`). - `picker={false}`: the raw string as typed/stored (e.g. `"020 7183 8750"` or `"+1 202…"`). |
+| `onChange` | `(value: string \| null) => void` | yes | Fires on every edit; `null` when empty. - Picker mode (default): canonical E.164, or `null` while the number is still partial. - `picker={false}`: the RAW string exactly as typed (untrimmed, no E.164 forcing), or `null` when empty/whitespace-only. Normalise to E.164 server-side. |
+| `picker` | `boolean` | no | Show the country picker. Default `true`. - `true` — searchable country picker + national number input; emits E.164. - `false` — ONE plain `type="tel"` input; emits the raw string (see `onChange`). A value starting with `+` is international, anything else is read in `defaultCountry`. While focused the raw value shows; when blurred it is formatted — national for `defaultCountry` numbers, international otherwise. `countries`, `countryDisplay` and `countryLabel` are ignored, and the root `<div>` has no `role="group"` (labels go straight to the input). |
+| `defaultCountry` | `string` | no | ISO 3166-1 alpha-2 country used to seed the picker when `value` is empty (with `picker={false}`: the country a number without `+` is read in, and the one shown in national format). Default `"US"`. |
+| `countries` | `string[]` | no | Restrict the picker to this ISO-code subset. Defaults to all libphonenumber-js countries. An empty array is treated as all countries. Ignored with `picker={false}`. |
+| `countryDisplay` | `'flag' \| 'iso' \| 'name' \| 'code'` | no | How the SELECTED country renders in the picker trigger. Default `"code"`. - `"code"` — calling code only (`+1`). - `"iso"` — ISO code + code (`US +1`). - `"name"` — full country name + code (`United States +1`). - `"flag"` — emoji flag + code (`🇺🇸 +1`). Note: emoji flags don't render on Windows Chrome/Edge (they show the letters), so prefer `"iso"` there. The dropdown rows always show the full country name + code (plus a flag in `"flag"` mode) so they stay searchable + identifiable regardless of this. Ignored with `picker={false}`. |
+| `countryLabel` | `string` | no | Overrides the country picker's full accessible name. By default the picker is named after the group — "<group label> Country" (e.g. "Phone Country") — so it never collides with a form's own Country field; with no group label it is just "Country". Set this when that composed name reads badly. Ignored with `picker={false}`. |
 | `size` | `'sm' \| 'md' \| 'lg'` | no | Control size, forwarded to the Select + Input. Default `"md"`. |
 | `invalid` | `boolean` | no | Error chrome on both controls (host/Field-driven). |
 | `disabled` | `boolean` | no | Disable both controls. |
@@ -41,13 +51,14 @@ Inside a `<Field>` the label and error wiring are injected:
 </Field>
 ```
 
-**When NOT to use:** a non-phone numeric field — `<Input type="tel">` or `<Input inputMode="numeric">`.
+**When NOT to use:** a non-phone numeric field — `<Input type="tel">` or `<Input inputMode="numeric">`. Don't use the default picker mode when the backend parses phones itself — use `picker={false}` instead of a bare `<Input type="tel">` so the blurred display is still formatted.
 
 **Anti-patterns**
 
 - ❌ Treating it as uncontrolled — feed `onChange`'s E.164 back into `value`.
 - ❌ Storing the formatted national string — persist the emitted E.164; the display is reconstructed from it.
 - ❌ Validating by hand — call `isValidPhone(e164)` and pass `invalid` (or wire it through `<Field error>`).
+- ❌ Assuming `picker={false}` emits E.164 — it emits the raw string; normalise (and reject) server-side.
 
 **Known limitations**
 

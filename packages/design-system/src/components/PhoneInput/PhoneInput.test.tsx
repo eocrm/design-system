@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { createRef, useState } from 'react';
 import { PhoneInput } from './PhoneInput';
 import { Field } from '../Field';
 import { I18nProvider } from '../../i18n';
@@ -227,5 +227,68 @@ describe('PhoneInput', () => {
     await user.type(combo, 'United Kingdom');
     // the row is found by its full-name content even though the trigger label is just "+44"
     expect(await screen.findByRole('option', { name: /United Kingdom/i })).toBeInTheDocument();
+  });
+
+  describe('picker={false}', () => {
+    function Plain({ initial = null as string | null, spy = vi.fn() }) {
+      const [v, setV] = useState<string | null>(initial);
+      return (
+        <PhoneInput
+          picker={false}
+          aria-label="Phone"
+          defaultCountry="GB"
+          value={v}
+          onChange={(next) => {
+            setV(next);
+            spy(next);
+          }}
+        />
+      );
+    }
+
+    it('renders one tel input labelled by aria-label, no combobox or group', () => {
+      renderWith(<Plain />);
+      expect(screen.queryByRole('combobox')).toBeNull();
+      expect(screen.queryByRole('group')).toBeNull();
+      const input = screen.getByRole('textbox', { name: 'Phone' });
+      expect(input).toHaveAttribute('type', 'tel');
+      expect(input).toHaveAttribute('autocomplete', 'tel');
+    });
+
+    it('emits the raw string as typed, and null when blanked', async () => {
+      const user = userEvent.setup();
+      const spy = vi.fn();
+      renderWith(<Plain spy={spy} />);
+      const input = screen.getByRole('textbox', { name: 'Phone' });
+      await user.type(input, '+1 202 ');
+      expect(spy).toHaveBeenLastCalledWith('+1 202 ');
+      await user.clear(input);
+      expect(spy).toHaveBeenLastCalledWith(null);
+      await user.type(input, '  ');
+      expect(spy).toHaveBeenLastCalledWith(null);
+    });
+
+    it('shows the formatted value when blurred and the raw value when focused', async () => {
+      const user = userEvent.setup();
+      renderWith(<Plain initial="02071838750" />);
+      const input = screen.getByRole('textbox', { name: 'Phone' }) as HTMLInputElement;
+      expect(input.value).toBe('020 7183 8750');
+      await user.click(input);
+      expect(input.value).toBe('02071838750');
+      await user.tab();
+      expect(input.value).toBe('020 7183 8750');
+    });
+
+    it('forwards ref to the root div and wires Field label + error to the input', () => {
+      const ref = createRef<HTMLDivElement>();
+      renderWith(
+        <Field label="Mobile" error="Bad number">
+          <PhoneInput picker={false} ref={ref} value={null} onChange={() => {}} />
+        </Field>,
+      );
+      expect(ref.current?.tagName).toBe('DIV');
+      const input = screen.getByRole('textbox', { name: 'Mobile' });
+      expect(input).toHaveAccessibleDescription('Bad number');
+    });
   });
 });
