@@ -12,6 +12,7 @@ const [range, setRange] = useState<DateRange | null>(null);
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
+| `placeholder` | `string` | no | Text shown while the field is empty. Default: the locale's format hint for both ends, e.g. `DD/MM/YYYY — DD/MM/YYYY` (en-GB). |
 | `value` | `DateRange \| null` | no | Selected range. `null` = no range. Pair with `onChange` for controlled use. |
 | `defaultValue` | `DateRange \| null` | no | Initial range for uncontrolled use. |
 | `onChange` | `((range: DateRange \| null) => void)` | no | Fires when a complete range commits (after second click in grid, or successful typed parse on blur). |

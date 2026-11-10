@@ -46,6 +46,15 @@ export interface LiquidEditorProps {
   onChange: (value: string) => void;
   /** Available variables → insert menu, autocomplete, unknown flagging. */
   variables?: LiquidVariable[];
+  /**
+   * Labels for undeclared intermediate nodes in the nested Insert variable menu,
+   * keyed by dotted path — e.g. `{ 'record.cf': 'Custom fields' }` names the
+   * `record.cf` sub-menu without declaring `record.cf` as an insertable variable.
+   * A declared variable's `label` at the same path wins. A merged single-child
+   * chain (shown as `a.b`) is keyed by its full path (`a.b`). Menu-only:
+   * inserted text and autocomplete are unchanged.
+   */
+  variablePathLabels?: Record<string, string>;
   /** Underline `{{ vars }}` not present in `variables`. Default `true` (no-op when `variables` empty). */
   flagUnknownVariables?: boolean;
   /** External error visual (red border) — set from a backend Liquid syntax error. Default `false`. */

@@ -21,6 +21,7 @@ const small: DonutSegment[] = [
   { key: 'void', label: 'Void', value: 0 },
 ];
 const none: DonutSegment[] = [];
+const linked: DonutSegment[] = status.map((s) => ({ ...s, link: <a href={`#items-${s.key}`} /> }));
 
 export function DonutChartDemo() {
   const [clicked, setClicked] = useState('none yet');
@@ -59,6 +60,18 @@ export function DonutChartDemo() {
             />
           </div>
         </Stack>
+      </Example>
+
+      <Example
+        title="Linked segments"
+        description="Each segment's link (an empty <a href>, router Link or DS Link) makes its legend entry a real link: open in a new tab, middle-click, copy link. An arc click or Enter on the ring follows it; Ctrl/Cmd-click opens a new tab."
+        code={`const segments = statuses.map((s) => ({ ...s, link: <Link to={\`/items?status=\${s.key}\`} /> }));
+
+<DonutChart label="Work items by status" segments={segments} formatValue={formatCount} />`}
+      >
+        <div style={{ height: 300, maxWidth: 640 }}>
+          <DonutChart label="Work items by status" segments={linked} formatValue={formatCount} />
+        </div>
       </Example>
 
       <Example

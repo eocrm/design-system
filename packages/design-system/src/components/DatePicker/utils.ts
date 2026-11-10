@@ -138,6 +138,30 @@ export function getLocaleDateOrder(locale: string): readonly ('year' | 'month' |
   return order.length === 3 ? order : (['year', 'month', 'day'] as const);
 }
 
+/**
+ * Format hint for an empty date input, in `locale`'s field order and separators:
+ * `fields` replace the day/month/year digits, and `time` (if any) is appended after a space.
+ * en-GB → `DD/MM/YYYY`, en-US → `MM/DD/YYYY`, ru-RU → `ДД.ММ.ГГГГ` (DS-66: a sample date
+ * read as a real value).
+ */
+export function dateFormatHint(
+  locale: string,
+  fields: Record<'day' | 'month' | 'year', string>,
+  time?: string,
+): string {
+  const date = new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .formatToParts(new Date(2000, 0, 2))
+    .map((p) =>
+      p.type === 'day' || p.type === 'month' || p.type === 'year' ? fields[p.type] : p.value,
+    )
+    .join('');
+  return time ? `${date} ${time}` : date;
+}
+
 /** ISO `YYYY-MM-DD` representation in local time. */
 export function toIsoDate(date: Date): string {
   return toDateKey(date);

@@ -11,7 +11,7 @@ Read this first. Each component's contract is `docs/components/<Name>.md`. Agent
 1. **All UI is built from `@eocrm/design-system` components.** Don't write raw `<button>`, `<input>`, or pull in another component library.
 2. **All visual values come from tokens.** No raw `#hex`, `Npx`, `Nrem`, or `Nem` in your SCSS. Use `var(--color-*)`, `var(--space-*)`, `var(--radius-*)`, `var(--border-width)`, etc.
 3. **Components don't own positioning.** No `margin` on or around components in your SCSS. Use `<Stack>` (vertical), `<Cluster>` (horizontal + wrap), or set layout in the parent's `.module.scss`.
-4. **Import only from the package root.** `import { Button, Stack, ... } from '@eocrm/design-system'`. Never reach into `@eocrm/design-system/src/...`.
+4. **Import only from the package root.** `import { Button, Stack, ... } from '@eocrm/design-system'`. Never reach into `@eocrm/design-system/src/...`. The one exception is the published `@eocrm/design-system/i18n/ru` subpath, for lazily importing the Russian catalogue (see [docs/i18n.md](docs/i18n.md)).
 5. **6-digit hex only.** When defining your own CSS custom properties at the app level, use `#ffffff` not `#fff`.
 
 ---

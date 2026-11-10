@@ -2,7 +2,12 @@ import { DropdownMenu } from '../DropdownMenu';
 import { Button } from '../Button';
 import { useTranslation } from '../../i18n';
 import type { LiquidVariable } from './types';
-import { buildVariableTree, collapseChains, type VariableNode } from './variableTree';
+import {
+  buildVariableTree,
+  collapseChains,
+  dropSharedRoot,
+  type VariableNode,
+} from './variableTree';
 import styles from './LiquidEditor.module.scss';
 
 export interface InsertVariableMenuProps {
@@ -12,6 +17,8 @@ export interface InsertVariableMenuProps {
   disabled?: boolean;
   /** Called with the chosen variable when an item is selected. */
   onInsert: (variable: LiquidVariable) => void;
+  /** Sub-menu labels for undeclared intermediate paths (see `LiquidEditorProps.variablePathLabels`). */
+  pathLabels?: Record<string, string>;
 }
 
 /**
@@ -19,9 +26,16 @@ export interface InsertVariableMenuProps {
  * variable (`collection: true`), a `{% for item in code %}{{ item }}{% endfor %}`
  * snippet with the caret left after `{{ item }}`. Groups variables by their
  * `group` field (first-seen order) under section labels; ungrouped variables
- * render without a label. Shows an empty-state label when there are none.
+ * render without a label. A named group whose variables share one undeclared
+ * root (e.g. all `record.*`) lists that root's children directly under its
+ * label. Shows an empty-state label when there are none.
  */
-export function InsertVariableMenu({ variables, disabled, onInsert }: InsertVariableMenuProps) {
+export function InsertVariableMenu({
+  variables,
+  disabled,
+  onInsert,
+  pathLabels,
+}: InsertVariableMenuProps) {
   const t = useTranslation();
 
   // Preserve first-seen group order.
@@ -54,7 +68,9 @@ export function InsertVariableMenu({ variables, disabled, onInsert }: InsertVari
       node.variable && renderVariable(node.variable)
     ) : (
       <DropdownMenu.Sub key={node.path}>
-        <DropdownMenu.SubTrigger>{node.variable?.label || node.segment}</DropdownMenu.SubTrigger>
+        <DropdownMenu.SubTrigger>
+          {node.variable?.label || pathLabels?.[node.path] || node.segment}
+        </DropdownMenu.SubTrigger>
         <DropdownMenu.SubContent>
           {node.variable && renderVariable(node.variable)}
           {node.children.map((child) => renderNode(child))}
@@ -77,7 +93,10 @@ export function InsertVariableMenu({ variables, disabled, onInsert }: InsertVari
           groups.map((group, gi) => (
             <DropdownMenu.Group key={group.name ?? `g${gi}`}>
               {group.name ? <DropdownMenu.Label>{group.name}</DropdownMenu.Label> : null}
-              {collapseChains(buildVariableTree(group.items)).map((node) => renderNode(node))}
+              {/* Named groups drop a shared root hop — the label already names it. */}
+              {(group.name ? dropSharedRoot : (n: readonly VariableNode[]) => n)(
+                collapseChains(buildVariableTree(group.items)),
+              ).map((node) => renderNode(node))}
             </DropdownMenu.Group>
           ))
         )}

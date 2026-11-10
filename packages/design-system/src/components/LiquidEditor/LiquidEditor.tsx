@@ -57,6 +57,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
       value,
       onChange,
       variables = [],
+      variablePathLabels,
       flagUnknownVariables = true,
       invalid = false,
       error,
@@ -366,6 +367,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
               variables={variables}
               disabled={!interactive}
               onInsert={insertVariable}
+              pathLabels={variablePathLabels}
             />
           </div>
         ) : null}

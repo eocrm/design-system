@@ -1,12 +1,18 @@
 import {
+  cloneElement,
   forwardRef,
+  isValidElement,
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type HTMLAttributes,
   type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactElement,
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
@@ -14,6 +20,7 @@ import { EmptyState } from '../EmptyState';
 import { LiveRegion } from '../LiveRegion';
 import { VisuallyHidden } from '../VisuallyHidden';
 import { ChartTooltip } from '../Chart/ChartTooltip';
+import { readPx } from '../Chart/readPx';
 import { PALETTE_SIZE } from '../Chart/chartModel';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useLocale } from '../../i18n/useLocale';
@@ -44,8 +51,9 @@ export interface DonutChartProps extends Omit<HTMLAttributes<HTMLElement>, 'chil
   showTotal?: boolean;
   /**
    * Makes every non-zero segment activatable (arc click, Enter or Space on the focused ring, and a
-   * legend button), called with the consumer's original segment, e.g. to open a filtered list. Omit
-   * for an inspect-only donut with a plain-text legend.
+   * legend button), called with the consumer's original segment. To navigate, prefer a segment's
+   * `link` (a real link: new tab, copy link); this stays for non-navigating actions and analytics,
+   * and also fires for linked segments. Omit both for an inspect-only donut with a plain-text legend.
    */
   onSegmentClick?: (segment: DonutSegment) => void;
   /** EmptyState title when there are no segments or every value is 0. Default: translated "No data". */
@@ -60,20 +68,6 @@ export interface DonutChartProps extends Omit<HTMLAttributes<HTMLElement>, 'chil
 /** Fallbacks for `--donut-thickness` / `--donut-gap` (`--space-6` / `--space-05`) where computed styles don't resolve (jsdom). */
 const THICKNESS = 24;
 const GAP = 2;
-
-// ponytail: read once per plot element; a theme that changes these tokens at runtime needs a remount.
-/** Reads a length custom property in px; px and rem are understood, anything else (calc(), em) falls back. */
-function readPx(el: Element | null, name: string, fallback: number) {
-  if (!el) return fallback;
-  const raw = getComputedStyle(el).getPropertyValue(name).trim();
-  const unit = raw.endsWith('rem')
-    ? parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-    : raw.endsWith('px')
-      ? 1
-      : NaN;
-  const v = parseFloat(raw) * unit;
-  return Number.isFinite(v) && v >= 0 ? v : fallback;
-}
 
 const slotStyle = (slot: number) =>
   ({ '--chart-series-color': `var(--chart-series-${slot})` }) as CSSProperties;
@@ -121,6 +115,21 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
       `[DonutChart] More than ${PALETTE_SIZE} segments: colours repeat. Group the smallest into "Other".`,
     );
   }, [donut.overflow]);
+  const badLinks = segments.filter((s) => s.link != null && !isValidElement(s.link));
+  const fullLinks = segments.filter((s) => isValidElement(s.link) && s.link.props.children != null);
+  const badLinkKeys = badLinks.map((s) => s.key).join(', ');
+  const fullLinkKeys = fullLinks.map((s) => s.key).join(', ');
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    if (badLinkKeys)
+      console.warn(
+        `[DonutChart] \`link\` must be a React element (e.g. <a href> or a router Link); ignored for segment(s) ${badLinkKeys}.`,
+      );
+    if (fullLinkKeys)
+      console.warn(
+        `[DonutChart] \`link\` must be an empty element; its children are replaced for segment(s) ${fullLinkKeys}.`,
+      );
+  }, [badLinkKeys, fullLinkKeys]);
 
   const hintId = useId();
   const activateHintId = useId();
@@ -154,7 +163,42 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
   const shownIndex = hover ? indexOf(hover.key) : kbIndex;
   const current = shownIndex >= 0 ? resolved[shownIndex] : null;
   const kbSegment = kbIndex >= 0 ? resolved[kbIndex] : null;
-  const clickable = onSegmentClick !== undefined;
+  const linkOf = (s: DonutSegment) =>
+    isValidElement(s.link)
+      ? (s.link as ReactElement<HTMLAttributes<HTMLElement> & { 'data-segment-link'?: string }>)
+      : undefined;
+  // A segment is activatable when it is drawn and has a link or an onSegmentClick to call. With
+  // mixed linked/unlinked segments and no onSegmentClick, the unlinked ones stay inspect-only.
+  const canActivate = (s: (typeof resolved)[number]) =>
+    s.drawn && (onSegmentClick !== undefined || linkOf(s.segment) !== undefined);
+  const clickable = resolved.some(canActivate);
+  const legendRef = useRef<HTMLUListElement>(null);
+  // A linked segment is followed by clicking its legend link, so a router Link navigates via its own
+  // onClick and modifier keys (new tab) work; that link's onClick also calls onSegmentClick.
+  const activate = (
+    segment: DonutSegment,
+    e: Pick<MouseEvent, 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey'> & { button?: number },
+  ) => {
+    // Found through our own <li>, so a link component that drops data-* props still works.
+    const linkEl = linkOf(segment)
+      ? [...(legendRef.current?.children ?? [])].find(
+          (li) => li.getAttribute('data-legend') === segment.key,
+        )?.firstElementChild
+      : undefined;
+    if (!linkEl) return onSegmentClick?.(segment);
+    const { ctrlKey, metaKey, shiftKey, altKey, button = 0 } = e;
+    linkEl.dispatchEvent(
+      new window.MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        ctrlKey,
+        metaKey,
+        shiftKey,
+        altKey,
+        button,
+      }),
+    );
+  };
   const drawnKeys = resolved.flatMap((s) => (s.drawn ? [s.segment.key] : []));
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -178,9 +222,10 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
         break;
       case 'Enter':
       case ' ':
-        if (!kbSegment || !onSegmentClick) return;
+        if (!kbSegment || !canActivate(kbSegment)) return;
         e.preventDefault();
-        onSegmentClick(kbSegment.segment);
+        if (e.repeat) return; // holding Enter must not open the link once per key repeat
+        activate(kbSegment.segment, e);
         return;
       case 'Escape':
         if (kbKey === null && hover === null) return; // let a surrounding dialog close
@@ -296,7 +341,16 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
                       data-active={shownIndex === i ? '' : undefined}
                       onPointerEnter={() => hoverOn(s.segment.key)}
                       onPointerDown={() => hoverOn(s.segment.key)}
-                      onClick={onSegmentClick && (() => onSegmentClick(s.segment))}
+                      data-clickable={canActivate(s) || undefined}
+                      onClick={
+                        canActivate(s)
+                          ? (e) => {
+                              // The followed link's click bubbles itself; don't bubble this one too.
+                              if (linkOf(s.segment)) e.stopPropagation();
+                              activate(s.segment, e);
+                            }
+                          : undefined
+                      }
                     />
                   ),
               )}
@@ -333,7 +387,7 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
           )}
         </div>
         {/* Read-only: aria-hidden, the hidden data table is the screen reader's copy. */}
-        <ul className={styles.legend} aria-hidden={onSegmentClick ? undefined : true}>
+        <ul ref={legendRef} className={styles.legend} aria-hidden={clickable ? undefined : true}>
           {resolved.map((s, i) => {
             const content = (
               <>
@@ -343,29 +397,46 @@ export const DonutChart = forwardRef<HTMLElement, DonutChartProps>(function Donu
                 <span className={styles.legendShare}>{pct(s.share)}</span>
               </>
             );
+            const link = s.drawn ? linkOf(s.segment) : undefined;
+            const itemProps = {
+              className: styles.legendItem,
+              style: slotStyle(s.slot),
+              'aria-label': summary(i),
+              // Pointer events, not mouse: touch emulates mouseenter but never mouseleave.
+              onPointerEnter: (e: PointerEvent<HTMLElement>) =>
+                e.pointerType !== 'touch' && hoverOn(s.segment.key),
+              onPointerLeave: (e: PointerEvent<HTMLElement>) =>
+                e.pointerType !== 'touch' && clearPointer(),
+              // Focus needs no announcement: the entry's name already says it.
+              onFocus: () => setHover({ key: s.segment.key, from: 'focus' }),
+              onBlur: () => setHover((h) => (h?.from === 'focus' ? null : h)),
+            };
             return (
               <li
                 key={s.segment.key}
                 className={styles.legendEntry}
                 data-legend={s.segment.key}
                 data-dimmed={current && shownIndex !== i ? '' : undefined}
-                // A zero-value entry in a clickable legend has no button: hide the whole item.
-                aria-hidden={onSegmentClick && !s.drawn ? true : undefined}
+                // In an interactive legend, entries that can't be activated (zero-value, or unlinked
+                // with no onSegmentClick) stay hidden: the data table is their screen-reader copy.
+                aria-hidden={clickable && !canActivate(s) ? true : undefined}
               >
-                {onSegmentClick && s.drawn ? (
-                  <button
-                    type="button"
-                    className={styles.legendItem}
-                    style={slotStyle(s.slot)}
-                    aria-label={summary(i)}
-                    onClick={() => onSegmentClick(s.segment)}
-                    // Pointer events, not mouse: touch emulates mouseenter but never mouseleave.
-                    onPointerEnter={(e) => e.pointerType !== 'touch' && hoverOn(s.segment.key)}
-                    onPointerLeave={(e) => e.pointerType !== 'touch' && clearPointer()}
-                    // Focus needs no announcement: the button's name already says it.
-                    onFocus={() => setHover({ key: s.segment.key, from: 'focus' })}
-                    onBlur={() => setHover((h) => (h?.from === 'focus' ? null : h))}
-                  >
+                {link ? (
+                  cloneElement(
+                    link,
+                    {
+                      ...itemProps,
+                      className: clsx(styles.legendItem, link.props.className),
+                      'data-segment-link': s.segment.key,
+                      onClick: (e: MouseEvent<HTMLElement>) => {
+                        link.props.onClick?.(e);
+                        onSegmentClick?.(s.segment);
+                      },
+                    },
+                    content,
+                  )
+                ) : onSegmentClick && s.drawn ? (
+                  <button type="button" {...itemProps} onClick={() => onSegmentClick(s.segment)}>
                     {content}
                   </button>
                 ) : (

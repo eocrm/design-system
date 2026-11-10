@@ -2527,7 +2527,7 @@
           "type": "((segment: DonutSegment) => void)",
           "required": false,
           "default": "",
-          "description": "Makes every non-zero segment activatable (arc click, Enter or Space on the focused ring, and a\nlegend button), called with the consumer's original segment, e.g. to open a filtered list. Omit\nfor an inspect-only donut with a plain-text legend."
+          "description": "Makes every non-zero segment activatable (arc click, Enter or Space on the focused ring, and a\nlegend button), called with the consumer's original segment. To navigate, prefer a segment's\n`link` (a real link: new tab, copy link); this stays for non-navigating actions and analytics,\nand also fires for linked segments. Omit both for an inspect-only donut with a plain-text legend."
         },
         {
           "name": "emptyMessage",
@@ -4309,6 +4309,13 @@
           "description": "Available variables → insert menu, autocomplete, unknown flagging."
         },
         {
+          "name": "variablePathLabels",
+          "type": "Record<string, string>",
+          "required": false,
+          "default": "",
+          "description": "Labels for undeclared intermediate nodes in the nested Insert variable menu,\nkeyed by dotted path — e.g. `{ 'record.cf': 'Custom fields' }` names the\n`record.cf` sub-menu without declaring `record.cf` as an insertable variable.\nA declared variable's `label` at the same path wins. A merged single-child\nchain (shown as `a.b`) is keyed by its full path (`a.b`). Menu-only:\ninserted text and autocomplete are unchanged."
+        },
+        {
           "name": "flagUnknownVariables",
           "type": "boolean",
           "required": false,
@@ -5167,6 +5174,13 @@
           "required": false,
           "default": "",
           "description": "Render a 1px bottom border under the header. Default `true`. Set\n`false` when placing a `<Tabs>` component as a sibling below — Tabs\nhas its own `border-bottom`, and you don't want the double line."
+        },
+        {
+          "name": "actionsPlacement",
+          "type": "PageHeaderActionsPlacement",
+          "required": false,
+          "default": "",
+          "description": "Where `PageHeader.Actions` go on viewports narrower than 640px. Default `\"below\"`.\n- `\"below\"` — actions take their own full-width row under the title block.\n- `\"inline\"` — actions stay beside the title, as on wide viewports: the actions column is\n  capped so the title keeps `--page-header-title-min`, and several actions wrap inside it.\n  Use for pages with one or two compact actions, where a lone button row wastes height."
         }
       ]
     },
@@ -5347,42 +5361,49 @@
           "type": "string | null",
           "required": true,
           "default": "",
-          "description": "Controlled E.164 value (e.g. `\"+442071838750\"`); `null` = empty."
+          "description": "Controlled value; `null` = empty.\n- Picker mode (default): E.164 (e.g. `\"+442071838750\"`).\n- `picker={false}`: the raw string as typed/stored (e.g. `\"020 7183 8750\"` or `\"+1 202…\"`)."
         },
         {
           "name": "onChange",
-          "type": "(e164: string | null) => void",
+          "type": "(value: string | null) => void",
           "required": true,
           "default": "",
-          "description": "Fires with canonical E.164 on every edit; `null` when empty."
+          "description": "Fires on every edit; `null` when empty.\n- Picker mode (default): canonical E.164, or `null` while the number is still partial.\n- `picker={false}`: the RAW string exactly as typed (untrimmed, no E.164 forcing),\n  or `null` when empty/whitespace-only. Normalise to E.164 server-side."
+        },
+        {
+          "name": "picker",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Show the country picker. Default `true`.\n- `true` — searchable country picker + national number input; emits E.164.\n- `false` — ONE plain `type=\"tel\"` input; emits the raw string (see `onChange`).\n  A value starting with `+` is international, anything else is read in\n  `defaultCountry`. While focused the raw value shows; when blurred it is\n  formatted — national for `defaultCountry` numbers, international otherwise.\n  `countries`, `countryDisplay` and `countryLabel` are ignored, and the root\n  `<div>` has no `role=\"group\"` (labels go straight to the input)."
         },
         {
           "name": "defaultCountry",
           "type": "string",
           "required": false,
           "default": "",
-          "description": "ISO 3166-1 alpha-2 country used to seed the picker when `value` is empty. Default `\"US\"`."
+          "description": "ISO 3166-1 alpha-2 country used to seed the picker when `value` is empty (with `picker={false}`: the country a number without `+` is read in, and the one shown in national format). Default `\"US\"`."
         },
         {
           "name": "countries",
           "type": "string[]",
           "required": false,
           "default": "",
-          "description": "Restrict the picker to this ISO-code subset. Defaults to all libphonenumber-js countries. An empty array is treated as all countries."
+          "description": "Restrict the picker to this ISO-code subset. Defaults to all libphonenumber-js countries. An empty array is treated as all countries. Ignored with `picker={false}`."
         },
         {
           "name": "countryDisplay",
           "type": "CountryDisplay",
           "required": false,
           "default": "",
-          "description": "How the SELECTED country renders in the picker trigger. Default `\"code\"`.\n- `\"code\"` — calling code only (`+1`).\n- `\"iso\"` — ISO code + code (`US +1`).\n- `\"name\"` — full country name + code (`United States +1`).\n- `\"flag\"` — emoji flag + code (`🇺🇸 +1`). Note: emoji flags don't render on\n  Windows Chrome/Edge (they show the letters), so prefer `\"iso\"` there.\n\nThe dropdown rows always show the full country name + code (plus a flag in\n`\"flag\"` mode) so they stay searchable + identifiable regardless of this."
+          "description": "How the SELECTED country renders in the picker trigger. Default `\"code\"`.\n- `\"code\"` — calling code only (`+1`).\n- `\"iso\"` — ISO code + code (`US +1`).\n- `\"name\"` — full country name + code (`United States +1`).\n- `\"flag\"` — emoji flag + code (`🇺🇸 +1`). Note: emoji flags don't render on\n  Windows Chrome/Edge (they show the letters), so prefer `\"iso\"` there.\n\nThe dropdown rows always show the full country name + code (plus a flag in\n`\"flag\"` mode) so they stay searchable + identifiable regardless of this.\nIgnored with `picker={false}`."
         },
         {
           "name": "countryLabel",
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Overrides the country picker's full accessible name. By default the picker\nis named after the group — \"<group label> Country\" (e.g. \"Phone Country\") —\nso it never collides with a form's own Country field; with no group label\nit is just \"Country\". Set this when that composed name reads badly."
+          "description": "Overrides the country picker's full accessible name. By default the picker\nis named after the group — \"<group label> Country\" (e.g. \"Phone Country\") —\nso it never collides with a form's own Country field; with no group label\nit is just \"Country\". Set this when that composed name reads badly.\nIgnored with `picker={false}`."
         },
         {
           "name": "size",
@@ -7913,6 +7934,7 @@
     "ScreenFill": "\"viewport\" | \"block\"",
     "ScreenBackdrop": "\"danger\" | \"none\" | \"accent\" | \"plain\"",
     "ScreenAlign": "\"start\" | \"center\"",
+    "PageHeaderActionsPlacement": "\"inline\" | \"below\"",
     "DrawerSide": "\"left\" | \"right\" | \"top\" | \"bottom\"",
     "DrawerSize": "\"sm\" | \"md\" | \"lg\"",
     "DrawerOverlayVariant": "\"solid\" | \"blur\"",
@@ -8038,7 +8060,7 @@
     "StatGroupVariant": "\"filled\" | \"card\"",
     "FunnelShape": "\"taper\" | \"sharp\"",
     "FunnelStage": "{ key: string; label: string; value: number; color?: FunnelSlot }",
-    "DonutSegment": "{ key: string; label: string; value: number; color?: ChartSeriesColor }",
+    "DonutSegment": "{ key: string; label: string; value: number; color?: ChartSeriesColor; link?: ReactElement<{ className?: string; children?: ReactNode; }, string | JSXElementConstructor<any>> }",
     "ScatterReference": "{ key?: string; label: string; points: { x: number | Date; y: number; }[]; color?: ChartSeriesColor; emphasis?: \"strong\" | \"default\" }",
     "ScatterSeries": "{ key: string; label: string; points: ScatterPoint[]; color?: ChartSeriesColor }",
     "ScatterXScale": "\"number\" | \"time\"",

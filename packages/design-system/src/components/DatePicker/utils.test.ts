@@ -1,5 +1,6 @@
 import {
   combineDateAndTime,
+  dateFormatHint,
   formatDate,
   formatDateTime,
   formatTime,
@@ -442,5 +443,17 @@ describe('DatePicker utils', () => {
     it('returns 00:00 when input would round to 00:00', () => {
       expect(roundTimeToStep(0, 7, 15)).toEqual({ hours: 0, minutes: 0 });
     });
+  });
+});
+
+describe('dateFormatHint (DS-66)', () => {
+  const en = { day: 'DD', month: 'MM', year: 'YYYY' };
+  it('follows the locale field order and separators', () => {
+    expect(dateFormatHint('en-US', en)).toBe('MM/DD/YYYY');
+    expect(dateFormatHint('en-GB', en)).toBe('DD/MM/YYYY');
+    expect(dateFormatHint('ru-RU', { day: 'ДД', month: 'ММ', year: 'ГГГГ' })).toBe('ДД.ММ.ГГГГ');
+  });
+  it('appends the time hint after a space', () => {
+    expect(dateFormatHint('en-GB', en, 'HH:mm')).toBe('DD/MM/YYYY HH:mm');
   });
 });

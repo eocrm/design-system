@@ -164,6 +164,9 @@ export const en: Messages = {
     timePeriodPm: 'PM',
     timePlaceholder24: 'HH:mm',
     timePlaceholder12: 'h:mm AM/PM',
+    placeholderDay: 'DD',
+    placeholderMonth: 'MM',
+    placeholderYear: 'YYYY',
   },
   dateRangePicker: {
     startTimeLabel: 'Start time',

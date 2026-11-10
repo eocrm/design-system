@@ -1,3 +1,4 @@
+import type { ReactElement, ReactNode } from 'react';
 import { arc } from 'd3-shape';
 import { assignSlots, type ChartSeriesColor } from '../Chart/chartModel';
 
@@ -11,6 +12,11 @@ export interface DonutSegment {
   value: number;
   /** Palette slot (`--chart-series-N`). Omit to fill free slots in order. */
   color?: ChartSeriesColor;
+  /**
+   * An empty link element (`<a href>`, a router `Link`, the DS `Link`) that makes this segment a real
+   * link: its legend entry renders it, and an arc click or Enter on the ring follows it.
+   */
+  link?: ReactElement<{ className?: string; children?: ReactNode }>;
 }
 
 /** A segment with sanitised value, palette slot and angles. */

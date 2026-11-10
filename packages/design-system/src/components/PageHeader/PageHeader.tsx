@@ -26,7 +26,18 @@ export interface PageHeaderProps extends HTMLAttributes<HTMLDivElement> {
    * has its own `border-bottom`, and you don't want the double line.
    */
   borderBottom?: boolean;
+  /**
+   * Where `PageHeader.Actions` go on viewports narrower than 640px. Default `"below"`.
+   * - `"below"` — actions take their own full-width row under the title block.
+   * - `"inline"` — actions stay beside the title, as on wide viewports: the actions column is
+   *   capped so the title keeps `--page-header-title-min`, and several actions wrap inside it.
+   *   Use for pages with one or two compact actions, where a lone button row wastes height.
+   */
+  actionsPlacement?: PageHeaderActionsPlacement;
 }
+
+/** Narrow-viewport placement of `PageHeader.Actions`; see `PageHeaderProps.actionsPlacement`. */
+export type PageHeaderActionsPlacement = 'below' | 'inline';
 
 export interface PageHeaderBreadcrumbProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
@@ -260,7 +271,7 @@ PageHeaderActions.displayName = 'PageHeaderActions';
  * @see docs/components/PageHeader.md
  */
 const PageHeaderRoot = forwardRef<HTMLDivElement, PageHeaderProps>(function PageHeaderRoot(
-  { borderBottom = true, className, children, ...rest },
+  { borderBottom = true, actionsPlacement = 'below', className, children, ...rest },
   ref,
 ) {
   const breadcrumb = findSlot(children, PageHeaderBreadcrumb);
@@ -278,6 +289,7 @@ const PageHeaderRoot = forwardRef<HTMLDivElement, PageHeaderProps>(function Page
         styles.root,
         aside && styles.rootWithAside,
         borderBottom && styles.rootWithBorder,
+        actionsPlacement === 'inline' && styles.actionsInline,
         className,
       )}
       {...rest}

@@ -60,6 +60,22 @@ describe('PageHeader — rendering', () => {
     expect(root.className).toMatch(/rootWithBorder/);
   });
 
+  it('actionsPlacement="inline" adds the opt-out class; the default does not (DS-64)', () => {
+    const { container, rerender } = render(
+      <PageHeader>
+        <PageHeader.Title>X</PageHeader.Title>
+      </PageHeader>,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).not.toMatch(/actionsInline/);
+    rerender(
+      <PageHeader actionsPlacement="inline">
+        <PageHeader.Title>X</PageHeader.Title>
+      </PageHeader>,
+    );
+    expect(root.className).toMatch(/actionsInline/);
+  });
+
   it('does NOT apply rootWithBorder when borderBottom={false}', () => {
     const { container } = render(
       <PageHeader borderBottom={false}>
@@ -358,6 +374,10 @@ describe('PageHeader — responsive shrink (#550)', () => {
     expect(block('.breadcrumb')).toMatch(/min-width:\s*0/);
     expect(block('.title')).toMatch(/overflow-wrap:\s*anywhere/);
     expect(scss).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\);/); // narrow single column
+    // DS-64: every narrow-only rule skips actionsPlacement="inline".
+    for (const selector of narrow.match(/^\s*\.[^{]+\{/gm) ?? []) {
+      expect(selector).toMatch(/:not\(\.actionsInline\)/);
+    }
   });
 });
 

@@ -169,8 +169,10 @@
 }
 
 // ─── Responsive: actions wrap below the title on narrow viewports ────────
+// `actionsPlacement="inline"` (.actionsInline) opts out and keeps the wide
+// layout above, whose capped actions column already handles narrow widths (DS-64).
 @media (max-width: 640px) {
-  .root {
+  .root:not(.actionsInline) {
     grid-template-areas:
       'breadcrumb'
       'title'
@@ -180,7 +182,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .rootWithAside {
+  .rootWithAside:not(.actionsInline) {
     grid-template-areas:
       'breadcrumb breadcrumb'
       'aside title'
@@ -190,7 +192,7 @@
     grid-template-columns: auto minmax(0, 1fr);
   }
 
-  .actions {
+  .root:not(.actionsInline) .actions {
     // stylelint-disable-next-line property-disallowed-list -- internal responsive spacing in this layout primitive
     margin-top: var(--page-header-actions-margin-top-narrow);
   }

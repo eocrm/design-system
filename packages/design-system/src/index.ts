@@ -354,6 +354,7 @@ export type {
   PageHeaderSubtitleProps,
   PageHeaderMetaProps,
   PageHeaderActionsProps,
+  PageHeaderActionsPlacement,
 } from './components/PageHeader';
 
 export { Drawer } from './components/Drawer';

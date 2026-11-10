@@ -167,6 +167,9 @@ export const ru: Messages = {
     timePeriodPm: 'PM',
     timePlaceholder24: 'ЧЧ:мм',
     timePlaceholder12: 'ч:мм AM/PM',
+    placeholderDay: 'ДД',
+    placeholderMonth: 'ММ',
+    placeholderYear: 'ГГГГ',
   },
   dateRangePicker: {
     startTimeLabel: 'Время начала',

@@ -54,3 +54,14 @@ export function collapseChains(nodes: readonly VariableNode[]): VariableNode[] {
     return { ...node, children };
   });
 }
+
+/**
+ * Named-group pass (DS-67): when a group's (collapsed) tree is a single
+ * undeclared branch — every variable shares one root, e.g. `record.*` — return
+ * that branch's children so the section label isn't followed by a repeated
+ * root hop. Anything else is returned unchanged.
+ */
+export function dropSharedRoot(nodes: readonly VariableNode[]): readonly VariableNode[] {
+  const [only] = nodes;
+  return nodes.length === 1 && !only.variable && only.children.length > 0 ? only.children : nodes;
+}

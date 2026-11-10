@@ -333,6 +333,12 @@ export interface Messages {
     timePlaceholder24: string;
     /** Placeholder for the `<TimeField>` text input in 12-hour cycle (e.g. `h:mm AM/PM`). */
     timePlaceholder12: string;
+    /** Day field in the empty date input's format hint (e.g. `DD` in `DD/MM/YYYY`). */
+    placeholderDay: string;
+    /** Month field in the empty date input's format hint (e.g. `MM` in `DD/MM/YYYY`). */
+    placeholderMonth: string;
+    /** Year field in the empty date input's format hint (e.g. `YYYY` in `DD/MM/YYYY`). */
+    placeholderYear: string;
   };
   dateRangePicker: {
     /** Visible label / aria-label for the start-time input in `granularity="minute"` mode. */

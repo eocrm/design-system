@@ -752,6 +752,36 @@ describe('nested insert variable menu (#750)', () => {
   });
 });
 
+describe('grouped shared-root insert menu (DS-67)', () => {
+  const RECORD: LiquidVariable[] = [
+    { code: 'record.id', label: 'id', group: 'Record' },
+    { code: 'record.title', label: 'title', group: 'Record' },
+    { code: 'record.status.id', label: 'Status id', group: 'Record' },
+    { code: 'record.status.name', label: 'Status name', group: 'Record' },
+  ];
+
+  it("lists the shared root's children directly under the group label", async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={RECORD} />);
+    const ta = screen.getByRole('combobox') as HTMLTextAreaElement;
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    expect(await screen.findByRole('menuitem', { name: 'id' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'title' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'record' })).toBeNull();
+    await user.click(screen.getByRole('menuitem', { name: 'status' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Status name/ }));
+    await waitFor(() => expect(ta).toHaveValue('{{ record.status.name }}'));
+  });
+
+  it('variablePathLabels relabels an undeclared sub-trigger', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={RECORD} variablePathLabels={{ 'record.status': 'Status' }} />);
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    expect(await screen.findByRole('menuitem', { name: 'Status' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'status' })).toBeNull();
+  });
+});
+
 describe('tags prop typing', () => {
   const T = ['if', 'assign'] as const; // readonly tuple must be accepted (compile-time check)
   it('accepts a readonly tags array', async () => {

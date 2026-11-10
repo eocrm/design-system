@@ -19,6 +19,14 @@ const JUN = (d: number) => new Date(2026, 5, d);
 const SAMPLE_RANGE: DateRange = { start: MAY(21), end: JUN(4) };
 
 describe('DateRangePicker', () => {
+  it('shows a locale format hint for both ends when empty (DS-66)', () => {
+    render(<DateRangePicker aria-label="Range" />, { wrapper: wrap('en-US') });
+    expect(screen.getByLabelText('Range')).toHaveAttribute(
+      'placeholder',
+      'MM/DD/YYYY — MM/DD/YYYY',
+    );
+  });
+
   it('renders the formatted defaultValue in the input (uncontrolled)', () => {
     render(<DateRangePicker defaultValue={SAMPLE_RANGE} aria-label="Range" />, {
       wrapper: wrap(),

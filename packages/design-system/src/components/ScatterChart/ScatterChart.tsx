@@ -19,6 +19,7 @@ import { useControllableState } from '../_internal/useControllableState';
 import { useSize } from '../_internal/useSize';
 import { ChartLegend } from '../Chart/ChartLegend';
 import { ChartTooltip } from '../Chart/ChartTooltip';
+import { readPx } from '../Chart/readPx';
 import {
   LABEL_GAP,
   MARKER_RADIUS,
@@ -88,13 +89,6 @@ const NO_HIDDEN: string[] = [];
 
 const seriesStyle = (slot: number) =>
   ({ '--chart-series-color': `var(--chart-series-${slot})` }) as CSSProperties;
-
-// ponytail: read once per plot element; a theme that changes these tokens at runtime needs a remount.
-function readPx(el: Element | null, name: string, fallback: number) {
-  if (!el) return fallback;
-  const v = parseFloat(getComputedStyle(el).getPropertyValue(name));
-  return Number.isFinite(v) && v > 0 ? v : fallback;
-}
 
 type Inspected = { seriesKey: string; index: number };
 

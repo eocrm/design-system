@@ -24,6 +24,7 @@ const INTENTIONALLY_PRIVATE = new Set([
 const PRIVATE_UTIL_NAMES: Record<string, string[]> = {
   './components/DatePicker/utils': [
     'formatDate',
+    'dateFormatHint',
     'parseDate',
     'getLocaleDateOrder',
     'toIsoDate',
