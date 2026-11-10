@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DOT_RADIUS, estimateTextWidth } from '../Chart/chartModel';
+import { DOT_RADIUS, estimateTextWidth, MARKER_RADIUS } from '../Chart/chartModel';
 import {
   computeScatterLayout,
   inspectionOrder,
@@ -13,8 +13,9 @@ import {
 const fmt = (n: number) => String(n);
 const base = {
   xScale: 'number' as const,
-  width: 400,
-  height: 240,
+  // Roomy enough that the plot-size cap (1/20 of the shorter side) stays above sizeRange's 12.
+  width: 600,
+  height: 400,
   formatX: fmt,
   formatY: fmt,
   sizeRange: [3, 12] as [number, number],
@@ -364,5 +365,50 @@ describe('axis titles', () => {
     expect(layout.xTitle.y).toBeGreaterThan(layout.xTickBaseline);
     expect(layout.xTitle.y).toBeLessThanOrEqual(base.height);
     expect(layout.xTitle.x).toBe(layout.plot.x + layout.plot.width);
+  });
+});
+
+describe('sized markers on narrow plots (DS-68)', () => {
+  const meals = resolve([
+    { x: 0, y: 10, size: 10 },
+    { x: 5, y: 60, size: 50 },
+    { x: 10, y: 100, size: 40 },
+  ]);
+  it('caps the max radius at 1/20 of the plot’s shorter side, never below the min', () => {
+    const phone = computeScatterLayout({
+      ...base,
+      width: 250,
+      height: 260,
+      series: meals,
+      sizeRange: [4, 16],
+    });
+    const cap = Math.min(phone.plot.width, phone.plot.height) / 20;
+    expect(Math.max(...phone.dots.map((d) => d.r))).toBeCloseTo(cap);
+    const tiny = computeScatterLayout({
+      ...base,
+      width: 60,
+      height: 80,
+      series: meals,
+      sizeRange: [4, 16],
+    });
+    expect(Math.max(...tiny.dots.map((d) => d.r))).toBe(4);
+  });
+  it('keeps the largest dot’s hover ring (r + 1, plus the 1px stroke) inside the plot', () => {
+    for (const series of [
+      meals,
+      resolve([
+        { x: 0, y: 0 },
+        { x: 10, y: 100 },
+      ]),
+    ]) {
+      const l = computeScatterLayout({ ...base, xDomain: [0, 10], yDomain: [0, 100], series });
+      for (const d of l.dots) {
+        const ring = Math.max(d.r, MARKER_RADIUS) + 2;
+        expect(d.cy - ring).toBeGreaterThanOrEqual(l.plot.y);
+        expect(d.cy + ring).toBeLessThanOrEqual(l.plot.y + l.plot.height);
+        expect(d.cx - ring).toBeGreaterThanOrEqual(l.plot.x);
+        expect(d.cx + ring).toBeLessThanOrEqual(l.plot.x + l.plot.width);
+      }
+    }
   });
 });

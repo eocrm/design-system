@@ -10,7 +10,7 @@ Rules for UI code in a project that depends on `@eocrm/design-system` (the EOCRM
 - Use design-system components only; never raw `<button>`/`<input>`/`<select>` etc.
 - Design tokens only; no raw colour, px or spacing values.
 - No margin or positioning on components; lay out with `Stack`/`Cluster`.
-- Import from the package root ("@eocrm/design-system") only, never deep paths.
+- Import from the package root ("@eocrm/design-system") only, never deep paths. The one exception is the published "@eocrm/design-system/i18n/ru" subpath, for lazily importing the Russian catalogue.
 
 ## Where the docs are
 

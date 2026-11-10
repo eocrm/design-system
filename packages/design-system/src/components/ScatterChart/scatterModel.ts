@@ -4,6 +4,7 @@ import {
   DOT_RADIUS,
   estimateTextWidth,
   LABEL_GAP,
+  MARKER_RADIUS,
   PAD_RIGHT,
   X_LABEL_BASELINE,
   PAD_TOP,
@@ -122,7 +123,7 @@ export interface ScatterLayoutInput {
   formatY: (y: number) => string;
   reference?: ScatterReference | ScatterReference[];
   trendLine?: boolean;
-  /** Min and max dot radius for points with `size`. */
+  /** Min and max dot radius for points with `size`; the max also shrinks to 1/20 of the plot's shorter side. */
   sizeRange: [number, number];
   /** Domain of `size` values; pass `scatterSizeDomain(allSeries)` so hiding a series doesn't resize the rest. Defaults to `series`. */
   sizeDomain?: [number, number];
@@ -146,6 +147,11 @@ const Y_TITLE_BASELINE = 12;
 
 /** Space kept between the dot edge and the plot's domain bounds: the 1px ring. */
 const DOT_RING = 1;
+/**
+ * Largest dot radius as a share of the plot's shorter side (DS-68): a phone-width plot (~200px)
+ * caps sized dots near 10px instead of the token's 16px, so they stop overlapping their neighbours.
+ */
+const MAX_DOT_SHARE = 1 / 20;
 
 const num = (x: number | Date) => (x instanceof Date ? x.getTime() : x);
 
@@ -236,10 +242,15 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     height: plotBottom - plotTop,
   };
 
-  // Inset the pixel ranges by the largest dot so dots at the domain bounds stay inside the svg.
-  const pad =
-    (all.some((p) => validSize(p.size)) ? Math.max(input.sizeRange[1], DOT_RADIUS) : DOT_RADIUS) +
-    DOT_RING;
+  const [rMin, tokenMax] = input.sizeRange;
+  const rMax = Math.max(
+    rMin,
+    Math.min(tokenMax, Math.min(plot.width, plot.height) * MAX_DOT_SHARE),
+  );
+  // Inset the pixel ranges by the largest dot's hover ring (radius + 1, see ScatterChart's marker)
+  // so neither a dot nor its ring at the domain bounds is clipped by the plot (DS-68).
+  const largest = all.some((p) => validSize(p.size)) ? Math.max(rMax, DOT_RADIUS) : DOT_RADIUS;
+  const pad = Math.max(largest, MARKER_RADIUS) + 1 + DOT_RING;
   y.range([plotBottom - pad, plotTop + pad]);
   const xr: [number, number] = [plot.x + pad, plot.x + plot.width - pad];
   const xExtent = widen(extent(all.map((p) => p.x)), input.xScale === 'time' ? HOUR_MS : 1);
@@ -272,7 +283,6 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
   }
 
   const [, sMax] = input.sizeDomain ?? scatterSizeDomain(series);
-  const [rMin, rMax] = input.sizeRange;
   // Area ∝ value from 0; the min radius is only a floor so tiny / zero values stay visible and hoverable.
   const area = scaleSqrt().domain([0, sMax]).range([0, rMax]).clamp(true);
   const r = (v: number) => (sMax > 0 ? Math.max(rMin, area(Math.max(0, v))) : rMin);

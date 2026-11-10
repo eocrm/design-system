@@ -2128,6 +2128,13 @@
           "description": "Form name. When set, renders a hidden mirror `<input>` with the ISO date so native `<form>` submission works."
         },
         {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Text shown while the field is empty. Default: a muted format hint in the locale's field\norder, e.g. `DD/MM/YYYY` (en-GB), `MM/DD/YYYY h:mm AM/PM` (en-US, `granularity=\"minute\"`)."
+        },
+        {
           "name": "size",
           "type": "DatePickerSize",
           "required": false,
@@ -2159,6 +2166,13 @@
     },
     "DateRangePicker": {
       "props": [
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Text shown while the field is empty. Default: the locale's format hint for both ends,\ne.g. `DD/MM/YYYY — DD/MM/YYYY` (en-GB)."
+        },
         {
           "name": "value",
           "type": "DateRange | null",
