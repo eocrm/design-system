@@ -454,10 +454,12 @@ export function useChartInteraction(o: ChartInteractionOptions) {
   const { onInspect } = o;
   const reported = useRef<string>('null|null');
   useEffect(() => {
-    const key = `${current}|${activeSource}`;
+    // No index, no source: data shrinking under the inspected index leaves `activeSource` set.
+    const source = current === null ? null : activeSource;
+    const key = `${current}|${source}`;
     if (reported.current === key) return;
     reported.current = key;
-    onInspect?.(current, activeSource);
+    onInspect?.(current, source);
   });
 
   // The clicked button unmounts (zoom clears the selection; reset removes itself): keep focus on the plot.

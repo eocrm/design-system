@@ -56,6 +56,8 @@ import {
 import type { ChartViewport } from './chartViewport';
 import { useChartDomain } from './useChartDomain';
 import { useChartInteraction } from './useChartInteraction';
+import { useChartSync } from '../ChartSync/chartSyncStore';
+import { categoryPoint, matchCategory } from '../ChartSync/chartSyncMatch';
 import {
   renderAnnotations,
   renderReferenceLines,
@@ -249,6 +251,20 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
    * index, the domain fraction and the y value at the pointer, e.g. to add a marker there.
    */
   onPlotDoubleClick?: (e: ChartPlotPointerEvent) => void;
+  /**
+   * The x each category stands for (e.g. each day's start, as a `Date` or epoch ms), same length and order as
+   * `categories`, ascending. Inside a `ChartSync` it syncs by value: a category covers `[value_i, value_i+1)` (the
+   * last reuses the previous step), so charts with different labels or bucket sizes, and scatter charts, line
+   * up. Without it the chart syncs only with other category charts, by exact category label. A wrong length is
+   * ignored (label matching) with a dev warning.
+   */
+  categoryValues?: (number | Date)[];
+  /**
+   * Inside a `ChartSync`, `true` (default) joins the group: inspecting a category here shows a crosshair and tooltip
+   * at the matching x in the other charts, and theirs show here. `false` opts this chart out. No effect outside
+   * a `ChartSync`.
+   */
+  sync?: boolean;
 }
 
 const NO_MARKERS: ChartMarker[] = [];
@@ -334,6 +350,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     onViewportChange,
     zoomGestures = false,
     onPlotDoubleClick,
+    categoryValues,
+    sync: syncEnabled = true,
     className,
     ...rest
   },
@@ -495,6 +513,15 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     [layout, resolvedMarkers.markers],
   );
 
+  const sync = useChartSync(syncEnabled);
+  const badValues = categoryValues !== undefined && categoryValues.length !== allCategories.length;
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' || !badValues) return;
+    console.warn(
+      '[Chart] Ignored categoryValues: it must have one value per category. Syncing by category label instead.',
+    );
+  }, [badValues]);
+
   const ix = useChartInteraction({
     domain,
     layout,
@@ -507,6 +534,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     selectOn,
     zoomGestures,
     onPlotDoubleClick,
+    onInspect: (i) =>
+      sync.publish(
+        i === null ? null : categoryPoint(originalIndex(i), allCategories, categoryValues),
+      ),
   });
   const {
     selectable,
@@ -525,6 +556,30 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     resetZoom,
   } = ix;
 
+  // Another chart's inspected moment, echoed here (visual only) while this chart inspects nothing itself. Off the
+  // zoom window or the viewport: nothing, the chart does not pan.
+  const matched =
+    sync.echo && layout && current === null
+      ? matchCategory(sync.echo, allCategories, categoryValues)
+      : null;
+  const echoAt = matched === null ? -1 : matched - (zoomFrom ?? 0);
+  const echoX = layout?.categoryX[echoAt];
+  const echo =
+    layout &&
+    echoX !== undefined &&
+    echoX >= layout.plot.x &&
+    echoX <= layout.plot.x + layout.plot.width
+      ? echoAt
+      : null;
+  const echoY = echo === null ? undefined : layout?.plot.y;
+  const echoPoint = useMemo(
+    () => (echoX === undefined || echoY === undefined ? null : { x: echoX, y: echoY }),
+    [echoX, echoY],
+  );
+  /** The category drawn as inspected: this chart's own, else the echo. */
+  const shown = current ?? echo;
+  const echoAttr = echo === null ? undefined : '';
+
   const parentLabel = (s: ResolvedSeries) =>
     resolved.series.find((p) => p.key === s.comparisonOf)?.label;
   // Same label as the table header, so a comparison always names its parent.
@@ -532,7 +587,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     parentLabel(s) ? `${s.label} (${parentLabel(s)})` : s.label;
 
   const rows =
-    current === null
+    shown === null
       ? []
       : visible.map((s) => ({
           key: s.key,
@@ -540,21 +595,19 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
           slot: s.slot,
           comparison: s.comparisonOf !== undefined,
           value:
-            s.values[current] === null
-              ? t('chart.noData')
-              : formatValue(s.values[current] as number),
+            s.values[shown] === null ? t('chart.noData') : formatValue(s.values[shown] as number),
         }));
 
   const notes =
-    current === null
+    shown === null
       ? []
       : [
-          ...markerLabelsAt(resolvedMarkers.markers, current),
-          ...annotationLabelsAt(viewAnnotations, current),
+          ...markerLabelsAt(resolvedMarkers.markers, shown),
+          ...annotationLabelsAt(viewAnnotations, shown),
           ...referenceNotes,
         ];
   // `details` takes original indices: both call sites (here and the table's `detailsAt`) map through `originalIndex`.
-  const detailLines = current === null ? [] : (details?.(originalIndex(current)) ?? []);
+  const detailLines = shown === null ? [] : (details?.(originalIndex(shown)) ?? []);
   const liveText = selectionNote
     ? selectionNote
     : zoomNote
@@ -820,11 +873,12 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             </g>
             {/* With a viewport, everything drawn at category positions is clipped to the plot. */}
             <g clipPath={clip}>
-              {current !== null &&
+              {shown !== null &&
                 (type === 'bar' || type === 'stacked-bar' ? (
                   <rect
                     className={styles.band}
-                    x={layout.categoryX[current] - layout.step / 2}
+                    data-echo={echoAttr}
+                    x={layout.categoryX[shown] - layout.step / 2}
                     y={layout.plot.y}
                     width={layout.step}
                     height={layout.plot.height}
@@ -832,8 +886,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 ) : (
                   <line
                     className={styles.crosshair}
-                    x1={layout.categoryX[current]}
-                    x2={layout.categoryX[current]}
+                    data-echo={echoAttr}
+                    x1={layout.categoryX[shown]}
+                    x2={layout.categoryX[shown]}
                     y1={layout.plot.y}
                     y2={layout.plot.y + layout.plot.height}
                   />
@@ -883,11 +938,11 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
               {/* Glyphs above the data marks, with the value labels. */}
               {renderAnnotations(layout.annotations)}
               {/* Inspection markers in their own pass: a later stacked area would paint over them. */}
-              {current !== null &&
+              {shown !== null &&
                 layout.marks.map(
                   (m) =>
                     m.kind !== 'bars' &&
-                    m.points[current] && (
+                    m.points[shown] && (
                       <g
                         key={m.key}
                         className={styles.series}
@@ -898,8 +953,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                           className={styles.marker}
                           d={markerPath(
                             markerShape(m.slot),
-                            m.points[current]!.x,
-                            m.points[current]!.y,
+                            m.points[shown]!.x,
+                            m.points[shown]!.y,
                             MARKER_RADIUS,
                           )}
                         />
@@ -962,8 +1017,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       {footnoteEl}
       <ChartTooltip
         anchor={plotEl}
-        point={point}
-        title={current === null ? '' : categories[current]}
+        point={point ?? echoPoint}
+        echo={echo !== null}
+        title={shown === null ? '' : categories[shown]}
         rows={rows}
         notes={notes}
         details={detailLines}

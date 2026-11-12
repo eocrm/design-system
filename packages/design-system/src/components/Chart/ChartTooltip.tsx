@@ -31,6 +31,7 @@ export function ChartTooltip({
   rows,
   notes,
   details = [],
+  echo,
 }: {
   /** The plot element; `point` is relative to its top-left. */
   anchor: HTMLElement | null;
@@ -41,6 +42,8 @@ export function ChartTooltip({
   notes: string[];
   /** Plain-text lines from `Chart`'s `details`, shown muted without a swatch. */
   details?: string[];
+  /** Another chart's synced inspection (`ChartSync`), not this chart's own: marked `data-echo`. */
+  echo?: boolean;
 }) {
   const { refs, floatingStyles } = useFloating({
     placement: 'top',
@@ -71,6 +74,7 @@ export function ChartTooltip({
       className={styles.tooltip}
       aria-hidden="true"
       data-chart-tooltip=""
+      data-echo={echo || undefined}
     >
       <div className={styles.tooltipTitle}>{title}</div>
       {rows.map((r) => (
