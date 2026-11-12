@@ -99,7 +99,7 @@ function KanbanZone({
     () => ({ kanbanZone: { columnId, statusId: status.id, label: status.label, allowed } }),
     [columnId, status.id, status.label, allowed],
   );
-  const { setNodeRef } = useDroppable({ id: kanbanZoneId(columnId, status.id), data });
+  const { setNodeRef, isOver } = useDroppable({ id: kanbanZoneId(columnId, status.id), data });
   return (
     <div
       ref={setNodeRef}
@@ -107,6 +107,7 @@ function KanbanZone({
       data-kanban-zone=""
       data-zone-status={String(status.id)}
       data-disabled={!allowed || undefined}
+      data-over={isOver ? 'true' : undefined}
     >
       {status.label}
     </div>

@@ -11,6 +11,7 @@ import {
   Text,
   Title,
   type KanbanMoveEvent,
+  type KanbanStatusChangeEvent,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -92,6 +93,51 @@ const PIPELINE: [string, CardData[]][] = [
 
 const INITIAL_PIPELINE: Record<string, CardData[]> = Object.fromEntries(PIPELINE);
 
+interface DealCard extends CardData {
+  status?: string;
+}
+
+const DEAL_STATUS_LABELS: Record<string, string> = {
+  new: 'New',
+  contacted: 'Contacted',
+  meeting: 'Meeting set',
+  proposal: 'Proposal',
+  negotiation: 'Negotiation',
+};
+
+const QUALIFICATION_STATUSES = [
+  { id: 'new', label: 'New' },
+  { id: 'contacted', label: 'Contacted' },
+  { id: 'meeting', label: 'Meeting set' },
+];
+const CLOSING_STATUSES = [
+  { id: 'proposal', label: 'Proposal' },
+  { id: 'negotiation', label: 'Negotiation' },
+];
+
+const DEAL_COLUMNS = [
+  { id: 'lead', title: 'Lead', statuses: undefined },
+  { id: 'qualification', title: 'Qualification', statuses: QUALIFICATION_STATUSES },
+  { id: 'closing', title: 'Closing', statuses: CLOSING_STATUSES },
+];
+
+const INITIAL_DEALS: Record<string, DealCard[]> = {
+  lead: [
+    { id: 'z-1', title: 'Acme — 40 seats' },
+    { id: 'z-2', title: 'Globex renewal' },
+  ],
+  qualification: [
+    { id: 'z-3', title: 'Initech pilot', status: 'new' },
+    { id: 'z-4', title: 'Umbrella — security review', status: 'contacted' },
+    { id: 'z-5', title: 'Stark Industries', status: 'meeting' },
+  ],
+  closing: [{ id: 'z-6', title: 'Wayne Ent. — multi-year', status: 'proposal' }],
+};
+
+// Backwards drops into Lead from Closing are blocked.
+const canDropDeal = (cardId: string | number, to: { columnId: string | number }) =>
+  !(to.columnId === 'lead' && cardId === 'z-6');
+
 function makeMoveHandler<K extends string>(
   setter: React.Dispatch<React.SetStateAction<Record<K, CardData[]>>>,
 ) {
@@ -119,6 +165,35 @@ export function KanbanDemo() {
   const [boardB, setBoardB] = useState<Record<ColId, CardData[]>>(INITIAL_BOARD);
   const [boardC, setBoardC] = useState<Record<UnevenColId, CardData[]>>(INITIAL_UNEVEN);
   const [boardD, setBoardD] = useState<Record<string, CardData[]>>(INITIAL_PIPELINE);
+  const [deals, setDeals] = useState<Record<string, DealCard[]>>(INITIAL_DEALS);
+  const handleMoveDeals = useCallback((event: KanbanMoveEvent) => {
+    const { from, to, cardId } = event;
+    setDeals((curr) => {
+      const next: Record<string, DealCard[]> = {};
+      for (const k of Object.keys(curr)) next[k] = [...curr[k]];
+      const idx = next[from.columnId].findIndex((c) => c.id === cardId);
+      if (idx < 0) return curr;
+      const [moved] = next[from.columnId].splice(idx, 1);
+      // Plain-column drops carry an index; moving to a column without statuses clears the status.
+      const hasStatuses = DEAL_COLUMNS.find((c) => c.id === to.columnId)?.statuses;
+      const card = hasStatuses ? moved : { ...moved, status: undefined };
+      next[to.columnId].splice(Math.min(to.index, next[to.columnId].length), 0, card);
+      return next;
+    });
+  }, []);
+  const handleStatusChange = useCallback((event: KanbanStatusChangeEvent) => {
+    const { cardId, from, to } = event;
+    setDeals((curr) => {
+      const next: Record<string, DealCard[]> = {};
+      for (const k of Object.keys(curr)) next[k] = [...curr[k]];
+      const idx = next[from.columnId].findIndex((c) => c.id === cardId);
+      if (idx < 0) return curr;
+      const [moved] = next[from.columnId].splice(idx, 1);
+      // Zone drops carry no index: the card goes to the top of the target column.
+      next[to.columnId].unshift({ ...moved, status: String(to.statusId) });
+      return next;
+    });
+  }, []);
   const handleMoveD = useMemo(() => makeMoveHandler(setBoardD), []);
   const [lastMove, setLastMove] = useState<string>('—');
   const handleMoveA = useMemo(() => makeMoveHandler(setBoardA), []);
@@ -472,6 +547,60 @@ export function Demo() {
             Last onMove: {lastMove}
           </Text>
         </Stack>
+      </Example>
+
+      <Example
+        title="Multi-status columns"
+        description="Qualification and Closing hold several statuses. While dragging, each shows one zone per status; drop on a zone to change status (the card goes to the top). Lead is a plain column. Moving back into Lead from Closing is blocked via canDrop."
+        code={`<Kanban
+  canDrop={(cardId, to) => !(to.columnId === 'lead' && cardId === 'z-6')}
+  onMove={handleMove}
+  onStatusChange={handleStatusChange}
+>
+  <Kanban.Column id="lead" aria-label="Lead">…</Kanban.Column>
+  <Kanban.Column
+    id="qualification"
+    aria-label="Qualification"
+    statuses={[
+      { id: 'new', label: 'New' },
+      { id: 'contacted', label: 'Contacted' },
+      { id: 'meeting', label: 'Meeting set' },
+    ]}
+  >
+    <Kanban.Card id="z-3" status="new">
+      <Card padding="sm">…<Badge>New</Badge></Card>
+    </Kanban.Card>
+  </Kanban.Column>
+</Kanban>`}
+      >
+        <Kanban
+          data-testid="status-zones-board"
+          canDrop={canDropDeal}
+          onMove={handleMoveDeals}
+          onStatusChange={handleStatusChange}
+        >
+          {DEAL_COLUMNS.map((col) => (
+            <Kanban.Column key={col.id} id={col.id} aria-label={col.title} statuses={col.statuses}>
+              <Title order={3} size="sm">
+                {col.title}
+              </Title>
+              {deals[col.id].map((card) => (
+                <Kanban.Card key={card.id} id={card.id} status={card.status}>
+                  <Card padding="sm">
+                    <Stack gap="xs">
+                      <Text weight="medium">{card.title}</Text>
+                      {card.status && (
+                        <Badge tone="neutral" size="sm">
+                          {DEAL_STATUS_LABELS[card.status]}
+                        </Badge>
+                      )}
+                    </Stack>
+                  </Card>
+                </Kanban.Card>
+              ))}
+            </Kanban.Column>
+          ))}
+        </Kanban>
       </Example>
 
       <Example

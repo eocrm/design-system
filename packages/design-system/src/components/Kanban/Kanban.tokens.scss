@@ -11,6 +11,17 @@
   --kanban-column-padding: var(--space-3);
   --kanban-column-gap: var(--space-2);
 
+  // Status zones (drag-time overlay in multi-status columns)
+  --kanban-zone-gap: var(--space-2);
+  --kanban-zone-padding: var(--space-2);
+  --kanban-zone-radius: var(--radius-md);
+  --kanban-zone-bg: var(--color-bg-subtle);
+  --kanban-zone-border: var(--color-border-strong);
+  --kanban-zone-bg-active: var(--color-accent-subtle-bg);
+  --kanban-zone-border-active: var(--color-accent);
+  --kanban-zone-disabled-opacity: var(--opacity-disabled);
+  --kanban-zone-label-color: var(--color-fg-muted);
+
   // Card — drag state lift
   --kanban-card-shadow-dragging: var(--shadow-lg);
 }

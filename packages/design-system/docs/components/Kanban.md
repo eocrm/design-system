@@ -109,14 +109,41 @@ Controlled-only: the consumer applies each `onMove`. Column layout (header, foot
 
 **Keyboard reorder** works WITHIN a column (Tab to Card/Handle, Space pick up, Arrow keys move, Space drop). Cross-column keyboard moves are NOT supported in v1.
 
+**Multi-status columns**: give a column `statuses` and tag each card with `status`. While a card is dragged, the column's card area is covered by one labelled zone per status; dropping on a zone fires `onStatusChange` (not `onMove`). Drops on zones carry no index: the consumer decides where the card lands (e.g. top of the column). `canDrop(cardId, { columnId, statusId? })` can forbid a target (disabled zone / dimmed plain column).
+
+```tsx
+<Kanban
+  canDrop={(cardId, to) => to.columnId !== 'lead'}
+  onMove={handleMove}
+  onStatusChange={({ cardId, to }) => setStatus(cardId, to.columnId, to.statusId)}
+>
+  <Kanban.Column
+    id="qualification"
+    aria-label="Qualification"
+    statuses={[
+      { id: 'new', label: 'New' },
+      { id: 'contacted', label: 'Contacted' },
+    ]}
+  >
+    <Kanban.Card id="a" status="new">
+      <Card>Acme</Card>
+    </Kanban.Card>
+  </Kanban.Column>
+</Kanban>
+```
+
+`canDrop` is called frequently during a drag (on every collision pass), so it must be pure and cheap. It is never asked about a multi-status column as a whole, only about its zones.
+
 **When NOT to use**
 
 - Single-column drag-to-reorder — use `<Sortable>`.
 - Pure display boards with no drag — use `<Stack>` + `<Card>`.
+- Zones when users need to reorder cards within a stage: zone drops carry no index.
 - Column reordering is not supported; columns render in source JSX order.
 
 **Anti-patterns**
 
+- ❌ Relying on zones to show a card's status while idle. Zones exist only during a drag; render the status as a `<Badge>` in the card.
 - ❌ Expecting cross-column keyboard reorder. dnd-kit's stock coordinate-getter is per-`SortableContext`. v2 will ship a custom getter that bridges columns.
 - ❌ Leaving `<Kanban.Column>` unnamed. Screen-reader drag announcements name the destination column from its `aria-label` or `aria-labelledby`; without either they fall back to "column 2 of 3". A named column also renders as `role="group"` so the name isn't inert.
 - ❌ A content-heavy `<Kanban.Card>` with no `aria-label`. The card announces itself by its rendered text, so a card carrying title + assignee + due date + badges reads all of it on every drag step. One `aria-label` fixes it.
