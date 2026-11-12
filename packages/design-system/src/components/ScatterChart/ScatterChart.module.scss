@@ -78,6 +78,10 @@
   stroke-width: var(--scatter-dot-ring-width);
 }
 
+.dot[data-strong] {
+  stroke-width: var(--scatter-dot-strong-ring-width);
+}
+
 .trend {
   fill: none;
   stroke: var(--chart-series-color, currentColor);

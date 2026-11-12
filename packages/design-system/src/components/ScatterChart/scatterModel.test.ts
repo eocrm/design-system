@@ -4,6 +4,7 @@ import {
   computeScatterLayout,
   inspectionOrder,
   linearFit,
+  markerPath,
   nearestDot,
   resolveScatterSeries,
   scatterSizeDomain,
@@ -414,5 +415,55 @@ describe('sized markers on narrow plots (DS-68)', () => {
         expect(d.cx + ring).toBeLessThanOrEqual(l.plot.x + l.plot.width);
       }
     }
+  });
+});
+
+describe('markerPath', () => {
+  const bbox = (d: string) => {
+    // Absolute coords only for triangle/square? Parse by drawing: use numbers pairs via simple interpreter.
+    const nums = (d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+    return nums;
+  };
+  it('returns distinct closed paths per shape', () => {
+    const d = (['circle', 'square', 'triangle'] as const).map((s) => markerPath(s, 10, 20, 5));
+    expect(new Set(d).size).toBe(3);
+    expect(d[1].endsWith('Z')).toBe(true);
+    expect(d[2].endsWith('Z')).toBe(true);
+  });
+  it('centres the square and triangle on (cx, cy)', () => {
+    const sq = bbox(markerPath('square', 10, 20, 5));
+    expect(sq.slice(0, 2)).toEqual([5, 15]); // top-left corner
+    const tri = bbox(markerPath('triangle', 10, 20, 5));
+    expect(tri).toEqual([10, 15, 15, 25, 5, 25]); // apex, then base corners around cx
+  });
+});
+
+describe('emphasis strong', () => {
+  const strong = resolveScatterSeries([
+    {
+      key: 'a',
+      label: 'a',
+      emphasis: 'strong',
+      shape: 'square',
+      points: [
+        { x: 1, y: 1 },
+        { x: 2, y: 2, size: 5 },
+      ],
+    },
+  ]);
+  it('resolves shape and strong onto the series and dots', () => {
+    expect(strong[0].shape).toBe('square');
+    const layout = computeScatterLayout({ ...base, series: strong, strongRadius: 8 });
+    expect(layout.dots.every((d) => d.strong && d.shape === 'square')).toBe(true);
+  });
+  it('gives unsized strong dots the strong radius and keeps sized dots on the size scale', () => {
+    const layout = computeScatterLayout({ ...base, series: strong, strongRadius: 8 });
+    expect(layout.dots.find((d) => d.index === 0)!.r).toBe(8);
+    expect(layout.dots.find((d) => d.index === 1)!.r).toBe(12);
+  });
+  it('leaves default dots alone', () => {
+    const [s] = resolve([{ x: 1, y: 1 }]);
+    const layout = computeScatterLayout({ ...base, series: [s], strongRadius: 8 });
+    expect(layout.dots[0]).toMatchObject({ r: DOT_RADIUS, strong: false });
   });
 });

@@ -328,6 +328,16 @@
     border-radius: 0;
     background: transparent;
   }
+
+  // ScatterChart series with an explicit shape; square is the default box.
+  &[data-shape='circle'] {
+    border-radius: var(--radius-full);
+  }
+
+  &[data-shape='triangle'] {
+    border-radius: 0;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  }
 }
 
 // ScatterChart reference lines: the same dash patterns as their plot lines.

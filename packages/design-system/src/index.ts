@@ -926,6 +926,7 @@ export type { DonutChartProps, DonutSegment } from './components/DonutChart';
 export { ScatterChart } from './components/ScatterChart';
 export type {
   ScatterChartProps,
+  ScatterMarkerShape,
   ScatterPoint,
   ScatterReference,
   ScatterSeries,

@@ -20,13 +20,7 @@ import { useSize } from '../_internal/useSize';
 import { ChartLegend } from '../Chart/ChartLegend';
 import { ChartTooltip } from '../Chart/ChartTooltip';
 import { readPx } from '../Chart/readPx';
-import {
-  LABEL_GAP,
-  MARKER_RADIUS,
-  markerPath,
-  markerShape,
-  REFERENCE_DASHES,
-} from '../Chart/chartModel';
+import { LABEL_GAP, MARKER_RADIUS, markerPath, REFERENCE_DASHES } from '../Chart/chartModel';
 import {
   computeScatterLayout,
   inspectionOrder,
@@ -39,7 +33,13 @@ import {
 } from './scatterModel';
 import styles from './ScatterChart.module.scss';
 
-export type { ScatterPoint, ScatterReference, ScatterSeries, ScatterXScale } from './scatterModel';
+export type {
+  ScatterMarkerShape,
+  ScatterPoint,
+  ScatterReference,
+  ScatterSeries,
+  ScatterXScale,
+} from './scatterModel';
 
 export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
   /** Accessible name of the figure and caption of its data table, e.g. "Bowl vs meal size". Required. */
@@ -81,10 +81,11 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
   footnote?: ReactNode;
 }
 
-/** Fallbacks for `--scatter-hit-radius` / `--scatter-dot-min` / `--scatter-dot-max` (`--space-6` / `--space-1` / `--space-4`) where computed styles don't resolve (jsdom). */
+/** Fallbacks for `--scatter-hit-radius` / `--scatter-dot-min` / `--scatter-dot-max` / `--scatter-dot-strong` (`--space-6` / `--space-1` / `--space-4` / `--space-2`) where computed styles don't resolve (jsdom). */
 const HIT_RADIUS = 24;
 const DOT_MIN = 4;
 const DOT_MAX = 16;
+const DOT_STRONG = 8;
 const NO_HIDDEN: string[] = [];
 
 const seriesStyle = (slot: number) =>
@@ -176,6 +177,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
     ],
     [plotEl],
   );
+  const strongRadius = useMemo(() => readPx(plotEl, '--scatter-dot-strong', DOT_STRONG), [plotEl]);
   const references = useMemo(() => [reference ?? []].flat(), [reference]);
   // Over every series, hidden included, so a legend toggle never resizes the remaining dots.
   const sizeDomain = useMemo(() => scatterSizeDomain(resolved), [resolved]);
@@ -195,6 +197,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
             trendLine,
             sizeRange,
             sizeDomain,
+            strongRadius,
           })
         : null,
     [
@@ -211,6 +214,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       trendLine,
       sizeRange,
       sizeDomain,
+      strongRadius,
     ],
   );
 
@@ -314,6 +318,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       key: s.key,
       label: s.label,
       slot: s.slot,
+      shape: s.shape,
       comparison: false,
       overflow: s.overflow,
       locked: isLocked(s.key),
@@ -504,9 +509,10 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                 >
                   <path
                     className={styles.dot}
-                    d={markerPath(markerShape(d.slot), 0, 0, d.r)}
+                    d={markerPath(d.shape, 0, 0, d.r)}
                     transform={`translate(${d.cx},${d.cy})`}
                     data-scatter-dot=""
+                    data-strong={d.strong || undefined}
                   />
                 </g>
               ))}
@@ -515,7 +521,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                   <path
                     className={styles.marker}
                     d={markerPath(
-                      markerShape(currentDot.slot),
+                      currentDot.shape,
                       0,
                       0,
                       Math.max(currentDot.r, MARKER_RADIUS) + 1,

@@ -456,3 +456,39 @@ describe('ScatterChart', () => {
     expect(document.querySelector('[data-chart-tooltip]')).not.toBeNull();
   });
 });
+
+describe('ScatterChart shape and emphasis (DS-72)', () => {
+  const shaped: ScatterChartProps = {
+    ...base,
+    series: [
+      { key: 'sq', label: 'Square', shape: 'square', points: [{ x: 1, y: 1 }] },
+      { key: 'tri', label: 'Tri', shape: 'triangle', emphasis: 'strong', points: [{ x: 2, y: 2 }] },
+      { key: 'plain', label: 'Plain', points: [{ x: 3, y: 3 }] },
+    ],
+  };
+  it('marks strong dots and leaves others unmarked', () => {
+    const layout = stubLayout();
+    const { container } = render(<ScatterChart {...shaped} />);
+    layout.fire();
+    expect(container.querySelector('[data-series="tri"] [data-scatter-dot]')).toHaveAttribute(
+      'data-strong',
+    );
+    expect(container.querySelector('[data-series="sq"] [data-scatter-dot]')).not.toHaveAttribute(
+      'data-strong',
+    );
+  });
+  it('draws the series shape in the plot and the legend swatch', () => {
+    const layout = stubLayout();
+    const { container } = render(<ScatterChart {...shaped} />);
+    layout.fire();
+    const d = (k: string) =>
+      container.querySelector(`[data-series="${k}"] [data-scatter-dot]`)!.getAttribute('d');
+    expect(d('sq')).toMatch(/^M[^A-Za-z]*h/); // square path
+    expect(d('tri')).not.toBe(d('sq'));
+    const swatch = (name: string) =>
+      screen.getByRole('button', { name }).querySelector('[data-shape]');
+    expect(swatch('Square')).toHaveAttribute('data-shape', 'square');
+    expect(swatch('Tri')).toHaveAttribute('data-shape', 'triangle');
+    expect(swatch('Plain')).toBeNull();
+  });
+});

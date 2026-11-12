@@ -86,6 +86,23 @@ const bowlVsEaten: ScatterSeries[] = [
   },
 ];
 
+const shapeSeries: ScatterSeries[] = [
+  { key: 'meal', label: 'Meal', points: todaySeries[0].points },
+  {
+    key: 'poo',
+    label: 'Poo',
+    shape: 'square',
+    points: todaySeries[0].points.slice(0, 3).map((p) => ({ ...p, y: 5, size: undefined })),
+  },
+  {
+    key: 'visit',
+    label: 'Long visit',
+    shape: 'triangle',
+    emphasis: 'strong',
+    points: todaySeries[0].points.slice(1, 3).map((p) => ({ ...p, y: 20, size: undefined })),
+  },
+];
+
 function SeriesToggleExample() {
   const [hidden, setHidden] = useState<string[]>([]);
   return (
@@ -144,6 +161,28 @@ export function ScatterChartDemo() {
             formatX={formatTime}
             formatY={formatGrams}
             formatSize={formatGrams}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Shape and emphasis"
+        description="Per-series marker shape and strong emphasis: meals are circles, 'Poo' squares and 'Long visit' strong triangles."
+        code={`<ScatterChart ... series={[
+  { key: 'meal', label: 'Meal', points: meals },
+  { key: 'poo', label: 'Poo', shape: 'square', points: poo },
+  { key: 'visit', label: 'Long visit', shape: 'triangle', emphasis: 'strong', points: visits },
+]} />`}
+      >
+        <Cell title="Shapes">
+          <ScatterChart
+            label="Meals, poo and long visits"
+            xScale="time"
+            series={shapeSeries}
+            xLabel="Time"
+            yLabel="Eaten so far"
+            formatX={formatTime}
+            formatY={formatGrams}
           />
         </Cell>
       </Example>
