@@ -51,6 +51,11 @@
   }
 }
 
+// Keep the label where it was: the grid cell would otherwise centre it.
+.alignStart.loading {
+  justify-items: start;
+}
+
 .content {
   display: inline-flex;
   align-items: center;
