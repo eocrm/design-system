@@ -87,6 +87,9 @@ export type {
   ChartType,
 } from './chartModel';
 export type { ChartRange } from './chartRange';
+
+/** What a plain click or tap does on a selectable `Chart`: `'drag'` (default) or `'tap'` (selects one category). */
+export type ChartSelectOn = 'drag' | 'tap';
 export type { ChartViewport } from './chartViewport';
 
 /** What `onPlotDoubleClick` reports about the double-clicked (double-tapped, or Enter-activated) plot point. */
@@ -203,6 +206,13 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   defaultSelectedRange?: ChartRange | null;
   /** Called with the next selection (or `null` when cleared) on every user change. Also turns selection on. */
   onSelectedRangeChange?: (range: ChartRange | null) => void;
+  /**
+   * What a plain click or tap does while selection is on (ignored otherwise). `'drag'` (default): inspects, and
+   * outside the band clears. `'tap'`: selects that one category; tapping the already-selected single category
+   * clears it, tapping another replaces the range. Drag and long-press still select a range. Space toggles the
+   * inspected category in both modes.
+   */
+  selectOn?: ChartSelectOn;
   /**
    * Controlled zoomed category range (`null` = all categories). While zoomed, categories, series, markers and
    * value labels are sliced to the range, the y-axis rescales and `details` still receives original indices.
@@ -345,6 +355,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     selectedRange,
     defaultSelectedRange,
     onSelectedRangeChange,
+    selectOn = 'drag',
     zoomRange,
     defaultZoomRange,
     onZoomRangeChange,
@@ -648,6 +659,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const clampIndex = (i: number) => Math.max(0, Math.min(n - 1, i));
   const rangeAt = (a: number, b: number) =>
     rangeFromIndices(clampIndex(a), clampIndex(b), categories);
+  // One category: a second pick of the selected single category clears it, any other replaces the selection.
+  const toggleSelect = (i: number) =>
+    select(selectedIdx && selectedIdx.from === i && selectedIdx.to === i ? null : rangeAt(i, i));
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const extending = selectable && e.shiftKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft');
     if (!extending && e.key !== 'Shift') anchor.current = null;
@@ -687,6 +701,11 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         clientY: rect.top + layout.plot.y + layout.plot.height / 2,
         source: 'keyboard',
       });
+      return;
+    }
+    if (e.key === ' ' && selectable && plainKey && !e.shiftKey && current !== null) {
+      e.preventDefault();
+      toggleSelect(current);
       return;
     }
     let next: number | null;
@@ -838,6 +857,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     setDraft(null);
     const index = indexAt(e) ?? p.index;
     if (p.dragging) select(rangeAt(p.index, index));
+    else if (selectOn === 'tap') toggleSelect(index);
     else if (
       hasSelection &&
       (selectedIdx === null || index < selectedIdx.from || index > selectedIdx.to)

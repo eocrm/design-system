@@ -134,6 +134,30 @@ const todayAhead: ChartAnnotation[] = [
 ];
 const mealDetails = (i: number) => [`${[190, 255, 240, 80][i]} kcal`, `${[3, 4, 4, 1][i]} times`];
 
+function PickADayExample() {
+  const [range, setRange] = useState<ChartRange | null>(null);
+  return (
+    <Stack gap="sm">
+      <Cell title="Cleanings per day">
+        <Chart
+          type="bar"
+          label="Cleanings per day, pick a day"
+          categories={scaleDays}
+          series={cleanings}
+          formatValue={formatCount}
+          integerValues
+          selectOn="tap"
+          selectedRange={range}
+          onSelectedRangeChange={setRange}
+        />
+      </Cell>
+      <Text size="sm" tone="muted">
+        {range ? `Picked ${range.from}` : 'Tap a day'}
+      </Text>
+    </Stack>
+  );
+}
+
 function RangeSelectionExample() {
   const [range, setRange] = useState<ChartRange | null>(null);
   return (
@@ -311,6 +335,16 @@ export function ChartDemo() {
 <Text size="sm" tone="muted">{range ? \`Selected \${range.from} – \${range.to}\` : ''}</Text>`}
       >
         <RangeSelectionExample />
+      </Example>
+
+      <Example
+        title="Pick a day"
+        description='selectOn="tap": a click or tap selects that one category; tapping it again clears it (the only way to clear on a phone), tapping another replaces it. Drag and long-press still select a range. Space toggles the inspected category with the keyboard (in both modes).'
+        code={`<Chart type="bar" label="Cleanings per day" categories={days} series={cleanings}
+  selectOn="tap" selectedRange={range} onSelectedRangeChange={setRange}
+/>`}
+      >
+        <PickADayExample />
       </Example>
 
       <Example

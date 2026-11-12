@@ -11,6 +11,7 @@ export type {
   ChartProps,
   ChartRange,
   ChartReferenceLine,
+  ChartSelectOn,
   ChartSeries,
   ChartSeriesColor,
   ChartType,
