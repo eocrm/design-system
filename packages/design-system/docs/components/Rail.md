@@ -107,7 +107,7 @@ import { Home, Users, Settings } from 'lucide-react';
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `icon` | `ReactNode` | no | Leading icon — required for top-level items (the only thing visible when the rail is collapsed); optional for items nested inside a `<Rail.Group>` (Jira renders subitems without icons). |
-| `badge` | `ReactNode` | no | Optional trailing badge — typically a `<Badge>` or a small numeric pill. Right-aligned when the rail is expanded; fades to invisible when collapsed (the badge content is announced by screen readers either way since it's still in the DOM). |
+| `badge` | `ReactNode` | no | Optional trailing badge — typically a `<Badge>` or a small numeric pill. Right-aligned when the rail is expanded; when collapsed the badge is visually hidden and a small dot on the icon signals it (the badge content stays in the accessible name either way). |
 | `children` | `ReactNode` | no | The label text — visible when expanded, used as the tooltip when collapsed. Optional at the type level only to satisfy the polymorphic `forwardRef` generic; in practice every item has a label. |
 | `as` | `ElementType` | no |  |
 | …native | | | plus native attributes of the `as` element (default `<a>`) |
@@ -166,7 +166,7 @@ import { Home, Users, Settings } from 'lucide-react';
 - ❌ Adding a synthetic "All deals" first subitem so the parent list stays reachable — that's what `Rail.Group`'s `as` prop is for. Make the group itself the link.
 - ❌ Putting an icon-less top-level item directly inside a section — when the rail collapses there's nothing visible. Items without icons belong inside a `<Rail.Group>`.
 
-- **`Rail.Item`** defaults to `<a href>`. Expanded it shows icon + label + optional `badge` on one row; collapsed (top-level) it shows the icon only, wrapped in a `<Tooltip>` so the label stays discoverable (only when the children are a string and the item is a direct rail child — group subitems show their labels in the flyout). A `badge` fades as the rail collapses.
+- **`Rail.Item`** defaults to `<a href>`. Expanded it shows icon + label + optional `badge` on one row; collapsed (top-level) it shows the icon only, wrapped in a `<Tooltip>` so the label stays discoverable (only when the children are a string and the item is a direct rail child — group subitems show their labels in the flyout). Collapsed, a `badge` is visually hidden (still in the accessible name) and a small dot appears on the icon.
 - **`Rail.Section title="…"`** renders `<div role="group">` with the title as `aria-label`; visually the title is a small-caps muted line above the items, faded out (height 0, opacity 0) when collapsed.
 - **`Rail.CollapseToggle`** is a ghost icon-only button whose `aria-label` flips between expand / collapse; its chevron rotates 180° when collapsed so it always points outward. Drop it in `<Rail.Footer>` or anywhere inside the rail. `Rail.Footer` typically holds a user chip, theme switcher or the toggle.
 - **`Rail.Spacer`:** when the item list overflows, the body scrolls and the spacer collapses to nothing, so items after it scroll WITH the content; only `Rail.Footer` stays outside the scroll box. Use the Footer for anything that must stay visible on a tall scroll.

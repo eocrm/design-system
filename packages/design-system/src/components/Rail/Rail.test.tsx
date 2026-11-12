@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { stubMatchMedia } from '../_internal/matchMediaStub.testutil';
 import { Rail, useRail } from './Rail';
+import { VisuallyHidden } from '../VisuallyHidden';
 import { markTourTarget } from '../_internal/overlay/tourHold.testutil';
 import { ru } from '../../i18n/ru';
 
@@ -209,6 +210,40 @@ describe('Rail', () => {
       </Rail>,
     );
     expect(screen.getByText('12')).toBeInTheDocument();
+  });
+
+  it('collapsed item keeps badge text in the accessible name', () => {
+    render(
+      <Rail collapsed>
+        <Rail.Item
+          href="/e"
+          icon={<span aria-hidden />}
+          badge={
+            <>
+              3<VisuallyHidden> unread</VisuallyHidden>
+            </>
+          }
+        >
+          Emails
+        </Rail.Item>
+      </Rail>,
+    );
+    expect(screen.getByRole('link', { name: /Emails.*3\s*unread/ })).toBeInTheDocument();
+  });
+
+  it('collapsed item with a badge carries the dot modifier; none without', () => {
+    render(
+      <Rail collapsed>
+        <Rail.Item href="/a" icon={<span aria-hidden />} badge="3">
+          WithBadge
+        </Rail.Item>
+        <Rail.Item href="/b" icon={<span aria-hidden />}>
+          NoBadge
+        </Rail.Item>
+      </Rail>,
+    );
+    expect(screen.getByRole('link', { name: /WithBadge/ })).toHaveAttribute('data-has-badge');
+    expect(screen.getByRole('link', { name: /NoBadge/ })).not.toHaveAttribute('data-has-badge');
   });
 
   it('aria-current="page" item gets active-state styling via the CSS selector', () => {

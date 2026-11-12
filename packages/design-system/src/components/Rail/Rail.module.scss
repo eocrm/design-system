@@ -285,6 +285,23 @@
   width: var(--rail-item-icon-size);
   height: var(--rail-item-icon-size);
   flex-shrink: 0;
+
+  // Internal anchor for the collapsed badge dot (Rule 4 escape hatch).
+  position: relative;
+}
+
+// Collapsed badge dot: the badge itself is visually hidden (kept in the
+// accessible name); this dot on the icon signals "something here".
+.item[data-has-badge] .itemIcon::after {
+  content: '';
+  position: absolute;
+  top: calc(-1 * var(--space-1));
+  right: calc(-1 * var(--space-1));
+  width: var(--rail-item-badge-dot-size);
+  height: var(--rail-item-badge-dot-size);
+  border-radius: var(--radius-full);
+  background: var(--rail-item-badge-dot-bg);
+  box-shadow: 0 0 0 var(--border-width-emphasis) var(--rail-item-badge-dot-ring);
 }
 
 .itemLabel {
@@ -297,10 +314,14 @@
   transition: var(--rail-label-transition);
 }
 
-.collapsed .itemLabel,
-.collapsed .itemBadge {
+.collapsed .itemLabel {
   opacity: var(--rail-label-opacity-hidden);
   pointer-events: none;
+}
+
+// Visually hidden, not opacity:0 — keeps the text in the accessible name.
+.collapsed .itemBadge {
+  @include visually-hidden;
 }
 
 .itemBadge {

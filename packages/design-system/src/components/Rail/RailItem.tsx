@@ -23,9 +23,9 @@ interface RailItemOwnProps {
   icon?: ReactNode;
   /**
    * Optional trailing badge — typically a `<Badge>` or a small numeric
-   * pill. Right-aligned when the rail is expanded; fades to invisible
-   * when collapsed (the badge content is announced by screen readers
-   * either way since it's still in the DOM).
+   * pill. Right-aligned when the rail is expanded; when collapsed the badge
+   * is visually hidden and a small dot on the icon signals it (the badge
+   * content stays in the accessible name either way).
    */
   badge?: ReactNode;
   /**
@@ -82,6 +82,7 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
     <Component
       ref={ref}
       className={clsx(styles.item, className)}
+      data-has-badge={collapsed && badge != null ? '' : undefined}
       // {...rest} last so consumer overrides win (Pattern A), except that the
       // duplicate-presentation context owns aria-current below.
       {...rest}
