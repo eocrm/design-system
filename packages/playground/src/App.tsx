@@ -78,6 +78,7 @@ import { StatGroupDemo } from './pages/components/StatGroupDemo';
 import { ChartDemo } from './pages/components/ChartDemo';
 import { FunnelChartDemo } from './pages/components/FunnelChartDemo';
 import { DonutChartDemo } from './pages/components/DonutChartDemo';
+import { ChartSyncDemo } from './pages/components/ChartSyncDemo';
 import { LaneChartDemo } from './pages/components/LaneChartDemo';
 import { ScatterChartDemo } from './pages/components/ScatterChartDemo';
 import { HeatmapDemo } from './pages/components/HeatmapDemo';
@@ -238,6 +239,7 @@ export default function App() {
             <Route path="/components/chart" element={<ChartDemo />} />
             <Route path="/components/funnel-chart" element={<FunnelChartDemo />} />
             <Route path="/components/donut-chart" element={<DonutChartDemo />} />
+            <Route path="/components/chart-sync" element={<ChartSyncDemo />} />
             <Route path="/components/lane-chart" element={<LaneChartDemo />} />
             <Route path="/components/scatter-chart" element={<ScatterChartDemo />} />
             <Route path="/components/heatmap" element={<HeatmapDemo />} />

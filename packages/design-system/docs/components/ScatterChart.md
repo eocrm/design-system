@@ -60,6 +60,10 @@ function MealsToday({ bowlA, bowlB, usualPace }: MealsTodayProps) {
 }
 ```
 
+## Syncing with other charts (`categoryValues`, `sync`)
+
+Inside a [`ChartSync`](./ChartSync.md), inspecting a point shows a crosshair and tooltip at the same x in the other charts. `sync={false}` opts this chart out. A scatter chart syncs by x value, so it lines up with category charts that pass `categoryValues`; category charts without it are skipped.
+
 <!-- props:start -->
 
 ## Props

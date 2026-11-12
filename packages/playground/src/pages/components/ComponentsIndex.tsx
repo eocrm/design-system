@@ -370,6 +370,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['DonutChart'],
   },
   {
+    to: '/components/chart-sync',
+    name: 'ChartSync',
+    description:
+      'Wrapper that syncs hover across the charts inside it: a crosshair, highlighted marks and a tooltip echo at the same x.',
+    preview: SCHEMATICS['ChartSync'],
+  },
+  {
     to: '/components/lane-chart',
     name: 'LaneChart',
     description:

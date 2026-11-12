@@ -150,6 +150,7 @@
     "cluster": "Display",
     "composes": [
       "Button",
+      "ChartSync",
       "Cluster",
       "EmptyState",
       "LiveRegion",
@@ -159,6 +160,16 @@
       "DonutChart",
       "FunnelChart",
       "Heatmap",
+      "LaneChart",
+      "ScatterChart"
+    ]
+  },
+  "ChartSync": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": [
+      "Chart",
       "LaneChart",
       "ScatterChart"
     ]
@@ -625,6 +636,7 @@
     "composes": [
       "Button",
       "Chart",
+      "ChartSync",
       "Cluster",
       "EmptyState",
       "LiveRegion",
@@ -919,6 +931,7 @@
     "cluster": "Display",
     "composes": [
       "Chart",
+      "ChartSync",
       "EmptyState",
       "LiveRegion",
       "VisuallyHidden"

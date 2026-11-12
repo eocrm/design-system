@@ -1601,6 +1601,35 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       />
     </svg>
   ),
+  ChartSync: (
+    <svg width={84} height={44} viewBox="0 0 84 44" fill="none" aria-hidden="true">
+      <polyline
+        points="4,16 20,10 36,14 52,8 68,12 80,9"
+        stroke="var(--color-accent)"
+        strokeWidth={2}
+        fill="none"
+      />
+      {[6, 18, 30, 42, 54, 66].map((x, i) => (
+        <rect
+          key={x}
+          x={x}
+          y={40 - [4, 8, 6, 10, 5, 9][i]}
+          width={7}
+          height={[4, 8, 6, 10, 5, 9][i]}
+          fill="var(--color-accent-subtle-bg)"
+        />
+      ))}
+      <line
+        x1={42}
+        y1={2}
+        x2={42}
+        y2={42}
+        stroke="var(--color-accent)"
+        strokeWidth={1}
+        strokeDasharray="2 2"
+      />
+    </svg>
+  ),
   LaneChart: (
     <svg width={84} height={44} viewBox="0 0 84 44" fill="none" aria-hidden="true">
       {[6, 18, 30, 42, 54, 66].map((x, i) => (

@@ -40,6 +40,10 @@ function Effects({
 }
 ```
 
+## Syncing with other charts (`categoryValues`, `sync`)
+
+Inside a [`ChartSync`](./ChartSync.md), inspecting a category shows a crosshair and tooltip at the same x in the other charts. `sync={false}` opts this chart out. Pass `categoryValues` (the start of each category as a `Date` or epoch ms, strictly ascending, same length as `categories`) to sync by value, so charts with different labels or buckets, and `ScatterChart`, line up; without it only charts with exactly matching category labels sync.
+
 <!-- props:start -->
 
 ## Props
