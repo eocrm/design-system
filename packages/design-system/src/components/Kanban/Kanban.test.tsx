@@ -1432,6 +1432,32 @@ describe('Kanban — canDrop', () => {
     fireEvent.pointerUp(document, { clientX: at(1, 100)[0], clientY: 100 });
   });
 
+  it('never asks canDrop about a multi-status column without a statusId', async () => {
+    const user = userEvent.setup();
+    const canDrop = vi.fn(() => false);
+    render(
+      <Board
+        canDrop={canDrop}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: [{ id: 'new', label: 'New' }] }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    pressAndMove('a1', [at(1, 100)]);
+    fireEvent.pointerUp(document, { clientX: at(1, 100)[0], clientY: 100 });
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    await user.keyboard('[Escape]');
+    expect(canDrop).toHaveBeenCalled();
+    for (const [, to] of canDrop.mock.calls as unknown as [unknown, KanbanDropTarget][]) {
+      expect(to.columnId === 'b' && to.statusId === undefined).toBe(false);
+    }
+  });
+
   it('canDrop is not called while idle', () => {
     const canDrop = vi.fn(() => true);
     render(<Board canDrop={canDrop} columns={cols} />);
