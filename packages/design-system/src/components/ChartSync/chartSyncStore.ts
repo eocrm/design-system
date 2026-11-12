@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useId, useMemo, useSyncExternalStore } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from 'react';
 import type { ChartSyncPoint } from './chartSyncMatch';
 
 /** One `ChartSync` group's current point: a tiny external store, so a hover re-renders subscribers only. */
@@ -65,4 +73,24 @@ export function useChartSync(enabled: boolean) {
     [store, id],
   );
   return { echo, publish };
+}
+
+/**
+ * Internal: publishes `point` through `publish` after commit whenever its content (or `publish`) changes: not on
+ * mount, never twice, and `null` withdraws it.
+ */
+export function useSyncPublish(
+  publish: (p: Omit<ChartSyncPoint, 'source'> | null) => void,
+  point: Omit<ChartSyncPoint, 'source'> | null,
+) {
+  const key = point && `${point.label}\0${point.from}\0${point.to}`;
+  const published = useRef<{ key: string | null; publish: typeof publish }>({
+    key: null,
+    publish,
+  });
+  useEffect(() => {
+    if (published.current.key === key && published.current.publish === publish) return;
+    published.current = { key, publish };
+    publish(point);
+  });
 }

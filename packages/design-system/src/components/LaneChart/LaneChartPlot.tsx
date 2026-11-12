@@ -32,7 +32,7 @@ export function LaneChartPlot({
   gutterRows,
   gutterGap,
   current,
-  echo,
+  echoAttr,
   shownRange,
   clipped,
   tokens,
@@ -46,8 +46,8 @@ export function LaneChartPlot({
   gutterGap: number;
   /** Inspected view index. */
   current: number | null;
-  /** `current` is another chart's synced inspection (`ChartSync`): marked `data-echo`. */
-  echo: boolean;
+  /** `''` when `current` is another chart's synced inspection (`ChartSync`): the band's `data-echo`. */
+  echoAttr: '' | undefined;
   /** The drawn selection (in-progress drag or committed), view indices. */
   shownRange: { from: number; to: number } | null;
   /** A viewport is set: clip category-positioned marks to the plot's x range. */
@@ -127,7 +127,7 @@ export function LaneChartPlot({
         {current !== null && (
           <rect
             className={chartStyles.band}
-            data-echo={echo ? '' : undefined}
+            data-echo={echoAttr}
             x={layout.categoryX[current] - layout.step / 2}
             y={spanY}
             width={layout.step}

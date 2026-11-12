@@ -4,7 +4,6 @@ import {
   useEffect,
   useId,
   useMemo,
-  useRef,
   useState,
   type HTMLAttributes,
   type ReactNode,
@@ -57,8 +56,7 @@ import {
 import type { ChartViewport } from './chartViewport';
 import { useChartDomain } from './useChartDomain';
 import { useChartInteraction } from './useChartInteraction';
-import { useChartSync } from '../ChartSync/chartSyncStore';
-import { categoryPoint, matchCategory } from '../ChartSync/chartSyncMatch';
+import { useCategorySync } from '../ChartSync/useCategorySync';
 import {
   renderAnnotations,
   renderReferenceLines,
@@ -514,25 +512,6 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     [layout, resolvedMarkers.markers],
   );
 
-  const sync = useChartSync(syncEnabled);
-  const badValues = categoryValues !== undefined && categoryValues.length !== allCategories.length;
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'production' || !badValues) return;
-    console.warn(
-      '[Chart] Ignored categoryValues: it must have one value per category. Syncing by category label instead.',
-    );
-  }, [badValues]);
-  const unordered = useMemo(
-    () => !!categoryValues?.some((v, i) => i > 0 && Number(v) <= Number(categoryValues[i - 1])),
-    [categoryValues],
-  );
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'production' || !unordered) return;
-    console.warn(
-      '[Chart] categoryValues must be strictly ascending; synced matching will be wrong.',
-    );
-  }, [unordered]);
-
   const ix = useChartInteraction({
     domain,
     layout,
@@ -563,41 +542,15 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     resetZoom,
   } = ix;
 
-  // Publish this chart's inspected moment after commit, whenever it changes: a new index, a clear, or new data
-  // (categories / categoryValues) under the same index. Keyed by content, so an unchanged point is not re-sent.
-  const own =
-    current === null ? null : categoryPoint(originalIndex(current), allCategories, categoryValues);
-  const ownKey = own && `${own.label}\0${own.from}\0${own.to}`;
-  const published = useRef<{ key: string | null; publish: typeof sync.publish }>({
-    key: null,
-    publish: sync.publish,
+  const { echo, echoPoint } = useCategorySync({
+    enabled: syncEnabled,
+    name: 'Chart',
+    current,
+    categories: allCategories,
+    categoryValues,
+    zoomFrom: zoomFrom ?? 0,
+    layout,
   });
-  useEffect(() => {
-    if (published.current.key === ownKey && published.current.publish === sync.publish) return;
-    published.current = { key: ownKey, publish: sync.publish };
-    sync.publish(own);
-  });
-
-  // Another chart's inspected moment, echoed here (visual only) while this chart inspects nothing itself. Off the
-  // zoom window or the viewport: nothing, the chart does not pan.
-  const matched =
-    sync.echo && layout && current === null
-      ? matchCategory(sync.echo, allCategories, categoryValues)
-      : null;
-  const echoAt = matched === null ? -1 : matched - (zoomFrom ?? 0);
-  const echoX = layout?.categoryX[echoAt];
-  const echo =
-    layout &&
-    echoX !== undefined &&
-    echoX >= layout.plot.x &&
-    echoX <= layout.plot.x + layout.plot.width
-      ? echoAt
-      : null;
-  const echoY = echo === null ? undefined : layout?.plot.y;
-  const echoPoint = useMemo(
-    () => (echoX === undefined || echoY === undefined ? null : { x: echoX, y: echoY }),
-    [echoX, echoY],
-  );
   /** The category drawn as inspected: this chart's own, else the echo. */
   const shown = current ?? echo;
   const echoAttr = echo === null ? undefined : '';

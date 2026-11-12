@@ -497,6 +497,95 @@ describe('ChartSync with ScatterChart and LaneChart', () => {
     ).toBe(true);
   });
 
+  it('a bucket starting before the scatter domain highlights its in-domain points, without a crosshair', () => {
+    setup(
+      <ChartSync>
+        {chart('A', { categoryValues: days })}
+        {scatter('S')}
+      </ChartSync>,
+    );
+    // W1 = [day 1, day 2); S's x extent starts at day 1, 06:00.
+    hover('A', 'W1');
+    expect(figure('S').querySelector('line[data-echo]')).toBeNull();
+    expect(echoMarks('S')).toHaveLength(1);
+    expect(echoTooltip()).toHaveTextContent('t6h');
+  });
+
+  it('a scatter echo skips points clipped by a fixed yDomain', () => {
+    setup(
+      <ChartSync>
+        {chart('A', { categoryValues: days })}
+        {/* Clips the day-2 03:00 point (5 kg), the earliest in W2. */}
+        {scatter('S', { yDomain: [5.5, 10] })}
+        {scatter('T', { yDomain: [20, 30] })}
+      </ChartSync>,
+    );
+    hover('A', 'W2');
+    expect(echoMarks('S')).toHaveLength(1);
+    expect(echoMarks('T')).toHaveLength(0);
+    // Only S's tooltip: T has no visible point in the bucket, so the crosshair alone.
+    expect(document.querySelectorAll('[data-chart-tooltip][data-echo]')).toHaveLength(1);
+    expect(echoTooltip()).toHaveTextContent('t36h');
+    expect(echoTooltip()).toHaveTextContent('6 kg');
+    expect(figure('T').querySelector('line[data-echo]')).not.toBeNull();
+  });
+
+  it('a scatter ignores echoes while it inspects a point itself', () => {
+    setup(
+      <ChartSync>
+        {scatter('S')}
+        {chart('A', { categoryValues: days })}
+      </ChartSync>,
+    );
+    hoverDot('S', day(2, 3));
+    hover('A', 'W1');
+    expect(figure('S').querySelector('[data-echo]')).toBeNull();
+    expect(echoTooltip()).toBeNull();
+  });
+
+  it('a hidden scatter series gets no echo marks', () => {
+    setup(
+      <ChartSync>
+        {chart('A', { categoryValues: days })}
+        {scatter('S', {
+          series: [
+            {
+              key: 'w',
+              label: 'Weight',
+              points: [
+                { x: day(1, 6), y: 4 },
+                { x: day(3, 6), y: 4 },
+              ],
+            },
+            { key: 'v', label: 'Volume', points: [{ x: day(2, 3), y: 5 }] },
+          ],
+          hiddenSeries: ['v'],
+        })}
+      </ChartSync>,
+    );
+    hover('A', 'W2');
+    expect(figure('S').querySelector('line[data-echo]')).not.toBeNull();
+    expect(echoMarks('S')).toHaveLength(0);
+    expect(echoTooltip()).toBeNull();
+  });
+
+  it('LaneChart shows nothing when the match is outside its zoom window or viewport', () => {
+    setup(
+      <ChartSync>
+        {chart('A')}
+        {lane('L', { zoomRange: { from: 'W1', to: 'W2' } })}
+        {lane('M', { viewport: { from: 0, to: 0.6 } })}
+      </ChartSync>,
+    );
+    hover('A', 'W3');
+    expect(figure('L').querySelector('[data-echo]')).toBeNull();
+    expect(figure('M').querySelector('[data-echo]')).toBeNull();
+    expect(echoTooltip()).toBeNull();
+    hover('A', 'W1');
+    expect(figure('L').querySelector('rect[data-echo]')).not.toBeNull();
+    expect(figure('M').querySelector('rect[data-echo]')).not.toBeNull();
+  });
+
   it('server-renders a scatter and a lane chart inside a ChartSync', () => {
     const html = renderToString(
       <ChartSync>

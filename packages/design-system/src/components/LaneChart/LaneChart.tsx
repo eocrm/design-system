@@ -1,12 +1,4 @@
-import {
-  forwardRef,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  type HTMLAttributes,
-  type ReactNode,
-} from 'react';
+import { forwardRef, useEffect, useId, useMemo, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { EmptyState } from '../EmptyState';
 import { LiveRegion } from '../LiveRegion';
@@ -24,8 +16,7 @@ import type { ChartViewport } from '../Chart/chartViewport';
 import type { ChartPlotPointerEvent, ChartSelectOn } from '../Chart/Chart';
 import { useChartDomain } from '../Chart/useChartDomain';
 import { useChartInteraction } from '../Chart/useChartInteraction';
-import { useChartSync } from '../ChartSync/chartSyncStore';
-import { categoryPoint, matchCategory } from '../ChartSync/chartSyncMatch';
+import { useCategorySync } from '../ChartSync/useCategorySync';
 import {
   annotationLabelsAt,
   MARKER_LABEL_BASELINE,
@@ -314,56 +305,15 @@ export const LaneChart = forwardRef<HTMLElement, LaneChartProps>(function LaneCh
   const { selectable, current, activeSource, selectedIdx, hasSelection, draft, point } = ix;
   const { statusText, zoomText, selectionNote, zoomNote, zoomed } = ix;
 
-  const sync = useChartSync(syncEnabled);
-  const badValues = categoryValues !== undefined && categoryValues.length !== allCategories.length;
-  const unordered = useMemo(
-    () => !!categoryValues?.some((v, i) => i > 0 && Number(v) <= Number(categoryValues[i - 1])),
-    [categoryValues],
-  );
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'production') return;
-    if (badValues)
-      console.warn(
-        '[LaneChart] Ignored categoryValues: it must have one value per category. Syncing by category label instead.',
-      );
-    if (unordered)
-      console.warn(
-        '[LaneChart] categoryValues must be strictly ascending; synced matching will be wrong.',
-      );
-  }, [badValues, unordered]);
-  // Publish this chart's inspected moment after commit, whenever it changes (as Chart): keyed by content.
-  const own =
-    current === null ? null : categoryPoint(zoomFrom + current, allCategories, categoryValues);
-  const ownKey = own && `${own.label}\0${own.from}\0${own.to}`;
-  const published = useRef<{ key: string | null; publish: typeof sync.publish }>({
-    key: null,
-    publish: sync.publish,
+  const { echo, echoPoint } = useCategorySync({
+    enabled: syncEnabled,
+    name: 'LaneChart',
+    current,
+    categories: allCategories,
+    categoryValues,
+    zoomFrom,
+    layout,
   });
-  useEffect(() => {
-    if (published.current.key === ownKey && published.current.publish === sync.publish) return;
-    published.current = { key: ownKey, publish: sync.publish };
-    sync.publish(own);
-  });
-  // Another chart's moment, echoed here (visual only) while this chart inspects nothing itself; nothing when it is
-  // off the zoom window or the viewport (the chart does not pan).
-  const matched =
-    sync.echo && layout && current === null
-      ? matchCategory(sync.echo, allCategories, categoryValues)
-      : null;
-  const echoAt = matched === null ? -1 : matched - zoomFrom;
-  const echoX = layout?.categoryX[echoAt];
-  const echo =
-    layout &&
-    echoX !== undefined &&
-    echoX >= layout.plot.x &&
-    echoX <= layout.plot.x + layout.plot.width
-      ? echoAt
-      : null;
-  const echoY = echo === null ? undefined : layout?.plot.y;
-  const echoPoint = useMemo(
-    () => (echoX === undefined || echoY === undefined ? null : { x: echoX, y: echoY }),
-    [echoX, echoY],
-  );
   /** The category drawn as inspected: this chart's own, else the echo. */
   const shown = current ?? echo;
 
@@ -478,7 +428,7 @@ export const LaneChart = forwardRef<HTMLElement, LaneChartProps>(function LaneCh
             gutterRows={gutterRows}
             gutterGap={gutterGap}
             current={shown}
-            echo={echo !== null}
+            echoAttr={echo === null ? undefined : ''}
             shownRange={draft ?? selectedIdx}
             clipped={vp !== null}
             tokens={tokens}

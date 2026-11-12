@@ -3,7 +3,6 @@ import {
   useEffect,
   useId,
   useMemo,
-  useRef,
   useState,
   type CSSProperties,
   type HTMLAttributes,
@@ -32,7 +31,7 @@ import {
   type ScatterSeries,
   type ScatterXScale,
 } from './scatterModel';
-import { useChartSync } from '../ChartSync/chartSyncStore';
+import { useChartSync, useSyncPublish } from '../ChartSync/chartSyncStore';
 import styles from './ScatterChart.module.scss';
 
 export type {
@@ -299,20 +298,11 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
   };
 
   const sync = useChartSync(syncEnabled);
-  // Publish the inspected point's x after commit, whenever it changes; not on mount, never twice (as Chart).
-  const ownX = currentPoint?.x ?? null;
-  const published = useRef<{ x: number | null; publish: typeof sync.publish }>({
-    x: null,
-    publish: sync.publish,
-  });
-  useEffect(() => {
-    if (published.current.x === ownX && published.current.publish === sync.publish) return;
-    published.current = { x: ownX, publish: sync.publish };
-    sync.publish(ownX === null ? null : { from: ownX, to: ownX });
-  });
+  useSyncPublish(sync.publish, currentPoint ? { from: currentPoint.x, to: currentPoint.x } : null);
 
   // Another chart's x range, echoed here (visual only) while this chart inspects nothing itself: a crosshair at
-  // `from` and the points in `[from, to)` (or at `from`). Label-only points and an x off the domain: nothing.
+  // `from` when it is in the x domain, and the on-plot points in `[from, to)` (or at `from`), so a bucket that
+  // starts before the domain still highlights its points. Label-only points: nothing.
   const echoFrom = pos < 0 && layout ? sync.echo?.from : undefined;
   const echoTo = sync.echo?.to ?? echoFrom;
   const echoX =
@@ -323,10 +313,18 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       ? layout.xPos(echoFrom)
       : undefined;
   const echoDots =
-    echoX === undefined || echoFrom === undefined || echoTo === undefined
+    !layout || echoFrom === undefined || echoTo === undefined
       ? []
-      : layout!.dots.filter((d) =>
-          echoTo > echoFrom ? d.datum.x >= echoFrom && d.datum.x < echoTo : d.datum.x === echoFrom,
+      : layout.dots.filter(
+          (d) =>
+            (echoTo > echoFrom
+              ? d.datum.x >= echoFrom && d.datum.x < echoTo
+              : d.datum.x === echoFrom) &&
+            // Clipped by a fixed x / y domain: not shown, so not highlighted or anchored on.
+            d.cx >= layout.plot.x &&
+            d.cx <= layout.plot.x + layout.plot.width &&
+            d.cy >= layout.plot.y &&
+            d.cy <= layout.plot.y + layout.plot.height,
         );
   // Every bucket point is at or after `from`, so the nearest is the earliest.
   const echoDot = echoDots.reduce<(typeof echoDots)[number] | undefined>(
