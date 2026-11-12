@@ -622,6 +622,33 @@ describe('Rail', () => {
     }
   });
 
+  it('flyout subitems keep expanded rendering: no badge dot modifier', () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <Rail defaultCollapsed>
+          <Rail.Section title="Ops">
+            <Rail.Group icon={<span aria-hidden />} label="Settings">
+              <Rail.Item href="/profile" badge="2">
+                Profile
+              </Rail.Item>
+            </Rail.Group>
+          </Rail.Section>
+        </Rail>,
+      );
+      fireEvent.pointerEnter(screen.getByRole('button', { name: /Settings/ }));
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      const flyout = screen.getByRole('dialog', { name: 'Settings' });
+      expect(within(flyout).getByRole('link', { name: /Profile/ })).not.toHaveAttribute(
+        'data-has-badge',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('keeps the automatic Tooltip for a standalone collapsed item', () => {
     vi.useFakeTimers();
     try {

@@ -82,7 +82,7 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
     <Component
       ref={ref}
       className={clsx(styles.item, className)}
-      data-has-badge={collapsed && badge != null ? '' : undefined}
+      data-has-badge={collapsed && !insideGroup && badge != null ? '' : undefined}
       // {...rest} last so consumer overrides win (Pattern A), except that the
       // duplicate-presentation context owns aria-current below.
       {...rest}
