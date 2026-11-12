@@ -15,8 +15,8 @@ import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
 
 const DAYS = 30;
-const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
-const dayStarts = Array.from({ length: DAYS }, (_, i) => new Date(2026, 9, 1 + i).getTime());
+const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const dayStarts = Array.from({ length: DAYS }, (_, i) => Date.UTC(2026, 9, 1 + i));
 const categories = dayStarts.map((t) => fmt.format(t));
 
 // Deterministic pseudo-random (LCG), so the demo is stable across renders.

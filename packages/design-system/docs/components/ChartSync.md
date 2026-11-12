@@ -36,7 +36,7 @@ import { ChartSync, Chart, ScatterChart, DashboardWidget } from '@eocrm/design-s
 
 ## How matching works
 
-- **By value** (`categoryValues` set): a category covers `[value_i, value_i+1)` (the last reuses the previous step). Charts with different labels or bucket sizes line up, and `ScatterChart` (which is always positioned by x) joins in. Values must be strictly ascending and the same length as `categories`, otherwise they are ignored with a dev warning.
+- **By value** (`categoryValues` set): a category covers `[value_i, value_i+1)` (the last reuses the previous step). Charts with different labels or bucket sizes line up, and `ScatterChart` (which is always positioned by x) joins in. Values must be strictly ascending and the same length as `categories`. A length mismatch is ignored (the chart falls back to label matching); non-ascending values are still used but match wrongly. Both log a dev warning.
 - **By label** (no `categoryValues`): a category chart syncs only with other category charts that have a category with exactly the same label. `ScatterChart` is skipped.
 
 Each chart can opt out with `sync={false}`. Groups are independent: charts in two separate `<ChartSync>` do not affect each other, and with nested ones the nearest wins. Outside a `ChartSync` the props have no effect.

@@ -1,8 +1,6 @@
 import { useState, type ReactElement, type ReactNode } from 'react';
 import { ChartSyncContext, createChartSyncStore } from './chartSyncStore';
 
-export type { ChartSyncPoint } from './chartSyncMatch';
-
 export interface ChartSyncProps {
   /** The charts to sync (at any depth), plus anything else on the dashboard. */
   children?: ReactNode;
