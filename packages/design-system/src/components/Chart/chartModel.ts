@@ -653,6 +653,10 @@ export interface LayoutInput {
   includeZero?: boolean;
   /** Whole-number y ticks only (counts): a domain narrower than a tick step of 1 is widened to whole numbers. Default `false`. */
   integerValues?: boolean;
+  /** Fixed left gutter (plot.x) in px, replacing the measured tick-label width, so stacked plots share an x axis. */
+  gutterLeft?: number;
+  /** `false` draws no x labels and reserves no x-axis height below the plot. Default `true`. */
+  xLabels?: boolean;
 }
 
 export interface ChartLayout {
@@ -758,7 +762,8 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   if (min === max) max = min + 1;
 
   const plotTop = PAD_TOP + (input.topGutter ?? 0);
-  const plotBottom = Math.max(plotTop + 1, height - X_AXIS_HEIGHT);
+  const showXLabels = input.xLabels !== false;
+  const plotBottom = Math.max(plotTop + 1, height - (showXLabels ? X_AXIS_HEIGHT : 0));
   const tickCount = Math.max(2, Math.floor((plotBottom - plotTop) / Y_TICK_SPACING));
   const labelled = !!input.valueLabels && (type === 'bar' || type === 'stacked-bar');
   const room = labelled ? VALUE_LABEL_HEIGHT + VALUE_LABEL_GAP : 0;
@@ -776,7 +781,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     tickValues = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
   }
   const tickLabels = tickValues.map(formatValue);
-  const left = Math.max(0, ...tickLabels.map(textWidth)) + LABEL_GAP;
+  const left = input.gutterLeft ?? Math.max(0, ...tickLabels.map(textWidth)) + LABEL_GAP;
   const plot: Rect = {
     x: left,
     y: plotTop,
@@ -1035,7 +1040,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   return {
     plot,
     yTicks,
-    xLabels: xLabels.map(({ index, x, label }) => ({ index, x, label })),
+    xLabels: showXLabels ? xLabels.map(({ index, x, label }) => ({ index, x, label })) : [],
     categoryX,
     step,
     bandWidth,

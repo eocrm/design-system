@@ -1650,3 +1650,26 @@ describe('integerValues (DS-74)', () => {
     expect(t[t.length - 1]).toBeGreaterThanOrEqual(2.5);
   });
 });
+
+describe('lane layout inputs (DS-75)', () => {
+  const line = (over: Partial<LayoutInput> = {}) =>
+    layout({
+      type: 'line',
+      series: resolveSeries('line', [s('a', [1, 20000, 3])], 3).series,
+      categories: ['a', 'b', 'c'],
+      ...over,
+    });
+
+  it('gutterLeft pins plot.x', () => {
+    expect(line().plot.x).not.toBe(77);
+    expect(line({ gutterLeft: 77 }).plot.x).toBe(77);
+  });
+
+  it('xLabels false yields no labels and a taller plot', () => {
+    const withLabels = line();
+    const without = line({ xLabels: false });
+    expect(withLabels.xLabels.length).toBeGreaterThan(0);
+    expect(without.xLabels).toEqual([]);
+    expect(without.plot.height).toBeGreaterThan(withLabels.plot.height);
+  });
+});
