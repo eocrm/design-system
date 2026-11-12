@@ -65,7 +65,7 @@ describe('computeLaneLayout', () => {
     expect(lane.dots.map((d) => d.index)).toEqual([1, 3]);
     for (const d of lane.dots) {
       expect(d.cx).toBe(out.categoryX[d.index]);
-      expect(d.cy).toBe(base.dotsLaneHeight / 2);
+      expect(d.cy).toBe(base.laneLabelHeight + (base.dotsLaneHeight - base.laneLabelHeight) / 2);
     }
   });
 
@@ -85,6 +85,16 @@ describe('computeLaneLayout', () => {
     const last = out.lanes[1];
     expect(last.top + last.height).toBeCloseTo(base.height - X_AXIS_HEIGHT);
     expect(out.xLabels.length).toBeGreaterThan(0);
+  });
+
+  it('aligns bottom-dots x labels with categoryX under a viewport', () => {
+    const out = computeLaneLayout({
+      ...base,
+      lanes: [narrow, dots],
+      viewport: { from: 0.2, to: 0.8 },
+    });
+    expect(out.xLabels.length).toBeGreaterThan(0);
+    expect(out.xLabels.every((l) => l.x === out.categoryX[l.index])).toBe(true);
   });
 
   it('applies a viewport to every lane identically', () => {

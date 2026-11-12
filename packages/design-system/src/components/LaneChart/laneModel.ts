@@ -60,6 +60,7 @@ export function computeLaneLayout(input: {
   height: number;
   viewport: ChartViewport | null;
   topGutter: number;
+  /** Total lane height, label band included: pass `laneLabelHeight` plus room for a dot. */
   dotsLaneHeight: number;
   laneGap: number;
   laneLabelHeight: number;
@@ -134,12 +135,21 @@ export function computeLaneLayout(input: {
     top += h + laneGap;
     return g;
   });
-  const ref = geometry.find((g) => g.layout)?.layout ?? stand(gutterLeft);
+  const standIn = stand(gutterLeft);
+  const ref = geometry.find((g) => g.layout)?.layout ?? standIn;
   const lastLayout = geometry[geometry.length - 1]?.layout;
   geometry.forEach((g, i) => {
     if (lanes[i].type !== 'dots') return;
     g.dots = lanes[i].values.flatMap((v, index) =>
-      v !== null && v > 0 ? [{ index, cx: ref.categoryX[index], cy: g.height / 2 }] : [],
+      v !== null && v > 0
+        ? [
+            {
+              index,
+              cx: ref.categoryX[index],
+              cy: laneLabelHeight + (g.height - laneLabelHeight) / 2,
+            },
+          ]
+        : [],
     );
   });
   const first = geometry.find((g) => g.layout);
@@ -152,7 +162,7 @@ export function computeLaneLayout(input: {
     plot: { x: ref.plot.x, width: ref.plot.width, y: y0, height: y1 - y0 },
     categoryX: ref.categoryX,
     step: ref.step,
-    xLabels: lastLayout ? lastLayout.xLabels : stand(gutterLeft).xLabels,
+    xLabels: lastLayout ? lastLayout.xLabels : standIn.xLabels,
     lanes: geometry,
   };
 }
