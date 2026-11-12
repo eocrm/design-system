@@ -5,7 +5,6 @@ import {
   useId,
   useMemo,
   useState,
-  type CSSProperties,
   type HTMLAttributes,
   type ReactNode,
 } from 'react';
@@ -33,11 +32,9 @@ import {
   markerGutterRows,
   markerLabelsAt,
   annotationLabelsAt,
-  annotationPath,
   resolveAnnotations,
   resolveMarkers,
   REFERENCE_DASHES,
-  DOT_RADIUS,
   PAD_TOP,
   MARKER_LABEL_BASELINE,
   markerGutterGap,
@@ -59,6 +56,12 @@ import {
 import type { ChartViewport } from './chartViewport';
 import { useChartDomain } from './useChartDomain';
 import { useChartInteraction } from './useChartInteraction';
+import {
+  renderAnnotations,
+  renderReferenceLines,
+  renderSeriesMarks,
+  seriesStyle,
+} from './chartMarks';
 import styles from './Chart.module.scss';
 
 export type {
@@ -261,12 +264,6 @@ const HEADER_GAP_PX = 8;
 // Lifts descenders off the row below (or the plot top).
 const GUTTER_DESCENT = 2;
 const gutterBaseline = (row: number) => PAD_TOP + row * MARKER_LABEL_BASELINE - GUTTER_DESCENT;
-
-const seriesStyle = (slot: number) =>
-  ({
-    '--chart-series-color':
-      slot === 0 ? 'var(--chart-total-comparison)' : `var(--chart-series-${slot})`,
-  }) as CSSProperties;
 
 // Marker label text in the marker's palette colour (class + variable); untouched without `color`.
 const labelColor = (slot: number) =>
@@ -680,27 +677,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       <span />
     );
 
-  // `part` splits an area's fill from its stroke so reference lines can paint between them; `data-series` stays
-  // on the stroke group only.
-  const seriesMarks = (m: SeriesMarks, part: 'all' | 'fill' | 'stroke' = 'all') => (
-    <g
-      key={m.key}
-      className={styles.series}
-      style={seriesStyle(m.slot)}
-      data-series={part === 'fill' ? undefined : m.key}
-      data-comparison={m.comparison || undefined}
-      data-overflow={m.overflow || undefined}
-      data-dimmed={dimmed(m.key)}
-    >
-      {m.area && part !== 'stroke' && <path className={styles.area} d={m.area} />}
-      {m.line && part !== 'fill' && <path className={styles.line} d={m.line} />}
-      {m.bars?.map((d, i) => d && <path key={i} className={styles.bar} d={d} />)}
-      {part !== 'fill' &&
-        m.dots.map((p, i) => (
-          <circle key={i} className={styles.dot} cx={p.x} cy={p.y} r={DOT_RADIUS} />
-        ))}
-    </g>
-  );
+  const seriesMarks = (m: SeriesMarks, part: 'all' | 'fill' | 'stroke' = 'all') =>
+    renderSeriesMarks(m, part, dimmed(m.key));
   // Without reference lines the series pass is one group per series, as before.
   const splitAreas = !!layout && layout.referenceLines.length > 0;
 
@@ -882,20 +860,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
               {splitAreas &&
                 layout.marks.filter((m) => m.kind === 'area').map((m) => seriesMarks(m, 'fill'))}
               {/* Over bars and area fills, under line strokes, dots and inspection markers. */}
-              {layout.referenceLines.map((r) => (
-                <line
-                  key={r.key}
-                  className={styles.referenceLine}
-                  data-reference-line=""
-                  data-dash={r.dash}
-                  data-emphasis={r.emphasis}
-                  style={r.slot ? seriesStyle(r.slot) : undefined}
-                  x1={r.x1}
-                  x2={r.x2}
-                  y1={r.y}
-                  y2={r.y}
-                />
-              ))}
+              {renderReferenceLines(layout.referenceLines)}
               {layout.marks
                 .filter((m) => m.kind !== 'bars')
                 .map((m) => seriesMarks(m, splitAreas ? 'stroke' : 'all'))}
@@ -916,19 +881,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 </g>
               )}
               {/* Glyphs above the data marks, with the value labels. */}
-              {layout.annotations.map((a) => (
-                <g
-                  key={a.key}
-                  className={styles.annotation}
-                  data-annotation=""
-                  data-glyph={a.glyph}
-                  data-tone={a.tone}
-                  aria-hidden="true"
-                  transform={`translate(${a.x} ${a.y})`}
-                >
-                  <path d={annotationPath(a.glyph)} />
-                </g>
-              ))}
+              {renderAnnotations(layout.annotations)}
               {/* Inspection markers in their own pass: a later stacked area would paint over them. */}
               {current !== null &&
                 layout.marks.map(

@@ -8,14 +8,15 @@ export function useRangeWarning(
   prop: string,
   range: ChartRange | null | undefined,
   invalid: boolean,
+  component = 'Chart',
 ) {
   const key = invalid && range ? `${range.from}|${range.to}` : '';
   useEffect(() => {
     if (process.env.NODE_ENV === 'production' || !key) return;
     console.warn(
-      `[Chart] Ignored ${prop} (${key.replace('|', ' to ')}): from/to must be one of categories.`,
+      `[${component}] Ignored ${prop} (${key.replace('|', ' to ')}): from/to must be one of categories.`,
     );
-  }, [prop, key]);
+  }, [prop, key, component]);
 }
 
 export interface ChartDomainOptions {
@@ -27,10 +28,14 @@ export interface ChartDomainOptions {
   viewport?: ChartViewport | null;
   defaultViewport?: ChartViewport | null;
   onViewportChange?: (next: ChartViewport | null, info: { end: boolean }) => void;
+  /** Component name in dev warnings. Default `'Chart'`. */
+  name?: string;
 }
 
 /** What `useChartDomain` returns; pass it whole to `useChartInteraction` as `domain`. */
 export interface ChartDomain {
+  /** Component name in dev warnings. */
+  name: string;
   /** Every category, as passed. */
   allCategories: string[];
   /** `false` while there are no categories yet (loading): range warnings stay quiet. */
@@ -62,6 +67,7 @@ export function useChartDomain(options: ChartDomainOptions): ChartDomain {
     viewport,
     defaultViewport,
     onViewportChange,
+    name = 'Chart',
   } = options;
   const [zoom, setZoom] = useControllableState<ChartRange | null>({
     value: zoomRange,
@@ -71,7 +77,7 @@ export function useChartDomain(options: ChartDomainOptions): ChartDomain {
   const zoomIdx = resolveRange(zoom, allCategories);
   // No categories yet (loading): every range would "miss"; don't cry wolf.
   const loaded = allCategories.length > 0;
-  useRangeWarning('zoomRange', zoom, loaded && zoomIdx === null);
+  useRangeWarning('zoomRange', zoom, loaded && zoomIdx === null, name);
   const zoomFrom = zoomIdx?.from;
   const zoomTo = zoomIdx?.to;
   const categories = useMemo(
@@ -119,6 +125,7 @@ export function useChartDomain(options: ChartDomainOptions): ChartDomain {
     onViewportChange?.(null, { end: true });
   }, [zoomKey, rawViewport, setViewportState, onViewportChange]);
   return {
+    name,
     allCategories,
     loaded,
     setZoom,

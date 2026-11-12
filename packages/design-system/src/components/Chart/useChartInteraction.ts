@@ -90,6 +90,7 @@ export function useChartInteraction(o: ChartInteractionOptions) {
     'selectedRange',
     selection,
     loaded && resolveRange(selection, allCategories) === null,
+    domain.name,
   );
   const selectionIdx = selectable ? resolveRange(selection, allCategories) : null;
   const hasSelection = selectionIdx !== null;

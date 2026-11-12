@@ -10,6 +10,8 @@ export interface ChartTableColumn {
   key: string;
   header: string;
   values: (number | null)[];
+  /** Formats this column's values; default the table's `formatValue` (LaneChart: one unit per lane). */
+  format?: (n: number) => string;
 }
 
 /** Internal: the screen-reader view of the chart. Always the same numbers as the plot. */
@@ -67,7 +69,7 @@ export function ChartTable({
               <th scope="row">{category}</th>
               {columns.map((c) => {
                 const v = c.values[i];
-                return <td key={c.key}>{v === null ? noData : formatValue(v)}</td>;
+                return <td key={c.key}>{v === null ? noData : (c.format ?? formatValue)(v)}</td>;
               })}
               {hasNotes && (
                 <td>

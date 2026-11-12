@@ -13,22 +13,41 @@ import {
 } from '../Chart/chartModel';
 import type { ChartViewport } from '../Chart/chartViewport';
 
+/**
+ * How a lane draws its measure: `'bar'` (amounts per category, y from 0), `'line'` (a level over time) or `'dots'`
+ * (presence: a dot where the value is > 0, no y axis).
+ */
 export type LaneType = 'bar' | 'line' | 'dots';
 
+/** One measure of a `LaneChart`, with its own y scale and unit. */
 export interface Lane {
+  /** Stable identifier (React key, table column). */
   key: string;
+  /** Measure name, drawn above the lane and used in the tooltip, announcement and data table, e.g. "Food". */
   label: string;
+  /** `'bar'`, `'line'` or `'dots'`; see `LaneType`. */
   type: LaneType;
+  /** One value per category (`values[i]` belongs to `categories[i]`); `null` is a gap. Shorter arrays are padded with gaps. */
   values: (number | null)[];
+  /** Formats this lane's values for its y ticks, the tooltip and the data table (the app owns units and i18n). */
   formatValue: (n: number) => string;
+  /** `line` only: `false` fits the y axis to the data instead of starting at 0. Default `true`. Bars always start at 0. */
   includeZero?: boolean;
+  /** Whole-number y ticks only, for counts. Default `false`. */
   integerValues?: boolean;
-  /** Palette slot; default is the lane's position. */
+  /** Palette slot 1–8; default the lane's position (1 for the first lane, wrapping after 8). */
   color?: ChartSeriesColor;
+  /** `line` only: `'smooth'` (default) or `'linear'`. */
   curve?: ChartCurve;
+  /** Horizontal lines at constant values inside this lane, as `Chart`'s `referenceLines`. Ignored on `dots`. */
   referenceLines?: ChartReferenceLine[];
+  /** Status glyphs on this lane's categories, as `Chart`'s `annotations`. Ignored on `dots`. */
   annotations?: ChartAnnotation[];
 }
+
+/** A lane's palette slot: its `color`, else its position (1-based, wrapping after the palette). */
+export const laneSlot = (lane: Lane, i: number): ChartSeriesColor =>
+  lane.color ?? (((i % PALETTE_SIZE) + 1) as ChartSeriesColor);
 
 /** All coordinates of a lane (`layout`, `dots`, `labelY`) are local to `top`: draw it in a `translate(0, top)` group. */
 export interface LaneGeometry {
@@ -86,7 +105,7 @@ export function computeLaneLayout(input: {
           key: lane.key,
           label: lane.label,
           values: lane.values,
-          color: lane.color ?? (((i % PALETTE_SIZE) + 1) as ChartSeriesColor),
+          color: laneSlot(lane, i),
         },
       ],
       categories.length,
