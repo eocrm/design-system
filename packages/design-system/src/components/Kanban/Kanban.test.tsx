@@ -1366,3 +1366,79 @@ describe('Kanban — status zones', () => {
     expect(multi.children[0].querySelector('[data-card="b1"]')).not.toBeNull();
   });
 });
+
+describe('Kanban — canDrop', () => {
+  let restore: () => void;
+  beforeEach(() => {
+    restore = stubLayout();
+  });
+  afterEach(() => restore());
+
+  const cols: [string, string[]][] = [
+    ['a', ['a1', 'a2']],
+    ['b', ['b1']],
+  ];
+  const colAttr = (i: number) =>
+    document.querySelector(`[data-col="${i}"]`)!.getAttribute('data-drop-disabled');
+
+  it('a rejected plain column takes no live re-seat and a release there cancels', () => {
+    const onMove = vi.fn();
+    render(<Board onMove={onMove} canDrop={(_, to) => to.columnId !== 'b'} columns={cols} />);
+    const before = boardOrder();
+    pressAndMove('a1', [at(1, 25)]);
+    expect(boardOrder()).toEqual(before);
+    expect(colAttr(1)).toBe('true');
+    expect(colAttr(0)).toBeNull();
+    fireEvent.pointerUp(document, { clientX: at(1, 25)[0], clientY: 25 });
+    expect(onMove).not.toHaveBeenCalled();
+    expect(colAttr(1)).toBeNull();
+  });
+
+  it('a rejected plain column is skipped by the keyboard', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    render(<Board onMove={onMove} canDrop={(_, to) => to.columnId !== 'b'} columns={cols} />);
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    expect(boardOrder()).toEqual([['a1', 'a2'], ['b1']]);
+    await user.keyboard('[Space]');
+    expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it('never asks canDrop about the origin plain column; in-column reorder still works', () => {
+    const onMove = vi.fn();
+    const canDrop = vi.fn(() => false);
+    render(<Board onMove={onMove} canDrop={canDrop} columns={cols} />);
+    drag('a1', [at(0, 75)]);
+    expect(onMove).toHaveBeenCalledTimes(1);
+    for (const [, to] of canDrop.mock.calls as unknown as [unknown, KanbanDropTarget][]) {
+      expect(to.columnId === 'a' && to.statusId === undefined).toBe(false);
+    }
+  });
+
+  it('canDrop receives the dragged card id and { columnId, statusId }', () => {
+    const canDrop = vi.fn(() => true);
+    render(
+      <Board
+        canDrop={canDrop}
+        columns={cols}
+        statuses={{ b: [{ id: 'new', label: 'New' }] }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    pressAndMove('a1', [at(1, 100)]);
+    expect(canDrop).toHaveBeenCalledWith('a1', { columnId: 'b', statusId: 'new' });
+    fireEvent.pointerUp(document, { clientX: at(1, 100)[0], clientY: 100 });
+  });
+
+  it('canDrop is not called while idle', () => {
+    const canDrop = vi.fn(() => true);
+    render(<Board canDrop={canDrop} columns={cols} />);
+    expect(canDrop).not.toHaveBeenCalled();
+    drag('a1', [at(1, 25)]);
+    canDrop.mockClear();
+    fireEvent.pointerMove(document, { clientX: 5, clientY: 5 });
+    expect(canDrop).not.toHaveBeenCalled();
+  });
+});

@@ -507,10 +507,17 @@ KanbanCard.displayName = 'KanbanCard';
  * @see docs/components/Kanban.md
  */
 export const KanbanColumn = forwardRef<HTMLDivElement, KanbanColumnProps>(function KanbanColumn(
-  { id, statuses: _statuses, className, children, ...rest },
+  { id, statuses, className, children, ...rest },
   ref,
 ) {
   const { setNodeRef } = useDroppable({ id });
+  const drag = useContext(KanbanDragContext);
+  // Plain column `canDrop` rejects mid-drag; the origin is never asked.
+  const dropDisabled =
+    drag?.activeCardId != null &&
+    id !== drag.originColumn &&
+    !(statuses && statuses.length > 0) &&
+    !drag.canDropTo({ columnId: id });
 
   // Effective card ids are injected by KanbanRoot via context so that this
   // column's SortableContext sees the live-reordered order.
@@ -539,6 +546,7 @@ export const KanbanColumn = forwardRef<HTMLDivElement, KanbanColumnProps>(functi
     <div
       ref={setRef}
       className={clsx(styles.column, className)}
+      data-drop-disabled={dropDisabled ? 'true' : undefined}
       {...rest}
       // A name on a role-less <div> is inert, so a labelled column gets a role
       // to hang it on. AFTER {...rest} — but only when the consumer didn't
@@ -776,9 +784,18 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       // nearest collision here would leave screen readers naming a stale column.
       if (isOutsideBoard) return [];
 
-      const plain = rest.filter((d) => !zoneOnly.has(d.id));
+      // Plain columns `canDrop` rejects (never the origin), and the cards inside them.
+      const rejected = new Set<string | number>();
+      for (const d of rest) {
+        const id = d.id;
+        if (!isContainer(d) || zoneOnly.has(id) || id === originRef.current) continue;
+        if (canDropTo({ columnId: id })) continue;
+        rejected.add(id);
+        for (const c of effectiveItems.get(id) ?? []) rejected.add(c);
+      }
+      const plain = rest.filter((d) => !zoneOnly.has(d.id) && !rejected.has(d.id));
       if (!args.pointerCoordinates) {
-        // Keyboard: every zone and plain target is reachable.
+        // Keyboard: every zone and allowed plain target is reachable.
         return containerAwareClosestCorners({ ...args, droppableContainers: [...zones, ...plain] });
       }
 
@@ -788,6 +805,9 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       const columns = rest.filter(isContainer);
       const multiColumns = columns.filter((d) => columnStatuses.has(d.id));
       if (pointerWithin({ ...args, droppableContainers: multiColumns }).length > 0) return [];
+      // Pointer inside a rejected plain column: no live re-seat, a release cancels.
+      const rejectedCols = columns.filter((d) => rejected.has(d.id));
+      if (pointerWithin({ ...args, droppableContainers: rejectedCols }).length > 0) return [];
       // Gutter: cancel when the column it would resolve to is multi-status.
       if (pointerWithin({ ...args, droppableContainers: columns }).length === 0) {
         const [nearest] = closestCorners({ ...args, droppableContainers: columns });
@@ -795,7 +815,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       }
       return containerAwareClosestCorners({ ...args, droppableContainers: plain });
     },
-    [zoneOnly, columnStatuses],
+    [zoneOnly, columnStatuses, canDropTo, effectiveItems],
   );
   const collisionDetection = useCallback<CollisionDetection>(
     (args) => {
