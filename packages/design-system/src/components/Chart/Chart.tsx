@@ -4,6 +4,7 @@ import {
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
   type HTMLAttributes,
   type ReactNode,
@@ -521,6 +522,16 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       '[Chart] Ignored categoryValues: it must have one value per category. Syncing by category label instead.',
     );
   }, [badValues]);
+  const unordered = useMemo(
+    () => !!categoryValues?.some((v, i) => i > 0 && Number(v) <= Number(categoryValues[i - 1])),
+    [categoryValues],
+  );
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' || !unordered) return;
+    console.warn(
+      '[Chart] categoryValues must be strictly ascending; synced matching will be wrong.',
+    );
+  }, [unordered]);
 
   const ix = useChartInteraction({
     domain,
@@ -534,10 +545,6 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     selectOn,
     zoomGestures,
     onPlotDoubleClick,
-    onInspect: (i) =>
-      sync.publish(
-        i === null ? null : categoryPoint(originalIndex(i), allCategories, categoryValues),
-      ),
   });
   const {
     selectable,
@@ -555,6 +562,21 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     zoomToSelection,
     resetZoom,
   } = ix;
+
+  // Publish this chart's inspected moment after commit, whenever it changes: a new index, a clear, or new data
+  // (categories / categoryValues) under the same index. Keyed by content, so an unchanged point is not re-sent.
+  const own =
+    current === null ? null : categoryPoint(originalIndex(current), allCategories, categoryValues);
+  const ownKey = own && `${own.label}\0${own.from}\0${own.to}`;
+  const published = useRef<{ key: string | null; publish: typeof sync.publish }>({
+    key: null,
+    publish: sync.publish,
+  });
+  useEffect(() => {
+    if (published.current.key === ownKey && published.current.publish === sync.publish) return;
+    published.current = { key: ownKey, publish: sync.publish };
+    sync.publish(own);
+  });
 
   // Another chart's inspected moment, echoed here (visual only) while this chart inspects nothing itself. Off the
   // zoom window or the viewport: nothing, the chart does not pan.

@@ -48,6 +48,16 @@ describe('matchCategory', () => {
     expect(matchCategory({ source: 's', from: 200 }, days)).toBeNull();
   });
 
+  it('matches the right bucket among 10,000 categories', () => {
+    const n = 10_000;
+    const labels = Array.from({ length: n }, (_, i) => `c${i}`);
+    const values = Array.from({ length: n }, (_, i) => i * 10);
+    expect(matchCategory({ source: 's', from: 73_215 }, labels, values)).toBe(7321);
+    expect(matchCategory({ source: 's', from: 0 }, labels, values)).toBe(0);
+    expect(matchCategory({ source: 's', from: 99_995 }, labels, values)).toBe(n - 1);
+    expect(matchCategory({ source: 's', from: 100_000 }, labels, values)).toBeNull();
+  });
+
   it('a length mismatch on the receiver falls back to the label', () => {
     expect(matchCategory({ source: 's', label: 'Tue', from: 999 }, days, [1])).toBe(1);
   });

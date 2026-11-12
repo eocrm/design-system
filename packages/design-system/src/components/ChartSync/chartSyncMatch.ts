@@ -10,9 +10,16 @@ export interface ChartSyncPoint {
   to?: number;
 }
 
-/** `categoryValues` as numbers, or `undefined` when absent or not one per category. */
-export const valuesOf = (categories: string[], values?: (number | Date)[]) =>
-  values && values.length === categories.length ? values.map(Number) : undefined;
+/** `categoryValues` usable for value matching: one per category. */
+const usable = (categories: string[], values?: (number | Date)[]): values is (number | Date)[] =>
+  !!values && values.length === categories.length;
+
+/** Bucket `[v_i, v_i+1)` of category `i`; the last reuses the previous step (zero-width for one category). */
+function bucket(v: (number | Date)[], i: number) {
+  const from = Number(v[i]);
+  const to = i + 1 < v.length ? Number(v[i + 1]) : from + (i > 0 ? from - Number(v[i - 1]) : 0);
+  return { from, to };
+}
 
 /** What a category chart publishes for category `i`: its label and, with `categoryValues`, the bucket `[v_i, v_i+1)`. */
 export function categoryPoint(
@@ -20,31 +27,35 @@ export function categoryPoint(
   categories: string[],
   categoryValues?: (number | Date)[],
 ): Omit<ChartSyncPoint, 'source'> {
-  const v = valuesOf(categories, categoryValues);
-  if (!v) return { label: categories[i] };
-  // The last bucket reuses the previous step (zero-width for a single category).
-  const to = i + 1 < v.length ? v[i + 1] : v[i] + (i > 0 ? v[i] - v[i - 1] : 0);
-  return { label: categories[i], from: v[i], to };
+  return usable(categories, categoryValues)
+    ? { label: categories[i], ...bucket(categoryValues, i) }
+    : { label: categories[i] };
 }
 
 /**
- * The category of a receiving chart that `p` points at, or `null`. With `categoryValues` it matches by value
- * (the bucket containing `p.from`); without, by exact label.
+ * The category of a receiving chart that `p` points at, or `null`. With `categoryValues` (ascending) it matches by
+ * value, the bucket containing `p.from` (binary search); without, by exact label.
  */
 export function matchCategory(
   p: ChartSyncPoint,
   categories: string[],
   categoryValues?: (number | Date)[],
 ): number | null {
-  const v = valuesOf(categories, categoryValues);
-  if (!v) {
+  if (!usable(categories, categoryValues)) {
     const i = p.label === undefined ? -1 : categories.indexOf(p.label);
     return i < 0 ? null : i;
   }
-  if (p.from === undefined) return null;
-  for (let i = 0; i < v.length; i++) {
-    const { from, to } = categoryPoint(i, categories, v);
-    if (p.from >= from! && (p.from < to! || p.from === from)) return i;
+  const x = p.from;
+  if (x === undefined || categoryValues.length === 0) return null;
+  // Last category whose start is <= x.
+  let lo = 0;
+  let hi = categoryValues.length - 1;
+  if (x < Number(categoryValues[0])) return null;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (Number(categoryValues[mid]) <= x) lo = mid;
+    else hi = mid - 1;
   }
-  return null;
+  const { from, to } = bucket(categoryValues, lo);
+  return x < to || x === from ? lo : null;
 }

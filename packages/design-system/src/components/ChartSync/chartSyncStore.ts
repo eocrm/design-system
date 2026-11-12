@@ -40,10 +40,15 @@ export function useChartSync(enabled: boolean) {
   const ctx = useContext(ChartSyncContext);
   const store = (enabled && ctx) || NONE;
   const id = useId();
-  const echo = useSyncExternalStore(store.subscribe, () => {
-    const p = store.get();
-    return p && p.source !== id ? p : null;
-  });
+  const echo = useSyncExternalStore(
+    store.subscribe,
+    () => {
+      const p = store.get();
+      return p && p.source !== id ? p : null;
+    },
+    // Nothing is inspected on the server.
+    () => null,
+  );
   // Leaving the group (unmount, `sync={false}`, another provider) withdraws this chart's point.
   useEffect(
     () => () => {

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { renderToString } from 'react-dom/server';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Chart, type ChartProps } from '../Chart';
@@ -265,5 +266,36 @@ describe('ChartSync', () => {
     expect(echoLine('B')).toHaveAttribute('x1', String(xOf('B', 'W2')));
     const calls = warn.mock.calls.filter((c) => String(c[0]).includes('categoryValues'));
     expect(calls).toHaveLength(1);
+  });
+
+  it('warns once when categoryValues are not strictly ascending', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { rerender } = setup(<ChartSync>{chart('A', { categoryValues: [1, 3, 2] })}</ChartSync>);
+    rerender(<ChartSync>{chart('A', { categoryValues: [1, 3, 2] })}</ChartSync>);
+    const calls = warn.mock.calls.filter((c) => String(c[0]).includes('ascending'));
+    expect(calls).toHaveLength(1);
+  });
+
+  it('republishes when the data changes under the same inspected index', () => {
+    const { rerender } = setup(
+      <ChartSync>
+        {chart('A')}
+        {chart('B', { categories: ['W1', 'W2', 'W3', 'W4'] })}
+      </ChartSync>,
+    );
+    hover('A', 'W2');
+    expect(echoLine('B')).toHaveAttribute('x1', String(xOf('B', 'W2')));
+    rerender(
+      <ChartSync>
+        {chart('A', { categories: ['W2', 'W3', 'W4'] })}
+        {chart('B', { categories: ['W1', 'W2', 'W3', 'W4'] })}
+      </ChartSync>,
+    );
+    expect(echoLine('B')).toHaveAttribute('x1', String(xOf('B', 'W3')));
+  });
+
+  it('server-renders, inside and outside a ChartSync', () => {
+    expect(renderToString(chart('A'))).toContain('Deals');
+    expect(renderToString(<ChartSync>{chart('A')}</ChartSync>)).toContain('Deals');
   });
 });
