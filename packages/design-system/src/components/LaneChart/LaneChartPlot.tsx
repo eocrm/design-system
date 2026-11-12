@@ -16,7 +16,7 @@ import {
   X_LABEL_BASELINE,
   type ResolvedMarker,
 } from '../Chart/chartModel';
-import { laneSlot, type Lane, type LaneChartLayout } from './laneModel';
+import { laneDotRadius, laneSlot, type Lane, type LaneChartLayout } from './laneModel';
 import chartStyles from '../Chart/Chart.module.scss';
 import styles from './LaneChart.module.scss';
 
@@ -76,6 +76,7 @@ export function LaneChartPlot({
       {children}
     </g>
   );
+  const dotRadius = laneDotRadius(tokens.dotRadius, layout.step);
   const clip = clipped ? `url(#${clipId})` : undefined;
 
   return (
@@ -229,13 +230,14 @@ export function LaneChartPlot({
                   )}
               </>
             ) : (
-              <g style={seriesStyle(slot)}>
+              // Shrunk dots drop the surface ring, which would eat them.
+              <g style={seriesStyle(slot)} data-fitted={dotRadius < tokens.dotRadius || undefined}>
                 {g.dots.map((d) => (
                   <path
                     key={d.index}
                     className={styles.dot}
                     data-lane-dot=""
-                    d={markerPath('circle', d.cx, d.cy, tokens.dotRadius)}
+                    d={markerPath('circle', d.cx, d.cy, dotRadius)}
                   />
                 ))}
               </g>

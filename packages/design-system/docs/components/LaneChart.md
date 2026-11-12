@@ -6,7 +6,17 @@ Stacks several measures with different units (food in grams, weight in kg, clean
 import { useMemo } from 'react';
 import { LaneChart, DashboardWidget, type Lane } from '@eocrm/design-system';
 
-function Effects({ days, food, poo, weight }: EffectsProps) {
+function Effects({
+  days,
+  food,
+  poo,
+  weight,
+}: {
+  days: string[];
+  food: (number | null)[];
+  poo: (number | null)[];
+  weight: (number | null)[];
+}) {
   const lanes = useMemo<Lane[]>(
     () => [
       { key: 'food', label: 'Food', type: 'bar', values: food, formatValue: (n) => `${n} g` },

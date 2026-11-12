@@ -106,6 +106,23 @@ describe('LaneChart', () => {
     expect(container.querySelectorAll('[data-lane="poo"] [data-lane-dot]')).toHaveLength(2);
   });
 
+  it('marks dots shrunk to a dense band as fitted (no ring), and not at low density', () => {
+    const fire = stubLayout();
+    const many = Array.from({ length: 90 }, (_, i) => `c${i}`);
+    const { container, rerender } = render(
+      <LaneChart
+        {...base}
+        categories={many}
+        lanes={[base.lanes[0], { ...base.lanes[1], values: many.map(() => 1) }]}
+      />,
+    );
+    fire();
+    const dot = () => container.querySelector('[data-lane-dot]')!.parentElement!;
+    expect(dot()).toHaveAttribute('data-fitted');
+    rerender(<LaneChart {...base} />);
+    expect(dot()).not.toHaveAttribute('data-fitted');
+  });
+
   it('ArrowRight inspects category 1 and the tooltip lists every lane', async () => {
     const fire = stubLayout();
     render(<LaneChart {...base} />);

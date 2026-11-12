@@ -49,6 +49,13 @@ export interface Lane {
 export const laneSlot = (lane: Lane, i: number): ChartSeriesColor =>
   lane.color ?? (((i % PALETTE_SIZE) + 1) as ChartSeriesColor);
 
+/**
+ * A dots lane's dot radius: the token radius, shrunk at high density so neighbouring dots never overlap
+ * (at most half the band `step` less a hairline). Pass the step under the current viewport: zooming in grows them back.
+ */
+export const laneDotRadius = (tokenRadius: number, step: number) =>
+  Math.min(tokenRadius, Math.max(0.5, step / 2 - 0.5));
+
 /** All coordinates of a lane (`layout`, `dots`, `labelY`) are local to `top`: draw it in a `translate(0, top)` group. */
 export interface LaneGeometry {
   key: string;

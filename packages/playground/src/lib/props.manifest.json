@@ -455,6 +455,13 @@
           "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\n(+ `aria-current=\"true\"` on the current row) for a master–detail or\nnavigation list whose labels line up; to choose a value use `RadioGroup`.\nIgnored with `iconOnly`."
         },
         {
+          "name": "loading",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Show an in-button spinner while an async action runs. The children stay\nrendered (transparent) so the button keeps its width, and a small\nindeterminate spinner is centred over them.\n\nWhile `true` the button sets `aria-disabled=\"true\"` and ignores clicks and\nform submission (the consumer's `onClick` is not called; with `as=\"a\"` the\nnavigation is prevented) but stays focusable. It does NOT use the native\n`disabled` attribute: that would drop focus from the control mid-action.\n\nAssistive tech: the accessible name is unchanged and a visually hidden\npolite live region (`role=\"status\"`) announces \"Loading…\" when it turns\ntrue. The region renders only when the prop is passed at all (either\nvalue), so pass `loading={false}` rather than omitting it for a button\nthat can later load: a region added together with its text is not\nannounced. Defaults to `undefined` (no region, not loading)."
+        },
+        {
           "name": "as",
           "type": "C",
           "required": false,
@@ -860,6 +867,20 @@
           "description": "Print each value on its bar (`bar`, comparisons included) or the stack total above each `stacked-bar`, using\n`formatValue`. Decorative (`aria-hidden`); the data table and tooltip carry the same values. A label wider than its\nbar is omitted rather than truncated. Ignored on `line` and `area`. Default `false`."
         },
         {
+          "name": "includeZero",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "`line` only: `false` fits the y axis to the data instead of starting at 0. Bars and stacked area always start at\n0 (ignored there), because a cut baseline misstates size. Default `true`."
+        },
+        {
+          "name": "integerValues",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Whole-number y ticks only, for counts: a small range shows `0, 1, 2` instead of `0, 0.5, 1`. Larger ranges keep\ntheir normal ticks. Default `false`."
+        },
+        {
           "name": "selectedRange",
           "type": "ChartRange | null",
           "required": false,
@@ -879,6 +900,13 @@
           "required": false,
           "default": "",
           "description": "Called with the next selection (or `null` when cleared) on every user change. Also turns selection on."
+        },
+        {
+          "name": "selectOn",
+          "type": "ChartSelectOn",
+          "required": false,
+          "default": "'drag'",
+          "description": "What a plain click or tap does while selection is on (ignored otherwise). `'drag'` (default): inspects, and\noutside the band clears. `'tap'`: selects that one category; tapping the already-selected single category\nclears it, tapping another replaces the range. Drag and long-press still select a range. Space toggles the\ninspected category in both modes."
         },
         {
           "name": "zoomRange",
@@ -4154,6 +4182,143 @@
         }
       ]
     },
+    "LaneChart": {
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Accessible name of the figure and plot, and caption of its data table, e.g. \"Effects, last 90 days\". Required."
+        },
+        {
+          "name": "categories",
+          "type": "string[]",
+          "required": true,
+          "default": "",
+          "description": "X-axis buckets shared by every lane, already formatted by the app (\"12 Jan\"). `lanes[].values[i]` belongs to `categories[i]`."
+        },
+        {
+          "name": "lanes",
+          "type": "Lane[]",
+          "required": true,
+          "default": "",
+          "description": "The measures, top to bottom (3–6 is the sweet spot). Each lane has its own y scale, unit (`formatValue`) and\ntype: `'bar'` / `'line'` split the height equally; `'dots'` lanes get a short fixed row\n(`--lane-chart-dots-height`) and mark presence only (a dot where the value is > 0; the magnitude is in the\ntooltip and table). Every lane shares the left edge, the category x positions and one x axis under the bottom lane."
+        },
+        {
+          "name": "markers",
+          "type": "ChartMarker[]",
+          "required": false,
+          "default": "",
+          "description": "Category markers (`Chart`'s `markers`) drawn through every lane: lines and bands span all lanes, each label is\ndrawn once in a gutter above the top lane (`labelPlacement` is always treated as `'top'`). Labelled markers are\nlisted in the tooltip, the announcement and the data table. A marker naming an unknown category is ignored with a dev warning."
+        },
+        {
+          "name": "emptyMessage",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "EmptyState title when there are no categories or every value is null/zero. Default: translated \"No data for this period\"."
+        },
+        {
+          "name": "footnote",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Short note under the plot on its own row; also describes the plot for screen readers. Shown in the empty state too."
+        },
+        {
+          "name": "details",
+          "type": "((categoryIndex: number) => string[])",
+          "required": false,
+          "default": "",
+          "description": "Extra plain-text lines for a category (`categoryIndex` indexes `categories`), e.g. `['235 kcal']`: muted rows in\nthe tooltip, appended to the announcement, and a \"Details\" column in the data table. Return `[]` for none."
+        },
+        {
+          "name": "selectedRange",
+          "type": "ChartRange | null",
+          "required": false,
+          "default": "",
+          "description": "Controlled selected category range (`null` = none), as `Chart`: one band across every lane. Passing this,\n`defaultSelectedRange` or `onSelectedRangeChange` turns selection on (drag / long-press, Shift+←/→, Space, Escape)."
+        },
+        {
+          "name": "defaultSelectedRange",
+          "type": "ChartRange | null",
+          "required": false,
+          "default": "",
+          "description": "Initial selection when uncontrolled. Default `null`. Also turns selection on."
+        },
+        {
+          "name": "onSelectedRangeChange",
+          "type": "((range: ChartRange | null) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called with the next selection (or `null` when cleared) on every user change. Also turns selection on."
+        },
+        {
+          "name": "selectOn",
+          "type": "ChartSelectOn",
+          "required": false,
+          "default": "'drag'",
+          "description": "What a plain click or tap does while selection is on. `'drag'` (default): inspects, outside the band clears.\n`'tap'`: selects that one category (tapping it again clears), the phone flow. Drag and long-press still select a range."
+        },
+        {
+          "name": "zoomRange",
+          "type": "ChartRange | null",
+          "required": false,
+          "default": "",
+          "description": "Controlled zoomed category range (`null` = all), as `Chart`: every lane is sliced and rescaled. Header buttons \"Zoom to selection\" / \"Reset zoom\"."
+        },
+        {
+          "name": "defaultZoomRange",
+          "type": "ChartRange | null",
+          "required": false,
+          "default": "",
+          "description": "Initial zoomed range when uncontrolled. Default `null`."
+        },
+        {
+          "name": "onZoomRangeChange",
+          "type": "((range: ChartRange | null) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called with the next zoomed range (or `null` on reset) when the user clicks a zoom button."
+        },
+        {
+          "name": "viewport",
+          "type": "ChartViewport | null",
+          "required": false,
+          "default": "",
+          "description": "Controlled render window inside the current domain, as `Chart`'s `viewport`; one window moves every lane. Omit for uncontrolled."
+        },
+        {
+          "name": "defaultViewport",
+          "type": "ChartViewport | null",
+          "required": false,
+          "default": "",
+          "description": "Initial render window when uncontrolled. Default `null`. Resets to `null` when `categories` change content."
+        },
+        {
+          "name": "onViewportChange",
+          "type": "((next: ChartViewport | null, info: { end: boolean; }) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called with the next window when the user zooms or pans; `end: true` once the change settles."
+        },
+        {
+          "name": "zoomGestures",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Turns on interactive zooming of the `viewport` (wheel, pinch, pan, `+` / `-`), as `Chart`. Default `false`."
+        },
+        {
+          "name": "onPlotDoubleClick",
+          "type": "((e: ChartPlotPointerEvent) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called on a double-click, double-tap or Enter on the plot, as `Chart`; `value` is always `null` (no single y scale)."
+        }
+      ]
+    },
     "Lightbox": {
       "props": [
         {
@@ -6738,6 +6903,13 @@
           "description": "Where the content sits when the button is wider than it: `center`\n(default) or `start` (the inline start — left in LTR, right in RTL).\nPair `align=\"start\"` with `fullWidth` and `variant=\"ghost\"` + `selected`\n(+ `aria-current=\"true\"` on the current row) for a master–detail or\nnavigation list whose labels line up; to choose a value use `RadioGroup`.\nIgnored with `iconOnly`."
         },
         {
+          "name": "loading",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Show an in-button spinner while an async action runs. The children stay\nrendered (transparent) so the button keeps its width, and a small\nindeterminate spinner is centred over them.\n\nWhile `true` the button sets `aria-disabled=\"true\"` and ignores clicks and\nform submission (the consumer's `onClick` is not called; with `as=\"a\"` the\nnavigation is prevented) but stays focusable. It does NOT use the native\n`disabled` attribute: that would drop focus from the control mid-action.\n\nAssistive tech: the accessible name is unchanged and a visually hidden\npolite live region (`role=\"status\"`) announces \"Loading…\" when it turns\ntrue. The region renders only when the prop is passed at all (either\nvalue), so pass `loading={false}` rather than omitting it for a button\nthat can later load: a region added together with its text is not\nannounced. Defaults to `undefined` (no region, not loading)."
+        },
+        {
           "name": "as",
           "type": "\"button\"",
           "required": false,
@@ -8076,7 +8248,7 @@
     "FunnelStage": "{ key: string; label: string; value: number; color?: FunnelSlot }",
     "DonutSegment": "{ key: string; label: string; value: number; color?: ChartSeriesColor; link?: ReactElement<{ className?: string; children?: ReactNode; }, string | JSXElementConstructor<any>> }",
     "ScatterReference": "{ key?: string; label: string; points: { x: number | Date; y: number; }[]; color?: ChartSeriesColor; emphasis?: \"strong\" | \"default\" }",
-    "ScatterSeries": "{ key: string; label: string; points: ScatterPoint[]; color?: ChartSeriesColor }",
+    "ScatterSeries": "{ key: string; label: string; points: ScatterPoint[]; color?: ChartSeriesColor; shape?: ScatterMarkerShape; emphasis?: \"strong\" | \"default\"; connect?: boolean | { maxGap: number; } }",
     "ScatterXScale": "\"number\" | \"time\"",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",
@@ -8088,6 +8260,7 @@
     "ChartPlotPointerEvent": "{ index: number; fraction: number; value: number | null; clientX: number; clientY: number; source: \"touch\" | \"mouse\" | \"keyboard\" }",
     "ChartRange": "{ from: string; to: string }",
     "ChartReferenceLine": "{ key?: string; value: number; label: string; color?: ChartSeriesColor; emphasis?: \"strong\" | \"default\" }",
+    "ChartSelectOn": "\"drag\" | \"tap\"",
     "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string; color?: ChartSeriesColor }",
     "ChartViewport": "{ from: number; to: number }"
   }

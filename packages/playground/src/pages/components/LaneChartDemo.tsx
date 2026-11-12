@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   DashboardWidget,
   LaneChart,
@@ -62,7 +62,6 @@ const markers: ChartMarker[] = [
 ];
 
 function EffectsExample() {
-  const memoLanes = useMemo(() => lanes, []);
   const [range, setRange] = useState<ChartRange | null>(null);
   const idx = range ? categories.indexOf(range.from) : -1;
   return (
@@ -72,7 +71,7 @@ function EffectsExample() {
           <LaneChart
             label="Effects, last 90 days"
             categories={categories}
-            lanes={memoLanes}
+            lanes={lanes}
             markers={markers}
             selectOn="tap"
             onSelectedRangeChange={setRange}
@@ -82,7 +81,9 @@ function EffectsExample() {
       </div>
       <Text>
         {range && idx >= 0
-          ? `Selected: ${range.from}${range.to !== range.from ? ` – ${range.to}` : ''}, food ${food[idx]} g, cleanings ${cleanings[idx]}`
+          ? range.to === range.from
+            ? `Selected: ${range.from}, food ${food[idx]} g, cleanings ${cleanings[idx]}`
+            : `Selected: ${range.from} – ${range.to}`
           : 'Tap a day to select it.'}
       </Text>
     </Stack>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeLaneLayout, type Lane } from './laneModel';
+import { computeLaneLayout, laneDotRadius, type Lane } from './laneModel';
 import { X_AXIS_HEIGHT } from '../Chart/chartModel';
 
 const categories = ['a', 'b', 'c', 'd', 'e'];
@@ -121,6 +121,24 @@ describe('computeLaneLayout', () => {
     expect(out.plot.y + out.plot.height).toBeCloseTo(bottom.top + bottom.height);
     for (const d of bottom.dots)
       expect(out.plot.y + out.plot.height).toBeGreaterThanOrEqual(bottom.top + d.cy);
+  });
+
+  it('fits dots to the band at 90 categories on a 300px plot, and grows them back when zoomed in', () => {
+    const many = Array.from({ length: 90 }, (_, i) => `c${i}`);
+    const lanes: Lane[] = [narrow, { ...dots, values: many.map(() => 1) }];
+    const out = computeLaneLayout({ ...base, categories: many, width: 300, lanes });
+    const r = laneDotRadius(4, out.step);
+    expect(out.lanes[1].dots.length).toBeGreaterThan(0);
+    expect(r).toBeLessThanOrEqual(out.step / 2);
+    expect(r).toBeGreaterThan(0);
+    const zoomed = computeLaneLayout({
+      ...base,
+      categories: many,
+      width: 300,
+      lanes,
+      viewport: { from: 0, to: 0.1 },
+    });
+    expect(laneDotRadius(4, zoomed.step)).toBe(4);
   });
 
   it('yields a categoryX when every lane is dots', () => {

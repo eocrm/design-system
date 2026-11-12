@@ -39,3 +39,8 @@
   stroke: var(--scatter-dot-ring);
   stroke-width: var(--scatter-dot-ring-width);
 }
+
+// Dots shrunk to fit a dense band: no ring, so it can't eat them.
+[data-fitted] > .dot {
+  stroke: none;
+}
