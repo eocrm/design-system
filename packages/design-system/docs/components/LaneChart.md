@@ -88,7 +88,7 @@ Inside a [`ChartSync`](./ChartSync.md), inspecting a category shows a crosshair 
 - **Shared axis.** Every lane shares the left edge, the category x positions and one x axis under the bottom lane. `values[i]` belongs to `categories[i]`; `null` is a gap and short arrays are padded.
 - **Markers** (`markers`) are [Chart](Chart.md)'s: lines and bands span all lanes, labels are drawn once above the top lane.
 - **Selection and zoom** behave as in Chart: one selected range across all lanes (`selectOn="tap"` selects a single category on tap, and only when selection is on: pass `selectedRange` / `onSelectedRangeChange`), `zoomRange` / `viewport` slice and rescale every lane, `zoomGestures` turns on wheel / pinch / pan.
-- **Keyboard and screen readers.** Focus the plot; ←/→ walk the categories, Home / End jump, Space selects the inspected category, Shift+←/→ extends a range, Esc dismisses. A visually hidden data table (caption = `label`) has one column per lane.
+- **Keyboard and screen readers.** Focus the plot; ←/→ walk the categories, Home / End jump, with selection on, Space selects the inspected category and Shift+←/→ extends a range; Esc dismisses. A visually hidden data table (caption = `label`) has one column per lane.
 - **Empty** (no categories, or every value null/zero) renders `EmptyState` with `emptyMessage`.
 - **Sizing.** Fills its parent; the parent needs a definite height.
 
