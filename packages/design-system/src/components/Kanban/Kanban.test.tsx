@@ -1,5 +1,6 @@
 import { createRef } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {
   Kanban,
   clampKanbanTransform,
@@ -1283,6 +1284,63 @@ describe('Kanban — status zones', () => {
     drag('a1', [zoneCentre(1, 1, 2)]);
     expect(onStatusChange).toHaveBeenCalledTimes(1);
     expect(onStatusChange.mock.calls[0][0].to.statusId).toBe('1');
+  });
+
+  it('a release on a zone canDrop forbids cancels and is announced as cancelled', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        canDrop={(_, to) => to.statusId !== 'won'}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    pressAndMove('a1', [zoneCentre(1, 1, 2)]);
+    expect(document.querySelector('[data-zone-status="won"]')?.getAttribute('data-disabled')).toBe(
+      'true',
+    );
+    fireEvent.pointerUp(document, {
+      clientX: zoneCentre(1, 1, 2)[0],
+      clientY: zoneCentre(1, 1, 2)[1],
+    });
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('status').textContent).toMatch(/^Move cancelled/);
+  });
+
+  it('a keyboard drop on a forbidden zone is announced as cancelled', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        canDrop={(_, to) => to.statusId === undefined}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    expect(document.querySelectorAll('[data-kanban-zone][data-disabled]')).toHaveLength(2);
+    expect(screen.getByRole('status').textContent).not.toMatch(/position/);
+    await user.keyboard('[Space]');
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('status').textContent).toMatch(/^Move cancelled/);
   });
 
   it('plain-column boards render no .body wrapper', () => {

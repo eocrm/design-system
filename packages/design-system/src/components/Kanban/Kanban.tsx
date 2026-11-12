@@ -762,10 +762,8 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
     return ids;
   }, [columnStatuses, effectiveItems]);
 
-  const collisionDetection = useCallback<CollisionDetection>(
-    (args) => {
-      disallowedZoneRef.current = false;
-      const zones: DroppableContainer[] = [];
+  const resolveCollisions = useCallback(
+    (args: Parameters<CollisionDetection>[0], zones: DroppableContainer[]) => {
       const rest: DroppableContainer[] = [];
       for (const d of args.droppableContainers) (zoneOf(d) ? zones : rest).push(d);
 
@@ -786,11 +784,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
 
       // A status commits only with the pointer inside its zone (no nearest-zone fallback).
       const [zoneHit] = pointerWithin({ ...args, droppableContainers: zones });
-      if (zoneHit) {
-        const zone = zones.find((z) => z.id === zoneHit.id);
-        disallowedZoneRef.current = zone != null && !zoneOf(zone)?.allowed;
-        return [zoneHit];
-      }
+      if (zoneHit) return [zoneHit];
       const columns = rest.filter(isContainer);
       const multiColumns = columns.filter((d) => columnStatuses.has(d.id));
       if (pointerWithin({ ...args, droppableContainers: multiColumns }).length > 0) return [];
@@ -802,6 +796,17 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       return containerAwareClosestCorners({ ...args, droppableContainers: plain });
     },
     [zoneOnly, columnStatuses],
+  );
+  const collisionDetection = useCallback<CollisionDetection>(
+    (args) => {
+      const zones: DroppableContainer[] = [];
+      const result = resolveCollisions(args, zones);
+      // Latched from the RESULT so pointer and keyboard drags agree.
+      const zone = zoneOf(zones.find((z) => z.id === result[0]?.id));
+      disallowedZoneRef.current = zone != null && !zone.allowed;
+      return result;
+    },
+    [resolveCollisions],
   );
 
   const handleDragStart = useCallback(
