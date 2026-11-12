@@ -23,6 +23,10 @@
   // Disabled state
   --button-opacity-disabled: var(--opacity-disabled);
 
+  // Loading: the button stays fully opaque; its children go transparent (width kept)
+  --button-opacity-loading: 1;
+  --button-opacity-loading-content: 0;
+
   // Sizing — height per size
   --button-height-xs: var(--size-xs);
   --button-height-sm: var(--size-sm);

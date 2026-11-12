@@ -70,9 +70,11 @@
     "composedBy": []
   },
   "Button": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Forms",
-    "composes": [],
+    "composes": [
+      "CircularProgress"
+    ],
     "composedBy": [
       "Alert",
       "Banner",
@@ -190,6 +192,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "Button",
       "RichText",
       "Tour",
       "TreeView"

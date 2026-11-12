@@ -38,6 +38,44 @@
   }
 }
 
+// Loading (DS-77): children and spinner share one grid cell, so the button
+// keeps the children's width and the spinner is centred without position.
+.loading {
+  display: inline-grid;
+  place-items: center;
+
+  // Busy, not unavailable: beat the shared aria-disabled dimming above.
+  &[aria-disabled='true'] {
+    opacity: var(--button-opacity-loading);
+    cursor: progress;
+  }
+}
+
+.content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: inherit;
+  gap: inherit;
+  grid-area: 1 / 1;
+
+  .loading > & {
+    opacity: var(--button-opacity-loading-content);
+  }
+}
+
+.spinner {
+  display: inline-flex;
+  grid-area: 1 / 1;
+
+  // The button's own foreground, so the arc shows on an accent-filled button.
+  --circular-progress-indeterminate-color: currentColor;
+  --circular-progress-track-color: transparent;
+}
+
+.srOnly {
+  @include visually-hidden;
+}
+
 // Sizes
 .xs {
   @include touch-hit-area;

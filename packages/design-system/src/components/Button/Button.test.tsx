@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { readFileSync } from 'node:fs';
@@ -403,5 +403,101 @@ describe('Button touch tokens (DS-35)', () => {
     expect(scss).toMatch(
       /@media \(pointer: coarse\)[\s\S]*--button-height-lg:\s*var\(\-\-size\-touch\)/,
     );
+  });
+});
+
+describe('Button — loading (DS-77)', () => {
+  it('loading: keeps the accessible name, sets aria-disabled, stays focusable', async () => {
+    render(<Button loading>Ask</Button>);
+    const btn = screen.getByRole('button', { name: 'Ask' });
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
+    expect(btn).not.toHaveAttribute('disabled');
+    await userEvent.tab();
+    expect(btn).toHaveFocus();
+  });
+
+  it('loading: ignores clicks', async () => {
+    const onClick = vi.fn();
+    render(
+      <Button loading onClick={onClick}>
+        Ask
+      </Button>,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }));
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('loading: blocks form submission', async () => {
+    const submit = vi.fn((e: { preventDefault: () => void }) => e.preventDefault());
+    render(
+      <form onSubmit={submit}>
+        <input aria-label="field" />
+        <Button type="submit" loading>
+          Go
+        </Button>
+      </form>,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Go' }));
+    await userEvent.type(screen.getByLabelText('field'), 'x{Enter}');
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('loading: still submits when not loading (guard is state-bound)', async () => {
+    const submit = vi.fn((e: { preventDefault: () => void }) => e.preventDefault());
+    render(
+      <form onSubmit={submit}>
+        <Button type="submit" loading={false}>
+          Go
+        </Button>
+      </form>,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Go' }));
+    expect(submit).toHaveBeenCalledTimes(1);
+  });
+
+  it('loading: announces through a polite region present before loading', async () => {
+    const { rerender } = render(<Button loading={false}>Ask</Button>);
+    const region = screen.getByRole('status');
+    expect(region).toHaveTextContent('');
+    rerender(<Button loading>Ask</Button>);
+    expect(await screen.findByText('Loading…')).toBe(region);
+    expect(screen.getByRole('status')).toBe(region);
+    rerender(<Button loading={false}>Ask</Button>);
+    await waitFor(() => expect(region).toHaveTextContent(''));
+  });
+
+  it('no loading prop: renders no status region', () => {
+    render(<Button>Ask</Button>);
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('loading as="a": click is defaultPrevented', () => {
+    render(
+      <Button as="a" href="#x" loading>
+        Open
+      </Button>,
+    );
+    const evt = new MouseEvent('click', { bubbles: true, cancelable: true });
+    screen.getByRole('link', { name: 'Open' }).dispatchEvent(evt);
+    expect(evt.defaultPrevented).toBe(true);
+  });
+
+  it('loading: spinner is aria-hidden', () => {
+    render(<Button loading>Ask</Button>);
+    const spinner = screen
+      .getByRole('button', { name: 'Ask' })
+      .querySelector('[role="progressbar"]');
+    expect(spinner).not.toBeNull();
+    expect(spinner!.closest('[aria-hidden="true"]')).not.toBeNull();
+  });
+
+  it('iconOnly loading: the name stays the aria-label and the icon is hidden', () => {
+    render(
+      <Button iconOnly loading aria-label="Send">
+        <svg data-testid="icon" />
+      </Button>,
+    );
+    expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument();
+    expect(screen.getByTestId('icon').closest('[aria-hidden="true"]')).not.toBeNull();
   });
 });
