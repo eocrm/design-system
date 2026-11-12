@@ -1,6 +1,6 @@
 import { useEffect, useRef, type MouseEvent, type PointerEvent } from 'react';
 import { pastSlop } from '../_internal/longPress';
-import type { ChartLayout } from './chartModel';
+import type { ChartGeometry } from './chartModel';
 import { panViewport, zoomViewport, type ChartViewport } from './chartViewport';
 
 /** Wheel zoom: factor = `Math.exp(deltaY * WHEEL_ZOOM_STEP)` (pixel deltas; line deltas ×16). */
@@ -14,14 +14,14 @@ export const DOUBLE_TAP_SLOP_PX = 24;
 const LINE_PX = 16;
 
 /** Pixels dragged across the plot → domain fractions, at the window's span. */
-const pxToDomain = (px: number, v: ChartViewport | null, layout: ChartLayout | null) =>
+const pxToDomain = (px: number, v: ChartViewport | null, layout: ChartGeometry | null) =>
   layout && layout.plot.width > 0 ? (px / layout.plot.width) * (v ? v.to - v.from : 1) : 0;
 
 type Source = 'mouse' | 'touch';
 
 export interface ChartGesturesOptions {
   plotEl: HTMLElement | null;
-  layout: ChartLayout | null;
+  layout: ChartGeometry | null;
   /** `zoomGestures`: wheel, touch and mouse-drag zoom/pan. */
   enabled: boolean;
   /** Selection owns mouse drags. */

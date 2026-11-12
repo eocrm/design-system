@@ -674,6 +674,9 @@ export interface ChartLayout {
   valueAt: (svgY: number) => number;
 }
 
+/** The x geometry interaction needs: plot rect, category centres and band step. */
+export type ChartGeometry = Pick<ChartLayout, 'plot' | 'categoryX' | 'step'>;
+
 type StackRow = Record<string, number>;
 
 const isolated = (values: readonly (number | null)[], i: number) =>
@@ -1170,7 +1173,7 @@ function sampledRuns(
  * Category index under svg x coordinate `x`, clamped to the categories visible in the plot (0 when there are none):
  * the axis gutter and right padding map to the window's edge categories, never off-screen ones. Viewport-aware.
  */
-export function categoryIndexAt(layout: ChartLayout, x: number): number {
+export function categoryIndexAt(layout: ChartGeometry, x: number): number {
   const n = layout.categoryX.length;
   if (n === 0) return 0;
   const { plot, step } = layout;
