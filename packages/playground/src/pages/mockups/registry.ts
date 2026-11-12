@@ -110,6 +110,7 @@ export type ComponentName =
   | 'Chart'
   | 'FunnelChart'
   | 'DonutChart'
+  | 'LaneChart'
   | 'ScatterChart'
   | 'Heatmap'
   | 'Sparkline'

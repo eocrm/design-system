@@ -932,6 +932,8 @@ export type {
   ScatterSeries,
   ScatterXScale,
 } from './components/ScatterChart';
+export { LaneChart } from './components/LaneChart';
+export type { Lane, LaneChartProps, LaneType } from './components/LaneChart';
 export { Heatmap } from './components/Heatmap';
 export type { HeatmapProps } from './components/Heatmap';
 export { Sparkline } from './components/Sparkline';

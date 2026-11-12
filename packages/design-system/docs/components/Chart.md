@@ -230,7 +230,7 @@ const [viewport, setViewport] = useState<ChartViewport | null>(null);
 
 - ❌ One headline number → `DashboardWidget variant="kpi"` or `StatGroup`.
 - ❌ More than 8 groups at once → fold the tail into an "Other" series in the app (the DS can't know whether your metric is additive).
-- ❌ Two measures with different units → two charts. There is no dual axis.
+- ❌ Two measures with different units → `LaneChart` (one lane per measure on a shared time axis). There is no dual axis.
 - ❌ Stage conversion (pipeline / campaign) → `FunnelChart`.
 - ❌ Two measures against each other, or events on a time axis sized by magnitude → `ScatterChart`.
 - ❌ A value per weekday × hour (two categorical dimensions) → `Heatmap`.

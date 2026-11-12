@@ -91,6 +91,7 @@
       "FlowCanvas",
       "Image",
       "ImageCrop",
+      "LaneChart",
       "LiquidEditor",
       "Modal",
       "OptionsPicker",
@@ -158,6 +159,7 @@
       "DonutChart",
       "FunnelChart",
       "Heatmap",
+      "LaneChart",
       "ScatterChart"
     ]
   },
@@ -207,6 +209,7 @@
       "Chart",
       "ConfirmationPopover",
       "DateStrip",
+      "LaneChart",
       "OptionsPicker",
       "RelativeDateInput",
       "RichTextEditor",
@@ -427,6 +430,7 @@
       "DonutChart",
       "FunnelChart",
       "Heatmap",
+      "LaneChart",
       "ScatterChart"
     ]
   },
@@ -615,6 +619,19 @@
       "TopBar"
     ]
   },
+  "LaneChart": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Button",
+      "Chart",
+      "Cluster",
+      "EmptyState",
+      "LiveRegion",
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
   "Lightbox": {
     "tier": "composition",
     "cluster": "Overlays",
@@ -669,6 +686,7 @@
       "DonutChart",
       "FunnelChart",
       "Heatmap",
+      "LaneChart",
       "RichTextEditor",
       "ScatterChart",
       "TopBar",
@@ -1210,6 +1228,7 @@
       "DonutChart",
       "FunnelChart",
       "Heatmap",
+      "LaneChart",
       "LiveRegion",
       "ScatterChart",
       "StagePath",

@@ -330,6 +330,11 @@
     "cluster": "Display"
   },
   {
+    "name": "LaneChart",
+    "summary": "several measures on one shared time axis",
+    "cluster": "Display"
+  },
+  {
     "name": "Lightbox",
     "summary": "full-screen image & document gallery overlay",
     "cluster": "Overlays"
