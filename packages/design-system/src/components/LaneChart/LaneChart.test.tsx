@@ -187,6 +187,47 @@ describe('LaneChart', () => {
     expect(within(screen.getByRole('table')).getByText('2x')).toBeInTheDocument();
   });
 
+  it('zoomRange slices the table and tooltip to the zoomed lane values; annotations shift with it', async () => {
+    const fire = stubLayout();
+    const lanes: LaneChartProps['lanes'] = [
+      {
+        ...base.lanes[0],
+        type: 'bar',
+        annotations: [{ at: 'd3', glyph: 'dot', tone: 'warning', label: 'Vet visit' }],
+      },
+      base.lanes[2],
+    ];
+    render(<LaneChart {...base} lanes={lanes} zoomRange={{ from: 'd2', to: 'd4' }} />);
+    fire();
+    const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1);
+    expect(rows.map((r) => within(r).getByRole('rowheader').textContent)).toEqual([
+      'd2',
+      'd3',
+      'd4',
+    ]);
+    expect(rows[0]).toHaveTextContent('30 g');
+    expect(rows[0]).not.toHaveTextContent('10 g');
+    // annotation on d3 lands on the second (shifted) row, prefixed with its lane
+    expect(rows[1]).toHaveTextContent('Food: Vet visit');
+    expect(rows[0]).not.toHaveTextContent('Vet visit');
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(tooltip()).toHaveTextContent('d2');
+    expect(tooltip()).toHaveTextContent('30 g');
+  });
+
+  it('keyboard inspection announces category and every lane value in the live region', async () => {
+    const fire = stubLayout();
+    render(<LaneChart {...base} />);
+    fire();
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 120));
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('d1: Food 20 g, Poo 2x, Weight No data');
+  });
+
   it('empty categories render emptyMessage', () => {
     stubLayout();
     render(<LaneChart {...base} categories={[]} emptyMessage="Nothing yet" />);

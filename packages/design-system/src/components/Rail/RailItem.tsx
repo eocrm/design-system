@@ -74,6 +74,7 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
   const { collapsed } = useRail();
   const insideGroup = useContext(RailGroupContext);
   const duplicatePresentation = useContext(RailGroupDuplicateContext);
+  const hasBadge = badge != null && badge !== false && badge !== '';
 
   // The polymorphic anchor / NavLink / button receives the className so the
   // CSS `:has([aria-current="page"])` selector can light it up via the
@@ -82,7 +83,7 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
     <Component
       ref={ref}
       className={clsx(styles.item, className)}
-      data-has-badge={collapsed && !insideGroup && badge != null ? '' : undefined}
+      data-has-badge={collapsed && !insideGroup && hasBadge ? '' : undefined}
       // {...rest} last so consumer overrides win (Pattern A), except that the
       // duplicate-presentation context owns aria-current below.
       {...rest}
@@ -101,7 +102,7 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
         </span>
       )}
       <span className={styles.itemLabel}>{children}</span>
-      {badge != null && <span className={styles.itemBadge}>{badge}</span>}
+      {hasBadge && <span className={styles.itemBadge}>{badge}</span>}
     </Component>
   );
 

@@ -1242,7 +1242,7 @@ describe('range selection and zoom', () => {
     );
     layout.fire();
     expect(plotOf()).toHaveAccessibleDescription(
-      'Zoomed to c1–c3. Selected c2 to c3. Use arrow keys to inspect values. All values are also in the data table. Shift+arrows select a range.',
+      'Zoomed to c1–c3. Selected c2 to c3. Use arrow keys to inspect values. All values are also in the data table. Space selects the inspected category, Shift+arrows select a range.',
     );
     expect(screen.getByRole('table', { name: 'Deals won per week. Zoomed to c1–c3' })).toBeTruthy();
   });
@@ -1360,7 +1360,7 @@ describe('range selection and zoom', () => {
     stubLayout();
     render(<Chart {...sel} onSelectedRangeChange={() => {}} />);
     expect(plotOf()).toHaveAccessibleDescription(
-      'Use arrow keys to inspect values. All values are also in the data table. Shift+arrows select a range.',
+      'Use arrow keys to inspect values. All values are also in the data table. Space selects the inspected category, Shift+arrows select a range.',
     );
   });
 });

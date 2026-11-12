@@ -295,8 +295,8 @@
 .item[data-has-badge] .itemIcon::after {
   content: '';
   position: absolute;
-  top: calc(-1 * var(--space-1));
-  right: calc(-1 * var(--space-1));
+  inset-block-start: calc(-1 * var(--space-1));
+  inset-inline-end: calc(-1 * var(--space-1));
   width: var(--rail-item-badge-dot-size);
   height: var(--rail-item-badge-dot-size);
   border-radius: var(--radius-full);

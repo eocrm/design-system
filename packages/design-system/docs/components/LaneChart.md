@@ -3,8 +3,8 @@
 Stacks several measures with different units (food in grams, weight in kg, cleanings as a count, poo as presence) in lanes, each with its own y scale, on one shared x axis. One tooltip, one selection band, one zoom and one set of markers run through every lane. Fills a `DashboardWidget variant="chart"` body and ships its own tooltip, keyboard inspection, data table and empty state. The app owns data, formatting, loading and errors.
 
 ```tsx
-import { useMemo } from 'react';
-import { LaneChart, DashboardWidget, type Lane } from '@eocrm/design-system';
+import { useMemo, useState } from 'react';
+import { LaneChart, DashboardWidget, type ChartRange, type Lane } from '@eocrm/design-system';
 
 function Effects({
   days,
@@ -17,6 +17,7 @@ function Effects({
   poo: (number | null)[];
   weight: (number | null)[];
 }) {
+  const [range, setRange] = useState<ChartRange | null>(null);
   const lanes = useMemo<Lane[]>(
     () => [
       { key: 'food', label: 'Food', type: 'bar', values: food, formatValue: (n) => `${n} g` },
@@ -34,7 +35,14 @@ function Effects({
   );
   return (
     <DashboardWidget variant="chart" title="Effects">
-      <LaneChart label="Effects, last 90 days" categories={days} lanes={lanes} selectOn="tap" />
+      <LaneChart
+        label="Effects, last 90 days"
+        categories={days}
+        lanes={lanes}
+        selectOn="tap"
+        selectedRange={range}
+        onSelectedRangeChange={setRange}
+      />
     </DashboardWidget>
   );
 }
@@ -61,7 +69,7 @@ Inside a [`ChartSync`](./ChartSync.md), inspecting a category shows a crosshair 
 | `selectedRange` | `ChartRange \| null` | no | Controlled selected category range (`null` = none), as `Chart`: one band across every lane. Passing this, `defaultSelectedRange` or `onSelectedRangeChange` turns selection on (drag / long-press, Shift+←/→, Space, Escape). |
 | `defaultSelectedRange` | `ChartRange \| null` | no | Initial selection when uncontrolled. Default `null`. Also turns selection on. |
 | `onSelectedRangeChange` | `((range: ChartRange \| null) => void)` | no | Called with the next selection (or `null` when cleared) on every user change. Also turns selection on. |
-| `selectOn` | `'drag' \| 'tap'` | no | What a plain click or tap does while selection is on. `'drag'` (default): inspects, outside the band clears. `'tap'`: selects that one category (tapping it again clears), the phone flow. Drag and long-press still select a range. |
+| `selectOn` | `'drag' \| 'tap'` | no | What a plain click or tap does while selection is on. `'drag'` (default): inspects, outside the band clears. `'tap'`: selects that one category (tapping it again clears), the phone flow. Drag and long-press still select a range. Ignored unless selection is on. |
 | `zoomRange` | `ChartRange \| null` | no | Controlled zoomed category range (`null` = all), as `Chart`: every lane is sliced and rescaled. Header buttons "Zoom to selection" / "Reset zoom". |
 | `defaultZoomRange` | `ChartRange \| null` | no | Initial zoomed range when uncontrolled. Default `null`. |
 | `onZoomRangeChange` | `((range: ChartRange \| null) => void)` | no | Called with the next zoomed range (or `null` on reset) when the user clicks a zoom button. |
@@ -79,8 +87,8 @@ Inside a [`ChartSync`](./ChartSync.md), inspecting a category shows a crosshair 
 - **Lanes** are drawn top to bottom. `'bar'` and `'line'` lanes split the height equally; a `'dots'` lane is a short fixed row (`--lane-chart-dots-height`) with a dot wherever the value is > 0 (the magnitude is in the tooltip and table). Each lane has its own y scale and `formatValue`; `includeZero={false}` fits a `line` lane to its data, `integerValues` gives whole-number ticks for counts, `referenceLines` and `annotations` work as in [Chart](Chart.md). Aim for 3–6 lanes.
 - **Shared axis.** Every lane shares the left edge, the category x positions and one x axis under the bottom lane. `values[i]` belongs to `categories[i]`; `null` is a gap and short arrays are padded.
 - **Markers** (`markers`) are [Chart](Chart.md)'s: lines and bands span all lanes, labels are drawn once above the top lane.
-- **Selection and zoom** behave as in Chart: one selected range across all lanes (`selectOn="tap"` selects a single category on tap), `zoomRange` / `viewport` slice and rescale every lane, `zoomGestures` turns on wheel / pinch / pan.
-- **Keyboard and screen readers.** Focus the plot; ←/→ walk the categories, Home / End jump, Esc dismisses. A visually hidden data table (caption = `label`) has one column per lane.
+- **Selection and zoom** behave as in Chart: one selected range across all lanes (`selectOn="tap"` selects a single category on tap, and only when selection is on: pass `selectedRange` / `onSelectedRangeChange`), `zoomRange` / `viewport` slice and rescale every lane, `zoomGestures` turns on wheel / pinch / pan.
+- **Keyboard and screen readers.** Focus the plot; ←/→ walk the categories, Home / End jump, Space selects the inspected category, Shift+←/→ extends a range, Esc dismisses. A visually hidden data table (caption = `label`) has one column per lane.
 - **Empty** (no categories, or every value null/zero) renders `EmptyState` with `emptyMessage`.
 - **Sizing.** Fills its parent; the parent needs a definite height.
 

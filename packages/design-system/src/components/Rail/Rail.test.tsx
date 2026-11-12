@@ -246,6 +246,24 @@ describe('Rail', () => {
     expect(screen.getByRole('link', { name: /NoBadge/ })).not.toHaveAttribute('data-has-badge');
   });
 
+  it('false and empty-string badges are no badge: no dot modifier, no badge span', () => {
+    render(
+      <Rail collapsed>
+        <Rail.Item href="/f" icon={<span aria-hidden />} badge={false}>
+          FalseBadge
+        </Rail.Item>
+        <Rail.Item href="/e" icon={<span aria-hidden />} badge="">
+          EmptyBadge
+        </Rail.Item>
+      </Rail>,
+    );
+    for (const name of [/FalseBadge/, /EmptyBadge/]) {
+      const link = screen.getByRole('link', { name });
+      expect(link).not.toHaveAttribute('data-has-badge');
+      expect(link.querySelectorAll('[class*="itemBadge"]')).toHaveLength(0);
+    }
+  });
+
   it('aria-current="page" item gets active-state styling via the CSS selector', () => {
     render(
       <Rail>

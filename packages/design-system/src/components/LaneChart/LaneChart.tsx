@@ -73,7 +73,7 @@ export interface LaneChartProps extends Omit<HTMLAttributes<HTMLElement>, 'child
   onSelectedRangeChange?: (range: ChartRange | null) => void;
   /**
    * What a plain click or tap does while selection is on. `'drag'` (default): inspects, outside the band clears.
-   * `'tap'`: selects that one category (tapping it again clears), the phone flow. Drag and long-press still select a range.
+   * `'tap'`: selects that one category (tapping it again clears), the phone flow. Drag and long-press still select a range. Ignored unless selection is on.
    */
   selectOn?: ChartSelectOn;
   /** Controlled zoomed category range (`null` = all), as `Chart`: every lane is sliced and rescaled. Header buttons "Zoom to selection" / "Reset zoom". */
@@ -206,10 +206,10 @@ export const LaneChart = forwardRef<HTMLElement, LaneChartProps>(function LaneCh
       ),
     [allLanes, allCategories],
   );
-  const viewAnnotations = laneAnnotations.flatMap((r) =>
+  const viewAnnotations = laneAnnotations.flatMap((r, li) =>
     r.annotations.flatMap((a) =>
       a.index >= zoomFrom && a.index - zoomFrom < categories.length
-        ? [{ ...a, index: a.index - zoomFrom }]
+        ? [{ ...a, index: a.index - zoomFrom, label: `${allLanes[li].label}: ${a.label}` }]
         : [],
     ),
   );

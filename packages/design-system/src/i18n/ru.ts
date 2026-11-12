@@ -498,7 +498,7 @@ export const ru: Messages = {
     markers: 'Отметки',
     notes: 'Заметки',
     details: 'Подробности',
-    rangeHint: 'Shift+стрелки выделяют диапазон.',
+    rangeHint: 'Пробел выделяет категорию, Shift+стрелки выделяют диапазон.',
     zoomHint: 'Плюс и минус увеличивают и уменьшают масштаб.',
     zoomToSelection: 'Увеличить выделенное',
     resetZoom: 'Сбросить масштаб',

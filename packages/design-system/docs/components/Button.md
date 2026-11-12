@@ -43,7 +43,7 @@
 ## Loading
 
 ```tsx
-<Button loading={saving} onClick={save}>
+<Button loading={saving} loadingLabel={t('common.saving')} onClick={save}>
   Save
 </Button>
 ```
