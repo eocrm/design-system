@@ -89,6 +89,7 @@
       "FlowCanvas",
       "Image",
       "ImageCrop",
+      "LaneChart",
       "LiquidEditor",
       "Modal",
       "OptionsPicker",
@@ -147,6 +148,7 @@
     "cluster": "Display",
     "composes": [
       "Button",
+      "ChartSync",
       "Cluster",
       "EmptyState",
       "LiveRegion",
@@ -156,6 +158,17 @@
       "DonutChart",
       "FunnelChart",
       "Heatmap",
+      "LaneChart",
+      "ScatterChart"
+    ]
+  },
+  "ChartSync": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": [
+      "Chart",
+      "LaneChart",
       "ScatterChart"
     ]
   },
@@ -204,6 +217,7 @@
       "Chart",
       "ConfirmationPopover",
       "DateStrip",
+      "LaneChart",
       "OptionsPicker",
       "RelativeDateInput",
       "RichTextEditor",
@@ -424,6 +438,7 @@
       "DonutChart",
       "FunnelChart",
       "Heatmap",
+      "LaneChart",
       "ScatterChart"
     ]
   },
@@ -612,6 +627,20 @@
       "TopBar"
     ]
   },
+  "LaneChart": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Button",
+      "Chart",
+      "ChartSync",
+      "Cluster",
+      "EmptyState",
+      "LiveRegion",
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
   "Lightbox": {
     "tier": "composition",
     "cluster": "Overlays",
@@ -666,6 +695,7 @@
       "DonutChart",
       "FunnelChart",
       "Heatmap",
+      "LaneChart",
       "RichTextEditor",
       "ScatterChart",
       "TopBar",
@@ -898,6 +928,7 @@
     "cluster": "Display",
     "composes": [
       "Chart",
+      "ChartSync",
       "EmptyState",
       "LiveRegion",
       "VisuallyHidden"
@@ -1207,6 +1238,7 @@
       "DonutChart",
       "FunnelChart",
       "Heatmap",
+      "LaneChart",
       "LiveRegion",
       "ScatterChart",
       "StagePath",

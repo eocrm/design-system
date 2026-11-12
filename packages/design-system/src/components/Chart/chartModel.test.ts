@@ -1575,3 +1575,101 @@ describe('annotations (DS-52)', () => {
     expect(withOne.marks[0].points[1]!.y).toBeGreaterThan(without.marks[0].points[1]!.y);
   });
 });
+
+describe('includeZero (DS-71)', () => {
+  const ser = (type: 'line' | 'bar' | 'stacked-bar' | 'area', values: (number | null)[]) =>
+    resolveSeries(type, [s('a', values)], values.length).series;
+  const ticks = (l: ReturnType<typeof layout>) => l.yTicks.map((t) => t.value);
+
+  it('includeZero false fits a line to its data', () => {
+    const values = [3700, 3760, 3830, 3790, 3716, 3800];
+    const l = layout({
+      type: 'line',
+      series: ser('line', values),
+      categories: values.map((_, i) => String(i)),
+      includeZero: false,
+      referenceLines: [{ value: 3800, label: 'Goal' }],
+    });
+    expect(l.yTicks[0].value).toBeGreaterThan(0);
+    expect(l.yTicks[0].value).toBeLessThanOrEqual(3700);
+    expect(l.yTicks[l.yTicks.length - 1].value).toBeGreaterThanOrEqual(3830);
+  });
+
+  it('includeZero false is ignored on bar, stacked-bar and area', () => {
+    for (const type of ['bar', 'stacked-bar', 'area'] as const) {
+      const l = layout({ type, series: ser(type, [50, 60, 70, 80]), includeZero: false });
+      expect(l.yTicks[0].value).toBe(0);
+    }
+  });
+
+  it('includeZero false with all-null values and with one value stays finite', () => {
+    for (const values of [
+      [null, null, null, null],
+      [null, 42, null, null],
+    ]) {
+      const t = ticks(layout({ type: 'line', series: ser('line', values), includeZero: false }));
+      expect(t.length).toBeGreaterThanOrEqual(2);
+      expect(t.every(Number.isFinite)).toBe(true);
+    }
+  });
+});
+
+describe('integerValues (DS-74)', () => {
+  const bar = (values: number[], integerValues?: boolean) =>
+    layout({
+      type: 'bar',
+      series: resolveSeries('bar', [s('a', values)], values.length).series,
+      categories: values.map((_, i) => String(i)),
+      integerValues,
+    });
+  const ticks = (l: ReturnType<typeof layout>) => l.yTicks.map((t) => t.value);
+
+  it('integerValues on 0–1 ticks [0, 1]', () => {
+    expect(ticks(bar([1, 1, 0], true))).toEqual([0, 1]);
+  });
+
+  it('integerValues on 0–3 ticks [0,1,2,3]', () => {
+    expect(ticks(bar([3, 1, 0], true))).toEqual([0, 1, 2, 3]);
+  });
+
+  it('integerValues on 0–2000 keeps normal density', () => {
+    const t = ticks(bar([2000, 500, 0], true));
+    expect(t.every(Number.isInteger)).toBe(true);
+    expect(t.length).toBeLessThanOrEqual(ticks(bar([2000, 500, 0])).length);
+  });
+
+  it('integerValues with negatives', () => {
+    const t = ticks(bar([-2, 3], true));
+    expect(t.every(Number.isInteger)).toBe(true);
+    expect(t).toContain(0);
+  });
+
+  it('integerValues keeps the domain ends on integer ticks for a fractional maximum', () => {
+    const t = ticks(bar([2.5, 1, 0], true));
+    expect(t.every(Number.isInteger)).toBe(true);
+    expect(t[t.length - 1]).toBeGreaterThanOrEqual(2.5);
+  });
+});
+
+describe('lane layout inputs (DS-75)', () => {
+  const line = (over: Partial<LayoutInput> = {}) =>
+    layout({
+      type: 'line',
+      series: resolveSeries('line', [s('a', [1, 20000, 3])], 3).series,
+      categories: ['a', 'b', 'c'],
+      ...over,
+    });
+
+  it('gutterLeft pins plot.x', () => {
+    expect(line().plot.x).not.toBe(77);
+    expect(line({ gutterLeft: 77 }).plot.x).toBe(77);
+  });
+
+  it('xLabels false yields no labels and a taller plot', () => {
+    const withLabels = line();
+    const without = line({ xLabels: false });
+    expect(withLabels.xLabels.length).toBeGreaterThan(0);
+    expect(without.xLabels).toEqual([]);
+    expect(without.plot.height).toBeGreaterThan(withLabels.plot.height);
+  });
+});

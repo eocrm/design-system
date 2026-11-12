@@ -926,11 +926,16 @@ export type { DonutChartProps, DonutSegment } from './components/DonutChart';
 export { ScatterChart } from './components/ScatterChart';
 export type {
   ScatterChartProps,
+  ScatterMarkerShape,
   ScatterPoint,
   ScatterReference,
   ScatterSeries,
   ScatterXScale,
 } from './components/ScatterChart';
+export { ChartSync } from './components/ChartSync';
+export type { ChartSyncProps } from './components/ChartSync';
+export { LaneChart } from './components/LaneChart';
+export type { Lane, LaneChartProps, LaneType } from './components/LaneChart';
 export { Heatmap } from './components/Heatmap';
 export type { HeatmapProps } from './components/Heatmap';
 export { Sparkline } from './components/Sparkline';
@@ -955,6 +960,7 @@ export type {
   ChartProps,
   ChartRange,
   ChartReferenceLine,
+  ChartSelectOn,
   ChartSeries,
   ChartSeriesColor,
   ChartType,

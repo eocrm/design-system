@@ -926,7 +926,7 @@ export interface Messages {
     notes: string;
     /** Header of the data table's details column (the strings `details` returns for each category). */
     details: string;
-    /** Appended to `keyboardHint` when range selection is enabled: says Shift+arrows select a range. */
+    /** Appended to `keyboardHint` when range selection is enabled: says Space selects the inspected category and Shift+arrows select a range. */
     rangeHint: string;
     /** Appended to `keyboardHint` when `zoomGestures` is on: says the plus and minus keys zoom. */
     zoomHint: string;

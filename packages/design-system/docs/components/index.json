@@ -80,6 +80,11 @@
     "cluster": "Display"
   },
   {
+    "name": "ChartSync",
+    "summary": "synced hover across charts on a page",
+    "cluster": "Display"
+  },
+  {
     "name": "ChatBubble",
     "summary": "one chat message, plus ChatBubble.List (the role=\"log\" container)",
     "cluster": "Feedback"
@@ -327,6 +332,11 @@
   {
     "name": "Kbd",
     "summary": "keyboard-shortcut chips",
+    "cluster": "Display"
+  },
+  {
+    "name": "LaneChart",
+    "summary": "several measures on one shared time axis",
     "cluster": "Display"
   },
   {

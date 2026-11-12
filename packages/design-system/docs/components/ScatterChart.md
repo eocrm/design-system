@@ -60,6 +60,10 @@ function MealsToday({ bowlA, bowlB, usualPace }: MealsTodayProps) {
 }
 ```
 
+## Syncing with other charts (`sync`)
+
+Inside a [`ChartSync`](./ChartSync.md), inspecting a point shows a crosshair and tooltip at the same x in the other charts. `sync={false}` opts this chart out. A scatter chart syncs by x value, so it lines up with category charts that pass `categoryValues`; category charts without it are skipped.
+
 <!-- props:start -->
 
 ## Props
@@ -84,13 +88,15 @@ function MealsToday({ bowlA, bowlB, usualPace }: MealsTodayProps) {
 | `hiddenSeries` | `string[]` | no | Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored; the last visible series with points can't be hidden (a set hiding all of them is ignored for those). |
 | `onHiddenSeriesChange` | `((keys: string[]) => void)` | no | Called with the next hidden keys when the user toggles a legend item. |
 | `footnote` | `ReactNode` | no | Short note under the plot; takes its own row, also describes the plot for screen readers and stays in the empty state. |
+| `sync` | `boolean` | no | Inside a `ChartSync`, `true` (default) joins the group: inspecting a point here shows a crosshair and tooltip at its x in the other charts (category charts need `categoryValues`), and theirs show here as a crosshair, the points in that x range highlighted and a tooltip for the nearest one. `false` opts this chart out. No effect outside a `ChartSync`. |
 | …native | | | plus native HTML attributes |
 
 <!-- props:end -->
 
-- **Series** are point groups in a stable order. Colour and marker shape come from the same 8-slot palette as [Chart](Chart.md); `color` pins a slot, series without it fill the free slots in order. Identity never relies on colour alone.
+- **Series** are point groups in a stable order. Colour and marker shape come from the same 8-slot palette as [Chart](Chart.md); `color` pins a slot, series without it fill the free slots in order. Identity never relies on colour alone. **`shape`** (`'circle' | 'square' | 'triangle'`) overrides the slot's marker for the series, in the plot and the legend swatch, so a second kind of event (a square "poo" among circle meals) reads without colour. **`emphasis: 'strong'`** draws a series' unsized points larger (`--scatter-dot-strong`) with a thicker surface-coloured ring (`--scatter-dot-strong-ring-width`) so they read over other dots and reference lines; sized points keep their size scale and get the ring.
 - **Axes.** `xScale="number"` (default) is linear; `"time"` takes `Date` or epoch ms for `x` and passes epoch ms to `formatX`. Domains default to the data extent (y includes 0 when every y ≥ 0); points outside a fixed `xDomain` / `yDomain` are clipped. `xLabel` / `yLabel` are drawn as axis titles and head the data-table columns.
 - **Size.** Dot area is proportional to `point.size`, scaled from 0 (20 and 22 look nearly alike; tiny, zero or negative sizes get the smallest dot). Needs `formatSize`; name it with `sizeLabel`. `--scatter-dot-max` is an upper bound: the largest dot's radius is also capped at 1/25 of the chart width, so a phone-width chart (~250px) draws a 10px radius instead of 16px and the dots don't swallow their neighbours (height never caps it). Raising the token only takes effect on wide charts; lowering it always does. The plot is inset so the largest dot and its hover ring are not clipped at the plot edge (the inset assumes the default 2px `--scatter-dot-ring-width`).
+- **`connect`** on a series draws a solid line in its colour through its visible points sorted by `x`, under the dots (`true`, or `{ maxGap }` to break the line between neighbours further apart than `maxGap` in x units, ms on a time axis; single points get no line). Decorative: the legend, tooltip, keyboard and table stay per point, and hiding the series hides its line. It replaces the second dashed `reference` line some apps drew only to join a series' points.
 - **`trendLine`** draws a dashed least-squares line per visible series (decorative; series with fewer than 2 distinct x get none). **`reference`** is one app-computed dashed line, or an array of them (e.g. usual pace + today's pace), each listed in the legend as a plain entry (not a toggle); the component does not fit them. Each line gets its own dash pattern (cycling after three) so lines differ without colour; `color` pins a palette slot, default is neutral ink; `emphasis: 'strong'` draws one line thicker (`--chart-reference-width-strong`) so it stands out, e.g. today's pace over the usual; `key` is the line's identity (default: index).
 - **Legend** toggles series (`hiddenSeries` / `onHiddenSeriesChange` to control). The last visible series with points can't be hidden.
 - **Keyboard.** Focus the plot; ←/→ walk all points by x, Home / End jump to the first / last, Esc dismisses. **Screen readers** get a visually hidden data table (caption = `label`) with every point of the visible series; the SVG is hidden from them.

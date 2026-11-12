@@ -1,0 +1,22 @@
+// LaneChart.tokens.scss — component tokens for <LaneChart>. Marks, axes, tooltip and markers use Chart's tokens;
+// the dots lanes size their dots by ScatterChart's dot token. Read by the component in px.
+@use '../Chart/Chart.tokens';
+@use '../ScatterChart/ScatterChart.tokens';
+
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
+  // Height of a `dots` lane's dot row (under its label band).
+  --lane-chart-dots-height: var(--space-5);
+
+  // Radius of a `dots` lane's dots: ScatterChart's dot size.
+  --lane-chart-dot-radius: var(--scatter-dot-min);
+
+  // Vertical space between two lanes.
+  --lane-chart-gap: var(--space-3);
+
+  // Band above each lane's plot that holds the lane label.
+  --lane-chart-label-height: var(--space-4);
+  --lane-chart-label-fg: var(--color-fg);
+  --lane-chart-label-size: var(--font-size-sm);
+  --lane-chart-label-weight: var(--font-weight-medium);
+}

@@ -1,0 +1,3 @@
+// ChartSync renders no DOM (a context provider) and has no styles; the echo is
+// drawn by each chart's own stylesheet. This file exists only to satisfy the
+// four-file component-structure rule (structure.test.ts); it is not imported.

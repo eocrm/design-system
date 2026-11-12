@@ -649,6 +649,14 @@ export interface LayoutInput {
   referenceLines?: readonly ChartReferenceLine[];
   /** Resolved annotations; the scale reserves glyph room above (below, for negatives) the annotated in-view marks. */
   annotations?: readonly ResolvedAnnotation[];
+  /** `line` only: `false` fits the y domain to the data instead of anchoring it at 0. Default `true`. */
+  includeZero?: boolean;
+  /** Whole-number y ticks only (counts): a domain narrower than a tick step of 1 is widened to whole numbers. Default `false`. */
+  integerValues?: boolean;
+  /** Fixed left gutter (plot.x) in px, replacing the measured tick-label width, so stacked plots share an x axis. */
+  gutterLeft?: number;
+  /** `false` draws no x labels and reserves no x-axis height below the plot. Default `true`. */
+  xLabels?: boolean;
 }
 
 export interface ChartLayout {
@@ -669,6 +677,9 @@ export interface ChartLayout {
   /** The y value at an svg y (inverse of the y scale). */
   valueAt: (svgY: number) => number;
 }
+
+/** The x geometry interaction needs: plot rect, category centres and band step. */
+export type ChartGeometry = Pick<ChartLayout, 'plot' | 'categoryX' | 'step'>;
 
 type StackRow = Record<string, number>;
 
@@ -699,8 +710,10 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       )
     : null;
 
-  let min = 0;
-  let max = 0;
+  // A cut baseline is only honest on a line: bars and stacked area always start at 0.
+  const fitData = input.includeZero === false && type === 'line';
+  let min = fitData ? Infinity : 0;
+  let max = fitData ? -Infinity : 0;
   const take = (v: number | null) => {
     if (v === null || Number.isNaN(v)) return;
     if (v < min) min = v;
@@ -745,10 +758,12 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   // the largest real total: keep that inside the plot.
   for (const layer of areaStack ?? [])
     layer.forEach((seg, i) => inView(i) && inView(i + 1) && seg.forEach(take));
+  if (min === Infinity) min = max = 0; // fitData, no values at all
   if (min === max) max = min + 1;
 
   const plotTop = PAD_TOP + (input.topGutter ?? 0);
-  const plotBottom = Math.max(plotTop + 1, height - X_AXIS_HEIGHT);
+  const showXLabels = input.xLabels !== false;
+  const plotBottom = Math.max(plotTop + 1, height - (showXLabels ? X_AXIS_HEIGHT : 0));
   const tickCount = Math.max(2, Math.floor((plotBottom - plotTop) / Y_TICK_SPACING));
   const labelled = !!input.valueLabels && (type === 'bar' || type === 'stacked-bar');
   const room = labelled ? VALUE_LABEL_HEIGHT + VALUE_LABEL_GAP : 0;
@@ -757,9 +772,16 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   // The y scale's domain and ticks don't depend on its range: fix them first, so the plot (and the bar slots the
   // annotation placement needs) is known before the range reserves room.
   const y = scaleLinear().domain([min, max]).nice(tickCount);
-  const tickValues = y.ticks(tickCount);
+  let tickValues = y.ticks(tickCount);
+  if (input.integerValues && tickValues.length >= 2 && tickValues[1] - tickValues[0] < 1) {
+    // Sub-1 steps: snap the domain to whole numbers and tick every one (the span is under a tick count wide).
+    const lo = Math.floor(min);
+    const hi = Math.max(Math.ceil(max), lo + 1);
+    y.domain([lo, hi]);
+    tickValues = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+  }
   const tickLabels = tickValues.map(formatValue);
-  const left = Math.max(0, ...tickLabels.map(textWidth)) + LABEL_GAP;
+  const left = input.gutterLeft ?? Math.max(0, ...tickLabels.map(textWidth)) + LABEL_GAP;
   const plot: Rect = {
     x: left,
     y: plotTop,
@@ -1018,7 +1040,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   return {
     plot,
     yTicks,
-    xLabels: xLabels.map(({ index, x, label }) => ({ index, x, label })),
+    xLabels: showXLabels ? xLabels.map(({ index, x, label }) => ({ index, x, label })) : [],
     categoryX,
     step,
     bandWidth,
@@ -1156,7 +1178,7 @@ function sampledRuns(
  * Category index under svg x coordinate `x`, clamped to the categories visible in the plot (0 when there are none):
  * the axis gutter and right padding map to the window's edge categories, never off-screen ones. Viewport-aware.
  */
-export function categoryIndexAt(layout: ChartLayout, x: number): number {
+export function categoryIndexAt(layout: ChartGeometry, x: number): number {
   const n = layout.categoryX.length;
   if (n === 0) return 0;
   const { plot, step } = layout;

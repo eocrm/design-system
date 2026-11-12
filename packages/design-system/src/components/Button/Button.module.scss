@@ -38,6 +38,63 @@
   }
 }
 
+// Loading (DS-77): children and spinner share one grid cell, so the button
+// keeps the children's width and the spinner is centred without position.
+.loading {
+  display: inline-grid;
+  place-items: center;
+
+  // Busy, not unavailable: beat the shared aria-disabled dimming above.
+  &[aria-disabled='true'] {
+    opacity: var(--button-opacity-loading);
+    cursor: progress;
+  }
+}
+
+// Keep the label where it was: the grid cell would otherwise centre it.
+.alignStart.loading {
+  justify-items: start;
+}
+
+.content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: inherit;
+  gap: inherit;
+  grid-area: 1 / 1;
+
+  .loading > & {
+    opacity: var(--button-opacity-loading-content);
+  }
+}
+
+.spinner {
+  grid-area: 1 / 1;
+  inline-size: var(--button-spinner-size);
+  block-size: var(--button-spinner-size);
+  border: var(--button-spinner-width) solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: var(--radius-full);
+  animation: button-spin var(--button-spinner-duration) linear infinite;
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// No rotation: a static ring with one open quarter is still an "in progress" cue.
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+.srOnly {
+  @include visually-hidden;
+}
+
 // Sizes
 .xs {
   @include touch-hit-area;

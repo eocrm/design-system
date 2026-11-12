@@ -8,11 +8,16 @@
   --scatter-dot-min: var(--space-1);
   --scatter-dot-max: var(--space-4);
 
+  // Radius of unsized dots of an `emphasis: 'strong'` series; read by the component in px.
+  --scatter-dot-strong: var(--space-2);
+  --scatter-dot-strong-ring-width: var(--border-width-strong);
+
   // Pointer distance (px) within which the nearest dot shows its tooltip; read by the component.
   --scatter-hit-radius: var(--space-6);
   --scatter-dot-ring: var(--chart-dot-ring);
   --scatter-dot-ring-width: var(--chart-dot-ring-width);
 
+  --scatter-connect-width: var(--chart-line-width);
   --scatter-trend-width: var(--chart-comparison-stroke);
   --scatter-trend-dash: var(--chart-dash);
 

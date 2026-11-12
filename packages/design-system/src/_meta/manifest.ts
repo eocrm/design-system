@@ -130,6 +130,8 @@ const CLUSTERS: Record<string, string> = {
   Chart: 'Display',
   FunnelChart: 'Display',
   DonutChart: 'Display',
+  ChartSync: 'Display',
+  LaneChart: 'Display',
   ScatterChart: 'Display',
   Heatmap: 'Display',
   Sparkline: 'Display',

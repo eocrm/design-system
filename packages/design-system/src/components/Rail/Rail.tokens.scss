@@ -56,6 +56,11 @@
   --rail-item-fg-active: var(--color-accent);
   --rail-item-icon-size: 18px;
 
+  // Collapsed badge dot (on the icon). Accent fill so the dot reads as a signal.
+  --rail-item-badge-dot-size: var(--space-2);
+  --rail-item-badge-dot-bg: var(--color-accent);
+  --rail-item-badge-dot-ring: var(--rail-bg);
+
   // Linkable group row (`<Rail.Group as={NavLink}>`) — the gap between the
   // label link and its sibling chevron button, and the chevron's own padding
   // (which sets its hit-target size around the 14px glyph).

@@ -23,9 +23,9 @@ interface RailItemOwnProps {
   icon?: ReactNode;
   /**
    * Optional trailing badge — typically a `<Badge>` or a small numeric
-   * pill. Right-aligned when the rail is expanded; fades to invisible
-   * when collapsed (the badge content is announced by screen readers
-   * either way since it's still in the DOM).
+   * pill. Right-aligned when the rail is expanded; when collapsed the badge
+   * is visually hidden and a small dot on the icon signals it (the badge
+   * content stays in the accessible name either way).
    */
   badge?: ReactNode;
   /**
@@ -74,6 +74,7 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
   const { collapsed } = useRail();
   const insideGroup = useContext(RailGroupContext);
   const duplicatePresentation = useContext(RailGroupDuplicateContext);
+  const hasBadge = badge != null && badge !== false && badge !== '';
 
   // The polymorphic anchor / NavLink / button receives the className so the
   // CSS `:has([aria-current="page"])` selector can light it up via the
@@ -82,6 +83,7 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
     <Component
       ref={ref}
       className={clsx(styles.item, className)}
+      data-has-badge={collapsed && !insideGroup && hasBadge ? '' : undefined}
       // {...rest} last so consumer overrides win (Pattern A), except that the
       // duplicate-presentation context owns aria-current below.
       {...rest}
@@ -100,7 +102,7 @@ export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'
         </span>
       )}
       <span className={styles.itemLabel}>{children}</span>
-      {badge != null && <span className={styles.itemBadge}>{badge}</span>}
+      {hasBadge && <span className={styles.itemBadge}>{badge}</span>}
     </Component>
   );
 

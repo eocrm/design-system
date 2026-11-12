@@ -71,11 +71,28 @@
   }
 }
 
+.crosshair {
+  stroke: var(--chart-crosshair);
+  stroke-width: 1px;
+}
+
 .dot,
 .marker {
   fill: var(--chart-series-color, currentColor);
   stroke: var(--scatter-dot-ring);
   stroke-width: var(--scatter-dot-ring-width);
+}
+
+.dot[data-strong] {
+  stroke-width: var(--scatter-dot-strong-ring-width);
+}
+
+.connect {
+  fill: none;
+  stroke: var(--chart-series-color, currentColor);
+  stroke-width: var(--scatter-connect-width);
+  stroke-linejoin: round;
+  stroke-linecap: round;
 }
 
 .trend {

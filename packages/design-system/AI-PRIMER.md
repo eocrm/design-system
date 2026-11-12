@@ -92,6 +92,8 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`.
 - `Chart` — line / bar / stacked bar / area time-series chart for a chart DashboardWidget (smoothed lines, static markers, reference lines, status annotations, legend, tooltip, keyboard, data table, empty state)
 - `FunnelChart` — stage funnel for pipeline / campaign conversion: height = drop-off, pill = step conversion, one-hue ramp with a hero first stage; optional stage click drill-through, vertical slices plus a table when narrow
 - `DonutChart` — part-of-whole donut with the total in the centre and a legend of values and shares; optional segment click drill-through, keyboard inspection, hidden data table
+- `ChartSync` — wrapper (no DOM) that syncs hover across the `Chart` / `LaneChart` / `ScatterChart` inside it: crosshair, highlighted marks and an aria-hidden tooltip echo at the same x; match by `categoryValues` or by category label; `sync={false}` opts a chart out
+- `LaneChart` — several measures with different units stacked in lanes (bar / line / presence dots) on one shared time axis: one tooltip, selection, zoom and markers across all lanes, per-lane reference lines, data table, empty state
 - `ScatterChart` — scatter plot of two measures or events on a time axis: series colours + marker shapes, dot size, optional trend line and reference line, legend, tooltip, keyboard, data table, empty state
 - `Heatmap` — rows × columns grid coloured by value in up to five sequential steps with legend; `null` = no data; tooltip, keyboard, data table, empty state
 - `TreeView` — lazily loaded hierarchy (WAI-ARIA tree) as a file-explorer list or a top-down org chart, with loading / error-retry / load-more rows

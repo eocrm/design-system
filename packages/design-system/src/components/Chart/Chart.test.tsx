@@ -1242,7 +1242,7 @@ describe('range selection and zoom', () => {
     );
     layout.fire();
     expect(plotOf()).toHaveAccessibleDescription(
-      'Zoomed to c1–c3. Selected c2 to c3. Use arrow keys to inspect values. All values are also in the data table. Shift+arrows select a range.',
+      'Zoomed to c1–c3. Selected c2 to c3. Use arrow keys to inspect values. All values are also in the data table. Space selects the inspected category, Shift+arrows select a range.',
     );
     expect(screen.getByRole('table', { name: 'Deals won per week. Zoomed to c1–c3' })).toBeTruthy();
   });
@@ -1360,7 +1360,7 @@ describe('range selection and zoom', () => {
     stubLayout();
     render(<Chart {...sel} onSelectedRangeChange={() => {}} />);
     expect(plotOf()).toHaveAccessibleDescription(
-      'Use arrow keys to inspect values. All values are also in the data table. Shift+arrows select a range.',
+      'Use arrow keys to inspect values. All values are also in the data table. Space selects the inspected category, Shift+arrows select a range.',
     );
   });
 });
@@ -2217,5 +2217,160 @@ describe('annotations (DS-52)', () => {
     expect(container.querySelector('[data-annotation]')).toBeNull();
     const rows = within(screen.getByRole('table')).getAllByRole('row');
     expect(rows[2].lastElementChild).toHaveTextContent('Ahead of usual pace');
+  });
+});
+
+describe('includeZero (DS-71)', () => {
+  const weights: ChartProps = {
+    type: 'line',
+    label: 'Weight',
+    categories: ['a', 'b', 'c'],
+    series: [{ key: 'w', label: 'Weight', values: [3700, 3800, 3750] }],
+    formatValue: (n) => String(n),
+  };
+  const tickLabels = (c: HTMLElement) =>
+    [...c.querySelectorAll('svg text')].map((t) => t.textContent);
+
+  it('draws a 0 tick by default and none with includeZero={false}', () => {
+    const layout = stubLayout();
+    const { container, rerender } = render(<Chart {...weights} />);
+    layout.fire();
+    expect(tickLabels(container)).toContain('0');
+    rerender(<Chart {...weights} includeZero={false} />);
+    expect(tickLabels(container)).not.toContain('0');
+  });
+});
+
+describe('integerValues (DS-74)', () => {
+  it('draws no fractional tick labels', () => {
+    const layout = stubLayout();
+    const props: ChartProps = {
+      type: 'bar',
+      label: 'Cleanings',
+      categories: ['a', 'b', 'c'],
+      series: [{ key: 'n', label: 'Cleanings', values: [1, 1, 0] }],
+      formatValue: (n) => String(n),
+    };
+    const { container, rerender } = render(<Chart {...props} />);
+    layout.fire();
+    const labels = () => [...container.querySelectorAll('svg text')].map((t) => t.textContent);
+    expect(labels().some((l) => l?.includes('.'))).toBe(true);
+    rerender(<Chart {...props} integerValues />);
+    expect(labels().some((l) => l?.includes('.'))).toBe(false);
+  });
+});
+
+describe('Chart selectOn="tap" and Space', () => {
+  const sel: ChartProps = {
+    ...base,
+    type: 'bar',
+    categories: ['c0', 'c1', 'c2', 'c3', 'c4'],
+    series: [{ key: 'won', label: 'Deals won', values: [1, 2, 3, 4, 5] }],
+  };
+  const plotOf = () => screen.getByRole('group', { name: 'Deals won per week' });
+  const xOf = (container: HTMLElement, category: string) =>
+    Number(
+      [...container.querySelectorAll('svg text')]
+        .find((t) => t.textContent === category)!
+        .getAttribute('x'),
+    );
+  const mouse = { pointerId: 1, pointerType: 'mouse', button: 0 };
+  const setup = (props: object = {}) => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const { container } = render(
+      <Chart {...sel} selectOn="tap" onSelectedRangeChange={onChange} {...props} />,
+    );
+    layout.fire();
+    return { container, onChange };
+  };
+  const click = (container: HTMLElement, at: string) => {
+    fireEvent.pointerDown(plotOf(), { ...mouse, clientX: xOf(container, at) });
+    fireEvent.pointerUp(plotOf(), { ...mouse, clientX: xOf(container, at) });
+  };
+
+  it('a click selects that category', () => {
+    const { container, onChange } = setup();
+    click(container, 'c2');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c2', to: 'c2' });
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('c2');
+  });
+
+  it('tapping the selected category clears it', () => {
+    const { container, onChange } = setup({ selectedRange: { from: 'c2', to: 'c2' } });
+    click(container, 'c2');
+    expect(onChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('tapping another category replaces a range', () => {
+    const { container, onChange } = setup({ selectedRange: { from: 'c1', to: 'c3' } });
+    click(container, 'c2');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c2', to: 'c2' });
+  });
+
+  it('a mouse drag still selects a range', () => {
+    const { container, onChange } = setup();
+    fireEvent.pointerDown(plotOf(), { ...mouse, clientX: xOf(container, 'c1') });
+    fireEvent.pointerMove(plotOf(), { ...mouse, clientX: xOf(container, 'c3') });
+    fireEvent.pointerUp(plotOf(), { ...mouse, clientX: xOf(container, 'c3') });
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c1', to: 'c3' });
+  });
+
+  it('a touch tap selects; a touch that moves past the slop neither selects nor clears', () => {
+    vi.useFakeTimers();
+    try {
+      const { container, onChange } = setup({ selectedRange: { from: 'c1', to: 'c1' } });
+      const touch = { pointerId: 2, pointerType: 'touch' };
+      const x = xOf(container, 'c3');
+      fireEvent.pointerDown(plotOf(), { ...touch, clientX: x, clientY: 50 });
+      fireEvent.pointerUp(plotOf(), { ...touch, clientX: x, clientY: 50 });
+      expect(onChange).toHaveBeenLastCalledWith({ from: 'c3', to: 'c3' });
+      onChange.mockClear();
+      fireEvent.pointerDown(plotOf(), { ...touch, clientX: x, clientY: 50 });
+      fireEvent.pointerMove(plotOf(), { ...touch, clientX: x, clientY: 80 });
+      fireEvent.pointerUp(plotOf(), { ...touch, clientX: x, clientY: 80 });
+      expect(onChange).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each(['tap', 'drag'] as const)('Space toggles the inspected category (%s)', async (mode) => {
+    const { onChange } = setup({ selectOn: mode });
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    await userEvent.keyboard(' ');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c1', to: 'c1' });
+  });
+
+  it('Space again clears, Escape clears', async () => {
+    const { onChange } = setup({ selectOn: 'drag' });
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard(' ');
+    expect(onChange).toHaveBeenLastCalledWith({ from: 'c0', to: 'c0' });
+    await userEvent.keyboard(' ');
+    expect(onChange).toHaveBeenLastCalledWith(null);
+    await userEvent.keyboard(' ');
+    onChange.mockClear();
+    await userEvent.keyboard('{Escape}');
+    expect(onChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('Enter still fires onPlotDoubleClick', async () => {
+    const onDouble = vi.fn();
+    setup({ onPlotDoubleClick: onDouble });
+    plotOf().focus();
+    await userEvent.keyboard('{ArrowRight}{Enter}');
+    expect(onDouble).toHaveBeenCalledWith(expect.objectContaining({ source: 'keyboard' }));
+  });
+
+  it('default drag mode: a click outside the band still clears', () => {
+    const { container, onChange } = setup({
+      selectOn: undefined,
+      selectedRange: { from: 'c1', to: 'c2' },
+    });
+    click(container, 'c4');
+    expect(onChange).toHaveBeenLastCalledWith(null);
   });
 });

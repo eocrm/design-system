@@ -1,13 +1,13 @@
 {
   "button": {
     "code": "import { Button } from '@eocrm/design-system'; console.log(Button);",
-    "jsGzip": 900,
-    "cssGzip": 1600
+    "jsGzip": 1210,
+    "cssGzip": 1920
   },
   "typical": {
     "code": "import { Button, Stack, Input, Select, Modal, Tooltip } from '@eocrm/design-system'; console.log(Button, Stack, Input, Select, Modal, Tooltip);",
     "jsGzip": 29800,
-    "cssGzip": 6600
+    "cssGzip": 6850
   },
   "datatable": {
     "code": "import { DataTable } from '@eocrm/design-system'; console.log(DataTable);",
@@ -21,13 +21,13 @@
   },
   "i18n-en": {
     "code": "import { I18nProvider, Button } from '@eocrm/design-system'; console.log(I18nProvider, Button);",
-    "jsGzip": 7800,
-    "cssGzip": 1600,
+    "jsGzip": 8330,
+    "cssGzip": 1920,
     "mustNotContain": ["Закрыть"]
   },
   "all": {
     "code": "import * as DS from '@eocrm/design-system'; console.log(DS);",
-    "jsGzip": 348400,
+    "jsGzip": 364200,
     "cssGzip": 83300
   },
   "global-css": {

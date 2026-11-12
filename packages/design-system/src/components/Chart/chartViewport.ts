@@ -1,4 +1,4 @@
-import type { ChartLayout } from './chartModel';
+import type { ChartGeometry } from './chartModel';
 
 /**
  * Visible window of the chart's current domain (the `zoomRange` slice, else all categories), as fractions
@@ -70,7 +70,7 @@ export function visibleIndexRange(
 }
 
 /** Svg x → 0..1 of the domain (band edges), clamped to the plot (so to the visible window); 0 with no categories. */
-export function domainFractionAt(layout: ChartLayout, x: number): number {
+export function domainFractionAt(layout: ChartGeometry, x: number): number {
   const n = layout.categoryX.length;
   if (n === 0) return 0;
   const { plot } = layout;

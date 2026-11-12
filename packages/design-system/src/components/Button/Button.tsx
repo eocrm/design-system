@@ -1,5 +1,9 @@
 import {
   forwardRef,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
   type ComponentPropsWithRef,
   type ComponentPropsWithoutRef,
   type CSSProperties,
@@ -106,6 +110,34 @@ interface ButtonOwnProps {
    * Ignored with `iconOnly`.
    */
   align?: 'start' | 'center';
+  /**
+   * Show an in-button spinner while an async action runs. The children stay
+   * rendered (transparent) so the button keeps its width, and a small
+   * indeterminate spinner is centred over them.
+   *
+   * While `true` the button sets `aria-disabled="true"` and ignores clicks and
+   * form submission (the consumer's `onClick` is not called; with `as="a"` the
+   * navigation is prevented) but stays focusable. It does NOT use the native
+   * `disabled` attribute: that would drop focus from the control mid-action.
+   *
+   * Assistive tech: the accessible name is unchanged and a visually hidden
+   * polite live region (`role="status"`) announces `loadingLabel` when it
+   * turns true. The region renders only when the prop is passed at all (either
+   * value), so pass `loading={false}` rather than omitting it for a button
+   * that can later load: a region added together with its text is not
+   * announced. Defaults to `undefined` (no region, not loading).
+   */
+  loading?: boolean;
+  /**
+   * Text the polite live region announces while `loading` is true, already
+   * translated by the caller (e.g. `t('common.saving')`). Without it nothing
+   * is announced and a dev-only `console.warn` fires once per instance.
+   *
+   * This is a deliberate, documented exception to Hard rule 9 (no
+   * per-component label props): Button must stay free of the i18n catalogue
+   * so a Button-only import stays small. Defaults to `undefined`.
+   */
+  loadingLabel?: string;
 }
 
 /**
@@ -179,6 +211,11 @@ export const Button = forwardRef(function Button<C extends ElementType = 'button
     color,
     fullWidth = false,
     align = 'center',
+    loading,
+    loadingLabel,
+    onClick,
+    children,
+    'aria-disabled': ariaDisabled,
     className,
     style,
     ...props
@@ -196,7 +233,32 @@ export const Button = forwardRef(function Button<C extends ElementType = 'button
   // wins: it rides along in {...props}, spread last.
   const defaultType = Component === 'button' ? { type: 'button' as const } : undefined;
 
-  return (
+  // One tick behind on purpose (same as Switch): a region that mounts with its
+  // text already in place is not announced, so the word must arrive as a change.
+  const [loadingText, setLoadingText] = useState('');
+  useEffect(() => {
+    setLoadingText(loading && loadingLabel ? loadingLabel : '');
+  }, [loading, loadingLabel]);
+  const warned = useRef(false);
+  useEffect(() => {
+    if (loading && !loadingLabel && !warned.current && process.env.NODE_ENV !== 'production') {
+      warned.current = true;
+      console.warn("[Button] `loading` without `loadingLabel`: screen readers won't hear it");
+    }
+  }, [loading, loadingLabel]);
+
+  // Order matters: while loading, the guard preventDefault()s (blocks submit
+  // and anchor navigation) and returns BEFORE the consumer's onClick.
+  const handleClick = (e: MouseEvent<Element>) => {
+    if (loading) {
+      e.preventDefault();
+      return;
+    }
+    onClick?.(e);
+  };
+  const hasLoadingProp = loading !== undefined;
+
+  const button = (
     <Component
       ref={ref}
       {...defaultType}
@@ -208,6 +270,7 @@ export const Button = forwardRef(function Button<C extends ElementType = 'button
         paintsSelected && styles.selected,
         !iconOnly && fullWidth && styles.fullWidth,
         !iconOnly && align === 'start' && styles.alignStart,
+        loading && styles.loading,
         className,
       )}
       style={
@@ -219,8 +282,36 @@ export const Button = forwardRef(function Button<C extends ElementType = 'button
             } as CSSProperties)
           : style
       }
-      // {...props} last so consumers can supply native semantics such as aria-pressed.
+      // {...props} first-class: consumers can supply native semantics such as
+      // aria-pressed. The two lines after it are deliberately AFTER the spread:
+      // loading owns aria-disabled (a consumer `aria-disabled` is kept when not
+      // loading) and onClick (wrapped so the consumer's runs only when idle).
       {...props}
-    />
+      aria-disabled={loading ? true : ariaDisabled}
+      onClick={handleClick}
+    >
+      {hasLoadingProp ? (
+        <>
+          {/* Transparent, not visibility:hidden, so the text still names the button. */}
+          <span className={styles.content} aria-hidden={(loading && iconOnly) || undefined}>
+            {children}
+          </span>
+          {loading && <span className={styles.spinner} aria-hidden="true" />}
+        </>
+      ) : (
+        children
+      )}
+    </Component>
+  );
+
+  if (!hasLoadingProp) return button;
+  return (
+    <>
+      {button}
+      {/* Outside the button so it never joins the accessible name (see Switch). */}
+      <span role="status" aria-live="polite" className={styles.srOnly}>
+        {loadingText}
+      </span>
+    </>
   );
 }) as ButtonComponent;

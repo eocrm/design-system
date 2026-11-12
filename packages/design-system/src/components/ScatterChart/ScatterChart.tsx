@@ -20,13 +20,7 @@ import { useSize } from '../_internal/useSize';
 import { ChartLegend } from '../Chart/ChartLegend';
 import { ChartTooltip } from '../Chart/ChartTooltip';
 import { readPx } from '../Chart/readPx';
-import {
-  LABEL_GAP,
-  MARKER_RADIUS,
-  markerPath,
-  markerShape,
-  REFERENCE_DASHES,
-} from '../Chart/chartModel';
+import { LABEL_GAP, MARKER_RADIUS, markerPath, REFERENCE_DASHES } from '../Chart/chartModel';
 import {
   computeScatterLayout,
   inspectionOrder,
@@ -37,9 +31,16 @@ import {
   type ScatterSeries,
   type ScatterXScale,
 } from './scatterModel';
+import { useChartSync, useSyncPublish } from '../ChartSync/chartSyncStore';
 import styles from './ScatterChart.module.scss';
 
-export type { ScatterPoint, ScatterReference, ScatterSeries, ScatterXScale } from './scatterModel';
+export type {
+  ScatterMarkerShape,
+  ScatterPoint,
+  ScatterReference,
+  ScatterSeries,
+  ScatterXScale,
+} from './scatterModel';
 
 export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
   /** Accessible name of the figure and caption of its data table, e.g. "Bowl vs meal size". Required. */
@@ -79,12 +80,20 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
   onHiddenSeriesChange?: (keys: string[]) => void;
   /** Short note under the plot; takes its own row, also describes the plot for screen readers and stays in the empty state. */
   footnote?: ReactNode;
+  /**
+   * Inside a `ChartSync`, `true` (default) joins the group: inspecting a point here shows a crosshair and tooltip at
+   * its x in the other charts (category charts need `categoryValues`), and theirs show here as a crosshair, the
+   * points in that x range highlighted and a tooltip for the nearest one. `false` opts this chart out. No effect
+   * outside a `ChartSync`.
+   */
+  sync?: boolean;
 }
 
-/** Fallbacks for `--scatter-hit-radius` / `--scatter-dot-min` / `--scatter-dot-max` (`--space-6` / `--space-1` / `--space-4`) where computed styles don't resolve (jsdom). */
+/** Fallbacks for `--scatter-hit-radius` / `--scatter-dot-min` / `--scatter-dot-max` / `--scatter-dot-strong` (`--space-6` / `--space-1` / `--space-4` / `--space-2`) where computed styles don't resolve (jsdom). */
 const HIT_RADIUS = 24;
 const DOT_MIN = 4;
 const DOT_MAX = 16;
+const DOT_STRONG = 8;
 const NO_HIDDEN: string[] = [];
 
 const seriesStyle = (slot: number) =>
@@ -119,6 +128,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
     hiddenSeries,
     onHiddenSeriesChange,
     footnote,
+    sync: syncEnabled = true,
     className,
     ...rest
   },
@@ -176,6 +186,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
     ],
     [plotEl],
   );
+  const strongRadius = useMemo(() => readPx(plotEl, '--scatter-dot-strong', DOT_STRONG), [plotEl]);
   const references = useMemo(() => [reference ?? []].flat(), [reference]);
   // Over every series, hidden included, so a legend toggle never resizes the remaining dots.
   const sizeDomain = useMemo(() => scatterSizeDomain(resolved), [resolved]);
@@ -195,6 +206,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
             trendLine,
             sizeRange,
             sizeDomain,
+            strongRadius,
           })
         : null,
     [
@@ -211,6 +223,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       trendLine,
       sizeRange,
       sizeDomain,
+      strongRadius,
     ],
   );
 
@@ -284,8 +297,48 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
     else if (e.type === 'pointerdown' || activeSource === 'pointer') inspect(null, null);
   };
 
-  const anchorX = currentDot?.cx;
-  const anchorY = currentDot ? currentDot.cy - currentDot.r : undefined;
+  const sync = useChartSync(syncEnabled);
+  useSyncPublish(sync.publish, currentPoint ? { from: currentPoint.x, to: currentPoint.x } : null);
+
+  // Another chart's x range, echoed here (visual only) while this chart inspects nothing itself: a crosshair at
+  // `from` when it is in the x domain, and the on-plot points in `[from, to)` (or at `from`), so a bucket that
+  // starts before the domain still highlights its points. Label-only points: nothing.
+  const echoFrom = pos < 0 && layout ? sync.echo?.from : undefined;
+  const echoTo = sync.echo?.to ?? echoFrom;
+  const echoX =
+    echoFrom !== undefined &&
+    layout &&
+    echoFrom >= Math.min(...layout.xDomain) &&
+    echoFrom <= Math.max(...layout.xDomain)
+      ? layout.xPos(echoFrom)
+      : undefined;
+  const echoDots =
+    !layout || echoFrom === undefined || echoTo === undefined
+      ? []
+      : layout.dots.filter(
+          (d) =>
+            (echoTo > echoFrom
+              ? d.datum.x >= echoFrom && d.datum.x < echoTo
+              : d.datum.x === echoFrom) &&
+            // Clipped by a fixed x / y domain: not shown, so not highlighted or anchored on.
+            d.cx >= layout.plot.x &&
+            d.cx <= layout.plot.x + layout.plot.width &&
+            d.cy >= layout.plot.y &&
+            d.cy <= layout.plot.y + layout.plot.height,
+        );
+  // Every bucket point is at or after `from`, so the nearest is the earliest.
+  const echoDot = echoDots.reduce<(typeof echoDots)[number] | undefined>(
+    (best, d) => (best && best.datum.x <= d.datum.x ? best : d),
+    undefined,
+  );
+  /** The point drawn as inspected: this chart's own, else the echo's nearest. */
+  const shownDot = currentDot ?? echoDot;
+  const shownSeries =
+    currentSeries ?? (echoDot && visible.find((s) => s.key === echoDot.seriesKey));
+  const shownPoint = currentPoint ?? echoDot?.datum;
+
+  const anchorX = shownDot?.cx;
+  const anchorY = shownDot ? shownDot.cy - shownDot.r : undefined;
   const point = useMemo(
     () => (anchorX === undefined || anchorY === undefined ? null : { x: anchorX, y: anchorY }),
     [anchorX, anchorY],
@@ -314,6 +367,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       key: s.key,
       label: s.label,
       slot: s.slot,
+      shape: s.shape,
       comparison: false,
       overflow: s.overflow,
       locked: isLocked(s.key),
@@ -481,6 +535,17 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                   data-series={s.key}
                   data-dimmed={activeKey !== null && activeKey !== s.key ? '' : undefined}
                 >
+                  {layout.connects
+                    .filter((c) => c.seriesKey === s.key)
+                    .map((c, i) => (
+                      <path
+                        key={i}
+                        className={styles.connect}
+                        d={c.path}
+                        aria-hidden="true"
+                        data-scatter-connect=""
+                      />
+                    ))}
                   {layout.trends
                     .filter((tr) => tr.seriesKey === s.key)
                     .map((tr) => (
@@ -504,9 +569,34 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                 >
                   <path
                     className={styles.dot}
-                    d={markerPath(markerShape(d.slot), 0, 0, d.r)}
+                    d={markerPath(d.shape, 0, 0, d.r)}
                     transform={`translate(${d.cx},${d.cy})`}
                     data-scatter-dot=""
+                    data-strong={d.strong || undefined}
+                  />
+                </g>
+              ))}
+              {echoX !== undefined && (
+                <line
+                  className={styles.crosshair}
+                  data-echo=""
+                  x1={echoX}
+                  x2={echoX}
+                  y1={layout.plot.y}
+                  y2={layout.plot.y + layout.plot.height}
+                />
+              )}
+              {echoDots.map((d) => (
+                <g
+                  key={`${d.seriesKey}\0${d.index}`}
+                  className={styles.series}
+                  style={seriesStyle(d.slot)}
+                >
+                  <path
+                    className={styles.marker}
+                    data-echo=""
+                    d={markerPath(d.shape, 0, 0, Math.max(d.r, MARKER_RADIUS) + 1)}
+                    transform={`translate(${d.cx},${d.cy})`}
                   />
                 </g>
               ))}
@@ -515,7 +605,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                   <path
                     className={styles.marker}
                     d={markerPath(
-                      markerShape(currentDot.slot),
+                      currentDot.shape,
                       0,
                       0,
                       Math.max(currentDot.r, MARKER_RADIUS) + 1,
@@ -532,24 +622,25 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       <ChartTooltip
         anchor={plotEl}
         point={point}
-        title={currentPoint ? formatX(currentPoint.x) : ''}
+        echo={!currentDot && !!echoDot}
+        title={shownPoint ? formatX(shownPoint.x) : ''}
         rows={
-          currentSeries && currentPoint
+          shownSeries && shownPoint
             ? [
                 {
-                  key: currentSeries.key,
-                  label: currentSeries.label,
-                  slot: currentSeries.slot,
+                  key: shownSeries.key,
+                  label: shownSeries.label,
+                  slot: shownSeries.slot,
                   comparison: false,
-                  value: formatY(currentPoint.y),
+                  value: formatY(shownPoint.y),
                 },
               ]
             : []
         }
         details={
-          hasSizeValue(currentPoint?.size) ? [`${sizeName}: ${sizeText(currentPoint.size)}`] : []
+          hasSizeValue(shownPoint?.size) ? [`${sizeName}: ${sizeText(shownPoint.size)}`] : []
         }
-        notes={currentPoint?.label ? [currentPoint.label] : []}
+        notes={shownPoint?.label ? [shownPoint.label] : []}
       />
       <LiveRegion>{liveText}</LiveRegion>
       <VisuallyHidden as="div">

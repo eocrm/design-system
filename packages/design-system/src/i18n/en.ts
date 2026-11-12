@@ -491,7 +491,7 @@ export const en: Messages = {
     markers: 'Markers',
     notes: 'Notes',
     details: 'Details',
-    rangeHint: 'Shift+arrows select a range.',
+    rangeHint: 'Space selects the inspected category, Shift+arrows select a range.',
     zoomHint: 'Plus and minus zoom in and out.',
     zoomToSelection: 'Zoom to selection',
     resetZoom: 'Reset zoom',

@@ -484,3 +484,25 @@ describe('ButtonGroup segmented items are 44px both axes on touch (DS-42)', () =
     expect(module).toMatch(/\.item \{[^}]*min-inline-size:\s*var\(--button-group-item-min-width\)/);
   });
 });
+
+describe('<ButtonGroup> (visual mode) — Button with a loading region (DS-77)', () => {
+  // jsdom does not apply the CSS module, so pin the selector shape plus the DOM
+  // fact it relies on: the status span trails the last button, so the end
+  // button is :last-of-type but not :last-child.
+  it('end corners key off button:first/last-of-type, not child position', () => {
+    render(
+      <ButtonGroup>
+        <Button loading={false}>Cut</Button>
+        <Button loading>Paste</Button>
+      </ButtonGroup>,
+    );
+    const last = screen.getByRole('button', { name: 'Paste' });
+    expect(last.matches(':last-child')).toBe(false);
+    expect(last.matches('button:last-of-type')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Cut' }).matches('button:first-of-type')).toBe(true);
+    const scss = readTouchTokens(resolveTouchTokens(__dirname, 'ButtonGroup.module.scss'), 'utf8');
+    expect(scss).toMatch(/> button:first-of-type/);
+    expect(scss).toMatch(/> button:last-of-type/);
+    expect(scss).not.toMatch(/> button:(first|last)-child/);
+  });
+});

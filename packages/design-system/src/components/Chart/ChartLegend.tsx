@@ -15,6 +15,8 @@ export interface ChartLegendItem {
   parentHidden: boolean;
   /** Not a series (ScatterChart's reference line): a plain entry with no toggle. */
   static?: boolean;
+  /** Swatch shape (ScatterChart series with an explicit `shape`); omit for the default box. */
+  shape?: 'circle' | 'square' | 'triangle';
   /** Dash pattern index (`--chart-reference-dash-N`): draws a line swatch (ScatterChart reference lines); omit for the box swatch. */
   dash?: number;
   /** `'strong'` draws the line swatch at the strong reference width (reference lines with `emphasis: 'strong'`). */
@@ -74,6 +76,7 @@ export function ChartLegend({
                 className={styles.swatch}
                 data-comparison={item.comparison || undefined}
                 data-overflow={item.overflow || undefined}
+                data-shape={item.shape}
                 aria-hidden="true"
               />
             ) : (

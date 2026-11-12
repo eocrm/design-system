@@ -31,14 +31,14 @@
   margin-left: calc(var(--border-width) * -1);
 }
 
-.group[data-mode='visual'] > button:first-child {
+.group[data-mode='visual'] > button:first-of-type {
   // stylelint-disable-next-line property-disallowed-list -- counterpart to the join above
   margin-left: 0;
   border-top-left-radius: var(--button-group-radius);
   border-bottom-left-radius: var(--button-group-radius);
 }
 
-.group[data-mode='visual'] > button:last-child {
+.group[data-mode='visual'] > button:last-of-type {
   border-top-right-radius: var(--button-group-radius);
   border-bottom-right-radius: var(--button-group-radius);
 }

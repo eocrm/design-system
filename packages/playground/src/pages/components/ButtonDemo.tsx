@@ -13,6 +13,23 @@ import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
 
+function LoadingToggle() {
+  const [loading, setLoading] = useState(false);
+  return (
+    <Cluster gap="sm">
+      <Button loading={loading} loadingLabel="Saving…" onClick={() => setLoading(true)}>
+        Save
+      </Button>
+      <Button variant="secondary" loading={loading} loadingLabel="Exporting…">
+        Export
+      </Button>
+      <Button variant="secondary" onClick={() => setLoading((v) => !v)}>
+        Toggle loading ({loading ? 'on' : 'off'})
+      </Button>
+    </Cluster>
+  );
+}
+
 function SaveWithSuccessFlash() {
   const [saved, setSaved] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -129,6 +146,16 @@ export function ButtonDemo() {
       files={getComponentFiles('Button')}
       componentName="Button"
     >
+      <Example
+        title="Loading"
+        description="loading keeps the width, centres a spinner, ignores clicks and stays focusable (aria-disabled, not disabled). A polite live region announces it; pass loading={false} rather than omitting it."
+        code={`const [loading, setLoading] = useState(false);
+
+<Button loading={loading} loadingLabel="Saving…" onClick={() => setLoading(true)}>Save</Button>`}
+      >
+        <LoadingToggle />
+      </Example>
+
       <Example
         title="Variants"
         description="Six visual variants. Use primary for the page's main action, secondary for supporting actions, ghost for tertiary actions in dense UIs, danger for destructive operations, danger-outline for a destructive action that must not dominate (a Remove on every row). The success variant is a transient confirmation state — see the next example."

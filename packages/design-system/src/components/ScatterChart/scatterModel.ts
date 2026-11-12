@@ -1,3 +1,4 @@
+import { line } from 'd3-shape';
 import { scaleLinear, scaleSqrt, scaleTime } from 'd3-scale';
 import {
   assignSlots,
@@ -5,6 +6,9 @@ import {
   estimateTextWidth,
   LABEL_GAP,
   MARKER_RADIUS,
+  markerPath,
+  markerShape,
+  type MarkerShape,
   PAD_RIGHT,
   X_LABEL_BASELINE,
   PAD_TOP,
@@ -14,6 +18,11 @@ import {
   type ChartSeriesColor,
   type Rect,
 } from '../Chart/chartModel';
+
+export { markerPath };
+
+/** Marker shape of a series' points. */
+export type ScatterMarkerShape = 'circle' | 'square' | 'triangle';
 
 /** One observation. Points with a non-finite `x` or `y` are skipped. */
 export interface ScatterPoint {
@@ -36,6 +45,22 @@ export interface ScatterSeries {
   points: ScatterPoint[];
   /** Pins a palette slot (1–8); series without it fill the free slots in order. */
   color?: ChartSeriesColor;
+  /**
+   * Marker shape of every point and of the legend swatch, so a series is told apart without colour (e.g. a square for
+   * "poo" next to circles for meals). Default: the palette slot's own shape.
+   */
+  shape?: ScatterMarkerShape;
+  /**
+   * `'strong'` draws unsized points larger (`--scatter-dot-strong`) with a thicker surface-coloured ring so they read
+   * over other dots and reference lines; sized points keep their size scale and get the ring. Default `'default'`.
+   */
+  emphasis?: 'default' | 'strong';
+  /**
+   * Draws a solid line in the series colour through its visible points, sorted by `x`, under the dots. Decorative
+   * (the legend, tooltip, keyboard and table stay per point). `{ maxGap }` breaks the line between neighbours whose
+   * `x` distance exceeds it (x units; ms on a `'time'` axis). Default `false`.
+   */
+  connect?: boolean | { maxGap: number };
 }
 /** An app-computed dashed line (e.g. a recommended ratio), drawn through `points` sorted by `x`. */
 export interface ScatterReference {
@@ -72,6 +97,10 @@ export interface ResolvedScatterSeries {
   slot: number;
   /** True when the slot is reused (more series than palette slots). */
   overflow: boolean;
+  /** Explicit `shape`; undefined = the slot's shape. */
+  shape?: ScatterMarkerShape;
+  strong: boolean;
+  connect?: boolean | { maxGap: number };
   points: ResolvedScatterPoint[];
 }
 
@@ -83,6 +112,10 @@ export interface ScatterDot {
   cx: number;
   cy: number;
   r: number;
+  /** Marker shape: the series' `shape`, else the slot's. */
+  shape: MarkerShape;
+  /** The series has `emphasis: 'strong'`. */
+  strong: boolean;
   datum: ResolvedScatterPoint;
 }
 export interface ScatterTick {
@@ -106,10 +139,16 @@ export interface ScatterLayout {
   xTickBaseline: number;
   xTicks: ScatterTick[];
   yTicks: ScatterTick[];
+  /** The drawn x range (after nice-rounding), epoch ms on a time axis. */
+  xDomain: [number, number];
+  /** Svg x of an x value. */
+  xPos: (v: number) => number;
   dots: ScatterDot[];
   /** One entry per reference line with points: its key, path, dash pattern index and palette slot (0 = neutral ink). */
   references: { key: string; path: string; dash: number; slot: number; emphasis?: 'strong' }[];
   trends: { seriesKey: string; slot: number; path: string }[];
+  /** One entry per connected segment of a `connect` series, in series order. */
+  connects: { seriesKey: string; slot: number; path: string }[];
 }
 
 export interface ScatterLayoutInput {
@@ -127,6 +166,8 @@ export interface ScatterLayoutInput {
   sizeRange: [number, number];
   /** Domain of `size` values; pass `scatterSizeDomain(allSeries)` so hiding a series doesn't resize the rest. Defaults to `series`. */
   sizeDomain?: [number, number];
+  /** Radius of unsized dots of an `emphasis: 'strong'` series. Default `2 * DOT_RADIUS + 2`. */
+  strongRadius?: number;
 }
 
 const validSize = (s: number | undefined): s is number => s !== undefined && Number.isFinite(s);
@@ -155,6 +196,9 @@ const DOT_RING = 1;
  */
 const MAX_DOT_SHARE = 1 / 25;
 
+/** Fallback for `--scatter-dot-strong` (`--space-2`) where computed styles don't resolve (jsdom). */
+const STRONG_RADIUS = 8;
+
 const num = (x: number | Date) => (x instanceof Date ? x.getTime() : x);
 
 export function resolveScatterSeries(series: ScatterSeries[]): ResolvedScatterSeries[] {
@@ -163,10 +207,34 @@ export function resolveScatterSeries(series: ScatterSeries[]): ResolvedScatterSe
     key: s.key,
     label: s.label,
     ...slots[i],
+    shape: s.shape,
+    strong: s.emphasis === 'strong',
+    connect: s.connect,
     points: s.points
       .map((p) => ({ ...p, x: num(p.x) }))
       .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y)),
   }));
+}
+
+/**
+ * Points sorted by `x` and split into runs where neighbours are at most `maxGap` apart (no split without it).
+ * Runs of one point are dropped: nothing to draw.
+ */
+export function connectSegments<T extends { x: number; y: number }>(
+  points: readonly T[],
+  maxGap?: number,
+): T[][] {
+  const segments: T[][] = [];
+  let run: T[] = [];
+  for (const p of [...points].sort((a, b) => a.x - b.x)) {
+    if (run.length && maxGap !== undefined && p.x - run[run.length - 1].x > maxGap) {
+      segments.push(run);
+      run = [];
+    }
+    run.push(p);
+  }
+  segments.push(run);
+  return segments.filter((r) => r.length > 1);
 }
 
 /** Least-squares line, or null with fewer than 2 distinct x. */
@@ -248,7 +316,11 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
   const rMax = Math.max(rMin, Math.min(tokenMax, width * MAX_DOT_SHARE));
   // Inset the pixel ranges by the largest dot's hover ring (radius + 1, see ScatterChart's marker)
   // so neither a dot nor its ring at the domain bounds is clipped by the plot (DS-68).
-  const largest = all.some((p) => validSize(p.size)) ? Math.max(rMax, DOT_RADIUS) : DOT_RADIUS;
+  const strongR = input.strongRadius ?? STRONG_RADIUS;
+  const largest = Math.max(
+    all.some((p) => validSize(p.size)) ? Math.max(rMax, DOT_RADIUS) : DOT_RADIUS,
+    series.some((s) => s.strong) ? strongR : 0,
+  );
   const pad = Math.max(largest, MARKER_RADIUS) + 1 + DOT_RING;
   y.range([plotBottom - pad, plotTop + pad]);
   const xr: [number, number] = [plot.x + pad, plot.x + plot.width - pad];
@@ -258,6 +330,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     : xExtent;
   let x: (v: number) => number;
   let xValues: number[];
+  let xDomain = xd;
   const xCount = Math.max(2, Math.floor(plot.width / 80));
   if (input.xScale === 'time') {
     const s = scaleTime().domain(xd).range(xr);
@@ -267,6 +340,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     const s = scaleLinear().domain(xd).range(xr);
     if (!input.xDomain) s.nice(xCount);
     x = s;
+    xDomain = s.domain() as [number, number];
     xValues = s.ticks(xCount);
   }
   // Drop ticks whose label would overflow the svg or collide with the previous kept one.
@@ -293,7 +367,9 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
         index,
         cx: x(datum.x),
         cy: y(datum.y),
-        r: validSize(datum.size) ? r(datum.size) : DOT_RADIUS,
+        r: validSize(datum.size) ? r(datum.size) : s.strong ? strongR : DOT_RADIUS,
+        shape: s.shape ?? markerShape(s.slot),
+        strong: s.strong,
         datum,
       })),
     )
@@ -328,6 +404,17 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
       trends.push({ seriesKey: s.key, slot: s.slot, path: `M${at(x0)}L${at(x1)}` });
     }
 
+  const connects: ScatterLayout['connects'] = [];
+  const toPath = line<{ x: number; y: number }>()
+    .x((p) => x(p.x))
+    .y((p) => y(p.y));
+  for (const s of series) {
+    if (!s.connect) continue;
+    const maxGap = typeof s.connect === 'object' ? s.connect.maxGap : undefined;
+    for (const seg of connectSegments(s.points, maxGap))
+      connects.push({ seriesKey: s.key, slot: s.slot, path: toPath(seg)! });
+  }
+
   return {
     plot,
     yTitle: { x: 0, y: Y_TITLE_BASELINE },
@@ -335,8 +422,11 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     xTickBaseline: height - X_LABEL_BASELINE - TITLE_ROW,
     xTicks,
     yTicks: yValues.map((value, i) => ({ value, pos: y(value), label: yLabels[i] })),
+    xDomain,
+    xPos: x,
     dots,
     references,
     trends,
+    connects,
   };
 }

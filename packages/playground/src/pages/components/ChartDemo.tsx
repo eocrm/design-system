@@ -93,6 +93,11 @@ const bowlSeries: ChartSeries[] = [
     values: minutes.map((_, i) => Math.max(0, 120 - i * 2 + (i % 7 === 0 ? 30 : 0))),
   },
 ];
+const scaleReadings: ChartSeries[] = [
+  { key: 'w', label: 'Weight', values: [3700, 3760, 3830, 3790, 3716, 3800] },
+];
+const scaleDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const cleanings: ChartSeries[] = [{ key: 'n', label: 'Cleanings', values: [1, 1, 0, 1, 0, 1] }];
 const formatGrams = (n: number) => `${fmt.format(n)} g`;
 
 const mealHours = ['07:00', '12:00', '18:00', '21:00'];
@@ -128,6 +133,30 @@ const todayAhead: ChartAnnotation[] = [
   { at: 'Sun', glyph: 'up', tone: 'success', label: 'Ahead of usual pace' },
 ];
 const mealDetails = (i: number) => [`${[190, 255, 240, 80][i]} kcal`, `${[3, 4, 4, 1][i]} times`];
+
+function PickADayExample() {
+  const [range, setRange] = useState<ChartRange | null>(null);
+  return (
+    <Stack gap="sm">
+      <Cell title="Cleanings per day">
+        <Chart
+          type="bar"
+          label="Cleanings per day, pick a day"
+          categories={scaleDays}
+          series={cleanings}
+          formatValue={formatCount}
+          integerValues
+          selectOn="tap"
+          selectedRange={range}
+          onSelectedRangeChange={setRange}
+        />
+      </Cell>
+      <Text size="sm" tone="muted">
+        {range ? `Picked ${range.from}` : 'Tap a day'}
+      </Text>
+    </Stack>
+  );
+}
 
 function RangeSelectionExample() {
   const [range, setRange] = useState<ChartRange | null>(null);
@@ -259,6 +288,44 @@ export function ChartDemo() {
       </Example>
 
       <Example
+        title="Fit a line to its data"
+        description="includeZero={false} fits the y axis to the values instead of starting at 0, for readings that hover in a narrow band. Line only: bars and stacked area always start at 0, because a cut baseline misstates size."
+        code={`<Chart type="line" label="Weight" categories={days} series={readings}
+  formatValue={formatGrams} includeZero={false}
+/>`}
+      >
+        <Cell title="Weight, includeZero={false}">
+          <Chart
+            type="line"
+            label="Weight by day"
+            categories={scaleDays}
+            series={scaleReadings}
+            formatValue={formatGrams}
+            includeZero={false}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Whole-number ticks"
+        description="integerValues keeps the y ticks to whole numbers, so a count that never passes 1 reads 0, 1 instead of 0, 0.2, 0.4 … Larger ranges keep their normal ticks."
+        code={`<Chart type="bar" label="Cleanings" categories={days} series={cleanings}
+  formatValue={formatCount} integerValues
+/>`}
+      >
+        <Cell title="Cleanings per day, integerValues">
+          <Chart
+            type="bar"
+            label="Cleanings per day"
+            categories={scaleDays}
+            series={cleanings}
+            formatValue={formatCount}
+            integerValues
+          />
+        </Cell>
+      </Example>
+
+      <Example
         title="Range selection"
         description="Passing onSelectedRangeChange turns selection on. While a range exists a Zoom to selection button appears in the legend row (Reset zoom once zoomed), so the chart can zoom with no extra props. Mouse: press and drag. Touch: hold a finger still for a moment, then slide; a quick swipe still scrolls the page and a tap shows the tooltip. Keyboard: Shift+arrows. A click or tap outside the band clears it."
         code={`const [range, setRange] = useState<ChartRange | null>(null);
@@ -268,6 +335,16 @@ export function ChartDemo() {
 <Text size="sm" tone="muted">{range ? \`Selected \${range.from} – \${range.to}\` : ''}</Text>`}
       >
         <RangeSelectionExample />
+      </Example>
+
+      <Example
+        title="Pick a day"
+        description='selectOn="tap": a click or tap selects that one category; tapping it again clears it (the only way to clear on a phone), tapping another replaces it. Drag and long-press still select a range. Space toggles the inspected category with the keyboard (in both modes).'
+        code={`<Chart type="bar" label="Cleanings per day" categories={days} series={cleanings}
+  selectOn="tap" selectedRange={range} onSelectedRangeChange={setRange}
+/>`}
+      >
+        <PickADayExample />
       </Example>
 
       <Example
