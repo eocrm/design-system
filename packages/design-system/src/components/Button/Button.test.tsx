@@ -456,13 +456,25 @@ describe('Button — loading (DS-77)', () => {
   });
 
   it('loading: announces through a polite region present before loading', async () => {
-    const { rerender } = render(<Button loading={false}>Ask</Button>);
+    const { rerender } = render(
+      <Button loading={false} loadingLabel="Loading…">
+        Ask
+      </Button>,
+    );
     const region = screen.getByRole('status');
     expect(region).toHaveTextContent('');
-    rerender(<Button loading>Ask</Button>);
+    rerender(
+      <Button loading loadingLabel="Loading…">
+        Ask
+      </Button>,
+    );
     expect(await screen.findByText('Loading…')).toBe(region);
     expect(screen.getByRole('status')).toBe(region);
-    rerender(<Button loading={false}>Ask</Button>);
+    rerender(
+      <Button loading={false} loadingLabel="Loading…">
+        Ask
+      </Button>,
+    );
     await waitFor(() => expect(region).toHaveTextContent(''));
   });
 
@@ -482,13 +494,12 @@ describe('Button — loading (DS-77)', () => {
     expect(evt.defaultPrevented).toBe(true);
   });
 
-  it('loading: spinner is aria-hidden', () => {
+  it('loading: spinner is an aria-hidden, empty span', () => {
     render(<Button loading>Ask</Button>);
     const spinner = screen
       .getByRole('button', { name: 'Ask' })
-      .querySelector('[role="progressbar"]');
+      .querySelector(':scope > span[aria-hidden="true"]:empty');
     expect(spinner).not.toBeNull();
-    expect(spinner!.closest('[aria-hidden="true"]')).not.toBeNull();
   });
 
   it('iconOnly loading: the name stays the aria-label and the icon is hidden', () => {
@@ -499,5 +510,20 @@ describe('Button — loading (DS-77)', () => {
     );
     expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument();
     expect(screen.getByTestId('icon').closest('[aria-hidden="true"]')).not.toBeNull();
+  });
+
+  it('loading without loadingLabel: warns once per instance and announces nothing', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { rerender } = render(<Button loading>Ask</Button>);
+    rerender(<Button loading>Ask!</Button>);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toContain('`loading` without `loadingLabel`');
+    expect(screen.getByRole('status')).toHaveTextContent('');
+    warn.mockRestore();
+  });
+
+  it('is free of the i18n catalogue and CircularProgress (bundle size)', () => {
+    const src = readFileSync(resolve(__dirname, 'Button.tsx'), 'utf8');
+    expect(src).not.toMatch(/from '\.\.\/\.\.\/i18n|from '\.\.\/CircularProgress/);
   });
 });

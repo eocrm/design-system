@@ -137,13 +137,6 @@ export interface Messages {
     /** Label rendered when the strength score is "very strong". */
     veryStrong: string;
   };
-  button: {
-    /**
-     * Announced from a polite live region when `loading` turns true. The
-     * button keeps its accessible name; the state change is announced instead.
-     */
-    loading: string;
-  };
   switch: {
     /**
      * Announced from a polite live region while `loading` is true. Same

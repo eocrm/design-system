@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useEffect,
+  useRef,
   useState,
   type MouseEvent,
   type ComponentPropsWithRef,
@@ -12,8 +13,6 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { paletteTokens, type PaletteColor } from '../../palette/palette';
-import { useTranslation } from '../../i18n/useTranslation';
-import { CircularProgress } from '../CircularProgress';
 import styles from './Button.module.scss';
 
 /** Visual variant. See ButtonProps#variant for when to use each. */
@@ -122,13 +121,23 @@ interface ButtonOwnProps {
    * `disabled` attribute: that would drop focus from the control mid-action.
    *
    * Assistive tech: the accessible name is unchanged and a visually hidden
-   * polite live region (`role="status"`) announces "Loading…" when it turns
-   * true. The region renders only when the prop is passed at all (either
+   * polite live region (`role="status"`) announces `loadingLabel` when it
+   * turns true. The region renders only when the prop is passed at all (either
    * value), so pass `loading={false}` rather than omitting it for a button
    * that can later load: a region added together with its text is not
    * announced. Defaults to `undefined` (no region, not loading).
    */
   loading?: boolean;
+  /**
+   * Text the polite live region announces while `loading` is true, already
+   * translated by the caller (e.g. `t('common.saving')`). Without it nothing
+   * is announced and a dev-only `console.warn` fires once per instance.
+   *
+   * This is a deliberate, documented exception to Hard rule 9 (no
+   * per-component label props): Button must stay free of the i18n catalogue
+   * so a Button-only import stays small. Defaults to `undefined`.
+   */
+  loadingLabel?: string;
 }
 
 /**
@@ -203,6 +212,7 @@ export const Button = forwardRef(function Button<C extends ElementType = 'button
     fullWidth = false,
     align = 'center',
     loading,
+    loadingLabel,
     onClick,
     children,
     'aria-disabled': ariaDisabled,
@@ -223,13 +233,19 @@ export const Button = forwardRef(function Button<C extends ElementType = 'button
   // wins: it rides along in {...props}, spread last.
   const defaultType = Component === 'button' ? { type: 'button' as const } : undefined;
 
-  const t = useTranslation();
   // One tick behind on purpose (same as Switch): a region that mounts with its
   // text already in place is not announced, so the word must arrive as a change.
   const [loadingText, setLoadingText] = useState('');
   useEffect(() => {
-    setLoadingText(loading ? t('button.loading') : '');
-  }, [loading, t]);
+    setLoadingText(loading && loadingLabel ? loadingLabel : '');
+  }, [loading, loadingLabel]);
+  const warned = useRef(false);
+  useEffect(() => {
+    if (loading && !loadingLabel && !warned.current && process.env.NODE_ENV !== 'production') {
+      warned.current = true;
+      console.warn("[Button] `loading` without `loadingLabel`: screen readers won't hear it");
+    }
+  }, [loading, loadingLabel]);
 
   // Order matters: while loading, the guard preventDefault()s (blocks submit
   // and anchor navigation) and returns BEFORE the consumer's onClick.
@@ -280,11 +296,7 @@ export const Button = forwardRef(function Button<C extends ElementType = 'button
           <span className={styles.content} aria-hidden={(loading && iconOnly) || undefined}>
             {children}
           </span>
-          {loading && (
-            <span className={styles.spinner} aria-hidden="true">
-              <CircularProgress size="sm" />
-            </span>
-          )}
+          {loading && <span className={styles.spinner} aria-hidden="true" />}
         </>
       ) : (
         children

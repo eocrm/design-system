@@ -17,10 +17,10 @@ function LoadingToggle() {
   const [loading, setLoading] = useState(false);
   return (
     <Cluster gap="sm">
-      <Button loading={loading} onClick={() => setLoading(true)}>
+      <Button loading={loading} loadingLabel="Saving…" onClick={() => setLoading(true)}>
         Save
       </Button>
-      <Button variant="secondary" loading={loading}>
+      <Button variant="secondary" loading={loading} loadingLabel="Exporting…">
         Export
       </Button>
       <Button variant="secondary" onClick={() => setLoading((v) => !v)}>
@@ -151,7 +151,7 @@ export function ButtonDemo() {
         description="loading keeps the width, centres a spinner, ignores clicks and stays focusable (aria-disabled, not disabled). A polite live region announces it; pass loading={false} rather than omitting it."
         code={`const [loading, setLoading] = useState(false);
 
-<Button loading={loading} onClick={() => setLoading(true)}>Save</Button>`}
+<Button loading={loading} loadingLabel="Saving…" onClick={() => setLoading(true)}>Save</Button>`}
       >
         <LoadingToggle />
       </Example>

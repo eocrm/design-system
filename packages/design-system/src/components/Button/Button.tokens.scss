@@ -27,6 +27,11 @@
   --button-opacity-loading: 1;
   --button-opacity-loading-content: 0;
 
+  // Loading spinner: a CSS ring in the button's own foreground colour
+  --button-spinner-size: 1em;
+  --button-spinner-width: calc(var(--border-width) * 2);
+  --button-spinner-duration: 0.8s;
+
   // Sizing — height per size
   --button-height-xs: var(--size-xs);
   --button-height-sm: var(--size-sm);

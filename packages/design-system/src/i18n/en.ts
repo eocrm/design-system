@@ -67,9 +67,6 @@ export const en: Messages = {
     strong: 'Strong',
     veryStrong: 'Very strong',
   },
-  button: {
-    loading: 'Loading…',
-  },
   switch: {
     busy: 'Saving…',
   },

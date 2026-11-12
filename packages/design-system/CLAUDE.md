@@ -160,6 +160,8 @@ Library components must NEVER inline an English string for any user-visible surf
 
 Each becomes a key in `src/i18n/messages.ts` with values in both `src/i18n/en.ts` AND `src/i18n/ru.ts`, consumed via `useTranslation()`.
 
+**Documented exception:** `Button` takes its `loading` announcement as a caller-translated `loadingLabel` prop, because importing `useTranslation` would pull the whole catalogue into every Button-only bundle.
+
 ```tsx
 // ❌ Wrong
 <Button aria-label="Close dialog" onClick={onClose}>

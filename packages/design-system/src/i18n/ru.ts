@@ -68,9 +68,6 @@ export const ru: Messages = {
     strong: 'Надёжный',
     veryStrong: 'Очень надёжный',
   },
-  button: {
-    loading: 'Загрузка…',
-  },
   switch: {
     busy: 'Сохранение…',
   },

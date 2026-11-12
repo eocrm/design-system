@@ -69,12 +69,26 @@
 }
 
 .spinner {
-  display: inline-flex;
   grid-area: 1 / 1;
+  inline-size: var(--button-spinner-size);
+  block-size: var(--button-spinner-size);
+  border: var(--button-spinner-width) solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: var(--radius-full);
+  animation: button-spin var(--button-spinner-duration) linear infinite;
+}
 
-  // The button's own foreground, so the arc shows on an accent-filled button.
-  --circular-progress-indeterminate-color: currentColor;
-  --circular-progress-track-color: transparent;
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// No rotation: a static ring with one open quarter is still an "in progress" cue.
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
 }
 
 .srOnly {
