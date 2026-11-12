@@ -187,6 +187,11 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
    */
   includeZero?: boolean;
   /**
+   * Whole-number y ticks only, for counts: a small range shows `0, 1, 2` instead of `0, 0.5, 1`. Larger ranges keep
+   * their normal ticks. Default `false`.
+   */
+  integerValues?: boolean;
+  /**
    * Controlled selected category range (`null` = none). Passing this, `defaultSelectedRange` or
    * `onSelectedRangeChange` turns selection on (`line`, `area`, `bar`, `stacked-bar`): mouse press + drag
    * past 8px or a touch long-press (300ms) + slide selects, a click or tap outside the band clears,
@@ -336,6 +341,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     details,
     valueLabels,
     includeZero,
+    integerValues,
     selectedRange,
     defaultSelectedRange,
     onSelectedRangeChange,
@@ -573,6 +579,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             curve,
             valueLabels,
             includeZero,
+            integerValues,
             topGutter: gutterRows * MARKER_LABEL_BASELINE + gutterGap,
             viewport: vp,
             referenceLines,
@@ -590,6 +597,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       curve,
       valueLabels,
       includeZero,
+      integerValues,
       gutterRows,
       gutterGap,
       vp,

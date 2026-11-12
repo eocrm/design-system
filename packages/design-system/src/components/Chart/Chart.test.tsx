@@ -2240,3 +2240,22 @@ describe('includeZero (DS-71)', () => {
     expect(tickLabels(container)).not.toContain('0');
   });
 });
+
+describe('integerValues (DS-74)', () => {
+  it('draws no fractional tick labels', () => {
+    const layout = stubLayout();
+    const props: ChartProps = {
+      type: 'bar',
+      label: 'Cleanings',
+      categories: ['a', 'b', 'c'],
+      series: [{ key: 'n', label: 'Cleanings', values: [1, 1, 0] }],
+      formatValue: (n) => String(n),
+    };
+    const { container, rerender } = render(<Chart {...props} />);
+    layout.fire();
+    const labels = () => [...container.querySelectorAll('svg text')].map((t) => t.textContent);
+    expect(labels().some((l) => l?.includes('.'))).toBe(true);
+    rerender(<Chart {...props} integerValues />);
+    expect(labels().some((l) => l?.includes('.'))).toBe(false);
+  });
+});

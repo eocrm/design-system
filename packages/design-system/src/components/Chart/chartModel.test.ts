@@ -1613,3 +1613,40 @@ describe('includeZero (DS-71)', () => {
     }
   });
 });
+
+describe('integerValues (DS-74)', () => {
+  const bar = (values: number[], integerValues?: boolean) =>
+    layout({
+      type: 'bar',
+      series: resolveSeries('bar', [s('a', values)], values.length).series,
+      categories: values.map((_, i) => String(i)),
+      integerValues,
+    });
+  const ticks = (l: ReturnType<typeof layout>) => l.yTicks.map((t) => t.value);
+
+  it('integerValues on 0–1 ticks [0, 1]', () => {
+    expect(ticks(bar([1, 1, 0], true))).toEqual([0, 1]);
+  });
+
+  it('integerValues on 0–3 ticks [0,1,2,3]', () => {
+    expect(ticks(bar([3, 1, 0], true))).toEqual([0, 1, 2, 3]);
+  });
+
+  it('integerValues on 0–2000 keeps normal density', () => {
+    const t = ticks(bar([2000, 500, 0], true));
+    expect(t.every(Number.isInteger)).toBe(true);
+    expect(t.length).toBeLessThanOrEqual(ticks(bar([2000, 500, 0])).length);
+  });
+
+  it('integerValues with negatives', () => {
+    const t = ticks(bar([-2, 3], true));
+    expect(t.every(Number.isInteger)).toBe(true);
+    expect(t).toContain(0);
+  });
+
+  it('integerValues keeps the domain ends on integer ticks for a fractional maximum', () => {
+    const t = ticks(bar([2.5, 1, 0], true));
+    expect(t.every(Number.isInteger)).toBe(true);
+    expect(t[t.length - 1]).toBeGreaterThanOrEqual(2.5);
+  });
+});

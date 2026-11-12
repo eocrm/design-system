@@ -651,6 +651,8 @@ export interface LayoutInput {
   annotations?: readonly ResolvedAnnotation[];
   /** `line` only: `false` fits the y domain to the data instead of anchoring it at 0. Default `true`. */
   includeZero?: boolean;
+  /** Whole-number y ticks only (counts): a domain narrower than a tick step of 1 is widened to whole numbers. Default `false`. */
+  integerValues?: boolean;
 }
 
 export interface ChartLayout {
@@ -762,7 +764,14 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   // The y scale's domain and ticks don't depend on its range: fix them first, so the plot (and the bar slots the
   // annotation placement needs) is known before the range reserves room.
   const y = scaleLinear().domain([min, max]).nice(tickCount);
-  const tickValues = y.ticks(tickCount);
+  let tickValues = y.ticks(tickCount);
+  if (input.integerValues && tickValues.length >= 2 && tickValues[1] - tickValues[0] < 1) {
+    // Sub-1 steps: snap the domain to whole numbers and tick every one (the span is under a tick count wide).
+    const lo = Math.floor(min);
+    const hi = Math.max(Math.ceil(max), lo + 1);
+    y.domain([lo, hi]);
+    tickValues = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+  }
   const tickLabels = tickValues.map(formatValue);
   const left = Math.max(0, ...tickLabels.map(textWidth)) + LABEL_GAP;
   const plot: Rect = {

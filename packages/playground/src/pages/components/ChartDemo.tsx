@@ -97,6 +97,7 @@ const scaleReadings: ChartSeries[] = [
   { key: 'w', label: 'Weight', values: [3700, 3760, 3830, 3790, 3716, 3800] },
 ];
 const scaleDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const cleanings: ChartSeries[] = [{ key: 'n', label: 'Cleanings', values: [1, 1, 0, 1, 0, 1] }];
 const formatGrams = (n: number) => `${fmt.format(n)} g`;
 
 const mealHours = ['07:00', '12:00', '18:00', '21:00'];
@@ -277,6 +278,25 @@ export function ChartDemo() {
             series={scaleReadings}
             formatValue={formatGrams}
             includeZero={false}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Whole-number ticks"
+        description="integerValues keeps the y ticks to whole numbers, so a count that never passes 1 reads 0, 1 instead of 0, 0.2, 0.4 … Larger ranges keep their normal ticks."
+        code={`<Chart type="bar" label="Cleanings" categories={days} series={cleanings}
+  formatValue={formatCount} integerValues
+/>`}
+      >
+        <Cell title="Cleanings per day, integerValues">
+          <Chart
+            type="bar"
+            label="Cleanings per day"
+            categories={scaleDays}
+            series={cleanings}
+            formatValue={formatCount}
+            integerValues
           />
         </Cell>
       </Example>
