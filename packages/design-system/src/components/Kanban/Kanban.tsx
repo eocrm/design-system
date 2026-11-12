@@ -69,12 +69,37 @@ const KanbanColumnItemsContext = createContext<readonly (string | number)[] | nu
  * a column. Consumer applies the move by updating their items state.
  */
 export interface KanbanMoveEvent {
-  /** Source position — where the card was before the drag. */
-  from: { columnId: string | number; index: number };
+  /** Source position — where the card was before the drag. `statusId` is set when the source column has statuses. */
+  from: { columnId: string | number; index: number; statusId?: string | number };
   /** Destination position — where the card landed after the drop. */
   to: { columnId: string | number; index: number };
   /** The id of the card that was dragged. */
   cardId: string | number;
+}
+
+/** One status inside a multi-status column (a Jira-style swimlane zone). */
+export interface KanbanStatus {
+  /** Stable status id, referenced by `Kanban.Card`'s `status`. */
+  id: string | number;
+  /** Visible zone label. */
+  label: string;
+}
+
+/** A drop target: a column, and optionally one of its statuses. */
+export interface KanbanDropTarget {
+  columnId: string | number;
+  /** Set only when the target column has statuses. */
+  statusId?: string | number;
+}
+
+/** Payload of `onStatusChange`: a card moved to another status. */
+export interface KanbanStatusChangeEvent {
+  /** The id of the card that was dragged. */
+  cardId: string | number;
+  /** Where the card was before the drag. */
+  from: { columnId: string | number; index: number; statusId?: string | number };
+  /** The destination column and status. */
+  to: { columnId: string | number; statusId: string | number };
 }
 
 export interface KanbanProps extends HTMLAttributes<HTMLDivElement> {
@@ -98,6 +123,10 @@ export interface KanbanProps extends HTMLAttributes<HTMLDivElement> {
    * ```
    */
   onMove?: (event: KanbanMoveEvent) => void;
+  /** Fires when a card is dropped on a status of a multi-status column. */
+  onStatusChange?: (event: KanbanStatusChangeEvent) => void;
+  /** Return `false` to forbid dropping `cardId` on `to`. Default: allow all. */
+  canDrop?: (cardId: string | number, to: KanbanDropTarget) => boolean;
 }
 
 export interface KanbanColumnProps extends Omit<HTMLAttributes<HTMLDivElement>, 'id'> {
@@ -106,6 +135,8 @@ export interface KanbanColumnProps extends Omit<HTMLAttributes<HTMLDivElement>, 
    * Used internally to track which cards belong to which column.
    */
   id: string | number;
+  /** Statuses that make this column multi-status: zones appear while dragging. */
+  statuses?: readonly KanbanStatus[];
   children?: ReactNode;
 }
 
@@ -115,6 +146,8 @@ export interface KanbanCardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'i
    * the `<Kanban>`. Used by dnd-kit to track the card during drag.
    */
   id: string | number;
+  /** Status id within a multi-status column; unknown or missing = no status. */
+  status?: string | number;
   children: ReactNode;
 }
 
@@ -295,7 +328,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
  * @see docs/components/Kanban.md
  */
 export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function KanbanCard(
-  { id, className, children, ...rest },
+  { id, status: _status, className, children, ...rest },
   ref,
 ) {
   // Announcement label: the consumer's `aria-label`, else the card's RENDERED
@@ -421,7 +454,7 @@ KanbanCard.displayName = 'KanbanCard';
  * @see docs/components/Kanban.md
  */
 export const KanbanColumn = forwardRef<HTMLDivElement, KanbanColumnProps>(function KanbanColumn(
-  { id, className, children, ...rest },
+  { id, statuses: _statuses, className, children, ...rest },
   ref,
 ) {
   const { setNodeRef } = useDroppable({ id });
@@ -481,7 +514,8 @@ KanbanColumn.displayName = 'KanbanColumn';
  * @see docs/components/Kanban.md
  */
 const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
-  { onMove, className, children, ...rest },
+  // `onStatusChange` / `canDrop` are wired in by later drag handling; keep them off the DOM.
+  { onMove, onStatusChange: _onStatusChange, canDrop: _canDrop, className, children, ...rest },
   ref,
 ) {
   const t = useTranslation();
@@ -491,53 +525,87 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // columnElements is built in the same pass so render-time lookup is O(1)
   // instead of O(N) per column (i.e., O(N²) total per render).
   // ------------------------------------------------------------------
-  const { columnOrder, columnElements, initialItems, cardElements, columnChildrenSlices } =
-    useMemo(() => {
-      const colOrder: (string | number)[] = [];
-      const colElems = new Map<string | number, ReactElement<KanbanColumnProps>>();
-      const initItems = new Map<string | number, (string | number)[]>();
-      const cardElems = new Map<string | number, ReactElement<KanbanCardProps>>();
-      const colSlices = new Map<string | number, { before: ReactNode[]; after: ReactNode[] }>();
+  const {
+    columnOrder,
+    columnElements,
+    initialItems,
+    cardElements,
+    columnChildrenSlices,
+    columnStatuses,
+    cardStatus,
+  } = useMemo(() => {
+    const colOrder: (string | number)[] = [];
+    const colElems = new Map<string | number, ReactElement<KanbanColumnProps>>();
+    const initItems = new Map<string | number, (string | number)[]>();
+    const cardElems = new Map<string | number, ReactElement<KanbanCardProps>>();
+    const colSlices = new Map<string | number, { before: ReactNode[]; after: ReactNode[] }>();
+    const colStatuses = new Map<string | number, readonly KanbanStatus[]>();
+    const cStatus = new Map<string | number, string | number | undefined>();
 
-      Children.forEach(children, (child) => {
-        if (!isValidElement(child) || child.type !== KanbanColumn) return;
-        const columnElement = child as ReactElement<KanbanColumnProps>;
-        const colProps = columnElement.props;
-        const colId = colProps.id;
-        colOrder.push(colId);
-        colElems.set(colId, columnElement);
+    Children.forEach(children, (child) => {
+      if (!isValidElement(child) || child.type !== KanbanColumn) return;
+      const columnElement = child as ReactElement<KanbanColumnProps>;
+      const colProps = columnElement.props;
+      const colId = colProps.id;
+      colOrder.push(colId);
+      colElems.set(colId, columnElement);
 
-        const colCardIds: (string | number)[] = [];
-        let firstCardIdx = -1;
-        let lastCardIdx = -1;
-        const colChildren = Children.toArray(colProps.children);
+      const colCardIds: (string | number)[] = [];
+      let firstCardIdx = -1;
+      let lastCardIdx = -1;
+      const colChildren = Children.toArray(colProps.children);
+      const statuses = colProps.statuses;
+      const multi = statuses != null && statuses.length > 0;
+      if (multi) colStatuses.set(colId, statuses);
 
-        colChildren.forEach((grandchild, idx) => {
-          if (!isValidElement(grandchild) || grandchild.type !== KanbanCard) return;
-          const cardProps = grandchild.props as KanbanCardProps;
-          colCardIds.push(cardProps.id);
-          cardElems.set(cardProps.id, grandchild as ReactElement<KanbanCardProps>);
-          if (firstCardIdx < 0) firstCardIdx = idx;
-          lastCardIdx = idx;
-        });
-
-        // Split into before/after slices (non-card children outside the card block).
-        const before: ReactNode[] =
-          firstCardIdx >= 0 ? colChildren.slice(0, firstCardIdx) : colChildren;
-        const after: ReactNode[] = lastCardIdx >= 0 ? colChildren.slice(lastCardIdx + 1) : [];
-
-        initItems.set(colId, colCardIds);
-        colSlices.set(colId, { before, after });
+      colChildren.forEach((grandchild, idx) => {
+        if (!isValidElement(grandchild) || grandchild.type !== KanbanCard) return;
+        const cardProps = grandchild.props as KanbanCardProps;
+        colCardIds.push(cardProps.id);
+        cardElems.set(cardProps.id, grandchild as ReactElement<KanbanCardProps>);
+        cStatus.set(
+          cardProps.id,
+          multi && statuses.some((s) => s.id === cardProps.status) ? cardProps.status : undefined,
+        );
+        if (firstCardIdx < 0) firstCardIdx = idx;
+        lastCardIdx = idx;
       });
 
-      return {
-        columnOrder: colOrder,
-        columnElements: colElems,
-        initialItems: initItems,
-        cardElements: cardElems,
-        columnChildrenSlices: colSlices,
-      };
-    }, [children]);
+      // Split into before/after slices (non-card children outside the card block).
+      const before: ReactNode[] =
+        firstCardIdx >= 0 ? colChildren.slice(0, firstCardIdx) : colChildren;
+      const after: ReactNode[] = lastCardIdx >= 0 ? colChildren.slice(lastCardIdx + 1) : [];
+
+      initItems.set(colId, colCardIds);
+      colSlices.set(colId, { before, after });
+    });
+
+    return {
+      columnOrder: colOrder,
+      columnElements: colElems,
+      initialItems: initItems,
+      cardElements: cardElems,
+      columnChildrenSlices: colSlices,
+      columnStatuses: colStatuses,
+      cardStatus: cStatus,
+    };
+  }, [children]);
+
+  // Dev-only: a card in a multi-status column without a known status.
+  const warnedRef = useRef<Set<string | number>>(new Set());
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    for (const [colId, cards] of initialItems) {
+      if (!columnStatuses.has(colId)) continue;
+      for (const id of cards) {
+        if (cardStatus.get(id) !== undefined || warnedRef.current.has(id)) continue;
+        warnedRef.current.add(id);
+        console.warn(
+          `Kanban: card "${id}" in multi-status column "${colId}" has no known \`status\`.`,
+        );
+      }
+    }
+  }, [initialItems, columnStatuses, cardStatus]);
 
   // ------------------------------------------------------------------
   // Stable serialization of initialItems to detect consumer state changes.

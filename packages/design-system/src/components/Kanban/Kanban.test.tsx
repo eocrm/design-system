@@ -927,3 +927,84 @@ describe('Kanban — drag announcements (#390)', () => {
     expect(described()).toMatch(/^Нажмите пробел или Enter/);
   });
 });
+
+describe('Kanban — statuses (idle)', () => {
+  const statuses = [
+    { id: 'new', label: 'New' },
+    { id: 'won', label: 'Won' },
+  ];
+
+  it('renders a multi-status column as one mixed list with no zones while idle', () => {
+    const { container } = render(
+      <Kanban>
+        <Kanban.Column id="c" statuses={statuses}>
+          <Kanban.Card id="a" status="new">
+            Alpha
+          </Kanban.Card>
+          <Kanban.Card id="b" status="won">
+            Beta
+          </Kanban.Card>
+          <Kanban.Card id="g" status="new">
+            Gamma
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    for (const t of ['Alpha', 'Beta', 'Gamma']) expect(screen.getByText(t)).toBeTruthy();
+    expect(screen.queryByText('New')).toBeNull();
+    expect(screen.queryByText('Won')).toBeNull();
+    expect(container.querySelector('[data-kanban-zone]')).toBeNull();
+  });
+
+  it('does not leak statuses / status onto the DOM', () => {
+    const { container } = render(
+      <Kanban onStatusChange={() => {}} canDrop={() => true}>
+        <Kanban.Column id="c" statuses={statuses}>
+          <Kanban.Card id="a" status="new">
+            Alpha
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    expect(container.querySelector('[statuses]')).toBeNull();
+    expect(container.querySelector('[status]')).toBeNull();
+    expect(container.querySelector('[onstatuschange],[candrop]')).toBeNull();
+  });
+
+  it('warns once when a card in a multi-status column has no or an unknown status', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const board = (
+      <Kanban>
+        <Kanban.Column id="c" statuses={statuses}>
+          <Kanban.Card id="nostat">One</Kanban.Card>
+          <Kanban.Card id="zz" status="zzz">
+            Two
+          </Kanban.Card>
+          <Kanban.Card id="ok" status="new">
+            Three
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>
+    );
+    const { rerender } = render(board);
+    expect(warn).toHaveBeenCalledTimes(2);
+    expect(warn.mock.calls[0][0]).toContain('nostat');
+    expect(warn.mock.calls[1][0]).toContain('zz');
+    rerender(board);
+    expect(warn).toHaveBeenCalledTimes(2);
+    warn.mockRestore();
+  });
+
+  it('does not warn for cards in plain columns without a status', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <Kanban>
+        <Kanban.Column id="c">
+          <Kanban.Card id="a">Alpha</Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
