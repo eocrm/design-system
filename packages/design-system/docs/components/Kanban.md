@@ -50,6 +50,8 @@ function handleMove(event: KanbanMoveEvent) {
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `onMove` | `((event: KanbanMoveEvent) => void)` | no | Fires once per drag (on drop) with the from/to positions and the cardId. NOT fired on drag cancel. NOT fired when from === to (no-op drop). Consumer should update their items state immutably, e.g.: (example below) |
+| `onStatusChange` | `((event: KanbanStatusChangeEvent) => void)` | no | Fires when a card is dropped on a status of a multi-status column. |
+| `canDrop` | `((cardId: string \| number, to: KanbanDropTarget) => boolean)` | no | Return `false` to forbid dropping `cardId` on `to`. Default: allow all. |
 | …native | | | plus native `<div>` attributes |
 
 **`onMove`** example:
@@ -75,6 +77,7 @@ const handleMove = ({ from, to, cardId }) => {
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `id` | `string \| number` | yes | Stable identifier for this card. Must be unique across ALL columns in the `<Kanban>`. Used by dnd-kit to track the card during drag. |
+| `status` | `string \| number` | no | Status id within a multi-status column; unknown or missing = no status. |
 | `children` | `ReactNode` | yes |  |
 | …native | | | plus native `<div>` attributes |
 
@@ -84,6 +87,7 @@ const handleMove = ({ from, to, cardId }) => {
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `id` | `string \| number` | yes | Stable identifier for this column. Must be unique within a `<Kanban>`. Used internally to track which cards belong to which column. |
+| `statuses` | `readonly KanbanStatus[]` | no | Statuses that make this column multi-status: zones appear while dragging. |
 | `children` | `ReactNode` | no |  |
 | …native | | | plus native `<div>` attributes |
 

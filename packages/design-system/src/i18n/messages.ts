@@ -440,6 +440,12 @@ export interface Messages {
       total: number;
       container: string;
     }) => string;
+    /** Announced when the drag is over a named status zone inside a list (Kanban). */
+    movedOverZone: (params: { item: string; zone: string; container: string }) => string;
+    /** Announced on a committed drop into a named status zone. */
+    droppedInZone: (params: { item: string; zone: string; container: string }) => string;
+    /** Announced while the drag is over a status zone that refuses it; releasing there cancels. */
+    zoneUnavailable: (params: { item: string; zone: string; container: string }) => string;
     /** Announced while the drag is over no drop target at all. */
     movedOutside: (params: { item: string }) => string;
     /** Announced on a committed drop in a single-list component. */

@@ -1098,6 +1098,16 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
     });
   const describeDrag: DescribeDragTarget = (entry, activeId) => {
     if (!entry) return null;
+    const zone = zoneOf(entry);
+    if (zone)
+      return {
+        label: dragLabelOf(entry.data.current),
+        index: 0,
+        total: 0,
+        container: columnLabel(zone.columnId),
+        zone: zone.label,
+        unavailable: !zone.allowed,
+      };
     const id = entry.id as string | number;
     const isColumn = effectiveItems.has(id);
     const colId = isColumn ? id : findContainer(id, effectiveItems);

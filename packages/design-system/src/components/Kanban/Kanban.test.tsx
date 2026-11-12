@@ -1468,3 +1468,95 @@ describe('Kanban — canDrop', () => {
     expect(canDrop).not.toHaveBeenCalled();
   });
 });
+
+describe('Kanban — zone announcements', () => {
+  let restore: () => void;
+  beforeEach(() => {
+    restore = stubLayout();
+  });
+  afterEach(() => restore());
+
+  const WL: KanbanStatus[] = [
+    { id: 'open', label: 'Open' },
+    { id: 'won', label: 'Won' },
+  ];
+  function ZoneBoard({
+    canDrop,
+  }: {
+    canDrop?: (id: string | number, to: KanbanDropTarget) => boolean;
+  }) {
+    return (
+      <Kanban canDrop={canDrop}>
+        <Kanban.Column id="col-a" aria-label="To do" data-col={0} data-h={300}>
+          <Kanban.Card id="task-1" data-card="task-1">
+            Draft Q3 OKRs
+          </Kanban.Card>
+        </Kanban.Column>
+        <Kanban.Column id="col-b" aria-label="Done" statuses={WL} data-col={1} data-h={300}>
+          <Kanban.Card id="task-3" status="open" data-card="task-3">
+            Ship onboarding email
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>
+    );
+  }
+
+  it('announces the zone and column while hovering a zone', () => {
+    render(<ZoneBoard />);
+    pressAndMove('Draft Q3 OKRs', [zoneCentre(1, 1, 2)]);
+    expect(live()).toMatch(/^Draft Q3 OKRs, over Won in Done\.$/);
+  });
+
+  it('announces a drop into a zone', () => {
+    render(<ZoneBoard />);
+    pressAndMove('Draft Q3 OKRs', [zoneCentre(1, 1, 2)]);
+    release(zoneCentre(1, 1, 2));
+    expect(live()).toBe('Dropped Draft Q3 OKRs in Won in Done.');
+  });
+
+  it('announces a disabled zone as unavailable and its release as cancelled', () => {
+    render(<ZoneBoard canDrop={(_, to) => to.statusId !== 'won'} />);
+    pressAndMove('Draft Q3 OKRs', [zoneCentre(1, 1, 2)]);
+    expect(live()).toBe('Draft Q3 OKRs, Won in Done is unavailable.');
+    release(zoneCentre(1, 1, 2));
+    expect(live()).toMatch(/^Move cancelled/);
+  });
+
+  it('announces zones in Russian', () => {
+    render(
+      <I18nProvider locale="ru" messages={ru}>
+        <ZoneBoard />
+      </I18nProvider>,
+    );
+    pressAndMove('Draft Q3 OKRs', [zoneCentre(1, 1, 2)]);
+    expect(live()).toBe('«Draft Q3 OKRs» — над «Won», «Done».');
+    release(zoneCentre(1, 1, 2));
+    expect(live()).toBe('Размещено: «Draft Q3 OKRs», «Won», «Done».');
+  });
+
+  it('keyboard drag reaches a zone and fires onStatusChange', async () => {
+    const user = userEvent.setup();
+    const onStatusChange = vi.fn();
+    render(
+      <Kanban onStatusChange={onStatusChange}>
+        <Kanban.Column id="col-a" aria-label="To do" data-col={0} data-h={300}>
+          <Kanban.Card id="task-1" data-card="task-1">
+            Draft Q3 OKRs
+          </Kanban.Card>
+        </Kanban.Column>
+        <Kanban.Column id="col-b" aria-label="Done" statuses={WL} data-col={1} data-h={300}>
+          <Kanban.Card id="task-3" status="open" data-card="task-3">
+            Ship onboarding email
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    screen.getByText('Draft Q3 OKRs').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    expect(live()).toMatch(/^Draft Q3 OKRs, over .+ in Done\.$/);
+    await user.keyboard('[Space]');
+    expect(live()).toMatch(/^Dropped Draft Q3 OKRs in .+ in Done\.$/);
+    expect(onStatusChange).toHaveBeenCalledTimes(1);
+  });
+});
