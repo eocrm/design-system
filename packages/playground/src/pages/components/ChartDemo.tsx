@@ -93,6 +93,10 @@ const bowlSeries: ChartSeries[] = [
     values: minutes.map((_, i) => Math.max(0, 120 - i * 2 + (i % 7 === 0 ? 30 : 0))),
   },
 ];
+const scaleReadings: ChartSeries[] = [
+  { key: 'w', label: 'Weight', values: [3700, 3760, 3830, 3790, 3716, 3800] },
+];
+const scaleDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const formatGrams = (n: number) => `${fmt.format(n)} g`;
 
 const mealHours = ['07:00', '12:00', '18:00', '21:00'];
@@ -256,6 +260,25 @@ export function ChartDemo() {
             />
           </Cell>
         </Stack>
+      </Example>
+
+      <Example
+        title="Fit a line to its data"
+        description="includeZero={false} fits the y axis to the values instead of starting at 0, for readings that hover in a narrow band. Line only: bars and stacked area always start at 0, because a cut baseline misstates size."
+        code={`<Chart type="line" label="Weight" categories={days} series={readings}
+  formatValue={formatGrams} includeZero={false}
+/>`}
+      >
+        <Cell title="Weight, includeZero={false}">
+          <Chart
+            type="line"
+            label="Weight by day"
+            categories={scaleDays}
+            series={scaleReadings}
+            formatValue={formatGrams}
+            includeZero={false}
+          />
+        </Cell>
       </Example>
 
       <Example

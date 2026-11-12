@@ -1575,3 +1575,41 @@ describe('annotations (DS-52)', () => {
     expect(withOne.marks[0].points[1]!.y).toBeGreaterThan(without.marks[0].points[1]!.y);
   });
 });
+
+describe('includeZero (DS-71)', () => {
+  const ser = (type: 'line' | 'bar' | 'stacked-bar' | 'area', values: (number | null)[]) =>
+    resolveSeries(type, [s('a', values)], values.length).series;
+  const ticks = (l: ReturnType<typeof layout>) => l.yTicks.map((t) => t.value);
+
+  it('includeZero false fits a line to its data', () => {
+    const values = [3700, 3760, 3830, 3790, 3716, 3800];
+    const l = layout({
+      type: 'line',
+      series: ser('line', values),
+      categories: values.map((_, i) => String(i)),
+      includeZero: false,
+      referenceLines: [{ value: 3800, label: 'Goal' }],
+    });
+    expect(l.yTicks[0].value).toBeGreaterThan(0);
+    expect(l.yTicks[0].value).toBeLessThanOrEqual(3700);
+    expect(l.yTicks[l.yTicks.length - 1].value).toBeGreaterThanOrEqual(3830);
+  });
+
+  it('includeZero false is ignored on bar, stacked-bar and area', () => {
+    for (const type of ['bar', 'stacked-bar', 'area'] as const) {
+      const l = layout({ type, series: ser(type, [50, 60, 70, 80]), includeZero: false });
+      expect(l.yTicks[0].value).toBe(0);
+    }
+  });
+
+  it('includeZero false with all-null values and with one value stays finite', () => {
+    for (const values of [
+      [null, null, null, null],
+      [null, 42, null, null],
+    ]) {
+      const t = ticks(layout({ type: 'line', series: ser('line', values), includeZero: false }));
+      expect(t.length).toBeGreaterThanOrEqual(2);
+      expect(t.every(Number.isFinite)).toBe(true);
+    }
+  });
+});

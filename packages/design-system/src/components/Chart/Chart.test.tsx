@@ -2219,3 +2219,24 @@ describe('annotations (DS-52)', () => {
     expect(rows[2].lastElementChild).toHaveTextContent('Ahead of usual pace');
   });
 });
+
+describe('includeZero (DS-71)', () => {
+  const weights: ChartProps = {
+    type: 'line',
+    label: 'Weight',
+    categories: ['a', 'b', 'c'],
+    series: [{ key: 'w', label: 'Weight', values: [3700, 3800, 3750] }],
+    formatValue: (n) => String(n),
+  };
+  const tickLabels = (c: HTMLElement) =>
+    [...c.querySelectorAll('svg text')].map((t) => t.textContent);
+
+  it('draws a 0 tick by default and none with includeZero={false}', () => {
+    const layout = stubLayout();
+    const { container, rerender } = render(<Chart {...weights} />);
+    layout.fire();
+    expect(tickLabels(container)).toContain('0');
+    rerender(<Chart {...weights} includeZero={false} />);
+    expect(tickLabels(container)).not.toContain('0');
+  });
+});

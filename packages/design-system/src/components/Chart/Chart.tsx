@@ -182,6 +182,11 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
    */
   valueLabels?: boolean;
   /**
+   * `line` only: `false` fits the y axis to the data instead of starting at 0. Bars and stacked area always start at
+   * 0 (ignored there), because a cut baseline misstates size. Default `true`.
+   */
+  includeZero?: boolean;
+  /**
    * Controlled selected category range (`null` = none). Passing this, `defaultSelectedRange` or
    * `onSelectedRangeChange` turns selection on (`line`, `area`, `bar`, `stacked-bar`): mouse press + drag
    * past 8px or a touch long-press (300ms) + slide selects, a click or tap outside the band clears,
@@ -330,6 +335,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     footnote,
     details,
     valueLabels,
+    includeZero,
     selectedRange,
     defaultSelectedRange,
     onSelectedRangeChange,
@@ -566,6 +572,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             formatValue,
             curve,
             valueLabels,
+            includeZero,
             topGutter: gutterRows * MARKER_LABEL_BASELINE + gutterGap,
             viewport: vp,
             referenceLines,
@@ -582,6 +589,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       formatValue,
       curve,
       valueLabels,
+      includeZero,
       gutterRows,
       gutterGap,
       vp,

@@ -649,6 +649,8 @@ export interface LayoutInput {
   referenceLines?: readonly ChartReferenceLine[];
   /** Resolved annotations; the scale reserves glyph room above (below, for negatives) the annotated in-view marks. */
   annotations?: readonly ResolvedAnnotation[];
+  /** `line` only: `false` fits the y domain to the data instead of anchoring it at 0. Default `true`. */
+  includeZero?: boolean;
 }
 
 export interface ChartLayout {
@@ -699,8 +701,10 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       )
     : null;
 
-  let min = 0;
-  let max = 0;
+  // A cut baseline is only honest on a line: bars and stacked area always start at 0.
+  const fitData = input.includeZero === false && type === 'line';
+  let min = fitData ? Infinity : 0;
+  let max = fitData ? -Infinity : 0;
   const take = (v: number | null) => {
     if (v === null || Number.isNaN(v)) return;
     if (v < min) min = v;
@@ -745,6 +749,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   // the largest real total: keep that inside the plot.
   for (const layer of areaStack ?? [])
     layer.forEach((seg, i) => inView(i) && inView(i + 1) && seg.forEach(take));
+  if (min === Infinity) min = max = 0; // fitData, no values at all
   if (min === max) max = min + 1;
 
   const plotTop = PAD_TOP + (input.topGutter ?? 0);
