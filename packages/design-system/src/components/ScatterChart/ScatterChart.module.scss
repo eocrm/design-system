@@ -71,6 +71,11 @@
   }
 }
 
+.crosshair {
+  stroke: var(--chart-crosshair);
+  stroke-width: 1px;
+}
+
 .dot,
 .marker {
   fill: var(--chart-series-color, currentColor);

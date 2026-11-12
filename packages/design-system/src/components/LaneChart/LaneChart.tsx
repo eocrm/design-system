@@ -1,4 +1,12 @@
-import { forwardRef, useEffect, useId, useMemo, type HTMLAttributes, type ReactNode } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  type HTMLAttributes,
+  type ReactNode,
+} from 'react';
 import clsx from 'clsx';
 import { EmptyState } from '../EmptyState';
 import { LiveRegion } from '../LiveRegion';
@@ -16,6 +24,8 @@ import type { ChartViewport } from '../Chart/chartViewport';
 import type { ChartPlotPointerEvent, ChartSelectOn } from '../Chart/Chart';
 import { useChartDomain } from '../Chart/useChartDomain';
 import { useChartInteraction } from '../Chart/useChartInteraction';
+import { useChartSync } from '../ChartSync/chartSyncStore';
+import { categoryPoint, matchCategory } from '../ChartSync/chartSyncMatch';
 import {
   annotationLabelsAt,
   MARKER_LABEL_BASELINE,
@@ -91,6 +101,20 @@ export interface LaneChartProps extends Omit<HTMLAttributes<HTMLElement>, 'child
   zoomGestures?: boolean;
   /** Called on a double-click, double-tap or Enter on the plot, as `Chart`; `value` is always `null` (no single y scale). */
   onPlotDoubleClick?: (e: ChartPlotPointerEvent) => void;
+  /**
+   * The x each category stands for (e.g. each day's start, as a `Date` or epoch ms), same length and order as
+   * `categories`, ascending. Inside a `ChartSync` it syncs by value: a category covers `[value_i, value_i+1)` (the
+   * last reuses the previous step), so charts with different labels or bucket sizes, and scatter charts, line
+   * up. Without it the chart syncs only with other category charts, by exact category label. A wrong length is
+   * ignored (label matching) with a dev warning.
+   */
+  categoryValues?: (number | Date)[];
+  /**
+   * Inside a `ChartSync`, `true` (default) joins the group: inspecting a category here shows a crosshair and tooltip
+   * at the matching x in the other charts, and theirs show here across every lane. `false` opts this chart out. No
+   * effect outside a `ChartSync`.
+   */
+  sync?: boolean;
 }
 
 const NO_MARKERS: ChartMarker[] = [];
@@ -142,6 +166,8 @@ export const LaneChart = forwardRef<HTMLElement, LaneChartProps>(function LaneCh
     onViewportChange,
     zoomGestures = false,
     onPlotDoubleClick,
+    categoryValues,
+    sync: syncEnabled = true,
     className,
     ...rest
   },
@@ -288,29 +314,82 @@ export const LaneChart = forwardRef<HTMLElement, LaneChartProps>(function LaneCh
   const { selectable, current, activeSource, selectedIdx, hasSelection, draft, point } = ix;
   const { statusText, zoomText, selectionNote, zoomNote, zoomed } = ix;
 
+  const sync = useChartSync(syncEnabled);
+  const badValues = categoryValues !== undefined && categoryValues.length !== allCategories.length;
+  const unordered = useMemo(
+    () => !!categoryValues?.some((v, i) => i > 0 && Number(v) <= Number(categoryValues[i - 1])),
+    [categoryValues],
+  );
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    if (badValues)
+      console.warn(
+        '[LaneChart] Ignored categoryValues: it must have one value per category. Syncing by category label instead.',
+      );
+    if (unordered)
+      console.warn(
+        '[LaneChart] categoryValues must be strictly ascending; synced matching will be wrong.',
+      );
+  }, [badValues, unordered]);
+  // Publish this chart's inspected moment after commit, whenever it changes (as Chart): keyed by content.
+  const own =
+    current === null ? null : categoryPoint(zoomFrom + current, allCategories, categoryValues);
+  const ownKey = own && `${own.label}\0${own.from}\0${own.to}`;
+  const published = useRef<{ key: string | null; publish: typeof sync.publish }>({
+    key: null,
+    publish: sync.publish,
+  });
+  useEffect(() => {
+    if (published.current.key === ownKey && published.current.publish === sync.publish) return;
+    published.current = { key: ownKey, publish: sync.publish };
+    sync.publish(own);
+  });
+  // Another chart's moment, echoed here (visual only) while this chart inspects nothing itself; nothing when it is
+  // off the zoom window or the viewport (the chart does not pan).
+  const matched =
+    sync.echo && layout && current === null
+      ? matchCategory(sync.echo, allCategories, categoryValues)
+      : null;
+  const echoAt = matched === null ? -1 : matched - zoomFrom;
+  const echoX = layout?.categoryX[echoAt];
+  const echo =
+    layout &&
+    echoX !== undefined &&
+    echoX >= layout.plot.x &&
+    echoX <= layout.plot.x + layout.plot.width
+      ? echoAt
+      : null;
+  const echoY = echo === null ? undefined : layout?.plot.y;
+  const echoPoint = useMemo(
+    () => (echoX === undefined || echoY === undefined ? null : { x: echoX, y: echoY }),
+    [echoX, echoY],
+  );
+  /** The category drawn as inspected: this chart's own, else the echo. */
+  const shown = current ?? echo;
+
   const valueText = (l: Lane, i: number) => {
     const v = l.values[i];
     return v == null ? t('chart.noData') : l.formatValue(v);
   };
   const rows =
-    current === null
+    shown === null
       ? []
       : lanes.map((l, i) => ({
           key: l.key,
           label: l.label,
           slot: laneSlot(l, i),
           comparison: false,
-          value: valueText(l, current),
+          value: valueText(l, shown),
         }));
   const notes =
-    current === null
+    shown === null
       ? []
       : [
-          ...markerLabelsAt(resolvedMarkers.markers, current),
-          ...annotationLabelsAt(viewAnnotations, current),
+          ...markerLabelsAt(resolvedMarkers.markers, shown),
+          ...annotationLabelsAt(viewAnnotations, shown),
           ...references.map((r) => `${r.label}: ${r.text}`),
         ];
-  const detailLines = current === null ? [] : (details?.(zoomFrom + current) ?? []);
+  const detailLines = shown === null ? [] : (details?.(zoomFrom + shown) ?? []);
   const liveText =
     selectionNote ||
     zoomNote ||
@@ -398,7 +477,8 @@ export const LaneChart = forwardRef<HTMLElement, LaneChartProps>(function LaneCh
             markers={resolvedMarkers.markers}
             gutterRows={gutterRows}
             gutterGap={gutterGap}
-            current={current}
+            current={shown}
+            echo={echo !== null}
             shownRange={draft ?? selectedIdx}
             clipped={vp !== null}
             tokens={tokens}
@@ -408,8 +488,9 @@ export const LaneChart = forwardRef<HTMLElement, LaneChartProps>(function LaneCh
       {footnoteEl}
       <ChartTooltip
         anchor={plotEl}
-        point={point}
-        title={current === null ? '' : categories[current]}
+        point={point ?? echoPoint}
+        echo={echo !== null}
+        title={shown === null ? '' : categories[shown]}
         rows={rows}
         notes={notes}
         details={detailLines}

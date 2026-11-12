@@ -84,6 +84,7 @@ function MealsToday({ bowlA, bowlB, usualPace }: MealsTodayProps) {
 | `hiddenSeries` | `string[]` | no | Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored; the last visible series with points can't be hidden (a set hiding all of them is ignored for those). |
 | `onHiddenSeriesChange` | `((keys: string[]) => void)` | no | Called with the next hidden keys when the user toggles a legend item. |
 | `footnote` | `ReactNode` | no | Short note under the plot; takes its own row, also describes the plot for screen readers and stays in the empty state. |
+| `sync` | `boolean` | no | Inside a `ChartSync`, `true` (default) joins the group: inspecting a point here shows a crosshair and tooltip at its x in the other charts (category charts need `categoryValues`), and theirs show here as a crosshair, the points in that x range highlighted and a tooltip for the nearest one. `false` opts this chart out. No effect outside a `ChartSync`. |
 | …native | | | plus native HTML attributes |
 
 <!-- props:end -->

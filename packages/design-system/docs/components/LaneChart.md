@@ -66,6 +66,8 @@ function Effects({
 | `onViewportChange` | `((next: ChartViewport \| null, info: { end: boolean; }) => void)` | no | Called with the next window when the user zooms or pans; `end: true` once the change settles. |
 | `zoomGestures` | `boolean` | no | Turns on interactive zooming of the `viewport` (wheel, pinch, pan, `+` / `-`), as `Chart`. Default `false`. |
 | `onPlotDoubleClick` | `((e: ChartPlotPointerEvent) => void)` | no | Called on a double-click, double-tap or Enter on the plot, as `Chart`; `value` is always `null` (no single y scale). |
+| `categoryValues` | `(number \| Date)[]` | no | The x each category stands for (e.g. each day's start, as a `Date` or epoch ms), same length and order as `categories`, ascending. Inside a `ChartSync` it syncs by value: a category covers `[value_i, value_i+1)` (the last reuses the previous step), so charts with different labels or bucket sizes, and scatter charts, line up. Without it the chart syncs only with other category charts, by exact category label. A wrong length is ignored (label matching) with a dev warning. |
+| `sync` | `boolean` | no | Inside a `ChartSync`, `true` (default) joins the group: inspecting a category here shows a crosshair and tooltip at the matching x in the other charts, and theirs show here across every lane. `false` opts this chart out. No effect outside a `ChartSync`. |
 | …native | | | plus native HTML attributes |
 
 <!-- props:end -->

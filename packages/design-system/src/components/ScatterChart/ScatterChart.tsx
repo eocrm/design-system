@@ -3,6 +3,7 @@ import {
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type HTMLAttributes,
@@ -31,6 +32,7 @@ import {
   type ScatterSeries,
   type ScatterXScale,
 } from './scatterModel';
+import { useChartSync } from '../ChartSync/chartSyncStore';
 import styles from './ScatterChart.module.scss';
 
 export type {
@@ -79,6 +81,13 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
   onHiddenSeriesChange?: (keys: string[]) => void;
   /** Short note under the plot; takes its own row, also describes the plot for screen readers and stays in the empty state. */
   footnote?: ReactNode;
+  /**
+   * Inside a `ChartSync`, `true` (default) joins the group: inspecting a point here shows a crosshair and tooltip at
+   * its x in the other charts (category charts need `categoryValues`), and theirs show here as a crosshair, the
+   * points in that x range highlighted and a tooltip for the nearest one. `false` opts this chart out. No effect
+   * outside a `ChartSync`.
+   */
+  sync?: boolean;
 }
 
 /** Fallbacks for `--scatter-hit-radius` / `--scatter-dot-min` / `--scatter-dot-max` / `--scatter-dot-strong` (`--space-6` / `--space-1` / `--space-4` / `--space-2`) where computed styles don't resolve (jsdom). */
@@ -120,6 +129,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
     hiddenSeries,
     onHiddenSeriesChange,
     footnote,
+    sync: syncEnabled = true,
     className,
     ...rest
   },
@@ -288,8 +298,49 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
     else if (e.type === 'pointerdown' || activeSource === 'pointer') inspect(null, null);
   };
 
-  const anchorX = currentDot?.cx;
-  const anchorY = currentDot ? currentDot.cy - currentDot.r : undefined;
+  const sync = useChartSync(syncEnabled);
+  // Publish the inspected point's x after commit, whenever it changes; not on mount, never twice (as Chart).
+  const ownX = currentPoint?.x ?? null;
+  const published = useRef<{ x: number | null; publish: typeof sync.publish }>({
+    x: null,
+    publish: sync.publish,
+  });
+  useEffect(() => {
+    if (published.current.x === ownX && published.current.publish === sync.publish) return;
+    published.current = { x: ownX, publish: sync.publish };
+    sync.publish(ownX === null ? null : { from: ownX, to: ownX });
+  });
+
+  // Another chart's x range, echoed here (visual only) while this chart inspects nothing itself: a crosshair at
+  // `from` and the points in `[from, to)` (or at `from`). Label-only points and an x off the domain: nothing.
+  const echoFrom = pos < 0 && layout ? sync.echo?.from : undefined;
+  const echoTo = sync.echo?.to ?? echoFrom;
+  const echoX =
+    echoFrom !== undefined &&
+    layout &&
+    echoFrom >= Math.min(...layout.xDomain) &&
+    echoFrom <= Math.max(...layout.xDomain)
+      ? layout.xPos(echoFrom)
+      : undefined;
+  const echoDots =
+    echoX === undefined || echoFrom === undefined || echoTo === undefined
+      ? []
+      : layout!.dots.filter((d) =>
+          echoTo > echoFrom ? d.datum.x >= echoFrom && d.datum.x < echoTo : d.datum.x === echoFrom,
+        );
+  // Every bucket point is at or after `from`, so the nearest is the earliest.
+  const echoDot = echoDots.reduce<(typeof echoDots)[number] | undefined>(
+    (best, d) => (best && best.datum.x <= d.datum.x ? best : d),
+    undefined,
+  );
+  /** The point drawn as inspected: this chart's own, else the echo's nearest. */
+  const shownDot = currentDot ?? echoDot;
+  const shownSeries =
+    currentSeries ?? (echoDot && visible.find((s) => s.key === echoDot.seriesKey));
+  const shownPoint = currentPoint ?? echoDot?.datum;
+
+  const anchorX = shownDot?.cx;
+  const anchorY = shownDot ? shownDot.cy - shownDot.r : undefined;
   const point = useMemo(
     () => (anchorX === undefined || anchorY === undefined ? null : { x: anchorX, y: anchorY }),
     [anchorX, anchorY],
@@ -527,6 +578,30 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                   />
                 </g>
               ))}
+              {echoX !== undefined && (
+                <line
+                  className={styles.crosshair}
+                  data-echo=""
+                  x1={echoX}
+                  x2={echoX}
+                  y1={layout.plot.y}
+                  y2={layout.plot.y + layout.plot.height}
+                />
+              )}
+              {echoDots.map((d) => (
+                <g
+                  key={`${d.seriesKey}\0${d.index}`}
+                  className={styles.series}
+                  style={seriesStyle(d.slot)}
+                >
+                  <path
+                    className={styles.marker}
+                    data-echo=""
+                    d={markerPath(d.shape, 0, 0, Math.max(d.r, MARKER_RADIUS) + 1)}
+                    transform={`translate(${d.cx},${d.cy})`}
+                  />
+                </g>
+              ))}
               {currentDot && (
                 <g className={styles.series} style={seriesStyle(currentDot.slot)}>
                   <path
@@ -549,24 +624,25 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       <ChartTooltip
         anchor={plotEl}
         point={point}
-        title={currentPoint ? formatX(currentPoint.x) : ''}
+        echo={!currentDot && !!echoDot}
+        title={shownPoint ? formatX(shownPoint.x) : ''}
         rows={
-          currentSeries && currentPoint
+          shownSeries && shownPoint
             ? [
                 {
-                  key: currentSeries.key,
-                  label: currentSeries.label,
-                  slot: currentSeries.slot,
+                  key: shownSeries.key,
+                  label: shownSeries.label,
+                  slot: shownSeries.slot,
                   comparison: false,
-                  value: formatY(currentPoint.y),
+                  value: formatY(shownPoint.y),
                 },
               ]
             : []
         }
         details={
-          hasSizeValue(currentPoint?.size) ? [`${sizeName}: ${sizeText(currentPoint.size)}`] : []
+          hasSizeValue(shownPoint?.size) ? [`${sizeName}: ${sizeText(shownPoint.size)}`] : []
         }
-        notes={currentPoint?.label ? [currentPoint.label] : []}
+        notes={shownPoint?.label ? [shownPoint.label] : []}
       />
       <LiveRegion>{liveText}</LiveRegion>
       <VisuallyHidden as="div">

@@ -43,12 +43,6 @@ export interface ChartInteractionOptions {
   /** Default `false`. */
   zoomGestures?: boolean;
   onPlotDoubleClick?: (e: ChartPlotPointerEvent) => void;
-  /**
-   * Seam for synced charts: called after commit whenever the inspected view index or its source changes, by any
-   * path (pointer, keyboard, blur, outside press, zoom reset), with `(null, null)` when inspection clears. Not
-   * called for the initial `null`.
-   */
-  onInspect?: (index: number | null, source: ChartInspectSource | null) => void;
 }
 
 /**
@@ -449,18 +443,6 @@ export function useChartInteraction(o: ChartInteractionOptions) {
       plotEl.removeEventListener('contextmenu', block);
     };
   }, [selectable, plotEl]);
-
-  // Synced-chart seam: report inspection changes after commit, from every path that sets them.
-  const { onInspect } = o;
-  const reported = useRef<string>('null|null');
-  useEffect(() => {
-    // No index, no source: data shrinking under the inspected index leaves `activeSource` set.
-    const source = current === null ? null : activeSource;
-    const key = `${current}|${source}`;
-    if (reported.current === key) return;
-    reported.current = key;
-    onInspect?.(current, source);
-  });
 
   // The clicked button unmounts (zoom clears the selection; reset removes itself): keep focus on the plot.
   const zoomToSelection = () => {

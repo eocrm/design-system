@@ -3,6 +3,8 @@ import { renderToString } from 'react-dom/server';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Chart, type ChartProps } from '../Chart';
+import { LaneChart, type LaneChartProps } from '../LaneChart';
+import { ScatterChart, type ScatterChartProps } from '../ScatterChart';
 import { ChartSync } from './ChartSync';
 
 // LiveRegion writes after ANNOUNCE_DELAY_MS (50ms); wait past it or "empty" assertions pass vacuously.
@@ -297,5 +299,212 @@ describe('ChartSync', () => {
   it('server-renders, inside and outside a ChartSync', () => {
     expect(renderToString(chart('A'))).toContain('Deals');
     expect(renderToString(<ChartSync>{chart('A')}</ChartSync>)).toContain('Deals');
+  });
+});
+
+describe('ChartSync with ScatterChart and LaneChart', () => {
+  const day = (d: number, h = 0) => Date.UTC(2026, 0, d, h);
+  const days = [new Date(day(1)), new Date(day(2)), new Date(day(3))];
+  const scatter = (label: string, props: Partial<ScatterChartProps> = {}) => (
+    <ScatterChart
+      label={label}
+      xScale="time"
+      xLabel="Time"
+      yLabel="Weight"
+      formatX={(x) => `t${(x - day(1)) / 3_600_000}h`}
+      formatY={(y) => `${y} kg`}
+      series={[
+        {
+          key: 'w',
+          label: 'Weight',
+          points: [
+            { x: day(1, 6), y: 4 },
+            { x: day(2, 3), y: 5 },
+            { x: day(2, 12), y: 6 },
+          ],
+        },
+      ]}
+      {...props}
+    />
+  );
+  const lane = (label: string, props: Partial<LaneChartProps> = {}) => (
+    <LaneChart
+      label={label}
+      categories={['W1', 'W2', 'W3']}
+      lanes={[
+        { key: 'f', label: 'Food', type: 'bar', values: [1, 2, 3], formatValue: (n) => `${n} g` },
+        { key: 'm', label: 'Mood', type: 'line', values: [7, 8, 9], formatValue: (n) => `${n}/10` },
+      ]}
+      {...props}
+    />
+  );
+  /** Centre of each scatter dot in `label`, by its formatted x. */
+  const dotAt = (label: string, x: number) => {
+    const all = [...figure(label).querySelectorAll('[data-scatter-dot]')].map((d) => {
+      const [cx, cy] = d
+        .getAttribute('transform')!
+        .match(/-?[\d.]+/g)!
+        .map(Number);
+      return { cx, cy };
+    });
+    // Dots are in paint order; the data's x order maps to ascending cx.
+    const xs = [day(1, 6), day(2, 3), day(2, 12)];
+    return all.sort((a, b) => a.cx - b.cx)[xs.indexOf(x)];
+  };
+  const hoverDot = (label: string, x: number) => {
+    const { cx, cy } = dotAt(label, x);
+    fireEvent.pointerMove(plot(label), {
+      pointerId: 1,
+      pointerType: 'mouse',
+      clientX: cx,
+      clientY: cy,
+    });
+  };
+  const echoMarks = (label: string) =>
+    figure(label).querySelectorAll('path[data-echo][class*="marker"]');
+  const settle = () =>
+    act(async () => {
+      await new Promise((r) => setTimeout(r, PAST_ANNOUNCE_DELAY_MS));
+    });
+
+  it('a Chart with categoryValues echoes in a scatter: crosshair, bucket points, nearest tooltip', async () => {
+    setup(
+      <ChartSync>
+        {chart('A', { categoryValues: days })}
+        {scatter('S')}
+      </ChartSync>,
+    );
+    hover('A', 'W2');
+    const line = figure('S').querySelector('line[data-echo]');
+    expect(line).not.toBeNull();
+    const x = Number(line!.getAttribute('x1'));
+    expect(x).toBeLessThan(dotAt('S', day(2, 3)).cx);
+    expect(x).toBeGreaterThan(dotAt('S', day(1, 6)).cx);
+    // Both day-2 points, not the day-1 one.
+    expect(echoMarks('S')).toHaveLength(2);
+    expect(echoTooltip()).toHaveTextContent('t27h');
+    expect(echoTooltip()).toHaveTextContent('5 kg');
+    expect(echoTooltip()).toHaveAttribute('aria-hidden', 'true');
+    await settle();
+    expect(within(figure('S')).getByRole('status')).toBeEmptyDOMElement();
+    leave('A');
+    expect(figure('S').querySelector('[data-echo]')).toBeNull();
+  });
+
+  it('a scatter hover echoes in a Chart with categoryValues', () => {
+    setup(
+      <ChartSync>
+        {scatter('S')}
+        {chart('B', { categoryValues: days })}
+      </ChartSync>,
+    );
+    hoverDot('S', day(2, 12));
+    expect(echoLine('B')).toHaveAttribute('x1', String(xOf('B', 'W2')));
+    expect(echoTooltip()).toHaveTextContent('W2');
+    // The scatter shows its own tooltip, not an echo.
+    expect(figure('S').querySelector('[data-echo]')).toBeNull();
+  });
+
+  it('a scatter with no point in the bucket shows the crosshair only; outside its domain, nothing', () => {
+    setup(
+      <ChartSync>
+        {chart('A', { categoryValues: days })}
+        {scatter('S', { xDomain: [day(1), day(5)] })}
+        {scatter('T')}
+      </ChartSync>,
+    );
+    hover('A', 'W3');
+    expect(figure('S').querySelector('line[data-echo]')).not.toBeNull();
+    expect(echoMarks('S')).toHaveLength(0);
+    expect(echoTooltip()).toBeNull();
+    // T's x extent ends on day 2.
+    expect(figure('T').querySelector('[data-echo]')).toBeNull();
+  });
+
+  it('a scatter ignores label-only points', () => {
+    setup(
+      <ChartSync>
+        {chart('A')}
+        {scatter('S')}
+      </ChartSync>,
+    );
+    hover('A', 'W2');
+    expect(figure('S').querySelector('[data-echo]')).toBeNull();
+  });
+
+  it('LaneChart and Chart sync by label, both ways; the lane echo lists every lane silently', async () => {
+    setup(
+      <ChartSync>
+        {chart('A')}
+        {lane('L')}
+      </ChartSync>,
+    );
+    hover('A', 'W2');
+    expect(figure('L').querySelector('rect[data-echo]')).not.toBeNull();
+    expect(echoTooltip()).toHaveTextContent('W2');
+    expect(echoTooltip()).toHaveTextContent('2 g');
+    expect(echoTooltip()).toHaveTextContent('8/10');
+    expect(echoTooltip()).toHaveAttribute('aria-hidden', 'true');
+    await settle();
+    expect(within(figure('L')).getByRole('status')).toBeEmptyDOMElement();
+    leave('A');
+    hover('L', 'W3');
+    expect(echoLine('A')).toHaveAttribute('x1', String(xOf('A', 'W3')));
+    expect(figure('L').querySelector('[data-echo]')).toBeNull();
+  });
+
+  it('LaneChart with categoryValues syncs with a scatter', () => {
+    setup(
+      <ChartSync>
+        {lane('L', { categoryValues: days })}
+        {scatter('S')}
+      </ChartSync>,
+    );
+    hoverDot('S', day(1, 6));
+    expect(figure('L').querySelector('rect[data-echo]')).not.toBeNull();
+    expect(echoTooltip()).toHaveTextContent('W1');
+  });
+
+  it('sync={false} opts a scatter and a lane chart out', () => {
+    setup(
+      <ChartSync>
+        {chart('A', { categoryValues: days })}
+        {scatter('S', { sync: false })}
+        {lane('L', { sync: false })}
+      </ChartSync>,
+    );
+    hover('A', 'W2');
+    expect(figure('S').querySelector('[data-echo]')).toBeNull();
+    expect(figure('L').querySelector('[data-echo]')).toBeNull();
+    leave('A');
+    hoverDot('S', day(2, 3));
+    hover('L', 'W2');
+    expect(echoLine('A')).toBeNull();
+  });
+
+  it('LaneChart warns about bad categoryValues and falls back to labels', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    setup(
+      <ChartSync>
+        {chart('A')}
+        {lane('L', { categoryValues: [1, 2] })}
+      </ChartSync>,
+    );
+    hover('A', 'W2');
+    expect(echoTooltip()).toHaveTextContent('W2');
+    expect(
+      warn.mock.calls.some((c) => String(c[0]).includes('[LaneChart] Ignored categoryValues')),
+    ).toBe(true);
+  });
+
+  it('server-renders a scatter and a lane chart inside a ChartSync', () => {
+    const html = renderToString(
+      <ChartSync>
+        {scatter('S')}
+        {lane('L')}
+      </ChartSync>,
+    );
+    expect(html).toContain('Weight');
+    expect(html).toContain('Food');
   });
 });

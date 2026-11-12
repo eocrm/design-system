@@ -139,6 +139,10 @@ export interface ScatterLayout {
   xTickBaseline: number;
   xTicks: ScatterTick[];
   yTicks: ScatterTick[];
+  /** The drawn x range (after nice-rounding), epoch ms on a time axis. */
+  xDomain: [number, number];
+  /** Svg x of an x value. */
+  xPos: (v: number) => number;
   dots: ScatterDot[];
   /** One entry per reference line with points: its key, path, dash pattern index and palette slot (0 = neutral ink). */
   references: { key: string; path: string; dash: number; slot: number; emphasis?: 'strong' }[];
@@ -326,6 +330,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     : xExtent;
   let x: (v: number) => number;
   let xValues: number[];
+  let xDomain = xd;
   const xCount = Math.max(2, Math.floor(plot.width / 80));
   if (input.xScale === 'time') {
     const s = scaleTime().domain(xd).range(xr);
@@ -335,6 +340,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     const s = scaleLinear().domain(xd).range(xr);
     if (!input.xDomain) s.nice(xCount);
     x = s;
+    xDomain = s.domain() as [number, number];
     xValues = s.ticks(xCount);
   }
   // Drop ticks whose label would overflow the svg or collide with the previous kept one.
@@ -416,6 +422,8 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     xTickBaseline: height - X_LABEL_BASELINE - TITLE_ROW,
     xTicks,
     yTicks: yValues.map((value, i) => ({ value, pos: y(value), label: yLabels[i] })),
+    xDomain,
+    xPos: x,
     dots,
     references,
     trends,
