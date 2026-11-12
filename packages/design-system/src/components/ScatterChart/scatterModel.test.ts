@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DOT_RADIUS, estimateTextWidth, MARKER_RADIUS } from '../Chart/chartModel';
 import {
   computeScatterLayout,
+  connectSegments,
   inspectionOrder,
   linearFit,
   markerPath,
@@ -465,5 +466,52 @@ describe('emphasis strong', () => {
     const [s] = resolve([{ x: 1, y: 1 }]);
     const layout = computeScatterLayout({ ...base, series: [s], strongRadius: 8 });
     expect(layout.dots[0]).toMatchObject({ r: DOT_RADIUS, strong: false });
+  });
+});
+
+describe('connectSegments', () => {
+  const pts = (xs: number[]) => xs.map((x) => ({ x, y: x * 10 }));
+  it('sorts unsorted input by x', () => {
+    expect(connectSegments(pts([3, 1, 2]))[0].map((p) => p.x)).toEqual([1, 2, 3]);
+  });
+  it('splits where the gap exceeds maxGap', () => {
+    expect(connectSegments(pts([0, 1, 3, 4]), 1).map((s) => s.map((p) => p.x))).toEqual([
+      [0, 1],
+      [3, 4],
+    ]);
+  });
+  it('drops single-point segments', () => {
+    expect(connectSegments(pts([0, 5, 6]), 1).map((s) => s.map((p) => p.x))).toEqual([[5, 6]]);
+    expect(connectSegments(pts([1]))).toEqual([]);
+  });
+  it('uses ms gaps on a time series', () => {
+    const [s] = resolve(
+      [new Date(0), new Date(1000), new Date(10_000), new Date(11_000)].map((x) => ({ x, y: 1 })),
+    );
+    expect(connectSegments(s.points, 2000)).toHaveLength(2);
+  });
+});
+
+describe('connect layout', () => {
+  const mk = (connect: boolean | { maxGap: number }) =>
+    resolveScatterSeries([
+      { key: 'a', label: 'a', connect, points: [0, 1, 3, 4].map((x) => ({ x, y: x })) },
+    ]);
+  it('has one path per segment', () => {
+    expect(computeScatterLayout({ ...base, series: mk(true) }).connects).toHaveLength(1);
+    const split = computeScatterLayout({ ...base, series: mk({ maxGap: 1 }) }).connects;
+    expect(split).toHaveLength(2);
+    expect(split[0].path).toMatch(/^M[\d.]+,[\d.]+L/);
+  });
+  it('is empty without connect', () => {
+    expect(
+      computeScatterLayout({
+        ...base,
+        series: resolve([
+          { x: 1, y: 1 },
+          { x: 2, y: 2 },
+        ]),
+      }).connects,
+    ).toEqual([]);
   });
 });

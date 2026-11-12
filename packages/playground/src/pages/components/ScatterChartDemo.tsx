@@ -103,6 +103,15 @@ const shapeSeries: ScatterSeries[] = [
   },
 ];
 
+const connectedSeries: ScatterSeries[] = [
+  {
+    key: 'pace',
+    label: 'Eaten so far',
+    connect: { maxGap: 2 * 3_600_000 },
+    points: todaySeries[0].points.map((p) => ({ x: p.x, y: p.y })),
+  },
+];
+
 function SeriesToggleExample() {
   const [hidden, setHidden] = useState<string[]>([]);
   return (
@@ -179,6 +188,26 @@ export function ScatterChartDemo() {
             label="Meals, poo and long visits"
             xScale="time"
             series={shapeSeries}
+            xLabel="Time"
+            yLabel="Eaten so far"
+            formatX={formatTime}
+            formatY={formatGrams}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Connected points"
+        description="connect joins a series' points with a line; maxGap breaks it where the x distance is larger (here, more than two hours)."
+        code={`<ScatterChart ... series={[
+  { key: 'pace', label: 'Eaten so far', connect: { maxGap: 2 * 3_600_000 }, points },
+]} />`}
+      >
+        <Cell title="Eaten so far">
+          <ScatterChart
+            label="Eaten so far, connected"
+            xScale="time"
+            series={connectedSeries}
             xLabel="Time"
             yLabel="Eaten so far"
             formatX={formatTime}

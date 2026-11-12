@@ -492,3 +492,34 @@ describe('ScatterChart shape and emphasis (DS-72)', () => {
     expect(swatch('Plain')).toBeNull();
   });
 });
+
+describe('ScatterChart connect (DS-73)', () => {
+  const pts = [0, 1, 3, 4].map((x) => ({ x, y: x }));
+  const connected = (hidden?: string[]): ScatterChartProps => ({
+    ...base,
+    hiddenSeries: hidden,
+    series: [
+      { key: 'a', label: 'A', connect: { maxGap: 1 }, points: pts },
+      { key: 'b', label: 'B', points: pts },
+    ],
+  });
+  it('draws one aria-hidden path per segment, before the dots', () => {
+    const layout = stubLayout();
+    const { container } = render(<ScatterChart {...connected()} />);
+    layout.fire();
+    const lines = container.querySelectorAll('[data-series="a"] [data-scatter-connect]');
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toHaveAttribute('aria-hidden', 'true');
+    expect(container.querySelectorAll('[data-series="b"] [data-scatter-connect]')).toHaveLength(0);
+    const marks = [...container.querySelector('[data-scatter-marks]')!.querySelectorAll('*')];
+    expect(marks.indexOf(lines[1])).toBeLessThan(
+      marks.indexOf(container.querySelector('[data-scatter-dot]')!),
+    );
+  });
+  it('draws nothing for a hidden series', () => {
+    const layout = stubLayout();
+    const { container } = render(<ScatterChart {...connected(['a'])} />);
+    layout.fire();
+    expect(container.querySelectorAll('[data-scatter-connect]')).toHaveLength(0);
+  });
+});

@@ -1,3 +1,4 @@
+import { line } from 'd3-shape';
 import { scaleLinear, scaleSqrt, scaleTime } from 'd3-scale';
 import {
   assignSlots,
@@ -54,6 +55,12 @@ export interface ScatterSeries {
    * over other dots and reference lines; sized points keep their size scale and get the ring. Default `'default'`.
    */
   emphasis?: 'default' | 'strong';
+  /**
+   * Draws a solid line in the series colour through its visible points, sorted by `x`, under the dots. Decorative
+   * (the legend, tooltip, keyboard and table stay per point). `{ maxGap }` breaks the line between neighbours whose
+   * `x` distance exceeds it (x units; ms on a `'time'` axis). Default `false`.
+   */
+  connect?: boolean | { maxGap: number };
 }
 /** An app-computed dashed line (e.g. a recommended ratio), drawn through `points` sorted by `x`. */
 export interface ScatterReference {
@@ -93,6 +100,7 @@ export interface ResolvedScatterSeries {
   /** Explicit `shape`; undefined = the slot's shape. */
   shape?: ScatterMarkerShape;
   strong: boolean;
+  connect?: boolean | { maxGap: number };
   points: ResolvedScatterPoint[];
 }
 
@@ -135,6 +143,8 @@ export interface ScatterLayout {
   /** One entry per reference line with points: its key, path, dash pattern index and palette slot (0 = neutral ink). */
   references: { key: string; path: string; dash: number; slot: number; emphasis?: 'strong' }[];
   trends: { seriesKey: string; slot: number; path: string }[];
+  /** One entry per connected segment of a `connect` series, in series order. */
+  connects: { seriesKey: string; slot: number; path: string }[];
 }
 
 export interface ScatterLayoutInput {
@@ -195,10 +205,32 @@ export function resolveScatterSeries(series: ScatterSeries[]): ResolvedScatterSe
     ...slots[i],
     shape: s.shape,
     strong: s.emphasis === 'strong',
+    connect: s.connect,
     points: s.points
       .map((p) => ({ ...p, x: num(p.x) }))
       .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y)),
   }));
+}
+
+/**
+ * Points sorted by `x` and split into runs where neighbours are at most `maxGap` apart (no split without it).
+ * Runs of one point are dropped: nothing to draw.
+ */
+export function connectSegments<T extends { x: number; y: number }>(
+  points: readonly T[],
+  maxGap?: number,
+): T[][] {
+  const segments: T[][] = [];
+  let run: T[] = [];
+  for (const p of [...points].sort((a, b) => a.x - b.x)) {
+    if (run.length && maxGap !== undefined && p.x - run[run.length - 1].x > maxGap) {
+      segments.push(run);
+      run = [];
+    }
+    run.push(p);
+  }
+  segments.push(run);
+  return segments.filter((r) => r.length > 1);
 }
 
 /** Least-squares line, or null with fewer than 2 distinct x. */
@@ -366,6 +398,17 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
       trends.push({ seriesKey: s.key, slot: s.slot, path: `M${at(x0)}L${at(x1)}` });
     }
 
+  const connects: ScatterLayout['connects'] = [];
+  const toPath = line<{ x: number; y: number }>()
+    .x((p) => x(p.x))
+    .y((p) => y(p.y));
+  for (const s of series) {
+    if (!s.connect) continue;
+    const maxGap = typeof s.connect === 'object' ? s.connect.maxGap : undefined;
+    for (const seg of connectSegments(s.points, maxGap))
+      connects.push({ seriesKey: s.key, slot: s.slot, path: toPath(seg)! });
+  }
+
   return {
     plot,
     yTitle: { x: 0, y: Y_TITLE_BASELINE },
@@ -376,5 +419,6 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     dots,
     references,
     trends,
+    connects,
   };
 }

@@ -486,6 +486,17 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                   data-series={s.key}
                   data-dimmed={activeKey !== null && activeKey !== s.key ? '' : undefined}
                 >
+                  {layout.connects
+                    .filter((c) => c.seriesKey === s.key)
+                    .map((c, i) => (
+                      <path
+                        key={i}
+                        className={styles.connect}
+                        d={c.path}
+                        aria-hidden="true"
+                        data-scatter-connect=""
+                      />
+                    ))}
                   {layout.trends
                     .filter((tr) => tr.seriesKey === s.key)
                     .map((tr) => (
