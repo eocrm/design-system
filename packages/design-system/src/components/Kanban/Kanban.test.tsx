@@ -5,7 +5,10 @@ import {
   clampKanbanTransform,
   measureKanbanDragBounds,
   type KanbanDragBounds,
+  type KanbanDropTarget,
   type KanbanMoveEvent,
+  type KanbanStatus,
+  type KanbanStatusChangeEvent,
 } from './Kanban';
 import { SortableHandle } from '../Sortable/Sortable';
 import { I18nProvider } from '../../i18n';
@@ -205,6 +208,13 @@ function stubLayout(): () => void {
       const height = Number(column.getAttribute('data-h') ?? 300);
       return new DOMRect(left, 0, COL_W, height);
     }
+    // Status zone k of n fills its share of the column's height.
+    if (this.matches('[data-kanban-zone]')) {
+      const height = Number(column.getAttribute('data-h') ?? 300);
+      const zones = Array.from(this.parentElement!.querySelectorAll(':scope > [data-kanban-zone]'));
+      const n = zones.length;
+      return new DOMRect(left, (zones.indexOf(this) * height) / n, COL_W, height / n);
+    }
     const card = this.closest('[data-card]');
     if (card !== this) return orig.call(this);
     const idx = Array.from(column.querySelectorAll('[data-card]')).indexOf(this);
@@ -220,15 +230,35 @@ interface BoardProps {
   columns: [string, string[]][];
   /** Column height — a tall column with few cards has drop-able padding. */
   height?: number;
+  /** Per-column statuses (makes that column multi-status). */
+  statuses?: Record<string, KanbanStatus[]>;
+  /** Per-card status. */
+  cardStatus?: Record<string, string | number>;
+  onStatusChange?: (event: KanbanStatusChangeEvent) => void;
+  canDrop?: (cardId: string | number, to: KanbanDropTarget) => boolean;
 }
 
-function Board({ onMove, columns, height = 300 }: BoardProps) {
+function Board({
+  onMove,
+  columns,
+  height = 300,
+  statuses,
+  cardStatus,
+  onStatusChange,
+  canDrop,
+}: BoardProps) {
   return (
-    <Kanban onMove={onMove}>
+    <Kanban onMove={onMove} onStatusChange={onStatusChange} canDrop={canDrop}>
       {columns.map(([colId, cards], i) => (
-        <Kanban.Column key={colId} id={colId} data-col={i} data-h={height}>
+        <Kanban.Column
+          key={colId}
+          id={colId}
+          statuses={statuses?.[colId]}
+          data-col={i}
+          data-h={height}
+        >
           {cards.map((cardId) => (
-            <Kanban.Card key={cardId} id={cardId} data-card={cardId}>
+            <Kanban.Card key={cardId} id={cardId} status={cardStatus?.[cardId]} data-card={cardId}>
               {cardId}
             </Kanban.Card>
           ))}
@@ -243,6 +273,13 @@ function Board({ onMove, columns, height = 300 }: BoardProps) {
  *  trips the sensor's 5px activation constraint — the drag proper starts at
  *  `path[0]`, which keeps every delta measured from the press point. */
 function drag(cardId: string, path: [number, number][]) {
+  pressAndMove(cardId, path);
+  const [lastX, lastY] = path[path.length - 1];
+  fireEvent.pointerUp(document, { clientX: lastX, clientY: lastY });
+}
+
+/** `drag` without the release. */
+function pressAndMove(cardId: string, path: [number, number][]) {
   const card = screen.getByText(cardId);
   const from = card.getBoundingClientRect();
   const startX = from.left + COL_W / 2;
@@ -250,12 +287,14 @@ function drag(cardId: string, path: [number, number][]) {
   fireEvent.pointerDown(card, { clientX: startX, clientY: startY, button: 0, isPrimary: true });
   fireEvent.pointerMove(document, { clientX: startX, clientY: startY + 10 });
   for (const [clientX, clientY] of path) fireEvent.pointerMove(document, { clientX, clientY });
-  const [lastX, lastY] = path[path.length - 1];
-  fireEvent.pointerUp(document, { clientX: lastX, clientY: lastY });
 }
 
 /** Centre of column i, at vertical offset y. */
 const at = (col: number, y: number): [number, number] => [col * (COL_W + COL_GAP) + COL_W / 2, y];
+
+/** Centre of status zone k of n in column i (column height h). */
+const zoneCentre = (col: number, k: number, n: number, h = 300): [number, number] =>
+  at(col, (k * h) / n + h / (2 * n));
 
 describe('Kanban — drop position', () => {
   let restore: () => void;
@@ -1006,5 +1045,266 @@ describe('Kanban — statuses (idle)', () => {
     );
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+describe('Kanban — status zones', () => {
+  let restore: () => void;
+  beforeEach(() => {
+    restore = stubLayout();
+  });
+  afterEach(() => restore());
+
+  const NW: KanbanStatus[] = [
+    { id: 'new', label: 'New' },
+    { id: 'won', label: 'Won' },
+  ];
+  const zonesIn = (col: number) =>
+    Array.from(document.querySelectorAll(`[data-col="${col}"] [data-kanban-zone]`)).map((z) =>
+      z.getAttribute('data-zone-status'),
+    );
+
+  it('shows one zone per status in every multi-status column while dragging, none in plain columns', () => {
+    render(
+      <Board
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+          ['c', ['c1']],
+        ]}
+        statuses={{ a: NW, b: [...NW, { id: 'lost', label: 'Lost' }] }}
+        cardStatus={{ a1: 'new', b1: 'won' }}
+      />,
+    );
+    expect(document.querySelectorAll('[data-kanban-zone]')).toHaveLength(0);
+    pressAndMove('c1', [at(2, 100)]);
+    expect(zonesIn(0)).toEqual(['new', 'won']);
+    expect(zonesIn(1)).toEqual(['new', 'won', 'lost']);
+    expect(zonesIn(2)).toEqual([]);
+    fireEvent.pointerUp(document, { clientX: at(2, 100)[0], clientY: 100 });
+    expect(document.querySelectorAll('[data-kanban-zone]')).toHaveLength(0);
+  });
+
+  it('omits the dragged card’s own status zone in its own column', () => {
+    render(
+      <Board
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: NW, b: NW }}
+        cardStatus={{ a1: 'new', b1: 'new' }}
+      />,
+    );
+    pressAndMove('a1', [at(1, 100)]);
+    expect(zonesIn(0)).toEqual(['won']);
+    expect(zonesIn(1)).toEqual(['new', 'won']);
+    fireEvent.pointerUp(document, { clientX: at(1, 100)[0], clientY: 100 });
+  });
+
+  it('dropping on a zone fires onStatusChange with from/to status and never onMove', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: NW, b: NW }}
+        cardStatus={{ a1: 'new', b1: 'new' }}
+      />,
+    );
+    drag('a1', [zoneCentre(1, 0, 2), zoneCentre(1, 1, 2)]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).toHaveBeenCalledTimes(1);
+    expect(onStatusChange.mock.calls[0][0]).toEqual({
+      cardId: 'a1',
+      from: { columnId: 'a', index: 0, statusId: 'new' },
+      to: { columnId: 'b', statusId: 'won' },
+    });
+  });
+
+  it('dropping on another status zone in the card’s own column changes status', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[['a', ['a0', 'a1']]]}
+        statuses={{ a: [...NW, { id: 'lost', label: 'Lost' }] }}
+        cardStatus={{ a0: 'won', a1: 'new' }}
+      />,
+    );
+    // Zones in a: won, lost (own status omitted).
+    drag('a1', [zoneCentre(0, 1, 2)]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange.mock.calls).toEqual([
+      [
+        {
+          cardId: 'a1',
+          from: { columnId: 'a', index: 1, statusId: 'new' },
+          to: { columnId: 'a', statusId: 'lost' },
+        },
+      ],
+    ]);
+  });
+
+  it('a release in a multi-status column outside any zone cancels', () => {
+    // Single-status origin column: the own status is omitted, so it has no zone at all.
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: [{ id: 'new', label: 'New' }] }}
+        cardStatus={{ a1: 'new', a2: 'new' }}
+      />,
+    );
+    drag('a1', [at(0, 75), at(0, 200)]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(boardOrder()).toEqual([['a1', 'a2'], ['b1']]);
+  });
+
+  it('a release in the gutter beside a multi-status column cancels', () => {
+    // x 118: inside no column, nearest column (by the dragged rect's corners) is b.
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    drag('a1', [[118, 100]]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('a release past every column still cancels on an all-multi-status board', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: NW, b: NW }}
+        cardStatus={{ a1: 'new', b1: 'new' }}
+      />,
+    );
+    drag('a1', [zoneCentre(1, 1, 2), [600, 500]]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('hovering a zone then releasing in a plain column fires onMove with from.statusId', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: NW }}
+        cardStatus={{ a1: 'new' }}
+      />,
+    );
+    drag('a1', [zoneCentre(0, 0, 1), at(1, 100)]);
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(onMove.mock.calls).toEqual([
+      [
+        {
+          cardId: 'a1',
+          from: { columnId: 'a', index: 0, statusId: 'new' },
+          to: { columnId: 'b', index: 1 },
+        },
+      ],
+    ]);
+  });
+
+  it('a card with an unknown status sees every zone of its own column', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <Board
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: NW }}
+        cardStatus={{ a1: 'zzz' }}
+      />,
+    );
+    pressAndMove('a1', [at(1, 100)]);
+    expect(zonesIn(0)).toEqual(['new', 'won']);
+    fireEvent.pointerUp(document, { clientX: at(1, 100)[0], clientY: 100 });
+    warn.mockRestore();
+  });
+
+  it('numeric and string status ids are distinct zones', () => {
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{
+          b: [
+            { id: 1, label: 'Num' },
+            { id: '1', label: 'Str' },
+          ],
+        }}
+        cardStatus={{ b1: 1 }}
+      />,
+    );
+    drag('a1', [zoneCentre(1, 1, 2)]);
+    expect(onStatusChange).toHaveBeenCalledTimes(1);
+    expect(onStatusChange.mock.calls[0][0].to.statusId).toBe('1');
+  });
+
+  it('plain-column boards render no .body wrapper', () => {
+    render(
+      <Board
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    const plain = document.querySelector('[data-col="0"]')!;
+    expect(Array.from(plain.children).map((c) => c.getAttribute('data-card'))).toEqual([
+      'a1',
+      'a2',
+    ]);
+    // The multi-status column wraps its cards in one body element.
+    const multi = document.querySelector('[data-col="1"]')!;
+    expect(multi.children).toHaveLength(1);
+    expect(multi.children[0].getAttribute('data-card')).toBeNull();
+    expect(multi.children[0].querySelector('[data-card="b1"]')).not.toBeNull();
   });
 });

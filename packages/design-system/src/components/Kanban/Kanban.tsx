@@ -19,7 +19,9 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
+  closestCorners,
   getScrollableAncestors,
+  pointerWithin,
   useDroppable,
   useSensor,
   useSensors,
@@ -27,6 +29,7 @@ import {
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
+  type DroppableContainer,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -59,6 +62,56 @@ import styles from './Kanban.module.scss';
 // ---------------------------------------------------------------------------
 
 const KanbanColumnItemsContext = createContext<readonly (string | number)[] | null>(null);
+
+/** The drag in progress, for columns and zones. Null outside a `<Kanban>`. */
+interface KanbanDragContextValue {
+  activeCardId: string | number | null;
+  originColumn: string | number | null;
+  activeStatus: string | number | undefined;
+  /** `canDrop` bound to the active card; `true` when `canDrop` is unset. */
+  canDropTo: (to: KanbanDropTarget) => boolean;
+}
+const KanbanDragContext = createContext<KanbanDragContextValue | null>(null);
+
+/** Droppable id of a status zone; JSON keeps `1` and `'1'` apart and can't collide with card/column ids. */
+const kanbanZoneId = (columnId: string | number, statusId: string | number): string =>
+  `kanban-zone:${JSON.stringify([columnId, statusId])}`;
+
+interface KanbanZoneData {
+  columnId: string | number;
+  statusId: string | number;
+  label: string;
+  allowed: boolean;
+}
+
+const zoneOf = (droppable: { data: { current?: Record<string, unknown> } } | null | undefined) =>
+  droppable?.data.current?.kanbanZone as KanbanZoneData | undefined;
+
+/** A column/group droppable (no `data.sortable`), as opposed to a card. */
+const isContainer = (d: DroppableContainer) => d.data.current?.sortable == null;
+
+function KanbanZone({
+  columnId,
+  status,
+  allowed,
+}: Omit<KanbanZoneData, 'statusId' | 'label'> & { status: KanbanStatus }) {
+  const data = useMemo(
+    () => ({ kanbanZone: { columnId, statusId: status.id, label: status.label, allowed } }),
+    [columnId, status.id, status.label, allowed],
+  );
+  const { setNodeRef } = useDroppable({ id: kanbanZoneId(columnId, status.id), data });
+  return (
+    <div
+      ref={setNodeRef}
+      className={styles.zone}
+      data-kanban-zone=""
+      data-zone-status={String(status.id)}
+      data-disabled={!allowed || undefined}
+    >
+      {status.label}
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Public interfaces
@@ -514,8 +567,7 @@ KanbanColumn.displayName = 'KanbanColumn';
  * @see docs/components/Kanban.md
  */
 const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
-  // `onStatusChange` / `canDrop` are wired in by later drag handling; keep them off the DOM.
-  { onMove, onStatusChange: _onStatusChange, canDrop: _canDrop, className, children, ...rest },
+  { onMove, onStatusChange, canDrop, className, children, ...rest },
   ref,
 ) {
   const t = useTranslation();
@@ -631,6 +683,27 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
 
   const effectiveItems = liveItems ?? initialItems;
 
+  // The card being dragged: null when idle.
+  const [active, setActive] = useState<{
+    id: string | number;
+    origin: string | number | null;
+    status: string | number | undefined;
+  } | null>(null);
+
+  const canDropTo = useCallback(
+    (to: KanbanDropTarget) => !canDrop || active == null || canDrop(active.id, to),
+    [canDrop, active],
+  );
+  const dragContext = useMemo<KanbanDragContextValue>(
+    () => ({
+      activeCardId: active?.id ?? null,
+      originColumn: active?.origin ?? null,
+      activeStatus: active?.status,
+      canDropTo,
+    }),
+    [active, canDropTo],
+  );
+
   // ------------------------------------------------------------------
   // Sensors
   // ------------------------------------------------------------------
@@ -674,35 +747,86 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // that is safe because it is a pure function of the arguments, so a double
   // render under StrictMode writes the same value.
   const outsideBoardRef = useRef(false);
-  const collisionDetection = useCallback<CollisionDetection>((args) => {
-    const isOutsideBoard = isPointerOutsideContainers(args);
-    outsideBoardRef.current = isOutsideBoard;
-    // Force an `over` transition to null at the board boundary. dnd-kit's
-    // announcement callback only runs when `over.id` changes, so retaining the
-    // nearest collision here would leave screen readers naming a stale column.
-    if (isOutsideBoard) return [];
-    return containerAwareClosestCorners(args);
-  }, []);
+  // Was the last resolved `over` a zone that `canDrop` forbids? Same latching
+  // rationale as `outsideBoardRef`: the announcement must agree with the drop.
+  const disallowedZoneRef = useRef(false);
+
+  // Multi-status columns and the cards currently inside them never take a drop
+  // themselves — only their zones do.
+  const zoneOnly = useMemo(() => {
+    const ids = new Set<string | number>();
+    for (const colId of columnStatuses.keys()) {
+      ids.add(colId);
+      for (const id of effectiveItems.get(colId) ?? []) ids.add(id);
+    }
+    return ids;
+  }, [columnStatuses, effectiveItems]);
+
+  const collisionDetection = useCallback<CollisionDetection>(
+    (args) => {
+      disallowedZoneRef.current = false;
+      const zones: DroppableContainer[] = [];
+      const rest: DroppableContainer[] = [];
+      for (const d of args.droppableContainers) (zoneOf(d) ? zones : rest).push(d);
+
+      // Column droppables stay registered while zones show, so the board's
+      // bounds don't shrink.
+      const isOutsideBoard = isPointerOutsideContainers({ ...args, droppableContainers: rest });
+      outsideBoardRef.current = isOutsideBoard;
+      // Force an `over` transition to null at the board boundary. dnd-kit's
+      // announcement callback only runs when `over.id` changes, so retaining the
+      // nearest collision here would leave screen readers naming a stale column.
+      if (isOutsideBoard) return [];
+
+      const plain = rest.filter((d) => !zoneOnly.has(d.id));
+      if (!args.pointerCoordinates) {
+        // Keyboard: every zone and plain target is reachable.
+        return containerAwareClosestCorners({ ...args, droppableContainers: [...zones, ...plain] });
+      }
+
+      // A status commits only with the pointer inside its zone (no nearest-zone fallback).
+      const [zoneHit] = pointerWithin({ ...args, droppableContainers: zones });
+      if (zoneHit) {
+        const zone = zones.find((z) => z.id === zoneHit.id);
+        disallowedZoneRef.current = zone != null && !zoneOf(zone)?.allowed;
+        return [zoneHit];
+      }
+      const columns = rest.filter(isContainer);
+      const multiColumns = columns.filter((d) => columnStatuses.has(d.id));
+      if (pointerWithin({ ...args, droppableContainers: multiColumns }).length > 0) return [];
+      // Gutter: cancel when the column it would resolve to is multi-status.
+      if (pointerWithin({ ...args, droppableContainers: columns }).length === 0) {
+        const [nearest] = closestCorners({ ...args, droppableContainers: columns });
+        if (nearest && columnStatuses.has(nearest.id)) return [];
+      }
+      return containerAwareClosestCorners({ ...args, droppableContainers: plain });
+    },
+    [zoneOnly, columnStatuses],
+  );
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
       outsideBoardRef.current = false;
+      disallowedZoneRef.current = false;
+      const activeId = event.active.id as string | number;
       // The column the card started in. Used by handleDragOver to tell a
       // genuine same-column reorder apart from "already transited, still
       // moving inside the destination".
-      originRef.current = findContainer(event.active.id as string | number, initialItems);
+      originRef.current = findContainer(activeId, initialItems);
+      setActive({ id: activeId, origin: originRef.current, status: cardStatus.get(activeId) });
       // Snapshot: shallow-copy each cards array so mutations don't leak into initialItems.
       const snapshot = new Map<string | number, (string | number)[]>();
       for (const [colId, cards] of initialItems) snapshot.set(colId, [...cards]);
       setLiveItems(snapshot);
     },
-    [initialItems, findContainer],
+    [initialItems, findContainer, cardStatus],
   );
 
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
       const { active, over } = event;
-      if (!over) return;
+      // A zone has no list to seat into; the card keeps its slot until the drop.
+      if (!over || zoneOf(over)) return;
       const activeId = active.id as string | number;
       const overId = over.id as string | number;
       if (activeId === overId) return;
@@ -786,6 +910,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
     (event: DragEndEvent) => {
       const { active, over } = event;
       const activeId = active.id as string | number;
+      setActive(null);
 
       // Two ways a drag ends in nothing, and `over` only reports the first:
       //  - `over == null` — collision detection returned nothing at all, i.e.
@@ -820,6 +945,19 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
 
       if (fromColumn == null) {
         setLiveItems(null);
+        return;
+      }
+
+      const zone = zoneOf(over);
+      if (zone) {
+        setLiveItems(null);
+        // A forbidden zone cancels; the pointer was inside it, so nothing else was meant.
+        if (!zone.allowed) return;
+        onStatusChange?.({
+          cardId: activeId,
+          from: { columnId: fromColumn, index: fromIndex, statusId: cardStatus.get(activeId) },
+          to: { columnId: zone.columnId, statusId: zone.statusId },
+        });
         return;
       }
 
@@ -899,15 +1037,20 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       if (fromColumn === toColumn && fromIndex === toIndex) return;
 
       onMove?.({
-        from: { columnId: fromColumn, index: fromIndex },
+        from: {
+          columnId: fromColumn,
+          index: fromIndex,
+          ...(columnStatuses.has(fromColumn) ? { statusId: cardStatus.get(activeId) } : {}),
+        },
         to: { columnId: toColumn, index: toIndex },
         cardId: activeId,
       });
     },
-    [liveItems, initialItems, onMove],
+    [liveItems, initialItems, onMove, onStatusChange, columnStatuses, cardStatus],
   );
 
   const handleDragCancel = useCallback(() => {
+    setActive(null);
     setLiveItems(null);
   }, []);
 
@@ -949,7 +1092,10 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // A release outside the board is a cancel, not a drop — `over` is non-null on
   // that path (closestCorners rejects nothing), so without this dnd-kit would
   // announce a drop that handleDragEnd deliberately threw away (#387).
-  const accessibility = useDragAccessibility(describeDrag, () => outsideBoardRef.current);
+  const accessibility = useDragAccessibility(
+    describeDrag,
+    () => outsideBoardRef.current || disallowedZoneRef.current,
+  );
 
   // ------------------------------------------------------------------
   // Render
@@ -970,34 +1116,70 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         role="region" AFTER {...rest} so it stays locked — non-overridable
         semantic guarantee.
       */}
-      <div
-        ref={ref}
-        aria-label={t('kanban.board')}
-        className={clsx(styles.board, className)}
-        {...rest}
-        role="region"
-      >
-        {columnOrder.map((colId) => {
-          const columnElement = columnElements.get(colId);
-          if (!columnElement) return null;
+      <KanbanDragContext.Provider value={dragContext}>
+        <div
+          ref={ref}
+          aria-label={t('kanban.board')}
+          className={clsx(styles.board, className)}
+          {...rest}
+          role="region"
+        >
+          {columnOrder.map((colId) => {
+            const columnElement = columnElements.get(colId);
+            if (!columnElement) return null;
 
-          const cardIds = effectiveItems.get(colId) ?? [];
-          const cards = cardIds
-            .map((id) => cardElements.get(id))
-            .filter((c): c is ReactElement<KanbanCardProps> => c != null);
+            const cardIds = effectiveItems.get(colId) ?? [];
+            const cards = cardIds
+              .map((id) => cardElements.get(id))
+              .filter((c): c is ReactElement<KanbanCardProps> => c != null);
 
-          const slice = columnChildrenSlices.get(colId) ?? { before: [], after: [] };
+            const slice = columnChildrenSlices.get(colId) ?? { before: [], after: [] };
+            const statuses = columnStatuses.get(colId);
 
-          // Re-clone the column with re-arranged children. KanbanColumn reads
-          // cardIds via KanbanColumnItemsContext so its SortableContext.items
-          // matches what's rendered.
-          return (
-            <KanbanColumnItemsContext.Provider key={colId} value={cardIds}>
-              {cloneElement(columnElement, {}, ...slice.before, ...cards, ...slice.after)}
-            </KanbanColumnItemsContext.Provider>
-          );
-        })}
-      </div>
+            // Re-clone the column with re-arranged children. KanbanColumn reads
+            // cardIds via KanbanColumnItemsContext so its SortableContext.items
+            // matches what's rendered.
+            return (
+              <KanbanColumnItemsContext.Provider key={colId} value={cardIds}>
+                {statuses
+                  ? cloneElement(
+                      columnElement,
+                      {},
+                      ...slice.before,
+                      // The body stays mounted across drags so cards never remount;
+                      // the zone overlay covers it without moving any card's box.
+                      <div key="kanban-body" className={styles.body}>
+                        {cards}
+                        {slice.after}
+                        {active && (
+                          <div className={styles.zones}>
+                            {statuses
+                              .filter(
+                                (s) =>
+                                  !(
+                                    colId === active.origin &&
+                                    active.status !== undefined &&
+                                    s.id === active.status
+                                  ),
+                              )
+                              .map((s) => (
+                                <KanbanZone
+                                  key={kanbanZoneId(colId, s.id)}
+                                  columnId={colId}
+                                  status={s}
+                                  allowed={canDropTo({ columnId: colId, statusId: s.id })}
+                                />
+                              ))}
+                          </div>
+                        )}
+                      </div>,
+                    )
+                  : cloneElement(columnElement, {}, ...slice.before, ...cards, ...slice.after)}
+              </KanbanColumnItemsContext.Provider>
+            );
+          })}
+        </div>
+      </KanbanDragContext.Provider>
     </DndContext>
   );
 });

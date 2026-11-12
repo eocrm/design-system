@@ -20,6 +20,27 @@
   min-height: 80px;
 }
 
+.body {
+  // Anchor for the zone overlay; the cards stay in flow beneath it. Fills the
+  // column (internal child, not layout) so the zones split its whole card area.
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kanban-column-gap);
+  flex: 1 1 auto;
+}
+
+.zones {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.zone {
+  flex: 1 1 0;
+}
+
 .card {
   position: relative;
   cursor: grab;
