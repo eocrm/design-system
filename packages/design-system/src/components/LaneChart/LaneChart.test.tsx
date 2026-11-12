@@ -142,7 +142,7 @@ describe('LaneChart', () => {
       <LaneChart
         {...base}
         markers={[
-          { key: 'vet', at: 'd1', label: 'Vet' },
+          { key: 'vet', at: 'd1', label: 'Vet', labelPlacement: 'beside' },
           { key: 'trip', from: 'd3', to: 'd4', label: 'Trip', labelPlacement: 'top' },
         ]}
       />,

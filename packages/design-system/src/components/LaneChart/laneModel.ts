@@ -171,10 +171,13 @@ export function computeLaneLayout(input: {
         : [],
     );
   });
-  const first = geometry.find((g) => g.layout);
-  const last = [...geometry].reverse().find((g) => g.layout);
-  const y0 = first ? first.top + first.layout!.plot.y : topGutter;
-  const y1 = last ? last.top + last.layout!.plot.y + last.layout!.plot.height : height - reserved;
+  // Every lane, dots included: from the top lane's plot (a dots lane's dot row) to the bottom lane's.
+  const first = geometry[0];
+  const last = geometry[geometry.length - 1];
+  const y0 = first ? first.top + (first.layout?.plot.y ?? laneLabelHeight) : topGutter;
+  const y1 = last
+    ? last.top + (last.layout ? last.layout.plot.y + last.layout.plot.height : last.height)
+    : height - reserved;
 
   return {
     gutterLeft,

@@ -8,6 +8,9 @@
   // Height of a `dots` lane's dot row (under its label band).
   --lane-chart-dots-height: var(--space-5);
 
+  // Radius of a `dots` lane's dots: ScatterChart's dot size.
+  --lane-chart-dot-radius: var(--scatter-dot-min);
+
   // Vertical space between two lanes.
   --lane-chart-gap: var(--space-3);
 

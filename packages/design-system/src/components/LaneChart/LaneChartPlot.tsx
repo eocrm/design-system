@@ -49,18 +49,13 @@ export function LaneChartPlot({
   shownRange: { from: number; to: number } | null;
   /** A viewport is set: clip category-positioned marks to the plot's x range. */
   clipped: boolean;
-  tokens: { labelHeight: number; dotRadius: number };
+  tokens: { dotRadius: number };
 }) {
   const clipId = useId();
   const markerGeometry = layoutMarkers(markers, layout);
-  // Markers, selection and the inspection band span every lane: from the top lane's plot to the bottom lane's.
+  // Markers, selection and the inspection band span every lane (`layout.plot` is the union, dots lanes included).
   const geo = layout.lanes;
-  const lastGeo = geo[geo.length - 1];
-  const spanY0 = geo.length ? geo[0].top + (geo[0].layout?.plot.y ?? tokens.labelHeight) : 0;
-  const spanY1 = lastGeo
-    ? lastGeo.top +
-      (lastGeo.layout ? lastGeo.layout.plot.y + lastGeo.layout.plot.height : lastGeo.height)
-    : 0;
+  const { y: spanY, height: spanHeight } = layout.plot;
   const selectionGeometry = shownRange
     ? layoutMarkers(
         [
@@ -109,9 +104,9 @@ export function LaneChartPlot({
                 data-slot={m.slot || undefined}
                 style={m.slot ? seriesStyle(m.slot) : undefined}
                 x={m.x}
-                y={spanY0}
+                y={spanY}
                 width={m.width}
-                height={spanY1 - spanY0}
+                height={spanHeight}
               />
             ),
         )}
@@ -120,18 +115,18 @@ export function LaneChartPlot({
             className={chartStyles.selection}
             data-selection=""
             x={selectionGeometry.x}
-            y={spanY0}
+            y={spanY}
             width={selectionGeometry.width}
-            height={spanY1 - spanY0}
+            height={spanHeight}
           />
         )}
         {current !== null && (
           <rect
             className={chartStyles.band}
             x={layout.categoryX[current] - layout.step / 2}
-            y={spanY0}
+            y={spanY}
             width={layout.step}
-            height={spanY1 - spanY0}
+            height={spanHeight}
           />
         )}
       </g>
@@ -196,8 +191,8 @@ export function LaneChartPlot({
                   style={m.slot ? seriesStyle(m.slot) : undefined}
                   x1={m.x}
                   x2={m.x}
-                  y1={spanY0}
-                  y2={spanY1}
+                  y1={spanY}
+                  y2={spanY + spanHeight}
                 />
               ),
           )}

@@ -108,6 +108,21 @@ describe('computeLaneLayout', () => {
     for (const l of zoomed.lanes) expect(l.layout!.categoryX).toEqual(zoomed.categoryX);
   });
 
+  it('starts the shared plot span at a top dots lane, above its dots', () => {
+    const out = computeLaneLayout({ ...base, lanes: [dots, narrow, wide] });
+    const top = out.lanes[0];
+    expect(out.plot.y).toBe(top.top + base.laneLabelHeight);
+    for (const d of top.dots) expect(out.plot.y).toBeLessThanOrEqual(top.top + d.cy);
+  });
+
+  it('ends the shared plot span at the bottom of a bottom dots lane', () => {
+    const out = computeLaneLayout({ ...base, lanes: [narrow, wide, dots] });
+    const bottom = out.lanes[2];
+    expect(out.plot.y + out.plot.height).toBeCloseTo(bottom.top + bottom.height);
+    for (const d of bottom.dots)
+      expect(out.plot.y + out.plot.height).toBeGreaterThanOrEqual(bottom.top + d.cy);
+  });
+
   it('yields a categoryX when every lane is dots', () => {
     const out = computeLaneLayout({ ...base, lanes: [dots, { ...dots, key: 'd2' }] });
     expect(out.categoryX).toHaveLength(categories.length);

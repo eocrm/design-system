@@ -246,7 +246,7 @@ export const LaneChart = forwardRef<HTMLElement, LaneChartProps>(function LaneCh
       dotsHeight: readPx(plotEl, '--lane-chart-dots-height', DOTS_HEIGHT),
       gap: readPx(plotEl, '--lane-chart-gap', LANE_GAP),
       labelHeight: readPx(plotEl, '--lane-chart-label-height', LABEL_HEIGHT),
-      dotRadius: readPx(plotEl, '--scatter-dot-min', DOT_RADIUS),
+      dotRadius: readPx(plotEl, '--lane-chart-dot-radius', DOT_RADIUS),
     }),
     [plotEl],
   );
