@@ -107,7 +107,7 @@ function KanbanZone({
       data-kanban-zone=""
       data-zone-status={String(status.id)}
       data-disabled={!allowed || undefined}
-      data-over={isOver ? 'true' : undefined}
+      data-over={isOver && allowed ? 'true' : undefined}
     >
       {status.label}
     </div>

@@ -134,9 +134,13 @@ const INITIAL_DEALS: Record<string, DealCard[]> = {
   closing: [{ id: 'z-6', title: 'Wayne Ent. — multi-year', status: 'proposal' }],
 };
 
-// Backwards drops into Lead from Closing are blocked.
-const canDropDeal = (cardId: string | number, to: { columnId: string | number }) =>
-  !(to.columnId === 'lead' && cardId === 'z-6');
+// Closing deal can't go back to Lead; a "New" deal can't skip straight to Negotiation.
+const canDropDeal = (
+  cardId: string | number,
+  to: { columnId: string | number; statusId?: string | number },
+) =>
+  !(to.columnId === 'lead' && cardId === 'z-6') &&
+  !(cardId === 'z-3' && to.statusId === 'negotiation');
 
 function makeMoveHandler<K extends string>(
   setter: React.Dispatch<React.SetStateAction<Record<K, CardData[]>>>,
@@ -551,9 +555,11 @@ export function Demo() {
 
       <Example
         title="Multi-status columns"
-        description="Qualification and Closing hold several statuses. While dragging, each shows one zone per status; drop on a zone to change status (the card goes to the top). Lead is a plain column. Moving back into Lead from Closing is blocked via canDrop."
+        description="Qualification and Closing hold several statuses. While dragging, each shows one zone per status; drop on a zone to change status (the card goes to the top). Lead is a plain column. canDrop blocks moving back into Lead from Closing, and 'Initech pilot' (New) can't skip to Negotiation: that zone is dimmed and rejects the drop."
         code={`<Kanban
-  canDrop={(cardId, to) => !(to.columnId === 'lead' && cardId === 'z-6')}
+  canDrop={(cardId, to) =>
+    !(to.columnId === 'lead' && cardId === 'z-6') &&
+    !(cardId === 'z-3' && to.statusId === 'negotiation')}
   onMove={handleMove}
   onStatusChange={handleStatusChange}
 >
