@@ -1,11 +1,15 @@
 import { createRef } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {
   Kanban,
   clampKanbanTransform,
   measureKanbanDragBounds,
   type KanbanDragBounds,
+  type KanbanDropTarget,
   type KanbanMoveEvent,
+  type KanbanStatus,
+  type KanbanStatusChangeEvent,
 } from './Kanban';
 import { SortableHandle } from '../Sortable/Sortable';
 import { I18nProvider } from '../../i18n';
@@ -205,6 +209,24 @@ function stubLayout(): () => void {
       const height = Number(column.getAttribute('data-h') ?? 300);
       return new DOMRect(left, 0, COL_W, height);
     }
+    // Optional header (`data-col-header`) of `data-header-h` px at the column's
+    // top; zones then share the height below it.
+    const headerH = Number(column.getAttribute('data-header-h') ?? 0);
+    if (this.matches('[data-col-header]')) return new DOMRect(left, 0, COL_W, headerH);
+    // Optional footer (`data-col-footer`) of `data-footer-h` px at the column's
+    // bottom. Zones stop above it only when it is NOT inside their overlay's
+    // anchor (the zones' grandparent) — an overlay over the footer covers it.
+    const colH = Number(column.getAttribute('data-h') ?? 300);
+    const footerH = Number(column.getAttribute('data-footer-h') ?? 0);
+    if (this.matches('[data-col-footer]')) return new DOMRect(left, colH - footerH, COL_W, footerH);
+    // Status zone k of n fills its share of the column's height.
+    if (this.matches('[data-kanban-zone]')) {
+      const covered = this.parentElement!.parentElement!.querySelector('[data-col-footer]');
+      const height = colH - headerH - (covered ? 0 : footerH);
+      const zones = Array.from(this.parentElement!.querySelectorAll(':scope > [data-kanban-zone]'));
+      const n = zones.length;
+      return new DOMRect(left, headerH + (zones.indexOf(this) * height) / n, COL_W, height / n);
+    }
     const card = this.closest('[data-card]');
     if (card !== this) return orig.call(this);
     const idx = Array.from(column.querySelectorAll('[data-card]')).indexOf(this);
@@ -220,15 +242,35 @@ interface BoardProps {
   columns: [string, string[]][];
   /** Column height — a tall column with few cards has drop-able padding. */
   height?: number;
+  /** Per-column statuses (makes that column multi-status). */
+  statuses?: Record<string, KanbanStatus[]>;
+  /** Per-card status. */
+  cardStatus?: Record<string, string | number>;
+  onStatusChange?: (event: KanbanStatusChangeEvent) => void;
+  canDrop?: (cardId: string | number, to: KanbanDropTarget) => boolean;
 }
 
-function Board({ onMove, columns, height = 300 }: BoardProps) {
+function Board({
+  onMove,
+  columns,
+  height = 300,
+  statuses,
+  cardStatus,
+  onStatusChange,
+  canDrop,
+}: BoardProps) {
   return (
-    <Kanban onMove={onMove}>
+    <Kanban onMove={onMove} onStatusChange={onStatusChange} canDrop={canDrop}>
       {columns.map(([colId, cards], i) => (
-        <Kanban.Column key={colId} id={colId} data-col={i} data-h={height}>
+        <Kanban.Column
+          key={colId}
+          id={colId}
+          statuses={statuses?.[colId]}
+          data-col={i}
+          data-h={height}
+        >
           {cards.map((cardId) => (
-            <Kanban.Card key={cardId} id={cardId} data-card={cardId}>
+            <Kanban.Card key={cardId} id={cardId} status={cardStatus?.[cardId]} data-card={cardId}>
               {cardId}
             </Kanban.Card>
           ))}
@@ -243,6 +285,13 @@ function Board({ onMove, columns, height = 300 }: BoardProps) {
  *  trips the sensor's 5px activation constraint — the drag proper starts at
  *  `path[0]`, which keeps every delta measured from the press point. */
 function drag(cardId: string, path: [number, number][]) {
+  pressAndMove(cardId, path);
+  const [lastX, lastY] = path[path.length - 1];
+  fireEvent.pointerUp(document, { clientX: lastX, clientY: lastY });
+}
+
+/** `drag` without the release. */
+function pressAndMove(cardId: string, path: [number, number][]) {
   const card = screen.getByText(cardId);
   const from = card.getBoundingClientRect();
   const startX = from.left + COL_W / 2;
@@ -250,12 +299,14 @@ function drag(cardId: string, path: [number, number][]) {
   fireEvent.pointerDown(card, { clientX: startX, clientY: startY, button: 0, isPrimary: true });
   fireEvent.pointerMove(document, { clientX: startX, clientY: startY + 10 });
   for (const [clientX, clientY] of path) fireEvent.pointerMove(document, { clientX, clientY });
-  const [lastX, lastY] = path[path.length - 1];
-  fireEvent.pointerUp(document, { clientX: lastX, clientY: lastY });
 }
 
 /** Centre of column i, at vertical offset y. */
 const at = (col: number, y: number): [number, number] => [col * (COL_W + COL_GAP) + COL_W / 2, y];
+
+/** Centre of status zone k of n in column i (column height h). */
+const zoneCentre = (col: number, k: number, n: number, h = 300): [number, number] =>
+  at(col, (k * h) / n + h / (2 * n));
 
 describe('Kanban — drop position', () => {
   let restore: () => void;
@@ -925,5 +976,862 @@ describe('Kanban — drag announcements (#390)', () => {
       </I18nProvider>,
     );
     expect(described()).toMatch(/^Нажмите пробел или Enter/);
+  });
+});
+
+describe('Kanban — statuses (idle)', () => {
+  const statuses = [
+    { id: 'new', label: 'New' },
+    { id: 'won', label: 'Won' },
+  ];
+
+  it('renders a multi-status column as one mixed list with no zones while idle', () => {
+    const { container } = render(
+      <Kanban>
+        <Kanban.Column id="c" statuses={statuses}>
+          <Kanban.Card id="a" status="new">
+            Alpha
+          </Kanban.Card>
+          <Kanban.Card id="b" status="won">
+            Beta
+          </Kanban.Card>
+          <Kanban.Card id="g" status="new">
+            Gamma
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    for (const t of ['Alpha', 'Beta', 'Gamma']) expect(screen.getByText(t)).toBeTruthy();
+    expect(screen.queryByText('New')).toBeNull();
+    expect(screen.queryByText('Won')).toBeNull();
+    expect(container.querySelector('[data-kanban-zone]')).toBeNull();
+  });
+
+  it('does not leak statuses / status onto the DOM', () => {
+    const { container } = render(
+      <Kanban onStatusChange={() => {}} canDrop={() => true}>
+        <Kanban.Column id="c" statuses={statuses}>
+          <Kanban.Card id="a" status="new">
+            Alpha
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    expect(container.querySelector('[statuses]')).toBeNull();
+    expect(container.querySelector('[status]')).toBeNull();
+    expect(container.querySelector('[onstatuschange],[candrop]')).toBeNull();
+  });
+
+  it('warns once when a card in a multi-status column has no or an unknown status', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const board = (
+      <Kanban>
+        <Kanban.Column id="c" statuses={statuses}>
+          <Kanban.Card id="nostat">One</Kanban.Card>
+          <Kanban.Card id="zz" status="zzz">
+            Two
+          </Kanban.Card>
+          <Kanban.Card id="ok" status="new">
+            Three
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>
+    );
+    const { rerender } = render(board);
+    expect(warn).toHaveBeenCalledTimes(2);
+    expect(warn.mock.calls[0][0]).toContain('nostat');
+    expect(warn.mock.calls[1][0]).toContain('zz');
+    rerender(board);
+    expect(warn).toHaveBeenCalledTimes(2);
+    warn.mockRestore();
+  });
+
+  it('does not warn for cards in plain columns without a status', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <Kanban>
+        <Kanban.Column id="c">
+          <Kanban.Card id="a">Alpha</Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
+
+describe('Kanban — status zones', () => {
+  let restore: () => void;
+  beforeEach(() => {
+    restore = stubLayout();
+  });
+  afterEach(() => restore());
+
+  const NW: KanbanStatus[] = [
+    { id: 'new', label: 'New' },
+    { id: 'won', label: 'Won' },
+  ];
+  const zonesIn = (col: number) =>
+    Array.from(document.querySelectorAll(`[data-col="${col}"] [data-kanban-zone]`)).map((z) =>
+      z.getAttribute('data-zone-status'),
+    );
+
+  it('shows one zone per status in every multi-status column while dragging, none in plain columns', () => {
+    render(
+      <Board
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+          ['c', ['c1']],
+        ]}
+        statuses={{ a: NW, b: [...NW, { id: 'lost', label: 'Lost' }] }}
+        cardStatus={{ a1: 'new', b1: 'won' }}
+      />,
+    );
+    expect(document.querySelectorAll('[data-kanban-zone]')).toHaveLength(0);
+    pressAndMove('c1', [at(2, 100)]);
+    expect(zonesIn(0)).toEqual(['new', 'won']);
+    expect(zonesIn(1)).toEqual(['new', 'won', 'lost']);
+    expect(zonesIn(2)).toEqual([]);
+    fireEvent.pointerUp(document, { clientX: at(2, 100)[0], clientY: 100 });
+    expect(document.querySelectorAll('[data-kanban-zone]')).toHaveLength(0);
+  });
+
+  it('omits the dragged card’s own status zone in its own column', () => {
+    render(
+      <Board
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: NW, b: NW }}
+        cardStatus={{ a1: 'new', b1: 'new' }}
+      />,
+    );
+    pressAndMove('a1', [at(1, 100)]);
+    expect(zonesIn(0)).toEqual(['won']);
+    expect(zonesIn(1)).toEqual(['new', 'won']);
+    fireEvent.pointerUp(document, { clientX: at(1, 100)[0], clientY: 100 });
+  });
+
+  it('the dragged card keeps following the pointer over a zone', () => {
+    render(
+      <Board
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    // Pressed at (50, 25); useSortable gives a non-item `over` no transform.
+    pressAndMove('a1', [zoneCentre(1, 1, 2)]);
+    const card = document.querySelector<HTMLElement>('[data-card="a1"]')!;
+    expect(card.style.transform).toBe('translate3d(120px, 200px, 0) scaleX(1) scaleY(1)');
+    fireEvent.pointerUp(document, { clientX: zoneCentre(1, 1, 2)[0], clientY: 225 });
+    // Handed back to React once the drag ends — no stuck transform.
+    expect(card.getAttribute('data-dragging')).toBe(null);
+    expect(card.style.transform).toBe('');
+  });
+
+  it('dropping on a zone fires onStatusChange with from/to status and never onMove', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: NW, b: NW }}
+        cardStatus={{ a1: 'new', b1: 'new' }}
+      />,
+    );
+    drag('a1', [zoneCentre(1, 0, 2), zoneCentre(1, 1, 2)]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).toHaveBeenCalledTimes(1);
+    expect(onStatusChange.mock.calls[0][0]).toEqual({
+      cardId: 'a1',
+      from: { columnId: 'a', index: 0, statusId: 'new' },
+      to: { columnId: 'b', statusId: 'won' },
+    });
+  });
+
+  it('dropping on another status zone in the card’s own column changes status', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[['a', ['a0', 'a1']]]}
+        statuses={{ a: [...NW, { id: 'lost', label: 'Lost' }] }}
+        cardStatus={{ a0: 'won', a1: 'new' }}
+      />,
+    );
+    // Zones in a: won, lost (own status omitted).
+    drag('a1', [zoneCentre(0, 1, 2)]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange.mock.calls).toEqual([
+      [
+        {
+          cardId: 'a1',
+          from: { columnId: 'a', index: 1, statusId: 'new' },
+          to: { columnId: 'a', statusId: 'lost' },
+        },
+      ],
+    ]);
+  });
+
+  it('a release in a multi-status column outside any zone cancels', () => {
+    // Single-status origin column: the own status is omitted, so it has no zone at all.
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: [{ id: 'new', label: 'New' }] }}
+        cardStatus={{ a1: 'new', a2: 'new' }}
+      />,
+    );
+    drag('a1', [at(0, 75), at(0, 200)]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(boardOrder()).toEqual([['a1', 'a2'], ['b1']]);
+  });
+
+  it('a release in the gutter beside a multi-status column cancels', () => {
+    // x 118: inside no column, nearest column (by the dragged rect's corners) is b.
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    drag('a1', [[118, 100]]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('a release past every column still cancels on an all-multi-status board', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: NW, b: NW }}
+        cardStatus={{ a1: 'new', b1: 'new' }}
+      />,
+    );
+    drag('a1', [zoneCentre(1, 1, 2), [600, 500]]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('hovering a zone then releasing in a plain column fires onMove with from.statusId', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: NW }}
+        cardStatus={{ a1: 'new' }}
+      />,
+    );
+    drag('a1', [zoneCentre(0, 0, 1), at(1, 100)]);
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(onMove.mock.calls).toEqual([
+      [
+        {
+          cardId: 'a1',
+          from: { columnId: 'a', index: 0, statusId: 'new' },
+          to: { columnId: 'b', index: 1 },
+        },
+      ],
+    ]);
+  });
+
+  it('a card with an unknown status sees every zone of its own column', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <Board
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ a: NW }}
+        cardStatus={{ a1: 'zzz' }}
+      />,
+    );
+    pressAndMove('a1', [at(1, 100)]);
+    expect(zonesIn(0)).toEqual(['new', 'won']);
+    fireEvent.pointerUp(document, { clientX: at(1, 100)[0], clientY: 100 });
+    warn.mockRestore();
+  });
+
+  it('numeric and string status ids are distinct zones', () => {
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onStatusChange={onStatusChange}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{
+          b: [
+            { id: 1, label: 'Num' },
+            { id: '1', label: 'Str' },
+          ],
+        }}
+        cardStatus={{ b1: 1 }}
+      />,
+    );
+    drag('a1', [zoneCentre(1, 1, 2)]);
+    expect(onStatusChange).toHaveBeenCalledTimes(1);
+    expect(onStatusChange.mock.calls[0][0].to.statusId).toBe('1');
+  });
+
+  it('a release on a zone canDrop forbids cancels and is announced as cancelled', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        canDrop={(_, to) => to.statusId !== 'won'}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    pressAndMove('a1', [zoneCentre(1, 1, 2)]);
+    expect(document.querySelector('[data-zone-status="won"]')?.getAttribute('data-disabled')).toBe(
+      'true',
+    );
+    fireEvent.pointerUp(document, {
+      clientX: zoneCentre(1, 1, 2)[0],
+      clientY: zoneCentre(1, 1, 2)[1],
+    });
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('status').textContent).toMatch(/^Move cancelled/);
+  });
+
+  it('a keyboard drop on a forbidden zone is announced as cancelled', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        canDrop={(_, to) => to.statusId === undefined}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    expect(document.querySelectorAll('[data-kanban-zone][data-disabled]')).toHaveLength(2);
+    expect(screen.getByRole('status').textContent).not.toMatch(/position/);
+    await user.keyboard('[Space]');
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('status').textContent).toMatch(/^Move cancelled/);
+  });
+
+  it('a release on the header of a column with zones cancels', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Kanban onMove={onMove} onStatusChange={onStatusChange}>
+        <Kanban.Column id="a" data-col={0} data-h={300}>
+          <Kanban.Card id="a1" data-card="a1">
+            a1
+          </Kanban.Card>
+        </Kanban.Column>
+        <Kanban.Column id="b" statuses={NW} data-col={1} data-h={300} data-header-h={60}>
+          <div data-col-header="">Stage B</div>
+          <Kanban.Card id="b1" status="new" data-card="b1">
+            b1
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    pressAndMove('a1', [at(1, 30)]);
+    expect(document.querySelectorAll('[data-col="1"] [data-kanban-zone]')).toHaveLength(2);
+    expect(document.querySelector('[data-kanban-zone][data-over]')).toBeNull();
+    fireEvent.pointerUp(document, { clientX: at(1, 30)[0], clientY: 30 });
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('a release on the footer of a column with zones cancels', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Kanban onMove={onMove} onStatusChange={onStatusChange}>
+        <Kanban.Column id="a" data-col={0} data-h={300}>
+          <Kanban.Card id="a1" data-card="a1">
+            a1
+          </Kanban.Card>
+        </Kanban.Column>
+        <Kanban.Column id="b" statuses={NW} data-col={1} data-h={300} data-footer-h={60}>
+          <Kanban.Card id="b1" status="new" data-card="b1">
+            b1
+          </Kanban.Card>
+          <div data-col-footer="">Add card</div>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    pressAndMove('a1', [at(1, 270)]);
+    expect(document.querySelectorAll('[data-col="1"] [data-kanban-zone]')).toHaveLength(2);
+    expect(document.querySelector('[data-kanban-zone][data-over]')).toBeNull();
+    fireEvent.pointerUp(document, { clientX: at(1, 270)[0], clientY: 270 });
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  // a1 sits in a's 'won' zone's area (its own 'new' zone is omitted).
+  const ownColumnBoard = (onMove: () => void, onStatusChange: () => void) => (
+    <Board
+      onMove={onMove}
+      onStatusChange={onStatusChange}
+      columns={[
+        ['a', ['a0', 'a1']],
+        ['b', ['b1']],
+      ]}
+      statuses={{ a: [...NW, { id: 'lost', label: 'Lost' }] }}
+      cardStatus={{ a0: 'won', a1: 'new' }}
+    />
+  );
+
+  it('a pointer release that never left the card’s slot in a multi-status column is a no-op', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(ownColumnBoard(onMove, onStatusChange));
+    pressAndMove('a1', [at(0, 80)]);
+    expect(document.querySelector('[data-kanban-zone][data-over]')).toBeNull();
+    fireEvent.pointerUp(document, { clientX: at(0, 80)[0], clientY: 80 });
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('once the card has left its slot, coming back onto an own-column zone commits it', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(ownColumnBoard(onMove, onStatusChange));
+    drag('a1', [at(1, 75), at(0, 75)]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).toHaveBeenCalledWith(
+      expect.objectContaining({ to: { columnId: 'a', statusId: 'won' } }),
+    );
+  });
+
+  it('keyboard Space, Space in a multi-status column drops nothing', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(ownColumnBoard(onMove, onStatusChange));
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[Space]');
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('keyboard: the first arrow press from a multi-status column reaches a zone', async () => {
+    const user = userEvent.setup();
+    const onStatusChange = vi.fn();
+    render(ownColumnBoard(vi.fn(), onStatusChange));
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowDown]');
+    await user.keyboard('[Space]');
+    expect(onStatusChange).toHaveBeenCalledWith(
+      expect.objectContaining({ to: { columnId: 'a', statusId: 'lost' } }),
+    );
+  });
+
+  it('a disallowed zone never shows data-over; an allowed one does', () => {
+    render(
+      <Board
+        canDrop={(_, to) => to.statusId !== 'won'}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    const zone = (id: string) => document.querySelector(`[data-zone-status="${id}"]`);
+    pressAndMove('a1', [zoneCentre(1, 1, 2)]);
+    expect(zone('won')?.getAttribute('data-disabled')).toBe('true');
+    expect(zone('won')?.hasAttribute('data-over')).toBe(false);
+    fireEvent.pointerMove(document, {
+      clientX: zoneCentre(1, 0, 2)[0],
+      clientY: zoneCentre(1, 0, 2)[1],
+    });
+    expect(zone('new')?.getAttribute('data-over')).toBe('true');
+    expect(zone('won')?.hasAttribute('data-over')).toBe(false);
+    fireEvent.pointerUp(document, {
+      clientX: zoneCentre(1, 0, 2)[0],
+      clientY: zoneCentre(1, 0, 2)[1],
+    });
+  });
+
+  it('a gutter release nearer a rejected column cancels instead of reaching a farther column', () => {
+    // a (plain origin) | b (multi-status) | c (plain, rejected). x 235 is in the
+    // b|c gutter, nearer c: no column there takes the drop, so nothing commits.
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        canDrop={(_, to) => to.columnId !== 'c'}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1']],
+          ['c', ['c1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    drag('a1', [[235, 100]]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(boardOrder()).toEqual([['a1', 'a2'], ['b1'], ['c1']]);
+  });
+
+  it('arrow keys skip the cards under a zone overlay: each press reaches a zone', async () => {
+    const user = userEvent.setup();
+    const onStatusChange = vi.fn();
+    render(
+      <Kanban onStatusChange={onStatusChange}>
+        <Kanban.Column id="a" aria-label="To do" data-col={0} data-h={300}>
+          <Kanban.Card id="a1" data-card="a1">
+            a1
+          </Kanban.Card>
+        </Kanban.Column>
+        <Kanban.Column id="b" aria-label="Stage" statuses={NW} data-col={1} data-h={300}>
+          {['b1', 'b2', 'b3', 'b4'].map((id) => (
+            <Kanban.Card key={id} id={id} status="new" data-card={id}>
+              {id}
+            </Kanban.Card>
+          ))}
+        </Kanban.Column>
+      </Kanban>,
+    );
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    expect(live()).toBe('a1, over New in Stage.');
+    await user.keyboard('[ArrowDown]');
+    expect(live()).toBe('a1, over Won in Stage.');
+    await user.keyboard('[Space]');
+    expect(onStatusChange).toHaveBeenCalledWith(
+      expect.objectContaining({ to: { columnId: 'b', statusId: 'won' } }),
+    );
+  });
+
+  it('arrow keys move a card between plain columns', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1']],
+        ]}
+      />,
+    );
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    await user.keyboard('[Space]');
+    expect(onMove).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: { columnId: 'a', index: 0 },
+        to: expect.objectContaining({ columnId: 'b' }),
+      }),
+    );
+  });
+
+  it('plain-column boards render no .body wrapper', () => {
+    render(
+      <Board
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    const plain = document.querySelector('[data-col="0"]')!;
+    expect(Array.from(plain.children).map((c) => c.getAttribute('data-card'))).toEqual([
+      'a1',
+      'a2',
+    ]);
+    // The multi-status column wraps its cards in one body element.
+    const multi = document.querySelector('[data-col="1"]')!;
+    expect(multi.children).toHaveLength(1);
+    expect(multi.children[0].getAttribute('data-card')).toBeNull();
+    expect(multi.children[0].querySelector('[data-card="b1"]')).not.toBeNull();
+  });
+});
+
+describe('Kanban — canDrop', () => {
+  let restore: () => void;
+  beforeEach(() => {
+    restore = stubLayout();
+  });
+  afterEach(() => restore());
+
+  const cols: [string, string[]][] = [
+    ['a', ['a1', 'a2']],
+    ['b', ['b1']],
+  ];
+  const colAttr = (i: number) =>
+    document.querySelector(`[data-col="${i}"]`)!.getAttribute('data-drop-disabled');
+
+  it('a rejected plain column takes no live re-seat and a release there cancels', () => {
+    const onMove = vi.fn();
+    render(<Board onMove={onMove} canDrop={(_, to) => to.columnId !== 'b'} columns={cols} />);
+    const before = boardOrder();
+    pressAndMove('a1', [at(1, 25)]);
+    expect(boardOrder()).toEqual(before);
+    expect(colAttr(1)).toBe('true');
+    expect(colAttr(0)).toBeNull();
+    fireEvent.pointerUp(document, { clientX: at(1, 25)[0], clientY: 25 });
+    expect(onMove).not.toHaveBeenCalled();
+    expect(colAttr(1)).toBeNull();
+  });
+
+  it('a rejected plain column is skipped by the keyboard', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    render(<Board onMove={onMove} canDrop={(_, to) => to.columnId !== 'b'} columns={cols} />);
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    expect(boardOrder()).toEqual([['a1', 'a2'], ['b1']]);
+    await user.keyboard('[Space]');
+    expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it('one ArrowRight steps over a rejected plain column to the next allowed one', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        canDrop={(_, to) => to.columnId !== 'b'}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1']],
+          ['c', ['c1']],
+        ]}
+      />,
+    );
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    await user.keyboard('[Space]');
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0][0].to.columnId).toBe('c');
+  });
+
+  it('never asks canDrop about the origin plain column; in-column reorder still works', () => {
+    const onMove = vi.fn();
+    const canDrop = vi.fn(() => false);
+    render(<Board onMove={onMove} canDrop={canDrop} columns={cols} />);
+    drag('a1', [at(0, 75)]);
+    expect(onMove).toHaveBeenCalledTimes(1);
+    for (const [, to] of canDrop.mock.calls as unknown as [unknown, KanbanDropTarget][]) {
+      expect(to.columnId === 'a' && to.statusId === undefined).toBe(false);
+    }
+  });
+
+  it('canDrop receives the dragged card id and { columnId, statusId }', () => {
+    const canDrop = vi.fn(() => true);
+    render(
+      <Board
+        canDrop={canDrop}
+        columns={cols}
+        statuses={{ b: [{ id: 'new', label: 'New' }] }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    pressAndMove('a1', [at(1, 100)]);
+    expect(canDrop).toHaveBeenCalledWith('a1', { columnId: 'b', statusId: 'new' });
+    fireEvent.pointerUp(document, { clientX: at(1, 100)[0], clientY: 100 });
+  });
+
+  it('never asks canDrop about a multi-status column without a statusId', async () => {
+    const user = userEvent.setup();
+    const canDrop = vi.fn(() => false);
+    render(
+      <Board
+        canDrop={canDrop}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: [{ id: 'new', label: 'New' }] }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    pressAndMove('a1', [at(1, 100)]);
+    fireEvent.pointerUp(document, { clientX: at(1, 100)[0], clientY: 100 });
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    await user.keyboard('[Escape]');
+    expect(canDrop).toHaveBeenCalled();
+    for (const [, to] of canDrop.mock.calls as unknown as [unknown, KanbanDropTarget][]) {
+      expect(to.columnId === 'b' && to.statusId === undefined).toBe(false);
+    }
+  });
+
+  it('canDrop is not called while idle', () => {
+    const canDrop = vi.fn(() => true);
+    render(<Board canDrop={canDrop} columns={cols} />);
+    expect(canDrop).not.toHaveBeenCalled();
+    drag('a1', [at(1, 25)]);
+    canDrop.mockClear();
+    fireEvent.pointerMove(document, { clientX: 5, clientY: 5 });
+    expect(canDrop).not.toHaveBeenCalled();
+  });
+});
+
+describe('Kanban — zone announcements', () => {
+  let restore: () => void;
+  beforeEach(() => {
+    restore = stubLayout();
+  });
+  afterEach(() => restore());
+
+  const WL: KanbanStatus[] = [
+    { id: 'open', label: 'Open' },
+    { id: 'won', label: 'Won' },
+  ];
+  function ZoneBoard({
+    canDrop,
+  }: {
+    canDrop?: (id: string | number, to: KanbanDropTarget) => boolean;
+  }) {
+    return (
+      <Kanban canDrop={canDrop}>
+        <Kanban.Column id="col-a" aria-label="To do" data-col={0} data-h={300}>
+          <Kanban.Card id="task-1" data-card="task-1">
+            Draft Q3 OKRs
+          </Kanban.Card>
+        </Kanban.Column>
+        <Kanban.Column id="col-b" aria-label="Done" statuses={WL} data-col={1} data-h={300}>
+          <Kanban.Card id="task-3" status="open" data-card="task-3">
+            Ship onboarding email
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>
+    );
+  }
+
+  it('announces the zone and column while hovering a zone', () => {
+    render(<ZoneBoard />);
+    pressAndMove('Draft Q3 OKRs', [zoneCentre(1, 1, 2)]);
+    expect(live()).toMatch(/^Draft Q3 OKRs, over Won in Done\.$/);
+  });
+
+  it('announces a drop into a zone', () => {
+    render(<ZoneBoard />);
+    pressAndMove('Draft Q3 OKRs', [zoneCentre(1, 1, 2)]);
+    release(zoneCentre(1, 1, 2));
+    expect(live()).toBe('Dropped Draft Q3 OKRs in Won in Done.');
+  });
+
+  it('announces a disabled zone as unavailable and its release as cancelled', () => {
+    render(<ZoneBoard canDrop={(_, to) => to.statusId !== 'won'} />);
+    pressAndMove('Draft Q3 OKRs', [zoneCentre(1, 1, 2)]);
+    expect(live()).toBe('Draft Q3 OKRs, Won in Done is unavailable.');
+    release(zoneCentre(1, 1, 2));
+    expect(live()).toMatch(/^Move cancelled/);
+  });
+
+  it('announces zones in Russian', () => {
+    render(
+      <I18nProvider locale="ru" messages={ru}>
+        <ZoneBoard />
+      </I18nProvider>,
+    );
+    pressAndMove('Draft Q3 OKRs', [zoneCentre(1, 1, 2)]);
+    expect(live()).toBe('«Draft Q3 OKRs» — над «Won», «Done».');
+    release(zoneCentre(1, 1, 2));
+    expect(live()).toBe('Размещено: «Draft Q3 OKRs», «Won», «Done».');
+  });
+
+  it('keyboard drag reaches a zone and fires onStatusChange', async () => {
+    const user = userEvent.setup();
+    const onStatusChange = vi.fn();
+    render(
+      <Kanban onStatusChange={onStatusChange}>
+        <Kanban.Column id="col-a" aria-label="To do" data-col={0} data-h={300}>
+          <Kanban.Card id="task-1" data-card="task-1">
+            Draft Q3 OKRs
+          </Kanban.Card>
+        </Kanban.Column>
+        <Kanban.Column id="col-b" aria-label="Done" statuses={WL} data-col={1} data-h={300}>
+          <Kanban.Card id="task-3" status="open" data-card="task-3">
+            Ship onboarding email
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    screen.getByText('Draft Q3 OKRs').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    expect(live()).toMatch(/^Draft Q3 OKRs, over .+ in Done\.$/);
+    await user.keyboard('[Space]');
+    expect(live()).toMatch(/^Dropped Draft Q3 OKRs in .+ in Done\.$/);
+    expect(onStatusChange).toHaveBeenCalledTimes(1);
   });
 });

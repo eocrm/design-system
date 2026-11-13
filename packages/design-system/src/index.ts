@@ -22,6 +22,9 @@ export type {
   KanbanColumnProps,
   KanbanCardProps,
   KanbanMoveEvent,
+  KanbanStatus,
+  KanbanDropTarget,
+  KanbanStatusChangeEvent,
 } from './components/Kanban';
 
 export { Kbd } from './components/Kbd';

@@ -198,6 +198,12 @@ export const en: Messages = {
       `${item as string}, position ${index as number} of ${total as number}.`,
     movedOverIn: ({ item, index, total, container }) =>
       `${item as string}, position ${index as number} of ${total as number} in ${container as string}.`,
+    movedOverZone: ({ item, zone, container }) =>
+      `${item as string}, over ${zone as string} in ${container as string}.`,
+    droppedInZone: ({ item, zone, container }) =>
+      `Dropped ${item as string} in ${zone as string} in ${container as string}.`,
+    zoneUnavailable: ({ item, zone, container }) =>
+      `${item as string}, ${zone as string} in ${container as string} is unavailable.`,
     movedOutside: ({ item }) => `${item as string} is not over a drop target.`,
     dropped: ({ item, index, total }) =>
       `Dropped ${item as string} at position ${index as number} of ${total as number}.`,

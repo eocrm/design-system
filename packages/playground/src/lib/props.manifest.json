@@ -459,7 +459,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Show an in-button spinner while an async action runs. The children stay\nrendered (transparent) so the button keeps its width, and a small\nindeterminate spinner is centred over them.\n\nWhile `true` the button sets `aria-disabled=\"true\"` and ignores clicks and\nform submission (the consumer's `onClick` is not called; with `as=\"a\"` the\nnavigation is prevented) but stays focusable. It does NOT use the native\n`disabled` attribute: that would drop focus from the control mid-action.\n\nAssistive tech: the accessible name is unchanged and a visually hidden\npolite live region (`role=\"status\"`) announces \"Loading…\" when it turns\ntrue. The region renders only when the prop is passed at all (either\nvalue), so pass `loading={false}` rather than omitting it for a button\nthat can later load: a region added together with its text is not\nannounced. Defaults to `undefined` (no region, not loading)."
+          "description": "Show an in-button spinner while an async action runs. The children stay\nrendered (transparent) so the button keeps its width, and a small\nindeterminate spinner is centred over them.\n\nWhile `true` the button sets `aria-disabled=\"true\"` and ignores clicks and\nform submission (the consumer's `onClick` is not called; with `as=\"a\"` the\nnavigation is prevented) but stays focusable. It does NOT use the native\n`disabled` attribute: that would drop focus from the control mid-action.\n\nAssistive tech: the accessible name is unchanged and a visually hidden\npolite live region (`role=\"status\"`) announces `loadingLabel` when it\nturns true. The region renders only when the prop is passed at all (either\nvalue), so pass `loading={false}` rather than omitting it for a button\nthat can later load: a region added together with its text is not\nannounced. Defaults to `undefined` (no region, not loading)."
+        },
+        {
+          "name": "loadingLabel",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Text the polite live region announces while `loading` is true, already\ntranslated by the caller (e.g. `t('common.saving')`). Without it nothing\nis announced and a dev-only `console.warn` fires once per instance.\n\nThis is a deliberate, documented exception to Hard rule 9 (no\nper-component label props): Button must stay free of the i18n catalogue\nso a Button-only import stays small. Defaults to `undefined`."
         },
         {
           "name": "as",
@@ -963,6 +970,31 @@
           "required": false,
           "default": "",
           "description": "Called on a mouse double-click or a touch double-tap (two taps within 300ms and 24px) on the plot, and on\nEnter while a category is inspected from the keyboard (`value: null`). Reports the nearest category's original\nindex, the domain fraction and the y value at the pointer, e.g. to add a marker there."
+        },
+        {
+          "name": "categoryValues",
+          "type": "(number | Date)[]",
+          "required": false,
+          "default": "",
+          "description": "The x each category stands for (e.g. each day's start, as a `Date` or epoch ms), same length and order as\n`categories`, ascending. Inside a `ChartSync` it syncs by value: a category covers `[value_i, value_i+1)` (the\nlast reuses the previous step), so charts with different labels or bucket sizes, and scatter charts, line\nup. Without it the chart syncs only with other category charts, by exact category label. A wrong length is\nignored (label matching) with a dev warning."
+        },
+        {
+          "name": "sync",
+          "type": "boolean",
+          "required": false,
+          "default": "true",
+          "description": "Inside a `ChartSync`, `true` (default) joins the group: inspecting a category here shows a crosshair and tooltip\nat the matching x in the other charts, and theirs show here. `false` opts this chart out. No effect outside\na `ChartSync`."
+        }
+      ]
+    },
+    "ChartSync": {
+      "props": [
+        {
+          "name": "children",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "The charts to sync (at any depth), plus anything else on the dashboard."
         }
       ]
     },
@@ -4154,6 +4186,20 @@
           "required": false,
           "default": "",
           "description": "Fires once per drag (on drop) with the from/to positions and the cardId.\nNOT fired on drag cancel. NOT fired when from === to (no-op drop).\n\nConsumer should update their items state immutably, e.g.:\n```ts\nconst [cols, setCols] = useState({ todo: ['a', 'b'], done: ['c'] });\nconst handleMove = ({ from, to, cardId }) => {\n  setCols((prev) => {\n    const next = { ...prev };\n    next[from.columnId] = [...prev[from.columnId]];\n    next[from.columnId].splice(from.index, 1);\n    next[to.columnId] = [...prev[to.columnId]];\n    next[to.columnId].splice(to.index, 0, cardId);\n    return next;\n  });\n};\n```"
+        },
+        {
+          "name": "onStatusChange",
+          "type": "((event: KanbanStatusChangeEvent) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires when a card is dropped on a status zone of a multi-status column\n(instead of `onMove`). Carries no index: the consumer decides where the\ncard lands (e.g. top of the column). NOT fired on cancel."
+        },
+        {
+          "name": "canDrop",
+          "type": "((cardId: string | number, to: KanbanDropTarget) => boolean)",
+          "required": false,
+          "default": "",
+          "description": "Return `false` to forbid dropping `cardId` on `to`: a forbidden zone is\ndisabled, a forbidden plain column dimmed, and a release there cancels.\nRuns on every collision pass during a drag, so keep it pure and cheap.\nThe card's own plain origin column is never passed. Default: allow all."
         }
       ]
     },
@@ -4259,7 +4305,7 @@
           "type": "ChartSelectOn",
           "required": false,
           "default": "'drag'",
-          "description": "What a plain click or tap does while selection is on. `'drag'` (default): inspects, outside the band clears.\n`'tap'`: selects that one category (tapping it again clears), the phone flow. Drag and long-press still select a range."
+          "description": "What a plain click or tap does while selection is on. `'drag'` (default): inspects, outside the band clears.\n`'tap'`: selects that one category (tapping it again clears), the phone flow. Drag and long-press still select a range. Ignored unless selection is on."
         },
         {
           "name": "zoomRange",
@@ -4316,6 +4362,20 @@
           "required": false,
           "default": "",
           "description": "Called on a double-click, double-tap or Enter on the plot, as `Chart`; `value` is always `null` (no single y scale)."
+        },
+        {
+          "name": "categoryValues",
+          "type": "(number | Date)[]",
+          "required": false,
+          "default": "",
+          "description": "The x each category stands for (e.g. each day's start, as a `Date` or epoch ms), same length and order as\n`categories`, ascending. Inside a `ChartSync` it syncs by value: a category covers `[value_i, value_i+1)` (the\nlast reuses the previous step), so charts with different labels or bucket sizes, and scatter charts, line\nup. Without it the chart syncs only with other category charts, by exact category label. A wrong length is\nignored (label matching) with a dev warning."
+        },
+        {
+          "name": "sync",
+          "type": "boolean",
+          "required": false,
+          "default": "true",
+          "description": "Inside a `ChartSync`, `true` (default) joins the group: inspecting a category here shows a crosshair and tooltip\nat the matching x in the other charts, and theirs show here across every lane. `false` opts this chart out. No\neffect outside a `ChartSync`."
         }
       ]
     },
@@ -6246,6 +6306,13 @@
           "required": false,
           "default": "",
           "description": "Short note under the plot; takes its own row, also describes the plot for screen readers and stays in the empty state."
+        },
+        {
+          "name": "sync",
+          "type": "boolean",
+          "required": false,
+          "default": "true",
+          "description": "Inside a `ChartSync`, `true` (default) joins the group: inspecting a point here shows a crosshair and tooltip at\nits x in the other charts (category charts need `categoryValues`), and theirs show here as a crosshair, the\npoints in that x range highlighted and a tooltip for the nearest one. `false` opts this chart out. No effect\noutside a `ChartSync`."
         }
       ]
     },
@@ -6907,7 +6974,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Show an in-button spinner while an async action runs. The children stay\nrendered (transparent) so the button keeps its width, and a small\nindeterminate spinner is centred over them.\n\nWhile `true` the button sets `aria-disabled=\"true\"` and ignores clicks and\nform submission (the consumer's `onClick` is not called; with `as=\"a\"` the\nnavigation is prevented) but stays focusable. It does NOT use the native\n`disabled` attribute: that would drop focus from the control mid-action.\n\nAssistive tech: the accessible name is unchanged and a visually hidden\npolite live region (`role=\"status\"`) announces \"Loading…\" when it turns\ntrue. The region renders only when the prop is passed at all (either\nvalue), so pass `loading={false}` rather than omitting it for a button\nthat can later load: a region added together with its text is not\nannounced. Defaults to `undefined` (no region, not loading)."
+          "description": "Show an in-button spinner while an async action runs. The children stay\nrendered (transparent) so the button keeps its width, and a small\nindeterminate spinner is centred over them.\n\nWhile `true` the button sets `aria-disabled=\"true\"` and ignores clicks and\nform submission (the consumer's `onClick` is not called; with `as=\"a\"` the\nnavigation is prevented) but stays focusable. It does NOT use the native\n`disabled` attribute: that would drop focus from the control mid-action.\n\nAssistive tech: the accessible name is unchanged and a visually hidden\npolite live region (`role=\"status\"`) announces `loadingLabel` when it\nturns true. The region renders only when the prop is passed at all (either\nvalue), so pass `loading={false}` rather than omitting it for a button\nthat can later load: a region added together with its text is not\nannounced. Defaults to `undefined` (no region, not loading)."
+        },
+        {
+          "name": "loadingLabel",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Text the polite live region announces while `loading` is true, already\ntranslated by the caller (e.g. `t('common.saving')`). Without it nothing\nis announced and a dev-only `console.warn` fires once per instance.\n\nThis is a deliberate, documented exception to Hard rule 9 (no\nper-component label props): Button must stay free of the i18n catalogue\nso a Button-only import stays small. Defaults to `undefined`."
         },
         {
           "name": "as",
@@ -8038,7 +8112,9 @@
     "ButtonVariant": "\"success\" | \"danger\" | \"primary\" | \"secondary\" | \"ghost\" | \"danger-outline\"",
     "ButtonSize": "\"sm\" | \"md\" | \"lg\" | \"xs\"",
     "InputSize": "\"sm\" | \"md\" | \"lg\"",
-    "KanbanMoveEvent": "{ from: { columnId: string | number; index: number; }; to: { columnId: string | number; index: number; }; cardId: string | number }",
+    "KanbanMoveEvent": "{ from: { columnId: string | number; index: number; statusId?: string | number; }; to: { columnId: string | number; index: number; }; cardId: string | number }",
+    "KanbanDropTarget": "{ columnId: string | number; statusId?: string | number }",
+    "KanbanStatusChangeEvent": "{ cardId: string | number; from: { columnId: string | number; index: number; statusId?: string | number; }; to: { columnId: string | number; statusId: string | number; } }",
     "KbdSize": "\"sm\" | \"md\"",
     "VisuallyHiddenAs": "\"div\" | \"span\"",
     "LiveRegionPoliteness": "\"polite\" | \"assertive\"",

@@ -14,7 +14,8 @@ import {
  * `useDroppable`, so they carry no `data.sortable`; items register via
  * `useSortable`, which adds it.
  */
-const isContainer = (droppable: DroppableContainer) => droppable.data.current?.sortable == null;
+export const isContainer = (droppable: DroppableContainer) =>
+  droppable.data.current?.sortable == null;
 
 /**
  * `closestCorners`, but the pointer's containing container wins first.

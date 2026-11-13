@@ -10,7 +10,10 @@ import {
   Stack,
   Text,
   Title,
+  type KanbanDropTarget,
   type KanbanMoveEvent,
+  type KanbanStatus,
+  type KanbanStatusChangeEvent,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -92,6 +95,43 @@ const PIPELINE: [string, CardData[]][] = [
 
 const INITIAL_PIPELINE: Record<string, CardData[]> = Object.fromEntries(PIPELINE);
 
+interface DealCard extends CardData {
+  status?: string;
+}
+
+const QUALIFICATION_STATUSES = [
+  { id: 'new', label: 'New' },
+  { id: 'contacted', label: 'Contacted' },
+  { id: 'meeting', label: 'Meeting set' },
+];
+const CLOSING_STATUSES = [
+  { id: 'proposal', label: 'Proposal' },
+  { id: 'negotiation', label: 'Negotiation' },
+];
+
+const DEAL_STATUS_LABELS: Record<string | number, string> = Object.fromEntries(
+  [...QUALIFICATION_STATUSES, ...CLOSING_STATUSES].map((s) => [s.id, s.label]),
+);
+
+const DEAL_COLUMNS: { id: string; title: string; statuses?: KanbanStatus[] }[] = [
+  { id: 'lead', title: 'Lead' },
+  { id: 'qualification', title: 'Qualification', statuses: QUALIFICATION_STATUSES },
+  { id: 'closing', title: 'Closing', statuses: CLOSING_STATUSES },
+];
+
+const INITIAL_DEALS: Record<string, DealCard[]> = {
+  lead: [
+    { id: 'z-1', title: 'Acme — 40 seats' },
+    { id: 'z-2', title: 'Globex renewal' },
+  ],
+  qualification: [
+    { id: 'z-3', title: 'Initech pilot', status: 'new' },
+    { id: 'z-4', title: 'Umbrella — security review', status: 'contacted' },
+    { id: 'z-5', title: 'Stark Industries', status: 'meeting' },
+  ],
+  closing: [{ id: 'z-6', title: 'Wayne Ent. — multi-year', status: 'proposal' }],
+};
+
 function makeMoveHandler<K extends string>(
   setter: React.Dispatch<React.SetStateAction<Record<K, CardData[]>>>,
 ) {
@@ -119,6 +159,42 @@ export function KanbanDemo() {
   const [boardB, setBoardB] = useState<Record<ColId, CardData[]>>(INITIAL_BOARD);
   const [boardC, setBoardC] = useState<Record<UnevenColId, CardData[]>>(INITIAL_UNEVEN);
   const [boardD, setBoardD] = useState<Record<string, CardData[]>>(INITIAL_PIPELINE);
+  const [deals, setDeals] = useState<Record<string, DealCard[]>>(INITIAL_DEALS);
+  const handleMoveDeals = useCallback((event: KanbanMoveEvent) => {
+    const { from, to, cardId } = event;
+    setDeals((curr) => {
+      const next: Record<string, DealCard[]> = {};
+      for (const k of Object.keys(curr)) next[k] = [...curr[k]];
+      const idx = next[from.columnId].findIndex((c) => c.id === cardId);
+      if (idx < 0) return curr;
+      const [moved] = next[from.columnId].splice(idx, 1);
+      // Plain-column drops carry an index; moving to a column without statuses clears the status.
+      const hasStatuses = DEAL_COLUMNS.find((c) => c.id === to.columnId)?.statuses;
+      const card = hasStatuses ? moved : { ...moved, status: undefined };
+      next[to.columnId].splice(Math.min(to.index, next[to.columnId].length), 0, card);
+      return next;
+    });
+  }, []);
+  // A deal in Closing can't go back to Lead; 'Initech pilot' can't skip straight to Negotiation.
+  const canDropDeal = useCallback(
+    (cardId: string | number, to: KanbanDropTarget) =>
+      !(to.columnId === 'lead' && deals.closing.some((c) => c.id === cardId)) &&
+      !(cardId === 'z-3' && to.statusId === 'negotiation'),
+    [deals],
+  );
+  const handleStatusChange = useCallback((event: KanbanStatusChangeEvent) => {
+    const { cardId, from, to } = event;
+    setDeals((curr) => {
+      const next: Record<string, DealCard[]> = {};
+      for (const k of Object.keys(curr)) next[k] = [...curr[k]];
+      const idx = next[from.columnId].findIndex((c) => c.id === cardId);
+      if (idx < 0) return curr;
+      const [moved] = next[from.columnId].splice(idx, 1);
+      // Zone drops carry no index: the card goes to the top of the target column.
+      next[to.columnId].unshift({ ...moved, status: String(to.statusId) });
+      return next;
+    });
+  }, []);
   const handleMoveD = useMemo(() => makeMoveHandler(setBoardD), []);
   const [lastMove, setLastMove] = useState<string>('—');
   const handleMoveA = useMemo(() => makeMoveHandler(setBoardA), []);
@@ -472,6 +548,63 @@ export function Demo() {
             Last onMove: {lastMove}
           </Text>
         </Stack>
+      </Example>
+
+      <Example
+        title="Multi-status columns"
+        description="Qualification and Closing hold several statuses. While dragging, each shows one zone per status; drop on a zone to change status (the card goes to the top). Lead is a plain column. canDrop blocks moving any deal from Closing back into Lead (the column dims and rejects the drop), and 'Initech pilot' can't skip to Negotiation: that zone is dimmed and rejects the drop."
+        code={`<Kanban
+  canDrop={(cardId, to) =>
+    // Nothing in Closing goes back to Lead.
+    !(to.columnId === 'lead' && deals.closing.some((c) => c.id === cardId)) &&
+    !(cardId === 'z-3' && to.statusId === 'negotiation')}
+  onMove={handleMove}
+  onStatusChange={handleStatusChange}
+>
+  <Kanban.Column id="lead" aria-label="Lead">…</Kanban.Column>
+  <Kanban.Column
+    id="qualification"
+    aria-label="Qualification"
+    statuses={[
+      { id: 'new', label: 'New' },
+      { id: 'contacted', label: 'Contacted' },
+      { id: 'meeting', label: 'Meeting set' },
+    ]}
+  >
+    <Kanban.Card id="z-3" status="new">
+      <Card padding="sm">…<Badge>New</Badge></Card>
+    </Kanban.Card>
+  </Kanban.Column>
+</Kanban>`}
+      >
+        <Kanban
+          data-testid="status-zones-board"
+          canDrop={canDropDeal}
+          onMove={handleMoveDeals}
+          onStatusChange={handleStatusChange}
+        >
+          {DEAL_COLUMNS.map((col) => (
+            <Kanban.Column key={col.id} id={col.id} aria-label={col.title} statuses={col.statuses}>
+              <Title order={3} size="sm">
+                {col.title}
+              </Title>
+              {deals[col.id].map((card) => (
+                <Kanban.Card key={card.id} id={card.id} status={card.status}>
+                  <Card padding="sm">
+                    <Stack gap="xs">
+                      <Text weight="medium">{card.title}</Text>
+                      {card.status && (
+                        <Badge tone="neutral" size="sm">
+                          {DEAL_STATUS_LABELS[card.status]}
+                        </Badge>
+                      )}
+                    </Stack>
+                  </Card>
+                </Kanban.Card>
+              ))}
+            </Kanban.Column>
+          ))}
+        </Kanban>
       </Example>
 
       <Example

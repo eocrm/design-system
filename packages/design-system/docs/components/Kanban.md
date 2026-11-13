@@ -50,6 +50,8 @@ function handleMove(event: KanbanMoveEvent) {
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `onMove` | `((event: KanbanMoveEvent) => void)` | no | Fires once per drag (on drop) with the from/to positions and the cardId. NOT fired on drag cancel. NOT fired when from === to (no-op drop). Consumer should update their items state immutably, e.g.: (example below) |
+| `onStatusChange` | `((event: KanbanStatusChangeEvent) => void)` | no | Fires when a card is dropped on a status zone of a multi-status column (instead of `onMove`). Carries no index: the consumer decides where the card lands (e.g. top of the column). NOT fired on cancel. |
+| `canDrop` | `((cardId: string \| number, to: KanbanDropTarget) => boolean)` | no | Return `false` to forbid dropping `cardId` on `to`: a forbidden zone is disabled, a forbidden plain column dimmed, and a release there cancels. Runs on every collision pass during a drag, so keep it pure and cheap. The card's own plain origin column is never passed. Default: allow all. |
 | …native | | | plus native `<div>` attributes |
 
 **`onMove`** example:
@@ -75,6 +77,7 @@ const handleMove = ({ from, to, cardId }) => {
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `id` | `string \| number` | yes | Stable identifier for this card. Must be unique across ALL columns in the `<Kanban>`. Used by dnd-kit to track the card during drag. |
+| `status` | `string \| number` | no | Status id within a multi-status column; unknown or missing = no status. |
 | `children` | `ReactNode` | yes |  |
 | …native | | | plus native `<div>` attributes |
 
@@ -84,6 +87,7 @@ const handleMove = ({ from, to, cardId }) => {
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `id` | `string \| number` | yes | Stable identifier for this column. Must be unique within a `<Kanban>`. Used internally to track which cards belong to which column. |
+| `statuses` | `readonly KanbanStatus[]` | no | Statuses that make this column multi-status: zones appear while dragging. |
 | `children` | `ReactNode` | no |  |
 | …native | | | plus native `<div>` attributes |
 
@@ -99,21 +103,51 @@ Controlled-only: the consumer applies each `onMove`. Column layout (header, foot
 
 **Drop slot edge cases:** dropping onto an empty column lands at index 0; dropping in a column's padding past the last card appends to that column's end (including the source column's own padding). The drop target is decided by the pointer, while the dragged card itself stays clamped to the board — a card that looks parked on the last column has still cancelled if the cursor was released past it.
 
-**Releasing off the board cancels**: release with the cursor outside the columns — over unrelated page content, past the last column — and the card snaps back with NO `onMove`. "Outside" means outside the columns' collective bounding box, so the gutter between two columns still commits to the nearer one; only leaving the band of columns entirely cancels. Escape and a release that never left the card's own slot cancel the same way.
+**Releasing off the board cancels**: release with the cursor outside the columns — over unrelated page content, past the last column — and the card snaps back with NO `onMove`. "Outside" means outside the columns' collective bounding box, so the gutter between two columns commits to the nearer one; only leaving the band of columns entirely cancels. Exception: when the nearer column takes no plain drop (it has `statuses`, or `canDrop` rejects it), a gutter release cancels too, rather than committing to a farther column. Escape and a release that never left the card's own slot cancel the same way.
 
 **Overflowing boards auto-scroll**: the board is its own horizontal scroll container, so dragging a card near the left/right edge scrolls it — that is how you reach an off-screen column. The dragged card is confined to the board's scrollable content box on both axes (it stops at the outer edge of the first/last column rather than following the cursor out of the board). That bound is what keeps auto-scroll from running away: the card renders in flow, so an unbounded one would extend the board's own `scrollWidth` and auto-scroll would chase the edge it just created. Nothing to configure. Caveat: the bound is the card's NEAREST scrolling ancestor. Capping a column (`overflow-y: auto` + `max-height` on `<Kanban.Column>`) makes the column that ancestor, and the dragged card is then confined to its own column while dragging — the drop still lands wherever the cursor is, but the card won't visibly cross into the neighbour. Scroll the board, not the columns.
 
-**Keyboard reorder** works WITHIN a column (Tab to Card/Handle, Space pick up, Arrow keys move, Space drop). Cross-column keyboard moves are NOT supported in v1.
+**Keyboard moves** work within and across columns (Tab to Card/Handle, Space pick up, Arrow keys move, Space drop, Escape cancel): Up/Down step through slots, Left/Right step to the neighbouring column. Arrow keys visit allowed plain slots/columns and the zones of every multi-status column (in any column, the card's own included); a zone `canDrop` forbids is still visited and announced as unavailable, and dropping there cancels. Cards hidden under a zone overlay, a multi-status column as a whole, and columns `canDrop` rejects are skipped, so every key press announces a new target.
+
+**Multi-status columns**: give a column `statuses` and tag each card with `status`. While a card is dragged, the column's card area is covered by one labelled zone per status; dropping on a zone fires `onStatusChange` (not `onMove`). Drops on zones carry no index: the consumer decides where the card lands (e.g. top of the column). `canDrop(cardId, { columnId, statusId? })` can forbid a target (disabled zone / dimmed plain column).
+
+- Multi-status columns are not sortable: a drop must land on a zone. Releasing on the column's header (the children before the cards), its footer, or anywhere else inside the column but outside a zone cancels. So does a release that never left the dragged card's own slot (pointer, or Space then Space), even though another status's zone covers that slot until the card moves away.
+- `onMove` still fires when a card leaves a multi-status column for a plain one; `from.statusId` then carries the status it left (absent for a card from a plain column).
+- The card's own plain origin column is never passed to `canDrop`: reordering within it and dropping it back always work. `canDrop` therefore only decides where a card may GO; the example below forbids moving anything into `lead` from elsewhere, while cards already in `lead` still reorder freely.
+
+```tsx
+<Kanban
+  canDrop={(cardId, to) => to.columnId !== 'lead'}
+  onMove={handleMove}
+  onStatusChange={({ cardId, to }) => setStatus(cardId, to.columnId, to.statusId)}
+>
+  <Kanban.Column
+    id="qualification"
+    aria-label="Qualification"
+    statuses={[
+      { id: 'new', label: 'New' },
+      { id: 'contacted', label: 'Contacted' },
+    ]}
+  >
+    <Kanban.Card id="a" status="new">
+      <Card>Acme</Card>
+    </Kanban.Card>
+  </Kanban.Column>
+</Kanban>
+```
+
+`canDrop` is called frequently during a drag (on every collision pass), so it must be pure and cheap. It is never asked about a multi-status column as a whole, only about its zones.
 
 **When NOT to use**
 
 - Single-column drag-to-reorder — use `<Sortable>`.
 - Pure display boards with no drag — use `<Stack>` + `<Card>`.
+- Zones when users need to reorder cards within a stage: zone drops carry no index.
 - Column reordering is not supported; columns render in source JSX order.
 
 **Anti-patterns**
 
-- ❌ Expecting cross-column keyboard reorder. dnd-kit's stock coordinate-getter is per-`SortableContext`. v2 will ship a custom getter that bridges columns.
+- ❌ Relying on zones to show a card's status while idle. Zones exist only during a drag; render the status as a `<Badge>` in the card.
 - ❌ Leaving `<Kanban.Column>` unnamed. Screen-reader drag announcements name the destination column from its `aria-label` or `aria-labelledby`; without either they fall back to "column 2 of 3". A named column also renders as `role="group"` so the name isn't inert.
 - ❌ A content-heavy `<Kanban.Card>` with no `aria-label`. The card announces itself by its rendered text, so a card carrying title + assignee + due date + badges reads all of it on every drag step. One `aria-label` fixes it.
 - ❌ Interleaving non-`Kanban.Card` children with cards inside a `<Kanban.Column>`. The Root walks each column's children to extract a contiguous card block; if non-cards appear between cards, the rendering re-arranges them awkwardly. Keep header / count badges BEFORE the cards, footer / "Add card" buttons AFTER.

@@ -97,6 +97,13 @@ export interface DragTarget {
   total: number;
   /** Human name of the list the slot belongs to. Omit in single-list components. */
   container?: string;
+  /**
+   * Set when the slot is a named zone (a Kanban status zone) rather than a
+   * numbered position; `index` / `total` are then ignored.
+   */
+  zone?: string;
+  /** With `zone`: the zone refuses this drop. */
+  unavailable?: boolean;
 }
 
 /**
@@ -163,14 +170,22 @@ export function useDragAccessibility(
       describeRef.current(entry, activeId)?.label || t('drag.unnamed');
 
     const at = (
-      key: 'movedOver' | 'dropped',
+      kind: 'movedOver' | 'dropped',
       item: string,
       target: DragTarget,
     ): string | undefined => {
-      const { index, total, container } = target;
+      const { index, total, container, zone, unavailable } = target;
+      if (zone != null) {
+        const key = unavailable
+          ? 'drag.zoneUnavailable'
+          : kind === 'movedOver'
+            ? 'drag.movedOverZone'
+            : 'drag.droppedInZone';
+        return t(key, { item, zone, container: container ?? '' });
+      }
       return container == null
-        ? t(`drag.${key}`, { item, index, total })
-        : t(key === 'movedOver' ? 'drag.movedOverIn' : 'drag.droppedIn', {
+        ? t(`drag.${kind}`, { item, index, total })
+        : t(kind === 'movedOver' ? 'drag.movedOverIn' : 'drag.droppedIn', {
             item,
             index,
             total,

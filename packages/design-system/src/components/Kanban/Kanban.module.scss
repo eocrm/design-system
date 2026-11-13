@@ -20,6 +20,61 @@
   min-height: 80px;
 }
 
+.body {
+  // Anchor for the zone overlay; the cards stay in flow beneath it.
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kanban-column-gap);
+}
+
+// While dragging, fill the column (internal child, not layout) so the zones
+// split its whole card area. Idle, the footer stays right under the cards.
+.body[data-dragging='true'] {
+  flex: 1 1 auto;
+}
+
+.zones {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kanban-zone-gap);
+
+  // Opaque backing: the gaps between zones must not show the cards beneath.
+  background: var(--kanban-column-bg);
+}
+
+.zone {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--kanban-zone-padding);
+  border: var(--border-width) dashed var(--kanban-zone-border);
+  border-radius: var(--kanban-zone-radius);
+  background: var(--kanban-zone-bg);
+  color: var(--kanban-zone-label-color);
+  font-size: var(--font-size-sm);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.zone[data-over='true'] {
+  background: var(--kanban-zone-bg-active);
+  border-color: var(--kanban-zone-border-active);
+}
+
+.zone[data-disabled] {
+  opacity: var(--kanban-zone-disabled-opacity);
+}
+
+.column[data-drop-disabled='true'] {
+  opacity: var(--kanban-zone-disabled-opacity);
+}
+
 .card {
   position: relative;
   cursor: grab;
@@ -33,6 +88,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .zone {
+    transition: none;
+  }
+
   .card {
     transition: none !important; // stylelint-disable-line declaration-no-important -- override dnd-kit's inline transition
   }

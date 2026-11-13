@@ -19,7 +19,9 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
+  closestCorners,
   getScrollableAncestors,
+  pointerWithin,
   useDroppable,
   useSensor,
   useSensors,
@@ -27,6 +29,8 @@ import {
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
+  type DroppableContainer,
+  type KeyboardCoordinateGetter,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -50,6 +54,7 @@ import {
 import { useTranslation } from '../../i18n/useTranslation';
 import {
   containerAwareClosestCorners,
+  isContainer,
   isPointerOutsideContainers,
 } from '../Sortable/containerAwareCollision';
 import styles from './Kanban.module.scss';
@@ -60,6 +65,64 @@ import styles from './Kanban.module.scss';
 
 const KanbanColumnItemsContext = createContext<readonly (string | number)[] | null>(null);
 
+/** The drag in progress, for columns and zones. Null outside a `<Kanban>`. */
+interface KanbanDragContextValue {
+  activeCardId: string | number | null;
+  originColumn: string | number | null;
+  activeStatus: string | number | undefined;
+  /** `canDrop` bound to the active card; `true` when `canDrop` is unset. */
+  canDropTo: (to: KanbanDropTarget) => boolean;
+}
+const KanbanDragContext = createContext<KanbanDragContextValue | null>(null);
+
+/**
+ * Where dnd-kit places the dragged card this frame: its client-space top-left
+ * (`collisionRect` = initial rect + pointer translate, so it tracks the pointer
+ * and stays put while the board scrolls under it). A stable ref, written by the
+ * root's collision detection, so reading it re-renders nothing.
+ */
+const KanbanDragRectContext = createContext<{
+  current: { left: number; top: number } | null;
+} | null>(null);
+
+/** Droppable id of a status zone; JSON keeps `1` and `'1'` apart and can't collide with card/column ids. */
+const kanbanZoneId = (columnId: string | number, statusId: string | number): string =>
+  `kanban-zone:${JSON.stringify([columnId, statusId])}`;
+
+interface KanbanZoneData {
+  columnId: string | number;
+  statusId: string | number;
+  label: string;
+  allowed: boolean;
+}
+
+const zoneOf = (droppable: { data: { current?: Record<string, unknown> } } | null | undefined) =>
+  droppable?.data.current?.kanbanZone as KanbanZoneData | undefined;
+
+function KanbanZone({
+  columnId,
+  status,
+  allowed,
+}: Omit<KanbanZoneData, 'statusId' | 'label'> & { status: KanbanStatus }) {
+  const data = useMemo(
+    () => ({ kanbanZone: { columnId, statusId: status.id, label: status.label, allowed } }),
+    [columnId, status.id, status.label, allowed],
+  );
+  const { setNodeRef, isOver } = useDroppable({ id: kanbanZoneId(columnId, status.id), data });
+  return (
+    <div
+      ref={setNodeRef}
+      className={styles.zone}
+      data-kanban-zone=""
+      data-zone-status={String(status.id)}
+      data-disabled={!allowed || undefined}
+      data-over={isOver && allowed ? 'true' : undefined}
+    >
+      {status.label}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Public interfaces
 // ---------------------------------------------------------------------------
@@ -69,12 +132,38 @@ const KanbanColumnItemsContext = createContext<readonly (string | number)[] | nu
  * a column. Consumer applies the move by updating their items state.
  */
 export interface KanbanMoveEvent {
-  /** Source position — where the card was before the drag. */
-  from: { columnId: string | number; index: number };
+  /** Source position — where the card was before the drag. `statusId` is set when the source column has statuses. */
+  from: { columnId: string | number; index: number; statusId?: string | number };
   /** Destination position — where the card landed after the drop. */
   to: { columnId: string | number; index: number };
   /** The id of the card that was dragged. */
   cardId: string | number;
+}
+
+/** One status inside a multi-status column (a Jira-style swimlane zone). */
+export interface KanbanStatus {
+  /** Stable status id, referenced by `Kanban.Card`'s `status`. */
+  id: string | number;
+  /** Visible zone label. */
+  label: string;
+}
+
+/** A drop target: a column, and optionally one of its statuses. */
+export interface KanbanDropTarget {
+  /** The target column's `id`. */
+  columnId: string | number;
+  /** The target zone's status id; set only when the target column has statuses. */
+  statusId?: string | number;
+}
+
+/** Payload of `onStatusChange`: a card moved to another status. */
+export interface KanbanStatusChangeEvent {
+  /** The id of the card that was dragged. */
+  cardId: string | number;
+  /** Where the card was before the drag. */
+  from: { columnId: string | number; index: number; statusId?: string | number };
+  /** The destination column and status. */
+  to: { columnId: string | number; statusId: string | number };
 }
 
 export interface KanbanProps extends HTMLAttributes<HTMLDivElement> {
@@ -98,6 +187,19 @@ export interface KanbanProps extends HTMLAttributes<HTMLDivElement> {
    * ```
    */
   onMove?: (event: KanbanMoveEvent) => void;
+  /**
+   * Fires when a card is dropped on a status zone of a multi-status column
+   * (instead of `onMove`). Carries no index: the consumer decides where the
+   * card lands (e.g. top of the column). NOT fired on cancel.
+   */
+  onStatusChange?: (event: KanbanStatusChangeEvent) => void;
+  /**
+   * Return `false` to forbid dropping `cardId` on `to`: a forbidden zone is
+   * disabled, a forbidden plain column dimmed, and a release there cancels.
+   * Runs on every collision pass during a drag, so keep it pure and cheap.
+   * The card's own plain origin column is never passed. Default: allow all.
+   */
+  canDrop?: (cardId: string | number, to: KanbanDropTarget) => boolean;
 }
 
 export interface KanbanColumnProps extends Omit<HTMLAttributes<HTMLDivElement>, 'id'> {
@@ -106,6 +208,8 @@ export interface KanbanColumnProps extends Omit<HTMLAttributes<HTMLDivElement>, 
    * Used internally to track which cards belong to which column.
    */
   id: string | number;
+  /** Statuses that make this column multi-status: zones appear while dragging. */
+  statuses?: readonly KanbanStatus[];
   children?: ReactNode;
 }
 
@@ -115,6 +219,8 @@ export interface KanbanCardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'i
    * the `<Kanban>`. Used by dnd-kit to track the card during drag.
    */
   id: string | number;
+  /** Status id within a multi-status column; unknown or missing = no status. */
+  status?: string | number;
   children: ReactNode;
 }
 
@@ -286,6 +392,12 @@ export function clampKanbanTransform(
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
+const pointInRect = (
+  x: number,
+  y: number,
+  r: { left: number; top: number; width: number; height: number },
+) => x >= r.left && x <= r.left + r.width && y >= r.top && y <= r.top + r.height;
+
 // ---------------------------------------------------------------------------
 // KanbanCard
 // ---------------------------------------------------------------------------
@@ -295,13 +407,14 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
  * @see docs/components/Kanban.md
  */
 export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function KanbanCard(
-  { id, className, children, ...rest },
+  { id, status: _status, className, children, ...rest },
   ref,
 ) {
   // Announcement label: the consumer's `aria-label`, else the card's RENDERED
   // text (so a closed menu inside the card contributes nothing — see
   // `dragLabelOf`). The same ref is the drag-bounds node ref below.
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const dragRectRef = useContext(KanbanDragRectContext);
   const dragLabel = rest['aria-label'];
   const dragData = useMemo(() => ({ dragLabel, dragNode: cardRef }), [dragLabel]);
 
@@ -346,21 +459,21 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
   // this effect runs only on the renders that (re)measure, and on those the
   // closed-over `transform` is exactly the one just committed.
   //
-  // Be clear about what it is: on today's dnd-kit it is a NO-OP, not a fix.
+  // On today's dnd-kit the WRITE-BACK itself is inert: useSortable's
   // `transform` is null on precisely these frames — a re-seat mutates the
   // SortableContext items, so `itemsHaveChanged` forces `displaceItem` false;
   // and on a transit `over` is the column, so `overIndex` is -1 and it's false
-  // again. A null transform short-circuits every guard below, so nothing is
-  // written. Matching that, the frame could not be made to inflate
-  // `scrollWidth` in the browser: 635 rAF-sampled frames over 14 transits at
-  // max scroll with the pointer held outside the board, write-back disabled,
-  // yielded a single distinct `scrollWidth`.
+  // again. Those frames are not unpainted, though: the follow-pointer effect
+  // below paints a non-null transform on every frame useSortable leaves null,
+  // clamped against `boundsRef` — so the MEASUREMENT here is load-bearing, and
+  // it is in place in time only because this effect is declared (and so runs)
+  // before that one. Keep the order.
   //
-  // It is kept as insurance against exactly that internal changing. If a
-  // dnd-kit bump ever emits a non-null transform on a re-seat frame, deleting
-  // these lines silently reinstates the runaway — and no test can catch it,
-  // because jsdom lays nothing out, so the clamp's only evidence is a manual
-  // browser drag. Two inert guarded lines against a hand-only regression.
+  // The write-back is kept as insurance against dnd-kit's internals changing.
+  // If a bump ever emits a non-null useSortable transform on a re-seat frame,
+  // deleting these lines silently reinstates the runaway — and no test can
+  // catch it, because jsdom lays nothing out, so the clamp's only evidence is
+  // a manual browser drag. Two guarded lines against a hand-only regression.
   const boundsRef = useRef<KanbanDragBounds | null>(null);
   useLayoutEffect(() => {
     const node = cardRef.current;
@@ -373,6 +486,46 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
     if (bounded) node.style.transform = bounded;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- transform is deliberately not a dependency, see above
   }, [isDragging, index, items]);
+
+  const styleTransform = CSS.Transform.toString(clampKanbanTransform(transform, boundsRef.current));
+
+  // Keep the dragged card under the pointer when useSortable gives it no
+  // transform. useSortable only displaces the drag source while `over` is a
+  // sortable item (`overIndex` valid); over a status zone, a column, a
+  // rejected target or nothing at all it returns null and the card would sit
+  // frozen at its in-flow seat. So paint dnd-kit's own placement instead —
+  // the collision rect's top-left minus the card's untransformed layout
+  // top-left — which equals the transform dnd-kit paints over an item
+  // (`translate - nodeRectDelta + scroll since measure`), so the hand-off is
+  // seamless, and stays correct after auto-scroll or a re-seat. Clamped like
+  // every other painted transform (#373). Written straight to the node, pre-
+  // paint, on the renders the dragged card gets anyway (every drag frame), so
+  // nothing extra re-renders; React's own `transform` stays '' meanwhile and
+  // never overwrites it. No deps: it must run on every such render.
+  const followingRef = useRef(false);
+  useLayoutEffect(() => {
+    const node = cardRef.current;
+    const target = dragRectRef?.current;
+    if (!node) return;
+    if (!isDragging || transform || !target) {
+      // Hand the node back to React's value once we stop painting it.
+      if (followingRef.current) node.style.transform = styleTransform ?? '';
+      followingRef.current = false;
+      return;
+    }
+    // Strip like `measureKanbanDragBounds`: the rect must be the layout box.
+    const previousTransition = node.style.transition;
+    node.style.transform = 'none';
+    node.style.transition = 'none';
+    const rect = node.getBoundingClientRect();
+    node.style.transition = previousTransition;
+    const follow = clampKanbanTransform(
+      { x: target.left - rect.left, y: target.top - rect.top, scaleX: 1, scaleY: 1 },
+      boundsRef.current,
+    );
+    node.style.transform = CSS.Transform.toString(follow) ?? '';
+    followingRef.current = true;
+  });
 
   const setRef = (node: HTMLDivElement | null) => {
     cardRef.current = node;
@@ -391,7 +544,7 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
         // the layout effect above and must be applied on the very next pointer
         // move, without a re-render of its own.
         style={{
-          transform: CSS.Transform.toString(clampKanbanTransform(transform, boundsRef.current)),
+          transform: styleTransform,
           transition,
         }}
         data-dragging={isDragging ? 'true' : undefined}
@@ -421,10 +574,17 @@ KanbanCard.displayName = 'KanbanCard';
  * @see docs/components/Kanban.md
  */
 export const KanbanColumn = forwardRef<HTMLDivElement, KanbanColumnProps>(function KanbanColumn(
-  { id, className, children, ...rest },
+  { id, statuses, className, children, ...rest },
   ref,
 ) {
   const { setNodeRef } = useDroppable({ id });
+  const drag = useContext(KanbanDragContext);
+  // Plain column `canDrop` rejects mid-drag; the origin is never asked.
+  const dropDisabled =
+    drag?.activeCardId != null &&
+    id !== drag.originColumn &&
+    !(statuses && statuses.length > 0) &&
+    !drag.canDropTo({ columnId: id });
 
   // Effective card ids are injected by KanbanRoot via context so that this
   // column's SortableContext sees the live-reordered order.
@@ -453,6 +613,7 @@ export const KanbanColumn = forwardRef<HTMLDivElement, KanbanColumnProps>(functi
     <div
       ref={setRef}
       className={clsx(styles.column, className)}
+      data-drop-disabled={dropDisabled ? 'true' : undefined}
       {...rest}
       // A name on a role-less <div> is inert, so a labelled column gets a role
       // to hang it on. AFTER {...rest} — but only when the consumer didn't
@@ -481,7 +642,7 @@ KanbanColumn.displayName = 'KanbanColumn';
  * @see docs/components/Kanban.md
  */
 const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
-  { onMove, className, children, ...rest },
+  { onMove, onStatusChange, canDrop, className, children, ...rest },
   ref,
 ) {
   const t = useTranslation();
@@ -491,53 +652,87 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // columnElements is built in the same pass so render-time lookup is O(1)
   // instead of O(N) per column (i.e., O(N²) total per render).
   // ------------------------------------------------------------------
-  const { columnOrder, columnElements, initialItems, cardElements, columnChildrenSlices } =
-    useMemo(() => {
-      const colOrder: (string | number)[] = [];
-      const colElems = new Map<string | number, ReactElement<KanbanColumnProps>>();
-      const initItems = new Map<string | number, (string | number)[]>();
-      const cardElems = new Map<string | number, ReactElement<KanbanCardProps>>();
-      const colSlices = new Map<string | number, { before: ReactNode[]; after: ReactNode[] }>();
+  const {
+    columnOrder,
+    columnElements,
+    initialItems,
+    cardElements,
+    columnChildrenSlices,
+    columnStatuses,
+    cardStatus,
+  } = useMemo(() => {
+    const colOrder: (string | number)[] = [];
+    const colElems = new Map<string | number, ReactElement<KanbanColumnProps>>();
+    const initItems = new Map<string | number, (string | number)[]>();
+    const cardElems = new Map<string | number, ReactElement<KanbanCardProps>>();
+    const colSlices = new Map<string | number, { before: ReactNode[]; after: ReactNode[] }>();
+    const colStatuses = new Map<string | number, readonly KanbanStatus[]>();
+    const cStatus = new Map<string | number, string | number | undefined>();
 
-      Children.forEach(children, (child) => {
-        if (!isValidElement(child) || child.type !== KanbanColumn) return;
-        const columnElement = child as ReactElement<KanbanColumnProps>;
-        const colProps = columnElement.props;
-        const colId = colProps.id;
-        colOrder.push(colId);
-        colElems.set(colId, columnElement);
+    Children.forEach(children, (child) => {
+      if (!isValidElement(child) || child.type !== KanbanColumn) return;
+      const columnElement = child as ReactElement<KanbanColumnProps>;
+      const colProps = columnElement.props;
+      const colId = colProps.id;
+      colOrder.push(colId);
+      colElems.set(colId, columnElement);
 
-        const colCardIds: (string | number)[] = [];
-        let firstCardIdx = -1;
-        let lastCardIdx = -1;
-        const colChildren = Children.toArray(colProps.children);
+      const colCardIds: (string | number)[] = [];
+      let firstCardIdx = -1;
+      let lastCardIdx = -1;
+      const colChildren = Children.toArray(colProps.children);
+      const statuses = colProps.statuses;
+      const multi = statuses != null && statuses.length > 0;
+      if (multi) colStatuses.set(colId, statuses);
 
-        colChildren.forEach((grandchild, idx) => {
-          if (!isValidElement(grandchild) || grandchild.type !== KanbanCard) return;
-          const cardProps = grandchild.props as KanbanCardProps;
-          colCardIds.push(cardProps.id);
-          cardElems.set(cardProps.id, grandchild as ReactElement<KanbanCardProps>);
-          if (firstCardIdx < 0) firstCardIdx = idx;
-          lastCardIdx = idx;
-        });
-
-        // Split into before/after slices (non-card children outside the card block).
-        const before: ReactNode[] =
-          firstCardIdx >= 0 ? colChildren.slice(0, firstCardIdx) : colChildren;
-        const after: ReactNode[] = lastCardIdx >= 0 ? colChildren.slice(lastCardIdx + 1) : [];
-
-        initItems.set(colId, colCardIds);
-        colSlices.set(colId, { before, after });
+      colChildren.forEach((grandchild, idx) => {
+        if (!isValidElement(grandchild) || grandchild.type !== KanbanCard) return;
+        const cardProps = grandchild.props as KanbanCardProps;
+        colCardIds.push(cardProps.id);
+        cardElems.set(cardProps.id, grandchild as ReactElement<KanbanCardProps>);
+        cStatus.set(
+          cardProps.id,
+          multi && statuses.some((s) => s.id === cardProps.status) ? cardProps.status : undefined,
+        );
+        if (firstCardIdx < 0) firstCardIdx = idx;
+        lastCardIdx = idx;
       });
 
-      return {
-        columnOrder: colOrder,
-        columnElements: colElems,
-        initialItems: initItems,
-        cardElements: cardElems,
-        columnChildrenSlices: colSlices,
-      };
-    }, [children]);
+      // Split into before/after slices (non-card children outside the card block).
+      const before: ReactNode[] =
+        firstCardIdx >= 0 ? colChildren.slice(0, firstCardIdx) : colChildren;
+      const after: ReactNode[] = lastCardIdx >= 0 ? colChildren.slice(lastCardIdx + 1) : [];
+
+      initItems.set(colId, colCardIds);
+      colSlices.set(colId, { before, after });
+    });
+
+    return {
+      columnOrder: colOrder,
+      columnElements: colElems,
+      initialItems: initItems,
+      cardElements: cardElems,
+      columnChildrenSlices: colSlices,
+      columnStatuses: colStatuses,
+      cardStatus: cStatus,
+    };
+  }, [children]);
+
+  // Dev-only: a card in a multi-status column without a known status.
+  const warnedRef = useRef<Set<string | number>>(new Set());
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    for (const [colId, cards] of initialItems) {
+      if (!columnStatuses.has(colId)) continue;
+      for (const id of cards) {
+        if (cardStatus.get(id) !== undefined || warnedRef.current.has(id)) continue;
+        warnedRef.current.add(id);
+        console.warn(
+          `Kanban: card "${id}" in multi-status column "${colId}" has no known \`status\`.`,
+        );
+      }
+    }
+  }, [initialItems, columnStatuses, cardStatus]);
 
   // ------------------------------------------------------------------
   // Stable serialization of initialItems to detect consumer state changes.
@@ -563,12 +758,60 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
 
   const effectiveItems = liveItems ?? initialItems;
 
+  // The card being dragged: null when idle.
+  const [active, setActive] = useState<{
+    id: string | number;
+    origin: string | number | null;
+    status: string | number | undefined;
+  } | null>(null);
+
+  const canDropTo = useCallback(
+    (to: KanbanDropTarget) => !canDrop || active == null || canDrop(active.id, to),
+    [canDrop, active],
+  );
+  const dragContext = useMemo<KanbanDragContextValue>(
+    () => ({
+      activeCardId: active?.id ?? null,
+      originColumn: active?.origin ?? null,
+      activeStatus: active?.status,
+      canDropTo,
+    }),
+    [active, canDropTo],
+  );
+
   // ------------------------------------------------------------------
   // Sensors
   // ------------------------------------------------------------------
+  // Ids a keyboard drag may land on — every zone and allowed plain target —
+  // from the last collision pass (written during render by `resolveCollisions`).
+  const keyboardTargetsRef = useRef<Set<string | number> | null>(null);
+  // Arrow keys step only through the droppables a keyboard drop can land on
+  // (see `keyboardTargetsRef`), so no key press moves to a card hidden under a
+  // zone, a multi-status column itself or a rejected column and says nothing.
+  const coordinateGetter = useCallback<KeyboardCoordinateGetter>((event, args) => {
+    const targets = keyboardTargetsRef.current;
+    if (!targets) return sortableKeyboardCoordinates(event, args);
+    const all = args.context.droppableContainers;
+    // Proxy over the real map: only `getEnabled` is narrowed, every other
+    // member forwards to the real map, so a newer `^10` getter that reads more
+    // of it keeps working (the package's range lets consumers resolve one).
+    const droppableContainers = new Proxy(all, {
+      get(target, prop) {
+        if (prop === 'getEnabled') {
+          return () => target.getEnabled().filter((d) => targets.has(d.id));
+        }
+        const value: unknown = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    return sortableKeyboardCoordinates(event, {
+      ...args,
+      context: { ...args.context, droppableContainers },
+    });
+  }, []);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, { coordinateGetter }),
   );
 
   // ------------------------------------------------------------------
@@ -606,35 +849,135 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // that is safe because it is a pure function of the arguments, so a double
   // render under StrictMode writes the same value.
   const outsideBoardRef = useRef(false);
-  const collisionDetection = useCallback<CollisionDetection>((args) => {
-    const isOutsideBoard = isPointerOutsideContainers(args);
-    outsideBoardRef.current = isOutsideBoard;
-    // Force an `over` transition to null at the board boundary. dnd-kit's
-    // announcement callback only runs when `over.id` changes, so retaining the
-    // nearest collision here would leave screen readers naming a stale column.
-    if (isOutsideBoard) return [];
-    return containerAwareClosestCorners(args);
-  }, []);
+  // Was the last resolved `over` a zone that `canDrop` forbids? Same latching
+  // rationale as `outsideBoardRef`: the announcement must agree with the drop.
+  const disallowedZoneRef = useRef(false);
+  // The dragged card's client-space placement, for `KanbanCard` (see
+  // `KanbanDragRectContext`). Written during render like the refs above.
+  const dragRectRef = useRef<{ left: number; top: number } | null>(null);
+  // Has the drag left the card's starting rect yet? In a multi-status column
+  // the slot under the picked-up card belongs to ANOTHER status's zone (its
+  // own is omitted), so until the card has really moved away a release there
+  // must stay a no-op, not commit a status. Latched for the rest of the drag
+  // (reset on drag start); written during render like the refs above.
+  const leftOriginRef = useRef(false);
+
+  // Multi-status columns and the cards currently inside them never take a drop
+  // themselves — only their zones do.
+  const zoneOnly = useMemo(() => {
+    const ids = new Set<string | number>();
+    for (const colId of columnStatuses.keys()) {
+      ids.add(colId);
+      for (const id of effectiveItems.get(colId) ?? []) ids.add(id);
+    }
+    return ids;
+  }, [columnStatuses, effectiveItems]);
+
+  const resolveCollisions = useCallback(
+    (args: Parameters<CollisionDetection>[0], zones: DroppableContainer[]) => {
+      const rest: DroppableContainer[] = [];
+      for (const d of args.droppableContainers) (zoneOf(d) ? zones : rest).push(d);
+
+      // Column droppables stay registered while zones show, so the board's
+      // bounds don't shrink.
+      const isOutsideBoard = isPointerOutsideContainers({ ...args, droppableContainers: rest });
+      outsideBoardRef.current = isOutsideBoard;
+      // Force an `over` transition to null at the board boundary. dnd-kit's
+      // announcement callback only runs when `over.id` changes, so retaining the
+      // nearest collision here would leave screen readers naming a stale column.
+      if (isOutsideBoard) return [];
+
+      // Plain columns `canDrop` rejects (never the origin), and the cards inside them.
+      const rejected = new Set<string | number>();
+      for (const d of rest) {
+        const id = d.id;
+        if (!isContainer(d) || zoneOnly.has(id) || id === originRef.current) continue;
+        if (canDropTo({ columnId: id })) continue;
+        rejected.add(id);
+        for (const c of effectiveItems.get(id) ?? []) rejected.add(c);
+      }
+      const plain = rest.filter((d) => !zoneOnly.has(d.id) && !rejected.has(d.id));
+      const targets = [...zones, ...plain];
+      keyboardTargetsRef.current = new Set(targets.map((d) => d.id));
+      if (
+        !leftOriginRef.current &&
+        originRef.current != null &&
+        columnStatuses.has(originRef.current)
+      ) {
+        // `initial` is filled in only after the first pass; until then nothing
+        // can have moved, so no target.
+        const start = args.active.rect.current.initial;
+        if (!start) return [];
+        const now = args.collisionRect;
+        // Pointer: the card's centre has left its slot. Keyboard: any arrow
+        // press (each one is a deliberate step to a target) — so Space, Space
+        // drops nothing, while the first arrow press still reaches a zone.
+        leftOriginRef.current = args.pointerCoordinates
+          ? !pointInRect(now.left + now.width / 2, now.top + now.height / 2, start)
+          : now.left !== start.left || now.top !== start.top;
+        if (!leftOriginRef.current) return [];
+      }
+      if (!args.pointerCoordinates) {
+        // Keyboard: every zone and allowed plain target is reachable.
+        return containerAwareClosestCorners({ ...args, droppableContainers: targets });
+      }
+
+      // A status commits only with the pointer inside its zone (no nearest-zone fallback).
+      const [zoneHit] = pointerWithin({ ...args, droppableContainers: zones });
+      if (zoneHit) return [zoneHit];
+      const columns = rest.filter(isContainer);
+      const multiColumns = columns.filter((d) => columnStatuses.has(d.id));
+      if (pointerWithin({ ...args, droppableContainers: multiColumns }).length > 0) return [];
+      // Pointer inside a rejected plain column: no live re-seat, a release cancels.
+      const rejectedCols = columns.filter((d) => rejected.has(d.id));
+      if (pointerWithin({ ...args, droppableContainers: rejectedCols }).length > 0) return [];
+      // Gutter: cancel when the nearer column takes no plain drop (multi-status
+      // or rejected); falling through would resolve to some farther column.
+      if (pointerWithin({ ...args, droppableContainers: columns }).length === 0) {
+        const [nearest] = closestCorners({ ...args, droppableContainers: columns });
+        if (nearest && (columnStatuses.has(nearest.id) || rejected.has(nearest.id))) return [];
+      }
+      return containerAwareClosestCorners({ ...args, droppableContainers: plain });
+    },
+    [zoneOnly, columnStatuses, canDropTo, effectiveItems],
+  );
+  const collisionDetection = useCallback<CollisionDetection>(
+    (args) => {
+      dragRectRef.current = args.collisionRect;
+      const zones: DroppableContainer[] = [];
+      const result = resolveCollisions(args, zones);
+      // Latched from the RESULT so pointer and keyboard drags agree.
+      const zone = zoneOf(zones.find((z) => z.id === result[0]?.id));
+      disallowedZoneRef.current = zone != null && !zone.allowed;
+      return result;
+    },
+    [resolveCollisions],
+  );
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
       outsideBoardRef.current = false;
+      disallowedZoneRef.current = false;
+      leftOriginRef.current = false;
+      const activeId = event.active.id as string | number;
       // The column the card started in. Used by handleDragOver to tell a
       // genuine same-column reorder apart from "already transited, still
       // moving inside the destination".
-      originRef.current = findContainer(event.active.id as string | number, initialItems);
+      originRef.current = findContainer(activeId, initialItems);
+      setActive({ id: activeId, origin: originRef.current, status: cardStatus.get(activeId) });
       // Snapshot: shallow-copy each cards array so mutations don't leak into initialItems.
       const snapshot = new Map<string | number, (string | number)[]>();
       for (const [colId, cards] of initialItems) snapshot.set(colId, [...cards]);
       setLiveItems(snapshot);
     },
-    [initialItems, findContainer],
+    [initialItems, findContainer, cardStatus],
   );
 
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
       const { active, over } = event;
-      if (!over) return;
+      // A zone has no list to seat into; the card keeps its slot until the drop.
+      if (!over || zoneOf(over)) return;
       const activeId = active.id as string | number;
       const overId = over.id as string | number;
       if (activeId === overId) return;
@@ -718,6 +1061,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
     (event: DragEndEvent) => {
       const { active, over } = event;
       const activeId = active.id as string | number;
+      setActive(null);
 
       // Two ways a drag ends in nothing, and `over` only reports the first:
       //  - `over == null` — collision detection returned nothing at all, i.e.
@@ -752,6 +1096,23 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
 
       if (fromColumn == null) {
         setLiveItems(null);
+        return;
+      }
+
+      const zone = zoneOf(over);
+      if (zone) {
+        setLiveItems(null);
+        // A forbidden zone cancels; the pointer was inside it, so nothing else was meant.
+        if (!zone.allowed) return;
+        onStatusChange?.({
+          cardId: activeId,
+          from: {
+            columnId: fromColumn,
+            index: fromIndex,
+            ...(columnStatuses.has(fromColumn) ? { statusId: cardStatus.get(activeId) } : {}),
+          },
+          to: { columnId: zone.columnId, statusId: zone.statusId },
+        });
         return;
       }
 
@@ -831,15 +1192,20 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       if (fromColumn === toColumn && fromIndex === toIndex) return;
 
       onMove?.({
-        from: { columnId: fromColumn, index: fromIndex },
+        from: {
+          columnId: fromColumn,
+          index: fromIndex,
+          ...(columnStatuses.has(fromColumn) ? { statusId: cardStatus.get(activeId) } : {}),
+        },
         to: { columnId: toColumn, index: toIndex },
         cardId: activeId,
       });
     },
-    [liveItems, initialItems, onMove],
+    [liveItems, initialItems, onMove, onStatusChange, columnStatuses, cardStatus],
   );
 
   const handleDragCancel = useCallback(() => {
+    setActive(null);
     setLiveItems(null);
   }, []);
 
@@ -862,6 +1228,16 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
     });
   const describeDrag: DescribeDragTarget = (entry, activeId) => {
     if (!entry) return null;
+    const zone = zoneOf(entry);
+    if (zone)
+      return {
+        label: dragLabelOf(entry.data.current),
+        index: 0,
+        total: 0,
+        container: columnLabel(zone.columnId),
+        zone: zone.label,
+        unavailable: !zone.allowed,
+      };
     const id = entry.id as string | number;
     const isColumn = effectiveItems.has(id);
     const colId = isColumn ? id : findContainer(id, effectiveItems);
@@ -881,7 +1257,10 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // A release outside the board is a cancel, not a drop — `over` is non-null on
   // that path (closestCorners rejects nothing), so without this dnd-kit would
   // announce a drop that handleDragEnd deliberately threw away (#387).
-  const accessibility = useDragAccessibility(describeDrag, () => outsideBoardRef.current);
+  const accessibility = useDragAccessibility(
+    describeDrag,
+    () => outsideBoardRef.current || disallowedZoneRef.current,
+  );
 
   // ------------------------------------------------------------------
   // Render
@@ -902,34 +1281,81 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         role="region" AFTER {...rest} so it stays locked — non-overridable
         semantic guarantee.
       */}
-      <div
-        ref={ref}
-        aria-label={t('kanban.board')}
-        className={clsx(styles.board, className)}
-        {...rest}
-        role="region"
-      >
-        {columnOrder.map((colId) => {
-          const columnElement = columnElements.get(colId);
-          if (!columnElement) return null;
+      <KanbanDragContext.Provider value={dragContext}>
+        <KanbanDragRectContext.Provider value={dragRectRef}>
+          <div
+            ref={ref}
+            aria-label={t('kanban.board')}
+            className={clsx(styles.board, className)}
+            {...rest}
+            role="region"
+          >
+            {columnOrder.map((colId) => {
+              const columnElement = columnElements.get(colId);
+              if (!columnElement) return null;
 
-          const cardIds = effectiveItems.get(colId) ?? [];
-          const cards = cardIds
-            .map((id) => cardElements.get(id))
-            .filter((c): c is ReactElement<KanbanCardProps> => c != null);
+              const cardIds = effectiveItems.get(colId) ?? [];
+              const cards = cardIds
+                .map((id) => cardElements.get(id))
+                .filter((c): c is ReactElement<KanbanCardProps> => c != null);
 
-          const slice = columnChildrenSlices.get(colId) ?? { before: [], after: [] };
+              const slice = columnChildrenSlices.get(colId) ?? { before: [], after: [] };
+              const statuses = columnStatuses.get(colId);
 
-          // Re-clone the column with re-arranged children. KanbanColumn reads
-          // cardIds via KanbanColumnItemsContext so its SortableContext.items
-          // matches what's rendered.
-          return (
-            <KanbanColumnItemsContext.Provider key={colId} value={cardIds}>
-              {cloneElement(columnElement, {}, ...slice.before, ...cards, ...slice.after)}
-            </KanbanColumnItemsContext.Provider>
-          );
-        })}
-      </div>
+              // Re-clone the column with re-arranged children. KanbanColumn reads
+              // cardIds via KanbanColumnItemsContext so its SortableContext.items
+              // matches what's rendered.
+              return (
+                <KanbanColumnItemsContext.Provider key={colId} value={cardIds}>
+                  {statuses
+                    ? cloneElement(
+                        columnElement,
+                        {},
+                        ...slice.before,
+                        // The body stays mounted across drags so cards never remount;
+                        // the zone overlay covers it without moving any card's box.
+                        <div
+                          key="kanban-body"
+                          className={styles.body}
+                          // Grows to fill the column only while a drag is active, so
+                          // the zones split the whole card area; idle, the footer sits
+                          // right under the cards as it does in a plain column.
+                          data-dragging={active ? 'true' : undefined}
+                        >
+                          {cards}
+                          {active && (
+                            <div className={styles.zones}>
+                              {statuses
+                                .filter(
+                                  (s) =>
+                                    !(
+                                      colId === active.origin &&
+                                      active.status !== undefined &&
+                                      s.id === active.status
+                                    ),
+                                )
+                                .map((s) => (
+                                  <KanbanZone
+                                    key={kanbanZoneId(colId, s.id)}
+                                    columnId={colId}
+                                    status={s}
+                                    allowed={canDropTo({ columnId: colId, statusId: s.id })}
+                                  />
+                                ))}
+                            </div>
+                          )}
+                        </div>,
+                        // The footer sits outside the body so no zone covers it:
+                        // a release there cancels like one on the header.
+                        ...slice.after,
+                      )
+                    : cloneElement(columnElement, {}, ...slice.before, ...cards, ...slice.after)}
+                </KanbanColumnItemsContext.Provider>
+              );
+            })}
+          </div>
+        </KanbanDragRectContext.Provider>
+      </KanbanDragContext.Provider>
     </DndContext>
   );
 });

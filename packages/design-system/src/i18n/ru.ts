@@ -201,6 +201,12 @@ export const ru: Messages = {
       `«${item as string}» — позиция ${index as number} из ${total as number}.`,
     movedOverIn: ({ item, index, total, container }) =>
       `«${item as string}» — позиция ${index as number} из ${total as number}, «${container as string}».`,
+    movedOverZone: ({ item, zone, container }) =>
+      `«${item as string}» — над «${zone as string}», «${container as string}».`,
+    droppedInZone: ({ item, zone, container }) =>
+      `Размещено: «${item as string}», «${zone as string}», «${container as string}».`,
+    zoneUnavailable: ({ item, zone, container }) =>
+      `«${item as string}» — «${zone as string}», «${container as string}»: недоступно.`,
     movedOutside: ({ item }) => `«${item as string}» — вне области размещения.`,
     dropped: ({ item, index, total }) =>
       `Размещено: «${item as string}», позиция ${index as number} из ${total as number}.`,
