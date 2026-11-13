@@ -4192,14 +4192,14 @@
           "type": "((event: KanbanStatusChangeEvent) => void)",
           "required": false,
           "default": "",
-          "description": "Fires when a card is dropped on a status of a multi-status column."
+          "description": "Fires when a card is dropped on a status zone of a multi-status column\n(instead of `onMove`). Carries no index: the consumer decides where the\ncard lands (e.g. top of the column). NOT fired on cancel."
         },
         {
           "name": "canDrop",
           "type": "((cardId: string | number, to: KanbanDropTarget) => boolean)",
           "required": false,
           "default": "",
-          "description": "Return `false` to forbid dropping `cardId` on `to`. Default: allow all."
+          "description": "Return `false` to forbid dropping `cardId` on `to`: a forbidden zone is\ndisabled, a forbidden plain column dimmed, and a release there cancels.\nRuns on every collision pass during a drag, so keep it pure and cheap.\nThe card's own plain origin column is never passed. Default: allow all."
         }
       ]
     },

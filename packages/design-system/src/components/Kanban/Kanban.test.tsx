@@ -213,9 +213,16 @@ function stubLayout(): () => void {
     // top; zones then share the height below it.
     const headerH = Number(column.getAttribute('data-header-h') ?? 0);
     if (this.matches('[data-col-header]')) return new DOMRect(left, 0, COL_W, headerH);
+    // Optional footer (`data-col-footer`) of `data-footer-h` px at the column's
+    // bottom. Zones stop above it only when it is NOT inside their overlay's
+    // anchor (the zones' grandparent) — an overlay over the footer covers it.
+    const colH = Number(column.getAttribute('data-h') ?? 300);
+    const footerH = Number(column.getAttribute('data-footer-h') ?? 0);
+    if (this.matches('[data-col-footer]')) return new DOMRect(left, colH - footerH, COL_W, footerH);
     // Status zone k of n fills its share of the column's height.
     if (this.matches('[data-kanban-zone]')) {
-      const height = Number(column.getAttribute('data-h') ?? 300) - headerH;
+      const covered = this.parentElement!.parentElement!.querySelector('[data-col-footer]');
+      const height = colH - headerH - (covered ? 0 : footerH);
       const zones = Array.from(this.parentElement!.querySelectorAll(':scope > [data-kanban-zone]'));
       const n = zones.length;
       return new DOMRect(left, headerH + (zones.indexOf(this) * height) / n, COL_W, height / n);
@@ -1392,6 +1399,93 @@ describe('Kanban — status zones', () => {
     fireEvent.pointerUp(document, { clientX: at(1, 30)[0], clientY: 30 });
     expect(onMove).not.toHaveBeenCalled();
     expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('a release on the footer of a column with zones cancels', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Kanban onMove={onMove} onStatusChange={onStatusChange}>
+        <Kanban.Column id="a" data-col={0} data-h={300}>
+          <Kanban.Card id="a1" data-card="a1">
+            a1
+          </Kanban.Card>
+        </Kanban.Column>
+        <Kanban.Column id="b" statuses={NW} data-col={1} data-h={300} data-footer-h={60}>
+          <Kanban.Card id="b1" status="new" data-card="b1">
+            b1
+          </Kanban.Card>
+          <div data-col-footer="">Add card</div>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    pressAndMove('a1', [at(1, 270)]);
+    expect(document.querySelectorAll('[data-col="1"] [data-kanban-zone]')).toHaveLength(2);
+    expect(document.querySelector('[data-kanban-zone][data-over]')).toBeNull();
+    fireEvent.pointerUp(document, { clientX: at(1, 270)[0], clientY: 270 });
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  // a1 sits in a's 'won' zone's area (its own 'new' zone is omitted).
+  const ownColumnBoard = (onMove: () => void, onStatusChange: () => void) => (
+    <Board
+      onMove={onMove}
+      onStatusChange={onStatusChange}
+      columns={[
+        ['a', ['a0', 'a1']],
+        ['b', ['b1']],
+      ]}
+      statuses={{ a: [...NW, { id: 'lost', label: 'Lost' }] }}
+      cardStatus={{ a0: 'won', a1: 'new' }}
+    />
+  );
+
+  it('a pointer release that never left the card’s slot in a multi-status column is a no-op', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(ownColumnBoard(onMove, onStatusChange));
+    pressAndMove('a1', [at(0, 80)]);
+    expect(document.querySelector('[data-kanban-zone][data-over]')).toBeNull();
+    fireEvent.pointerUp(document, { clientX: at(0, 80)[0], clientY: 80 });
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('once the card has left its slot, coming back onto an own-column zone commits it', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(ownColumnBoard(onMove, onStatusChange));
+    drag('a1', [at(1, 75), at(0, 75)]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).toHaveBeenCalledWith(
+      expect.objectContaining({ to: { columnId: 'a', statusId: 'won' } }),
+    );
+  });
+
+  it('keyboard Space, Space in a multi-status column drops nothing', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(ownColumnBoard(onMove, onStatusChange));
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[Space]');
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('keyboard: the first arrow press from a multi-status column reaches a zone', async () => {
+    const user = userEvent.setup();
+    const onStatusChange = vi.fn();
+    render(ownColumnBoard(vi.fn(), onStatusChange));
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowDown]');
+    await user.keyboard('[Space]');
+    expect(onStatusChange).toHaveBeenCalledWith(
+      expect.objectContaining({ to: { columnId: 'a', statusId: 'lost' } }),
+    );
   });
 
   it('a disallowed zone never shows data-over; an allowed one does', () => {

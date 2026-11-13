@@ -50,8 +50,8 @@ function handleMove(event: KanbanMoveEvent) {
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `onMove` | `((event: KanbanMoveEvent) => void)` | no | Fires once per drag (on drop) with the from/to positions and the cardId. NOT fired on drag cancel. NOT fired when from === to (no-op drop). Consumer should update their items state immutably, e.g.: (example below) |
-| `onStatusChange` | `((event: KanbanStatusChangeEvent) => void)` | no | Fires when a card is dropped on a status of a multi-status column. |
-| `canDrop` | `((cardId: string \| number, to: KanbanDropTarget) => boolean)` | no | Return `false` to forbid dropping `cardId` on `to`. Default: allow all. |
+| `onStatusChange` | `((event: KanbanStatusChangeEvent) => void)` | no | Fires when a card is dropped on a status zone of a multi-status column (instead of `onMove`). Carries no index: the consumer decides where the card lands (e.g. top of the column). NOT fired on cancel. |
+| `canDrop` | `((cardId: string \| number, to: KanbanDropTarget) => boolean)` | no | Return `false` to forbid dropping `cardId` on `to`: a forbidden zone is disabled, a forbidden plain column dimmed, and a release there cancels. Runs on every collision pass during a drag, so keep it pure and cheap. The card's own plain origin column is never passed. Default: allow all. |
 | …native | | | plus native `<div>` attributes |
 
 **`onMove`** example:
@@ -111,7 +111,7 @@ Controlled-only: the consumer applies each `onMove`. Column layout (header, foot
 
 **Multi-status columns**: give a column `statuses` and tag each card with `status`. While a card is dragged, the column's card area is covered by one labelled zone per status; dropping on a zone fires `onStatusChange` (not `onMove`). Drops on zones carry no index: the consumer decides where the card lands (e.g. top of the column). `canDrop(cardId, { columnId, statusId? })` can forbid a target (disabled zone / dimmed plain column).
 
-- Multi-status columns are not sortable: a drop must land on a zone. Releasing on the column's header (the children before the cards), its footer, or anywhere else inside the column but outside a zone cancels.
+- Multi-status columns are not sortable: a drop must land on a zone. Releasing on the column's header (the children before the cards), its footer, or anywhere else inside the column but outside a zone cancels. So does a release that never left the dragged card's own slot (pointer, or Space then Space), even though another status's zone covers that slot until the card moves away.
 - `onMove` still fires when a card leaves a multi-status column for a plain one; `from.statusId` then carries the status it left (absent for a card from a plain column).
 - The card's own plain origin column is never passed to `canDrop`: reordering within it and dropping it back always work. `canDrop` therefore only decides where a card may GO; the example below forbids moving anything into `lead` from elsewhere, while cards already in `lead` still reorder freely.
 

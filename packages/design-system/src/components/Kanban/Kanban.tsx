@@ -150,8 +150,9 @@ export interface KanbanStatus {
 
 /** A drop target: a column, and optionally one of its statuses. */
 export interface KanbanDropTarget {
+  /** The target column's `id`. */
   columnId: string | number;
-  /** Set only when the target column has statuses. */
+  /** The target zone's status id; set only when the target column has statuses. */
   statusId?: string | number;
 }
 
@@ -186,9 +187,18 @@ export interface KanbanProps extends HTMLAttributes<HTMLDivElement> {
    * ```
    */
   onMove?: (event: KanbanMoveEvent) => void;
-  /** Fires when a card is dropped on a status of a multi-status column. */
+  /**
+   * Fires when a card is dropped on a status zone of a multi-status column
+   * (instead of `onMove`). Carries no index: the consumer decides where the
+   * card lands (e.g. top of the column). NOT fired on cancel.
+   */
   onStatusChange?: (event: KanbanStatusChangeEvent) => void;
-  /** Return `false` to forbid dropping `cardId` on `to`. Default: allow all. */
+  /**
+   * Return `false` to forbid dropping `cardId` on `to`: a forbidden zone is
+   * disabled, a forbidden plain column dimmed, and a release there cancels.
+   * Runs on every collision pass during a drag, so keep it pure and cheap.
+   * The card's own plain origin column is never passed. Default: allow all.
+   */
   canDrop?: (cardId: string | number, to: KanbanDropTarget) => boolean;
 }
 
@@ -382,6 +392,12 @@ export function clampKanbanTransform(
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
+const pointInRect = (
+  x: number,
+  y: number,
+  r: { left: number; top: number; width: number; height: number },
+) => x >= r.left && x <= r.left + r.width && y >= r.top && y <= r.top + r.height;
+
 // ---------------------------------------------------------------------------
 // KanbanCard
 // ---------------------------------------------------------------------------
@@ -443,21 +459,21 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
   // this effect runs only on the renders that (re)measure, and on those the
   // closed-over `transform` is exactly the one just committed.
   //
-  // Be clear about what it is: on today's dnd-kit it is a NO-OP, not a fix.
+  // On today's dnd-kit the WRITE-BACK itself is inert: useSortable's
   // `transform` is null on precisely these frames — a re-seat mutates the
   // SortableContext items, so `itemsHaveChanged` forces `displaceItem` false;
   // and on a transit `over` is the column, so `overIndex` is -1 and it's false
-  // again. A null transform short-circuits every guard below, so nothing is
-  // written. Matching that, the frame could not be made to inflate
-  // `scrollWidth` in the browser: 635 rAF-sampled frames over 14 transits at
-  // max scroll with the pointer held outside the board, write-back disabled,
-  // yielded a single distinct `scrollWidth`.
+  // again. Those frames are not unpainted, though: the follow-pointer effect
+  // below paints a non-null transform on every frame useSortable leaves null,
+  // clamped against `boundsRef` — so the MEASUREMENT here is load-bearing, and
+  // it is in place in time only because this effect is declared (and so runs)
+  // before that one. Keep the order.
   //
-  // It is kept as insurance against exactly that internal changing. If a
-  // dnd-kit bump ever emits a non-null transform on a re-seat frame, deleting
-  // these lines silently reinstates the runaway — and no test can catch it,
-  // because jsdom lays nothing out, so the clamp's only evidence is a manual
-  // browser drag. Two inert guarded lines against a hand-only regression.
+  // The write-back is kept as insurance against dnd-kit's internals changing.
+  // If a bump ever emits a non-null useSortable transform on a re-seat frame,
+  // deleting these lines silently reinstates the runaway — and no test can
+  // catch it, because jsdom lays nothing out, so the clamp's only evidence is
+  // a manual browser drag. Two guarded lines against a hand-only regression.
   const boundsRef = useRef<KanbanDragBounds | null>(null);
   useLayoutEffect(() => {
     const node = cardRef.current;
@@ -839,6 +855,12 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // The dragged card's client-space placement, for `KanbanCard` (see
   // `KanbanDragRectContext`). Written during render like the refs above.
   const dragRectRef = useRef<{ left: number; top: number } | null>(null);
+  // Has the drag left the card's starting rect yet? In a multi-status column
+  // the slot under the picked-up card belongs to ANOTHER status's zone (its
+  // own is omitted), so until the card has really moved away a release there
+  // must stay a no-op, not commit a status. Latched for the rest of the drag
+  // (reset on drag start); written during render like the refs above.
+  const leftOriginRef = useRef(false);
 
   // Multi-status columns and the cards currently inside them never take a drop
   // themselves — only their zones do.
@@ -877,6 +899,24 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       const plain = rest.filter((d) => !zoneOnly.has(d.id) && !rejected.has(d.id));
       const targets = [...zones, ...plain];
       keyboardTargetsRef.current = new Set(targets.map((d) => d.id));
+      if (
+        !leftOriginRef.current &&
+        originRef.current != null &&
+        columnStatuses.has(originRef.current)
+      ) {
+        // `initial` is filled in only after the first pass; until then nothing
+        // can have moved, so no target.
+        const start = args.active.rect.current.initial;
+        if (!start) return [];
+        const now = args.collisionRect;
+        // Pointer: the card's centre has left its slot. Keyboard: any arrow
+        // press (each one is a deliberate step to a target) — so Space, Space
+        // drops nothing, while the first arrow press still reaches a zone.
+        leftOriginRef.current = args.pointerCoordinates
+          ? !pointInRect(now.left + now.width / 2, now.top + now.height / 2, start)
+          : now.left !== start.left || now.top !== start.top;
+        if (!leftOriginRef.current) return [];
+      }
       if (!args.pointerCoordinates) {
         // Keyboard: every zone and allowed plain target is reachable.
         return containerAwareClosestCorners({ ...args, droppableContainers: targets });
@@ -918,6 +958,7 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
     (event: DragStartEvent) => {
       outsideBoardRef.current = false;
       disallowedZoneRef.current = false;
+      leftOriginRef.current = false;
       const activeId = event.active.id as string | number;
       // The column the card started in. Used by handleDragOver to tell a
       // genuine same-column reorder apart from "already transited, still
@@ -1065,7 +1106,11 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         if (!zone.allowed) return;
         onStatusChange?.({
           cardId: activeId,
-          from: { columnId: fromColumn, index: fromIndex, statusId: cardStatus.get(activeId) },
+          from: {
+            columnId: fromColumn,
+            index: fromIndex,
+            ...(columnStatuses.has(fromColumn) ? { statusId: cardStatus.get(activeId) } : {}),
+          },
           to: { columnId: zone.columnId, statusId: zone.statusId },
         });
         return;
@@ -1271,7 +1316,6 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
                         // the zone overlay covers it without moving any card's box.
                         <div key="kanban-body" className={styles.body}>
                           {cards}
-                          {slice.after}
                           {active && (
                             <div className={styles.zones}>
                               {statuses
@@ -1294,6 +1338,9 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
                             </div>
                           )}
                         </div>,
+                        // The footer sits outside the body so no zone covers it:
+                        // a release there cancels like one on the header.
+                        ...slice.after,
                       )
                     : cloneElement(columnElement, {}, ...slice.before, ...cards, ...slice.after)}
                 </KanbanColumnItemsContext.Provider>
