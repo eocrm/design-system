@@ -169,16 +169,20 @@ describe('stems', () => {
     { x: 2, y: 30 },
   ];
 
+  /** Every dot's stem segment, in x order. */
+  const stemsOf = (l: ReturnType<typeof computeScatterLayout>) =>
+    [...l.dots].sort((a, b) => a.cx - b.cx).flatMap((d) => segments(d.stem ?? ''));
+
   it('draws none unless asked', () => {
-    expect(computeScatterLayout({ ...base, series: resolve(pts) }).stems).toEqual([]);
+    const l = computeScatterLayout({ ...base, series: resolve(pts) });
+    expect(l.dots.every((d) => d.stem === undefined)).toBe(true);
   });
 
   it('runs one segment per point from y = 0 up to the dot', () => {
     const l = computeScatterLayout({ ...base, series: resolve(pts), stems: true });
-    expect(l.stems.map((s) => s.seriesKey)).toEqual(['a']);
     const zero = l.yTicks.find((t) => t.value === 0)!.pos;
-    const dots = l.dots.filter((d) => d.seriesKey === 'a').sort((a, b) => a.cx - b.cx);
-    const segs = segments(l.stems[0].path).sort((a, b) => a[0] - b[0]);
+    const dots = [...l.dots].sort((a, b) => a.cx - b.cx);
+    const segs = stemsOf(l);
     expect(segs).toHaveLength(2);
     segs.forEach(([x, b, y], i) => {
       expect(x).toBeCloseTo(dots[i].cx);
@@ -194,15 +198,16 @@ describe('stems', () => {
       yDomain: [5, 40],
       stems: true,
     });
-    for (const [, b] of segments(above.stems[0].path))
-      expect(b).toBeCloseTo(above.plot.y + above.plot.height);
+    for (const [, b] of stemsOf(above)) expect(b).toBeCloseTo(above.plot.y + above.plot.height);
     const below = computeScatterLayout({
       ...base,
       series: resolve([{ x: 1, y: -20 }]),
       yDomain: [-40, -5],
       stems: true,
     });
-    for (const [, b] of segments(below.stems[0].path)) expect(b).toBeCloseTo(below.plot.y);
+    const belowSegs = stemsOf(below);
+    expect(belowSegs).toHaveLength(1);
+    for (const [, b] of belowSegs) expect(b).toBeCloseTo(below.plot.y);
   });
 });
 

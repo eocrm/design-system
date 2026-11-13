@@ -213,22 +213,26 @@ describe('ScatterChart', () => {
     expect(trends[0].closest('[data-series]')).toHaveAttribute('data-series', 'cat');
   });
 
-  it('stems draw one decorative path per visible series, inside its series group, only when asked', () => {
+  it('stems: one decorative stem per dot, in its dot group, hidden and dimmed with its series', () => {
     const layout = stubLayout();
     const { container, rerender } = render(<ScatterChart {...base} />);
     layout.fire();
     expect(container.querySelector('[data-scatter-stems]')).toBeNull();
     rerender(<ScatterChart {...base} stems />);
-    const stems = [...container.querySelectorAll('[data-scatter-stems]')];
-    const keys = stems.map((s) => s.closest('[data-series]')?.getAttribute('data-series'));
-    expect(keys.length).toBeGreaterThan(0);
-    expect(new Set(keys).size).toBe(keys.length);
-    for (const s of stems) expect(s).toHaveAttribute('aria-hidden', 'true');
-    rerender(<ScatterChart {...base} stems hiddenSeries={[keys[0]!]} />);
-    const after = [...container.querySelectorAll('[data-scatter-stems]')].map((s) =>
-      s.closest('[data-series]')?.getAttribute('data-series'),
-    );
-    expect(after).not.toContain(keys[0]);
+    const dots = container.querySelectorAll('[data-scatter-dot]');
+    const stems = container.querySelectorAll('[data-scatter-stems]');
+    expect(stems).toHaveLength(dots.length);
+    for (const stem of stems) {
+      expect(stem).toHaveAttribute('aria-hidden', 'true');
+      // Same group as its dot, painted right after it: one paint order and one opacity for both.
+      expect(stem.previousElementSibling).toHaveAttribute('data-scatter-dot');
+    }
+    act(() => screen.getByRole('button', { name: 'Cat' }).focus());
+    for (const stem of container.querySelectorAll('[data-series="dog"] [data-scatter-stems]'))
+      expect(stem.closest('[data-series]')).toHaveAttribute('data-dimmed');
+    expect(container.querySelector('[data-series="dog"] [data-scatter-stems]')).not.toBeNull();
+    rerender(<ScatterChart {...base} stems hiddenSeries={['dog']} />);
+    expect(container.querySelector('[data-series="dog"] [data-scatter-stems]')).toBeNull();
   });
 
   it('reference draws a path and is listed in the legend', () => {

@@ -583,24 +583,16 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                     data-scatter-dot=""
                     data-strong={d.strong || undefined}
                   />
-                </g>
-              ))}
-              {/* Stems paint over the dots, ending at each dot's centre: same colour as the fill, so the
-                  dot's separating ring can't cut the stem off from its marker. */}
-              {layout.stems.map((st) => (
-                <g
-                  key={st.seriesKey}
-                  className={styles.series}
-                  style={seriesStyle(st.slot)}
-                  data-series={st.seriesKey}
-                  data-dimmed={activeKey !== null && activeKey !== st.seriesKey ? '' : undefined}
-                >
-                  <path
-                    className={styles.stem}
-                    d={st.path}
-                    aria-hidden="true"
-                    data-scatter-stems=""
-                  />
+                  {/* After its own dot (same colour, so the dot's ring can't cut it off), in the dot's paint
+                      order and opacity group: smaller dots painted later still cover it. */}
+                  {d.stem && (
+                    <path
+                      className={styles.stem}
+                      d={d.stem}
+                      aria-hidden="true"
+                      data-scatter-stems=""
+                    />
+                  )}
                 </g>
               ))}
               {echoX !== undefined && (

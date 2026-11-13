@@ -117,6 +117,8 @@ export interface ScatterDot {
   /** The series has `emphasis: 'strong'`. */
   strong: boolean;
   datum: ResolvedScatterPoint;
+  /** With `stems`: the vertical segment from y = 0 (clamped to the plot) to this dot's centre, drawn in its paint order. */
+  stem?: string;
 }
 export interface ScatterTick {
   value: number;
@@ -149,8 +151,6 @@ export interface ScatterLayout {
   trends: { seriesKey: string; slot: number; path: string }[];
   /** One entry per connected segment of a `connect` series, in series order. */
   connects: { seriesKey: string; slot: number; path: string }[];
-  /** With `stems`, one path per series with points: a vertical segment per dot from y = 0 (clamped to the plot) to the dot. */
-  stems: { seriesKey: string; slot: number; path: string }[];
 }
 
 export interface ScatterLayoutInput {
@@ -419,16 +419,10 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
       connects.push({ seriesKey: s.key, slot: s.slot, path: toPath(seg)! });
   }
 
-  const stems: ScatterLayout['stems'] = [];
   if (input.stems) {
     // y = 0, clamped to the plot so a range that excludes 0 starts at its nearest edge.
     const baseline = Math.min(plotBottom, Math.max(plotTop, y(0)));
-    for (const s of series) {
-      const own = dots.filter((d) => d.seriesKey === s.key);
-      if (own.length === 0) continue;
-      const path = own.map((d) => `M${d.cx},${baseline}V${d.cy}`).join('');
-      stems.push({ seriesKey: s.key, slot: s.slot, path });
-    }
+    for (const d of dots) d.stem = `M${d.cx},${baseline}V${d.cy}`;
   }
 
   return {
@@ -444,6 +438,5 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     references,
     trends,
     connects,
-    stems,
   };
 }
