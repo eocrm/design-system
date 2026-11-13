@@ -1103,6 +1103,27 @@ describe('Kanban — status zones', () => {
     fireEvent.pointerUp(document, { clientX: at(1, 100)[0], clientY: 100 });
   });
 
+  it('the dragged card keeps following the pointer over a zone', () => {
+    render(
+      <Board
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    // Pressed at (50, 25); useSortable gives a non-item `over` no transform.
+    pressAndMove('a1', [zoneCentre(1, 1, 2)]);
+    const card = document.querySelector<HTMLElement>('[data-card="a1"]')!;
+    expect(card.style.transform).toBe('translate3d(120px, 200px, 0) scaleX(1) scaleY(1)');
+    fireEvent.pointerUp(document, { clientX: zoneCentre(1, 1, 2)[0], clientY: 225 });
+    // Handed back to React once the drag ends — no stuck transform.
+    expect(card.getAttribute('data-dragging')).toBe(null);
+    expect(card.style.transform).toBe('');
+  });
+
   it('dropping on a zone fires onStatusChange with from/to status and never onMove', () => {
     const onMove = vi.fn();
     const onStatusChange = vi.fn();
