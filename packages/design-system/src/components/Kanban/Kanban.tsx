@@ -776,11 +776,18 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
     const targets = keyboardTargetsRef.current;
     if (!targets) return sortableKeyboardCoordinates(event, args);
     const all = args.context.droppableContainers;
-    // The stock getter only calls `get` and `getEnabled` on the map.
-    const droppableContainers = {
-      get: (id: string | number) => all.get(id),
-      getEnabled: () => all.getEnabled().filter((d) => targets.has(d.id)),
-    } as unknown as typeof all;
+    // Proxy over the real map: only `getEnabled` is narrowed, every other
+    // member forwards to the real map, so a newer `^10` getter that reads more
+    // of it keeps working (the package's range lets consumers resolve one).
+    const droppableContainers = new Proxy(all, {
+      get(target, prop) {
+        if (prop === 'getEnabled') {
+          return () => target.getEnabled().filter((d) => targets.has(d.id));
+        }
+        const value: unknown = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
     return sortableKeyboardCoordinates(event, {
       ...args,
       context: { ...args.context, droppableContainers },

@@ -1565,6 +1565,28 @@ describe('Kanban — canDrop', () => {
     expect(onMove).not.toHaveBeenCalled();
   });
 
+  it('one ArrowRight steps over a rejected plain column to the next allowed one', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        canDrop={(_, to) => to.columnId !== 'b'}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1']],
+          ['c', ['c1']],
+        ]}
+      />,
+    );
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    await user.keyboard('[Space]');
+    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove.mock.calls[0][0].to.columnId).toBe('c');
+  });
+
   it('never asks canDrop about the origin plain column; in-column reorder still works', () => {
     const onMove = vi.fn();
     const canDrop = vi.fn(() => false);
