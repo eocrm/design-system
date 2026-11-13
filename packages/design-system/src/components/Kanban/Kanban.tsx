@@ -1314,7 +1314,14 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
                         ...slice.before,
                         // The body stays mounted across drags so cards never remount;
                         // the zone overlay covers it without moving any card's box.
-                        <div key="kanban-body" className={styles.body}>
+                        <div
+                          key="kanban-body"
+                          className={styles.body}
+                          // Grows to fill the column only while a drag is active, so
+                          // the zones split the whole card area; idle, the footer sits
+                          // right under the cards as it does in a plain column.
+                          data-dragging={active ? 'true' : undefined}
+                        >
                           {cards}
                           {active && (
                             <div className={styles.zones}>

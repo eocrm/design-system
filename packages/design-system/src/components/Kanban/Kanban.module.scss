@@ -21,12 +21,16 @@
 }
 
 .body {
-  // Anchor for the zone overlay; the cards stay in flow beneath it. Fills the
-  // column (internal child, not layout) so the zones split its whole card area.
+  // Anchor for the zone overlay; the cards stay in flow beneath it.
   position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--kanban-column-gap);
+}
+
+// While dragging, fill the column (internal child, not layout) so the zones
+// split its whole card area. Idle, the footer stays right under the cards.
+.body[data-dragging='true'] {
   flex: 1 1 auto;
 }
 
