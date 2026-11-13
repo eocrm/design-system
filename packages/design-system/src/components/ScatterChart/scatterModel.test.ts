@@ -160,6 +160,57 @@ describe('size and paint order', () => {
   });
 });
 
+describe('stems', () => {
+  /** [x, baseline, y] per `M x,b V y` segment of a stem path. */
+  const segments = (path: string) =>
+    [...path.matchAll(/M(-?[\d.]+),(-?[\d.]+)V(-?[\d.]+)/g)].map((m) => m.slice(1).map(Number));
+  const pts = [
+    { x: 1, y: 10 },
+    { x: 2, y: 30 },
+  ];
+
+  /** Every dot's stem segment, in x order. */
+  const stemsOf = (l: ReturnType<typeof computeScatterLayout>) =>
+    [...l.dots].sort((a, b) => a.cx - b.cx).flatMap((d) => segments(d.stem ?? ''));
+
+  it('draws none unless asked', () => {
+    const l = computeScatterLayout({ ...base, series: resolve(pts) });
+    expect(l.dots.every((d) => d.stem === undefined)).toBe(true);
+  });
+
+  it('runs one segment per point from y = 0 up to the dot', () => {
+    const l = computeScatterLayout({ ...base, series: resolve(pts), stems: true });
+    const zero = l.yTicks.find((t) => t.value === 0)!.pos;
+    const dots = [...l.dots].sort((a, b) => a.cx - b.cx);
+    const segs = stemsOf(l);
+    expect(segs).toHaveLength(2);
+    segs.forEach(([x, b, y], i) => {
+      expect(x).toBeCloseTo(dots[i].cx);
+      expect(b).toBeCloseTo(zero);
+      expect(y).toBeCloseTo(dots[i].cy);
+    });
+  });
+
+  it('starts at the nearest plot edge when 0 is outside the y range', () => {
+    const above = computeScatterLayout({
+      ...base,
+      series: resolve(pts),
+      yDomain: [5, 40],
+      stems: true,
+    });
+    for (const [, b] of stemsOf(above)) expect(b).toBeCloseTo(above.plot.y + above.plot.height);
+    const below = computeScatterLayout({
+      ...base,
+      series: resolve([{ x: 1, y: -20 }]),
+      yDomain: [-40, -5],
+      stems: true,
+    });
+    const belowSegs = stemsOf(below);
+    expect(belowSegs).toHaveLength(1);
+    for (const [, b] of belowSegs) expect(b).toBeCloseTo(below.plot.y);
+  });
+});
+
 describe('trend and reference', () => {
   it('skips 1-point series and spans the series own x extent', () => {
     const series = [

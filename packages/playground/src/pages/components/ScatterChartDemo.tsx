@@ -69,6 +69,26 @@ const todayPace: ScatterReference = {
 };
 const paces = [usualPace, todayPace];
 
+// Litter-box visits today: x = time, y = visit length in seconds.
+const visitSeries: ScatterSeries[] = [
+  {
+    key: 'visits',
+    label: 'Visits',
+    emphasis: 'strong',
+    points: [
+      { x: at(1, 10), y: 22 },
+      { x: at(4, 5), y: 31 },
+      { x: at(10, 20), y: 40 },
+      { x: at(12, 50), y: 26 },
+      { x: at(15, 40), y: 43 },
+      { x: at(17, 55), y: 31 },
+      { x: at(22, 2), y: 64 },
+    ],
+  },
+];
+const formatDuration = (s: number) =>
+  `${Math.floor(s / 60)}′${String(Math.round(s % 60)).padStart(2, '0')}″`;
+
 // ~60 meals, deterministic pseudo-random (LCG): bowl contents at meal start vs grams eaten.
 function lcg(seed: number) {
   let s = seed;
@@ -212,6 +232,33 @@ export function ScatterChartDemo() {
             yLabel="Eaten so far"
             formatX={formatTime}
             formatY={formatGrams}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Stems (lollipop)"
+        description="stems draws a vertical line from 0 up to every point, so each event reads as a bar on a time axis — here, how long each litter-box visit lasted."
+        code={`<ScatterChart
+  label="Litter-box visits today"
+  xScale="time"
+  series={[{ key: 'visits', label: 'Visits', emphasis: 'strong', points }]} // { x: time, y: seconds }
+  xLabel="Time" yLabel="Visit length"
+  formatX={formatTime} formatY={formatDuration}
+  stems
+/>`}
+      >
+        <Cell title="Visits today">
+          <ScatterChart
+            label="Litter-box visits today"
+            xScale="time"
+            series={visitSeries}
+            xDomain={[at(0), at(24)]}
+            xLabel="Time"
+            yLabel="Visit length"
+            formatX={formatTime}
+            formatY={formatDuration}
+            stems
           />
         </Cell>
       </Example>

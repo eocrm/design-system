@@ -72,6 +72,12 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
   reference?: ScatterReference | ScatterReference[];
   /** Draw a dashed least-squares line per visible series over its own x-extent (series with ≥2 distinct x only). Decorative. Default `false`. */
   trendLine?: boolean;
+  /**
+   * Draw a vertical line from y = 0 up (or down) to every visible point: a lollipop / stem chart, e.g. visit length by
+   * time of day. When the y range excludes 0 the line starts at the nearest plot edge. Series colour, decorative
+   * (the data table and announcements already carry the values). Default `false`.
+   */
+  stems?: boolean;
   /** EmptyState title when no series has a point. Default: translated "No data for this period". */
   emptyMessage?: ReactNode;
   /** Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored; the last visible series with points can't be hidden (a set hiding all of them is ignored for those). */
@@ -124,6 +130,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
     sizeLabel,
     reference,
     trendLine,
+    stems = false,
     emptyMessage,
     hiddenSeries,
     onHiddenSeriesChange,
@@ -204,6 +211,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
             formatY,
             reference: references,
             trendLine,
+            stems,
             sizeRange,
             sizeDomain,
             strongRadius,
@@ -221,6 +229,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       formatY,
       references,
       trendLine,
+      stems,
       sizeRange,
       sizeDomain,
       strongRadius,
@@ -574,6 +583,16 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                     data-scatter-dot=""
                     data-strong={d.strong || undefined}
                   />
+                  {/* After its own dot (same colour, so the dot's ring can't cut it off), in the dot's paint
+                      order and opacity group: smaller dots painted later still cover it. */}
+                  {d.stem && (
+                    <path
+                      className={styles.stem}
+                      d={d.stem}
+                      aria-hidden="true"
+                      data-scatter-stems=""
+                    />
+                  )}
                 </g>
               ))}
               {echoX !== undefined && (

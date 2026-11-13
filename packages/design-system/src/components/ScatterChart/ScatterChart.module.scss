@@ -95,6 +95,13 @@
   stroke-linecap: round;
 }
 
+.stem {
+  fill: none;
+  stroke: var(--chart-series-color, currentColor);
+  stroke-width: var(--scatter-stem-width);
+  stroke-linecap: butt;
+}
+
 .trend {
   fill: none;
   stroke: var(--chart-series-color, currentColor);

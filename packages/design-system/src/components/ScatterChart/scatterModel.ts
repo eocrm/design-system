@@ -117,6 +117,8 @@ export interface ScatterDot {
   /** The series has `emphasis: 'strong'`. */
   strong: boolean;
   datum: ResolvedScatterPoint;
+  /** With `stems`: the vertical segment from y = 0 (clamped to the plot) to this dot's centre, drawn in its paint order. */
+  stem?: string;
 }
 export interface ScatterTick {
   value: number;
@@ -162,6 +164,8 @@ export interface ScatterLayoutInput {
   formatY: (y: number) => string;
   reference?: ScatterReference | ScatterReference[];
   trendLine?: boolean;
+  /** Build `stems`: a vertical line from y = 0 (or the nearest plot edge) to each dot. */
+  stems?: boolean;
   /** Min and max dot radius for points with `size`; the max also shrinks to 1/25 of the chart width. */
   sizeRange: [number, number];
   /** Domain of `size` values; pass `scatterSizeDomain(allSeries)` so hiding a series doesn't resize the rest. Defaults to `series`. */
@@ -413,6 +417,12 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     const maxGap = typeof s.connect === 'object' ? s.connect.maxGap : undefined;
     for (const seg of connectSegments(s.points, maxGap))
       connects.push({ seriesKey: s.key, slot: s.slot, path: toPath(seg)! });
+  }
+
+  if (input.stems) {
+    // y = 0, clamped to the plot so a range that excludes 0 starts at its nearest edge.
+    const baseline = Math.min(plotBottom, Math.max(plotTop, y(0)));
+    for (const d of dots) d.stem = `M${d.cx},${baseline}V${d.cy}`;
   }
 
   return {
