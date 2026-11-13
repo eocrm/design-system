@@ -46,13 +46,21 @@
 ### Task 1: Public types, props, parsing, dev warning (idle behaviour)
 
 **Files:**
+
 - Modify: `src/components/Kanban/Kanban.tsx`, `src/components/Kanban/index.ts`, `src/index.ts`
 - Test: `src/components/Kanban/Kanban.test.tsx` (new `describe('Kanban — statuses (idle)')`)
 
 **Interfaces — Produces:**
+
 ```ts
-export interface KanbanStatus { id: string | number; label: string }
-export interface KanbanDropTarget { columnId: string | number; statusId?: string | number }
+export interface KanbanStatus {
+  id: string | number;
+  label: string;
+}
+export interface KanbanDropTarget {
+  columnId: string | number;
+  statusId?: string | number;
+}
 export interface KanbanStatusChangeEvent {
   cardId: string | number;
   from: { columnId: string | number; index: number; statusId?: string | number };
@@ -64,6 +72,7 @@ export interface KanbanStatusChangeEvent {
 // KanbanColumnProps gains: statuses?: readonly KanbanStatus[];
 // KanbanCardProps gains:   status?: string | number;
 ```
+
 - Root parse memo additionally builds `columnStatuses: Map<colId, readonly KanbanStatus[]>` (multi-status columns only) and `cardStatus: Map<cardId, string | number | undefined>`. A status that is unknown or missing in a multi-status column resolves to `undefined`.
 - `statuses`, `status` and `canDrop` / `onStatusChange` are **not** spread onto the DOM.
 
@@ -80,10 +89,12 @@ export interface KanbanStatusChangeEvent {
 ### Task 2: Zones while dragging, collision, `onStatusChange`
 
 **Files:**
+
 - Modify: `Kanban.tsx`, `Kanban.module.scss` (functional structure only; visuals come in Task 5)
 - Test: `Kanban.test.tsx` (new `describe('Kanban — status zones')`)
 
 **Interfaces:**
+
 - Consumes: the Task 1 maps and types.
 - Produces (internal, not exported from `src/index.ts`):
   - `kanbanZoneId(columnId, statusId): string` returns `` `kanban-zone:${JSON.stringify([columnId, statusId])}` ``.
@@ -154,13 +165,15 @@ export interface KanbanStatusChangeEvent {
 **Files:** `src/components/_internal/dragAnnouncements.ts`, `src/i18n/messages.ts`, `en.ts`, `ru.ts`, `Kanban.tsx`, `Kanban.test.tsx` (`describe('Kanban — zone announcements')`)
 
 **Interfaces — Produces:**
+
 - `DragTarget` gains `zone?: string` (the status label) and `unavailable?: boolean`. When `zone` is set, `index` / `total` are ignored. `useDragAccessibility` routes:
   - `movedOver` with `zone` → `drag.movedOverZone({ item, zone, container })`
   - with `unavailable` → `drag.zoneUnavailable({ item, zone, container })`
   - `dropped` with `zone` → `drag.droppedInZone({ item, zone, container })`
   - a rejected drop is already `drag.cancelled`.
-  
+
   `index` / `total` stay required for the existing callers: pass `0` and `0` for zone targets.
+
 - New `messages.ts` keys under `drag`: `movedOverZone`, `droppedInZone`, `zoneUnavailable`, each `(params: { item: string; zone: string; container: string }) => string`, with JSDoc.
 - en copy (exact):
   - `${item}, over ${zone} in ${container}.`
@@ -170,8 +183,9 @@ export interface KanbanStatusChangeEvent {
   - `${item}, над «${zone}» в ${container}.`
   - `${item} перемещена в «${zone}» в ${container}.`
   - `${item}: «${zone}» в ${container} недоступно.`
-  
+
   Match the existing ru drag phrasing in `ru.ts` for gender and case conventions; adjust wording if they differ.
+
 - `describeDrag` in `Kanban.tsx`: for a zone entry, return `{ label, index: 0, total: 0, container: columnLabel(columnId), zone: label, unavailable: !allowed }`.
 
 - [ ] **Step 1: Write the failing tests** (use `NamedBoard`-style labelled columns plus statuses)
@@ -190,6 +204,7 @@ export interface KanbanStatusChangeEvent {
 **Files:** `Kanban.module.scss`, `Kanban.tokens.scss`, `docs/components/Kanban.md`, `AI-PRIMER.md`, `packages/playground/src/pages/components/KanbanDemo.tsx`
 
 **New tokens (names fixed, values from existing semantic tokens; the builder picks matching ones):**
+
 - `--kanban-zone-gap`
 - `--kanban-zone-padding`
 - `--kanban-zone-radius`
@@ -213,15 +228,17 @@ Zone label: centred, `--font-size-sm`-equivalent token. `prefers-reduced-motion`
   - a `canDrop` that blocks moving back into "Lead" from "Closing";
   - each card shows its status as a `Badge`;
   - state updates in `onMove` / `onStatusChange` (status-change places the card at the top of the target column).
-  
+
   Imports only from `@eocrm/design-system`.
+
 - [ ] **Step 4: Browser check** with the playground dev server on port 8090+ and Playwright:
   - pointer drag onto a zone, to another status in the same column, onto a disabled zone, and into the gutter;
   - keyboard drag (Space, arrows, Space) to a zone;
   - no layout jump of the dragged card at drag start;
   - light and dark theme.
-  
+
   Kill the Playwright Chrome afterwards.
+
 - [ ] **Step 5: Run** `npm test`, `npm run typecheck` and lint from the repo root. Expected: PASS.
 - [ ] **Step 6: Commit** `feat(kanban): zone styles, docs, playground demo`
 

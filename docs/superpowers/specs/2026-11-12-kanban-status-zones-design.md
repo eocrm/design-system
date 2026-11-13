@@ -33,15 +33,25 @@ CRM pipelines have stages (Kanban columns) that contain several statuses. Exampl
 
 ```tsx
 <Kanban
-  onMove={handleMove}                  // plain-column drops, unchanged
-  onStatusChange={handleStatusChange}  // zone drops
-  canDrop={(cardId, to) => boolean}    // to: { columnId, statusId? }
+  onMove={handleMove} // plain-column drops, unchanged
+  onStatusChange={handleStatusChange} // zone drops
+  canDrop={(cardId, to) => boolean} // to: { columnId, statusId? }
 >
-  <Kanban.Column id="qual" aria-label="Qualification"
-    statuses={[{ id: 'new', label: 'New' }, { id: 'contacted', label: 'Contacted' }]}>
-    <Kanban.Card id="a" status="new">…</Kanban.Card>
+  <Kanban.Column
+    id="qual"
+    aria-label="Qualification"
+    statuses={[
+      { id: 'new', label: 'New' },
+      { id: 'contacted', label: 'Contacted' },
+    ]}
+  >
+    <Kanban.Card id="a" status="new">
+      …
+    </Kanban.Card>
   </Kanban.Column>
-  <Kanban.Column id="won" aria-label="Won">…</Kanban.Column>
+  <Kanban.Column id="won" aria-label="Won">
+    …
+  </Kanban.Column>
 </Kanban>
 ```
 
