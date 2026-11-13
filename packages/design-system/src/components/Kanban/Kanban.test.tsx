@@ -209,12 +209,16 @@ function stubLayout(): () => void {
       const height = Number(column.getAttribute('data-h') ?? 300);
       return new DOMRect(left, 0, COL_W, height);
     }
+    // Optional header (`data-col-header`) of `data-header-h` px at the column's
+    // top; zones then share the height below it.
+    const headerH = Number(column.getAttribute('data-header-h') ?? 0);
+    if (this.matches('[data-col-header]')) return new DOMRect(left, 0, COL_W, headerH);
     // Status zone k of n fills its share of the column's height.
     if (this.matches('[data-kanban-zone]')) {
-      const height = Number(column.getAttribute('data-h') ?? 300);
+      const height = Number(column.getAttribute('data-h') ?? 300) - headerH;
       const zones = Array.from(this.parentElement!.querySelectorAll(':scope > [data-kanban-zone]'));
       const n = zones.length;
-      return new DOMRect(left, (zones.indexOf(this) * height) / n, COL_W, height / n);
+      return new DOMRect(left, headerH + (zones.indexOf(this) * height) / n, COL_W, height / n);
     }
     const card = this.closest('[data-card]');
     if (card !== this) return orig.call(this);
@@ -1362,6 +1366,140 @@ describe('Kanban — status zones', () => {
     expect(onMove).not.toHaveBeenCalled();
     expect(onStatusChange).not.toHaveBeenCalled();
     expect(screen.getByRole('status').textContent).toMatch(/^Move cancelled/);
+  });
+
+  it('a release on the header of a column with zones cancels', () => {
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Kanban onMove={onMove} onStatusChange={onStatusChange}>
+        <Kanban.Column id="a" data-col={0} data-h={300}>
+          <Kanban.Card id="a1" data-card="a1">
+            a1
+          </Kanban.Card>
+        </Kanban.Column>
+        <Kanban.Column id="b" statuses={NW} data-col={1} data-h={300} data-header-h={60}>
+          <div data-col-header="">Stage B</div>
+          <Kanban.Card id="b1" status="new" data-card="b1">
+            b1
+          </Kanban.Card>
+        </Kanban.Column>
+      </Kanban>,
+    );
+    pressAndMove('a1', [at(1, 30)]);
+    expect(document.querySelectorAll('[data-col="1"] [data-kanban-zone]')).toHaveLength(2);
+    expect(document.querySelector('[data-kanban-zone][data-over]')).toBeNull();
+    fireEvent.pointerUp(document, { clientX: at(1, 30)[0], clientY: 30 });
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('a disallowed zone never shows data-over; an allowed one does', () => {
+    render(
+      <Board
+        canDrop={(_, to) => to.statusId !== 'won'}
+        columns={[
+          ['a', ['a1']],
+          ['b', ['b1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    const zone = (id: string) => document.querySelector(`[data-zone-status="${id}"]`);
+    pressAndMove('a1', [zoneCentre(1, 1, 2)]);
+    expect(zone('won')?.getAttribute('data-disabled')).toBe('true');
+    expect(zone('won')?.hasAttribute('data-over')).toBe(false);
+    fireEvent.pointerMove(document, {
+      clientX: zoneCentre(1, 0, 2)[0],
+      clientY: zoneCentre(1, 0, 2)[1],
+    });
+    expect(zone('new')?.getAttribute('data-over')).toBe('true');
+    expect(zone('won')?.hasAttribute('data-over')).toBe(false);
+    fireEvent.pointerUp(document, {
+      clientX: zoneCentre(1, 0, 2)[0],
+      clientY: zoneCentre(1, 0, 2)[1],
+    });
+  });
+
+  it('a gutter release nearer a rejected column cancels instead of reaching a farther column', () => {
+    // a (plain origin) | b (multi-status) | c (plain, rejected). x 235 is in the
+    // b|c gutter, nearer c: no column there takes the drop, so nothing commits.
+    const onMove = vi.fn();
+    const onStatusChange = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        onStatusChange={onStatusChange}
+        canDrop={(_, to) => to.columnId !== 'c'}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1']],
+          ['c', ['c1']],
+        ]}
+        statuses={{ b: NW }}
+        cardStatus={{ b1: 'new' }}
+      />,
+    );
+    drag('a1', [[235, 100]]);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(boardOrder()).toEqual([['a1', 'a2'], ['b1'], ['c1']]);
+  });
+
+  it('arrow keys skip the cards under a zone overlay: each press reaches a zone', async () => {
+    const user = userEvent.setup();
+    const onStatusChange = vi.fn();
+    render(
+      <Kanban onStatusChange={onStatusChange}>
+        <Kanban.Column id="a" aria-label="To do" data-col={0} data-h={300}>
+          <Kanban.Card id="a1" data-card="a1">
+            a1
+          </Kanban.Card>
+        </Kanban.Column>
+        <Kanban.Column id="b" aria-label="Stage" statuses={NW} data-col={1} data-h={300}>
+          {['b1', 'b2', 'b3', 'b4'].map((id) => (
+            <Kanban.Card key={id} id={id} status="new" data-card={id}>
+              {id}
+            </Kanban.Card>
+          ))}
+        </Kanban.Column>
+      </Kanban>,
+    );
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    expect(live()).toBe('a1, over New in Stage.');
+    await user.keyboard('[ArrowDown]');
+    expect(live()).toBe('a1, over Won in Stage.');
+    await user.keyboard('[Space]');
+    expect(onStatusChange).toHaveBeenCalledWith(
+      expect.objectContaining({ to: { columnId: 'b', statusId: 'won' } }),
+    );
+  });
+
+  it('arrow keys move a card between plain columns', async () => {
+    const user = userEvent.setup();
+    const onMove = vi.fn();
+    render(
+      <Board
+        onMove={onMove}
+        columns={[
+          ['a', ['a1', 'a2']],
+          ['b', ['b1']],
+        ]}
+      />,
+    );
+    screen.getByText('a1').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowRight]');
+    await user.keyboard('[Space]');
+    expect(onMove).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: { columnId: 'a', index: 0 },
+        to: expect.objectContaining({ columnId: 'b' }),
+      }),
+    );
   });
 
   it('plain-column boards render no .body wrapper', () => {

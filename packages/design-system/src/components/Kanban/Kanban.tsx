@@ -30,6 +30,7 @@ import {
   type DragOverEvent,
   type DragStartEvent,
   type DroppableContainer,
+  type KeyboardCoordinateGetter,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -53,6 +54,7 @@ import {
 import { useTranslation } from '../../i18n/useTranslation';
 import {
   containerAwareClosestCorners,
+  isContainer,
   isPointerOutsideContainers,
 } from '../Sortable/containerAwareCollision';
 import styles from './Kanban.module.scss';
@@ -96,9 +98,6 @@ interface KanbanZoneData {
 
 const zoneOf = (droppable: { data: { current?: Record<string, unknown> } } | null | undefined) =>
   droppable?.data.current?.kanbanZone as KanbanZoneData | undefined;
-
-/** A column/group droppable (no `data.sortable`), as opposed to a card. */
-const isContainer = (d: DroppableContainer) => d.data.current?.sortable == null;
 
 function KanbanZone({
   columnId,
@@ -767,9 +766,29 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // ------------------------------------------------------------------
   // Sensors
   // ------------------------------------------------------------------
+  // Ids a keyboard drag may land on — every zone and allowed plain target —
+  // from the last collision pass (written during render by `resolveCollisions`).
+  const keyboardTargetsRef = useRef<Set<string | number> | null>(null);
+  // Arrow keys step only through the droppables a keyboard drop can land on
+  // (see `keyboardTargetsRef`), so no key press moves to a card hidden under a
+  // zone, a multi-status column itself or a rejected column and says nothing.
+  const coordinateGetter = useCallback<KeyboardCoordinateGetter>((event, args) => {
+    const targets = keyboardTargetsRef.current;
+    if (!targets) return sortableKeyboardCoordinates(event, args);
+    const all = args.context.droppableContainers;
+    // The stock getter only calls `get` and `getEnabled` on the map.
+    const droppableContainers = {
+      get: (id: string | number) => all.get(id),
+      getEnabled: () => all.getEnabled().filter((d) => targets.has(d.id)),
+    } as unknown as typeof all;
+    return sortableKeyboardCoordinates(event, {
+      ...args,
+      context: { ...args.context, droppableContainers },
+    });
+  }, []);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, { coordinateGetter }),
   );
 
   // ------------------------------------------------------------------
@@ -849,9 +868,11 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
         for (const c of effectiveItems.get(id) ?? []) rejected.add(c);
       }
       const plain = rest.filter((d) => !zoneOnly.has(d.id) && !rejected.has(d.id));
+      const targets = [...zones, ...plain];
+      keyboardTargetsRef.current = new Set(targets.map((d) => d.id));
       if (!args.pointerCoordinates) {
         // Keyboard: every zone and allowed plain target is reachable.
-        return containerAwareClosestCorners({ ...args, droppableContainers: [...zones, ...plain] });
+        return containerAwareClosestCorners({ ...args, droppableContainers: targets });
       }
 
       // A status commits only with the pointer inside its zone (no nearest-zone fallback).
@@ -863,10 +884,11 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
       // Pointer inside a rejected plain column: no live re-seat, a release cancels.
       const rejectedCols = columns.filter((d) => rejected.has(d.id));
       if (pointerWithin({ ...args, droppableContainers: rejectedCols }).length > 0) return [];
-      // Gutter: cancel when the column it would resolve to is multi-status.
+      // Gutter: cancel when the nearer column takes no plain drop (multi-status
+      // or rejected); falling through would resolve to some farther column.
       if (pointerWithin({ ...args, droppableContainers: columns }).length === 0) {
         const [nearest] = closestCorners({ ...args, droppableContainers: columns });
-        if (nearest && columnStatuses.has(nearest.id)) return [];
+        if (nearest && (columnStatuses.has(nearest.id) || rejected.has(nearest.id))) return [];
       }
       return containerAwareClosestCorners({ ...args, droppableContainers: plain });
     },
