@@ -72,6 +72,12 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
   reference?: ScatterReference | ScatterReference[];
   /** Draw a dashed least-squares line per visible series over its own x-extent (series with ≥2 distinct x only). Decorative. Default `false`. */
   trendLine?: boolean;
+  /**
+   * Draw a vertical line from y = 0 up (or down) to every visible point: a lollipop / stem chart, e.g. visit length by
+   * time of day. When the y range excludes 0 the line starts at the nearest plot edge. Series colour, decorative
+   * (the data table and announcements already carry the values). Default `false`.
+   */
+  stems?: boolean;
   /** EmptyState title when no series has a point. Default: translated "No data for this period". */
   emptyMessage?: ReactNode;
   /** Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored; the last visible series with points can't be hidden (a set hiding all of them is ignored for those). */
@@ -124,6 +130,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
     sizeLabel,
     reference,
     trendLine,
+    stems = false,
     emptyMessage,
     hiddenSeries,
     onHiddenSeriesChange,
@@ -204,6 +211,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
             formatY,
             reference: references,
             trendLine,
+            stems,
             sizeRange,
             sizeDomain,
             strongRadius,
@@ -221,6 +229,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       formatY,
       references,
       trendLine,
+      stems,
       sizeRange,
       sizeDomain,
       strongRadius,
@@ -573,6 +582,24 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
                     transform={`translate(${d.cx},${d.cy})`}
                     data-scatter-dot=""
                     data-strong={d.strong || undefined}
+                  />
+                </g>
+              ))}
+              {/* Stems paint over the dots, ending at each dot's centre: same colour as the fill, so the
+                  dot's separating ring can't cut the stem off from its marker. */}
+              {layout.stems.map((st) => (
+                <g
+                  key={st.seriesKey}
+                  className={styles.series}
+                  style={seriesStyle(st.slot)}
+                  data-series={st.seriesKey}
+                  data-dimmed={activeKey !== null && activeKey !== st.seriesKey ? '' : undefined}
+                >
+                  <path
+                    className={styles.stem}
+                    d={st.path}
+                    aria-hidden="true"
+                    data-scatter-stems=""
                   />
                 </g>
               ))}

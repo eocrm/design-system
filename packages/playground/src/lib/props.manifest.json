@@ -6280,6 +6280,13 @@
           "description": "Draw a dashed least-squares line per visible series over its own x-extent (series with ≥2 distinct x only). Decorative. Default `false`."
         },
         {
+          "name": "stems",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Draw a vertical line from y = 0 up (or down) to every visible point: a lollipop / stem chart, e.g. visit length by\ntime of day. When the y range excludes 0 the line starts at the nearest plot edge. Series colour, decorative\n(the data table and announcements already carry the values). Default `false`."
+        },
+        {
           "name": "emptyMessage",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,

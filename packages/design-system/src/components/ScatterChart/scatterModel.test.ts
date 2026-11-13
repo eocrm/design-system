@@ -160,6 +160,52 @@ describe('size and paint order', () => {
   });
 });
 
+describe('stems', () => {
+  /** [x, baseline, y] per `M x,b V y` segment of a stem path. */
+  const segments = (path: string) =>
+    [...path.matchAll(/M(-?[\d.]+),(-?[\d.]+)V(-?[\d.]+)/g)].map((m) => m.slice(1).map(Number));
+  const pts = [
+    { x: 1, y: 10 },
+    { x: 2, y: 30 },
+  ];
+
+  it('draws none unless asked', () => {
+    expect(computeScatterLayout({ ...base, series: resolve(pts) }).stems).toEqual([]);
+  });
+
+  it('runs one segment per point from y = 0 up to the dot', () => {
+    const l = computeScatterLayout({ ...base, series: resolve(pts), stems: true });
+    expect(l.stems.map((s) => s.seriesKey)).toEqual(['a']);
+    const zero = l.yTicks.find((t) => t.value === 0)!.pos;
+    const dots = l.dots.filter((d) => d.seriesKey === 'a').sort((a, b) => a.cx - b.cx);
+    const segs = segments(l.stems[0].path).sort((a, b) => a[0] - b[0]);
+    expect(segs).toHaveLength(2);
+    segs.forEach(([x, b, y], i) => {
+      expect(x).toBeCloseTo(dots[i].cx);
+      expect(b).toBeCloseTo(zero);
+      expect(y).toBeCloseTo(dots[i].cy);
+    });
+  });
+
+  it('starts at the nearest plot edge when 0 is outside the y range', () => {
+    const above = computeScatterLayout({
+      ...base,
+      series: resolve(pts),
+      yDomain: [5, 40],
+      stems: true,
+    });
+    for (const [, b] of segments(above.stems[0].path))
+      expect(b).toBeCloseTo(above.plot.y + above.plot.height);
+    const below = computeScatterLayout({
+      ...base,
+      series: resolve([{ x: 1, y: -20 }]),
+      yDomain: [-40, -5],
+      stems: true,
+    });
+    for (const [, b] of segments(below.stems[0].path)) expect(b).toBeCloseTo(below.plot.y);
+  });
+});
+
 describe('trend and reference', () => {
   it('skips 1-point series and spans the series own x extent', () => {
     const series = [

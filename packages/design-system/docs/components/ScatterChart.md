@@ -60,6 +60,25 @@ function MealsToday({ bowlA, bowlB, usualPace }: MealsTodayProps) {
 }
 ```
 
+## Stems — a lollipop chart (`stems`)
+
+`stems` draws a vertical line from y = 0 to every visible point, so each event reads like a thin bar at its exact time. Use it for discrete events on a time axis where the value is a magnitude — visit length, call duration, order value. When the y range excludes 0 (an explicit `yDomain`), the line starts at the nearest plot edge. Stems take the series colour, hide and dim with their series, and are decorative: the data table and announcements already carry each value. Give the series `emphasis: 'strong'` for the larger lollipop heads; default dots are barely wider than the stem.
+
+```tsx
+<ScatterChart
+  label="Litter-box visits today"
+  xScale="time"
+  series={[{ key: 'visits', label: 'Visits', emphasis: 'strong', points }]} // { x: time, y: seconds }
+  xLabel="Time"
+  yLabel="Visit length"
+  formatX={formatTime}
+  formatY={formatDuration}
+  stems
+/>
+```
+
+Don't use stems for values counted per category or per day — use [`Chart`](./Chart.md) bars. Don't combine them with `size` or a dense series: the lines overlap and add noise without adding information.
+
 ## Syncing with other charts (`sync`)
 
 Inside a [`ChartSync`](./ChartSync.md), inspecting a point shows a crosshair and tooltip at the same x in the other charts. `sync={false}` opts this chart out. A scatter chart syncs by x value, so it lines up with category charts that pass `categoryValues`; category charts without it are skipped.
@@ -84,6 +103,7 @@ Inside a [`ChartSync`](./ChartSync.md), inspecting a point shows a crosshair and
 | `sizeLabel` | `string` | no | Name of `size` in the tooltip, announcement and table header, e.g. "Calories". Default: translated "Size". |
 | `reference` | `ScatterReference \| ScatterReference[]` | no | App-computed reference line(s) (e.g. a recommended ratio), drawn dashed (a different pattern per line) and each listed in the legend. |
 | `trendLine` | `boolean` | no | Draw a dashed least-squares line per visible series over its own x-extent (series with ≥2 distinct x only). Decorative. Default `false`. |
+| `stems` | `boolean` | no | Draw a vertical line from y = 0 up (or down) to every visible point: a lollipop / stem chart, e.g. visit length by time of day. When the y range excludes 0 the line starts at the nearest plot edge. Series colour, decorative (the data table and announcements already carry the values). Default `false`. |
 | `emptyMessage` | `ReactNode` | no | EmptyState title when no series has a point. Default: translated "No data for this period". |
 | `hiddenSeries` | `string[]` | no | Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored; the last visible series with points can't be hidden (a set hiding all of them is ignored for those). |
 | `onHiddenSeriesChange` | `((keys: string[]) => void)` | no | Called with the next hidden keys when the user toggles a legend item. |

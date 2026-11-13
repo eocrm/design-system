@@ -213,6 +213,24 @@ describe('ScatterChart', () => {
     expect(trends[0].closest('[data-series]')).toHaveAttribute('data-series', 'cat');
   });
 
+  it('stems draw one decorative path per visible series, inside its series group, only when asked', () => {
+    const layout = stubLayout();
+    const { container, rerender } = render(<ScatterChart {...base} />);
+    layout.fire();
+    expect(container.querySelector('[data-scatter-stems]')).toBeNull();
+    rerender(<ScatterChart {...base} stems />);
+    const stems = [...container.querySelectorAll('[data-scatter-stems]')];
+    const keys = stems.map((s) => s.closest('[data-series]')?.getAttribute('data-series'));
+    expect(keys.length).toBeGreaterThan(0);
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const s of stems) expect(s).toHaveAttribute('aria-hidden', 'true');
+    rerender(<ScatterChart {...base} stems hiddenSeries={[keys[0]!]} />);
+    const after = [...container.querySelectorAll('[data-scatter-stems]')].map((s) =>
+      s.closest('[data-series]')?.getAttribute('data-series'),
+    );
+    expect(after).not.toContain(keys[0]);
+  });
+
   it('reference draws a path and is listed in the legend', () => {
     const layout = stubLayout();
     const { container } = render(

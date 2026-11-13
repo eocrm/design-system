@@ -149,6 +149,8 @@ export interface ScatterLayout {
   trends: { seriesKey: string; slot: number; path: string }[];
   /** One entry per connected segment of a `connect` series, in series order. */
   connects: { seriesKey: string; slot: number; path: string }[];
+  /** With `stems`, one path per series with points: a vertical segment per dot from y = 0 (clamped to the plot) to the dot. */
+  stems: { seriesKey: string; slot: number; path: string }[];
 }
 
 export interface ScatterLayoutInput {
@@ -162,6 +164,8 @@ export interface ScatterLayoutInput {
   formatY: (y: number) => string;
   reference?: ScatterReference | ScatterReference[];
   trendLine?: boolean;
+  /** Build `stems`: a vertical line from y = 0 (or the nearest plot edge) to each dot. */
+  stems?: boolean;
   /** Min and max dot radius for points with `size`; the max also shrinks to 1/25 of the chart width. */
   sizeRange: [number, number];
   /** Domain of `size` values; pass `scatterSizeDomain(allSeries)` so hiding a series doesn't resize the rest. Defaults to `series`. */
@@ -415,6 +419,18 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
       connects.push({ seriesKey: s.key, slot: s.slot, path: toPath(seg)! });
   }
 
+  const stems: ScatterLayout['stems'] = [];
+  if (input.stems) {
+    // y = 0, clamped to the plot so a range that excludes 0 starts at its nearest edge.
+    const baseline = Math.min(plotBottom, Math.max(plotTop, y(0)));
+    for (const s of series) {
+      const own = dots.filter((d) => d.seriesKey === s.key);
+      if (own.length === 0) continue;
+      const path = own.map((d) => `M${d.cx},${baseline}V${d.cy}`).join('');
+      stems.push({ seriesKey: s.key, slot: s.slot, path });
+    }
+  }
+
   return {
     plot,
     yTitle: { x: 0, y: Y_TITLE_BASELINE },
@@ -428,5 +444,6 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     references,
     trends,
     connects,
+    stems,
   };
 }
