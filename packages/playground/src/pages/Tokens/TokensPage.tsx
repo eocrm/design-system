@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import { Stack, Title, Text, Code, Input } from '@eocrm/design-system';
 import tokensSource from '@eocrm/design-tokens/styles/tokens.scss?raw';
 import {
@@ -12,13 +12,51 @@ import { TokenPreview } from './TokenPreview';
 import styles from './TokensPage.module.scss';
 
 /**
+ * Changes whenever the resolved theme can change: the AppShell's forced
+ * `<html data-theme>` / `data-accent`, or the OS scheme (System mode).
+ */
+function useThemeKey(): string {
+  return useSyncExternalStore(
+    (onChange) => {
+      const observer = new MutationObserver(onChange);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme', 'data-accent'],
+      });
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      mq.addEventListener('change', onChange);
+      return () => {
+        observer.disconnect();
+        mq.removeEventListener('change', onChange);
+      };
+    },
+    () => {
+      const { theme, accent } = document.documentElement.dataset;
+      return `${theme}|${accent}|${window.matchMedia('(prefers-color-scheme: dark)').matches}`;
+    },
+    () => '',
+  );
+}
+
+/**
  * Read-only reference page for every design token in `tokens.scss`. The
  * source file is imported via Vite's `?raw` loader and parsed at render
  * time — so adding a new token in the library automatically shows up here
  * with no playground change required.
  */
 export function TokensPage() {
-  const allTokens = useMemo(() => parseTokens(tokensSource), []);
+  const sourceTokens = useMemo(() => parseTokens(tokensSource), []);
+  const themeKey = useThemeKey();
+  // Show the value the current theme/accent resolves to, not the light `:root`
+  // literal from the source — dark and accent overrides land on `<html>`.
+  const allTokens = useMemo<ParsedToken[]>(() => {
+    if (!themeKey) return sourceTokens;
+    const computed = getComputedStyle(document.documentElement);
+    return sourceTokens.map((t) => ({
+      ...t,
+      value: computed.getPropertyValue(`--${t.name}`).trim() || t.value,
+    }));
+  }, [sourceTokens, themeKey]);
   const [filter, setFilter] = useState('');
 
   const filtered = useMemo<ParsedToken[]>(() => {
