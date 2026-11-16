@@ -16,6 +16,7 @@ import {
   type NavItem,
   mockupItems,
   componentOverview,
+  componentCatalog,
   tokensReference,
   architectureReference,
   componentGroups,
@@ -110,6 +111,26 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
   }, [collapsed]);
+
+  // Open component groups. The group holding the current page opens on every
+  // navigation (rail click, ⌘K search, in-page link); others keep their state.
+  const activeGroup = componentGroups.find((g) =>
+    g.items.some((i) => pathname === i.to || pathname.startsWith(`${i.to}/`)),
+  )?.heading;
+  const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(
+    () => new Set(activeGroup ? [activeGroup] : []),
+  );
+  useEffect(() => {
+    if (activeGroup)
+      setOpenGroups((prev) => (prev.has(activeGroup) ? prev : new Set(prev).add(activeGroup)));
+  }, [activeGroup]);
+  const setGroupOpen = (heading: string, open: boolean) =>
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (open) next.add(heading);
+      else next.delete(heading);
+      return next;
+    });
 
   // Below 768px the rail lives in an overlay drawer (AppLayout sidebarOverlayBelow).
   const [navOpen, setNavOpen] = useState(false);
@@ -217,14 +238,27 @@ export function AppShell({ children }: { children: ReactNode }) {
               <>
                 <Rail.Section>
                   {renderRailItem(componentOverview)}
+                  {renderRailItem(componentCatalog)}
                   {renderRailItem(tokensReference)}
                   {renderRailItem(architectureReference)}
                 </Rail.Section>
-                {componentGroups.map(({ heading, items }) => (
-                  <Rail.Section key={heading} title={heading}>
-                    {items.map(renderRailItem)}
-                  </Rail.Section>
-                ))}
+                <Rail.Section title="Components">
+                  {componentGroups.map(({ heading, icon: Icon, items }) => (
+                    <Rail.Group
+                      key={heading}
+                      icon={<Icon size={16} />}
+                      label={heading}
+                      open={openGroups.has(heading)}
+                      onOpenChange={(open) => setGroupOpen(heading, open)}
+                    >
+                      {items.map(({ to, label, end }) => (
+                        <Rail.Item key={to} as={NavLink} to={to} end={end}>
+                          {label}
+                        </Rail.Item>
+                      ))}
+                    </Rail.Group>
+                  ))}
+                </Rail.Section>
               </>
             ) : (
               <Rail.Section title="Mockups">{mockupItems.map(renderRailItem)}</Rail.Section>
@@ -239,16 +273,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Rail.Item as={NavLink} to={switchLink.to} icon={<switchLink.icon size={16} />}>
                 {switchLink.label}
               </Rail.Item>
-              {!inComponents && (
-                <Rail.Item
-                  href="https://github.com/eocrm/design-system"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  icon={<GithubMark />}
-                >
-                  GitHub
-                </Rail.Item>
-              )}
+              <Rail.Item
+                href="https://github.com/eocrm/design-system"
+                target="_blank"
+                rel="noopener noreferrer"
+                icon={<GithubMark />}
+              >
+                GitHub
+              </Rail.Item>
               {!isOverlayNav && <Rail.CollapseToggle />}
             </Rail.Footer>
           </Rail>

@@ -7,7 +7,7 @@ import styles from './CodeBlock.module.scss';
 
 export interface CodeBlockProps {
   code: string;
-  language?: 'tsx' | 'ts' | 'scss' | 'css' | 'json';
+  language?: 'tsx' | 'ts' | 'scss' | 'css' | 'json' | 'bash' | 'html';
   filename?: string;
   className?: string;
 }
