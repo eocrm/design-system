@@ -16,7 +16,7 @@ The cross-link is registry-driven and bidirectional: every mockup page lists "Co
 
 Routes: `/mockups/*` for mockups, `/components/*` for component demos. Root `/` redirects to `/mockups`.
 
-The sidebar rail is section-contextual: when you're under `/mockups/*` it shows only the Mockups items; under `/components/*` it shows only the Components items, grouped by category (Layout, Forms, Display, Navigation). A single switch link pinned to the bottom of the rail jumps between sections.
+The sidebar rail is section-contextual: when you're under `/mockups/*` it shows only the Mockups items; under `/components/*` it shows Overview (`/components`, install + setup landing page), All components (`/components/all`, the card grid), Tokens and Architecture, then one collapsible `Rail.Group` per component type (Layout, App shell, Typography, Actions, Text inputs, …). The group holding the current page opens automatically. A single switch link pinned to the bottom of the rail jumps between sections.
 
 ## Hard rules
 
@@ -78,8 +78,8 @@ If your demo covers a component whose sources live outside `components/` (rare �
 For a new demo page to be reachable:
 
 1. `src/App.tsx` — add a `<Route path="/components/<name>" element={<<Name>Demo />} />`
-2. `src/layout/AppShell/navItems.ts` — add the item to the appropriate group in `componentGroups` (`Layout`, `Forms`, `Display`, `Navigation`). The groups are defined here; `AppShell.tsx` only renders them. If none of the existing groups fit, add a new group rather than stuffing the item somewhere it doesn't belong.
-3. `src/pages/components/ComponentsIndex.tsx` — add a card to the overview grid, plus a schematic preview in `overviewSchematics.tsx` (blueprint-accent vocabulary — tinted shapes, exactly one solid-accent focal element; see the SCHEMATICS record). Overview previews are schematics, not live renders.
+2. `src/layout/AppShell/navItems.ts` — add the item to the appropriate type group in `componentGroups` (items sort A–Z within a group). The groups and their icons are defined here; `AppShell.tsx` only renders them. If none of the existing groups fit, add a new group rather than stuffing the item somewhere it doesn't belong.
+3. `src/pages/components/ComponentsIndex.tsx` — add a card to the All components grid (`/components/all`), plus a schematic preview in `overviewSchematics.tsx` (blueprint-accent vocabulary — tinted shapes, exactly one solid-accent focal element; see the SCHEMATICS record). Overview previews are schematics, not live renders.
 4. `src/pages/mockups/registry.ts` — extend the `ComponentName` union with the new name. `DemoLayout`'s `componentName` prop is typed to that union, so a demo that passes `componentName` won't typecheck without it (the prop is optional — `AppLayoutDemo` and `DatePickersDemo` omit it — but nearly every demo passes it). If the component is also used by a mockup, add its name to that mockup's `usesComponents` list.
 
 Skipping 1–3 → users can navigate to the URL but the page is unreachable through nav. Skipping 4 → a demo that passes `componentName` doesn't typecheck, and the cross-link between mockups and component demos is broken.

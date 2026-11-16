@@ -20,6 +20,7 @@ import { NotFoundStandalone } from './pages/mockups/NotFound/NotFoundStandalone'
 import { AppError } from './pages/mockups/AppError/AppError';
 import { AppErrorStandalone } from './pages/mockups/AppError/AppErrorStandalone';
 import { ComponentsIndex } from './pages/components/ComponentsIndex';
+import { OverviewPage } from './pages/Overview/OverviewPage';
 import { TokensPage } from './pages/Tokens/TokensPage';
 import { ArchitecturePage } from './pages/Architecture/ArchitecturePage';
 import { AccordionDemo } from './pages/components/AccordionDemo';
@@ -180,7 +181,8 @@ export default function App() {
             <Route path="/mockups/error" element={<AppError />} />
             <Route path="/mockups/error-standalone" element={<AppErrorStandalone />} />
 
-            <Route path="/components" element={<ComponentsIndex />} />
+            <Route path="/components" element={<OverviewPage />} />
+            <Route path="/components/all" element={<ComponentsIndex />} />
             <Route path="/components/tokens" element={<TokensPage />} />
             <Route path="/components/architecture" element={<ArchitecturePage />} />
             <Route path="/components/accordion" element={<AccordionDemo />} />
