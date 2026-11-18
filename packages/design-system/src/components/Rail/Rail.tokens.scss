@@ -39,11 +39,15 @@
 
   // Section grouping
   --rail-section-gap: var(--space-3);
-  --rail-section-title-fg: var(--color-fg-muted);
+
+  // Section title: quiet sentence-case label + a hairline to the right edge.
+  --rail-section-title-fg: var(--color-fg-subtle);
   --rail-section-title-font-size: var(--font-size-xs);
-  --rail-section-title-font-weight: var(--font-weight-semibold);
-  --rail-section-title-letter-spacing: var(--letter-spacing-caps);
+  --rail-section-title-font-weight: var(--font-weight-regular);
   --rail-section-title-padding: var(--space-2) var(--space-3);
+  --rail-section-title-rule-gap: var(--space-2);
+  --rail-section-title-rule-color: var(--color-border);
+  --rail-section-title-rule-width: var(--border-width);
 
   // Item visuals
   --rail-item-padding-x: var(--space-3);

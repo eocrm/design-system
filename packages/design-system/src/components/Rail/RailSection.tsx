@@ -4,7 +4,7 @@ import styles from './Rail.module.scss';
 
 export interface RailSectionProps extends HTMLAttributes<HTMLDivElement> {
   /**
-   * Section heading rendered in small-caps muted style above the section's
+   * Section heading rendered as a quiet label with a trailing hairline above the section's
    * items. Hidden when the rail is collapsed (a small visual gap remains
    * between sections via the rail's `gap`). When provided, doubles as
    * `aria-label` for the section's `role="group"` so screen readers can
