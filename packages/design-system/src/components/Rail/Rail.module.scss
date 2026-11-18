@@ -453,6 +453,10 @@
   padding-left: var(--rail-subitem-padding-left);
 }
 
+.subitems .sectionTitle {
+  padding: var(--rail-subsection-title-padding);
+}
+
 // When the rail is collapsed, inline subitems disappear (they live in the
 // flyout popover instead).
 .collapsed .subitems {
@@ -530,4 +534,8 @@
   flex-direction: column;
   gap: var(--rail-flyout-body-gap);
   padding: var(--rail-flyout-body-padding);
+}
+
+.flyoutBody .sectionTitle {
+  padding: var(--rail-flyout-subsection-title-padding);
 }

@@ -71,6 +71,10 @@
   // their group icon). No --space-7 (28px) exists, so we use --space-6 (24px).
   --rail-subitem-padding-left: var(--space-6);
 
+  // Title of a `Rail.Section` nested inside a Group, aligned to the subitem indent.
+  --rail-subsection-title-padding: var(--space-2) var(--space-3) var(--space-1)
+    var(--rail-subitem-padding-left);
+
   // Collapsed flyout (the hover popover surface for collapsed groups)
   --rail-flyout-min-width: 200px;
   --rail-flyout-z: var(--z-popover);
@@ -82,6 +86,7 @@
   --rail-flyout-header-padding: var(--space-2) var(--space-3);
   --rail-flyout-body-padding: var(--space-2);
   --rail-flyout-body-gap: var(--space-1);
+  --rail-flyout-subsection-title-padding: var(--space-2) var(--space-3) var(--space-1);
   --rail-flyout-header-fg: var(--color-fg);
   --rail-flyout-header-font-weight: var(--font-weight-semibold);
   --rail-flyout-header-border: var(--color-border);
