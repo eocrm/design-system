@@ -90,7 +90,7 @@ import { Home, Users, Settings } from 'lucide-react';
 | `open` | `boolean` | no | Controlled inline-expand state (only meaningful when the rail itself is expanded — collapsed-mode uses hover-driven popover state instead). Provide alongside `onOpenChange` to drive open state externally. |
 | `defaultOpen` | `boolean` | no | Initial open state for the uncontrolled case. Default `false`. |
 | `onOpenChange` | `((open: boolean) => void)` | no | Fires whenever the inline-expand toggles. |
-| `children` | `ReactNode` | yes | Subitems — typically a list of `<Rail.Item>` without icons. |
+| `children` | `ReactNode` | yes | Subitems — `<Rail.Item>`s without icons, optionally split into titled chunks with `<Rail.Section>`. |
 | `as` | `ElementType` | no |  |
 | …native | | | plus native attributes of the `as` element (default `<div>`) |
 
@@ -118,7 +118,7 @@ import { Home, Users, Settings } from 'lucide-react';
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `title` | `string` | no | Section heading rendered in small-caps muted style above the section's items. Hidden when the rail is collapsed (a small visual gap remains between sections via the rail's `gap`). When provided, doubles as `aria-label` for the section's `role="group"` so screen readers can navigate by group. |
-| `children` | `ReactNode` | yes | Items and/or groups belonging to this section. |
+| `children` | `ReactNode` | yes | Items and/or groups belonging to this section — or, nested in a `Rail.Group`, a titled chunk of its subitems. |
 | …native | | | plus native `<div>` attributes |
 
 ### `RailSpacerProps`
@@ -168,6 +168,7 @@ import { Home, Users, Settings } from 'lucide-react';
 
 - **`Rail.Item`** defaults to `<a href>`. Expanded it shows icon + label + optional `badge` on one row; collapsed (top-level) it shows the icon only, wrapped in a `<Tooltip>` so the label stays discoverable (only when the children are a string and the item is a direct rail child — group subitems show their labels in the flyout). Collapsed, a `badge` is visually hidden (still in the accessible name) and a small dot appears on the icon.
 - **`Rail.Section title="…"`** renders `<div role="group">` with the title as `aria-label`; visually the title is a small-caps muted line above the items, faded out (height 0, opacity 0) when collapsed.
+- **`Rail.Section` inside `Rail.Group`** splits the subitems into titled chunks (e.g. a "Задачи" group with "Saved views" and "Spaces" sections of items). The title lines up with the subitem labels, in the inline list and in the collapsed flyout. Still one level: a group's section holds only `Rail.Item`s.
 - **`Rail.CollapseToggle`** is a ghost icon-only button whose `aria-label` flips between expand / collapse; its chevron rotates 180° when collapsed so it always points outward. Drop it in `<Rail.Footer>` or anywhere inside the rail. `Rail.Footer` typically holds a user chip, theme switcher or the toggle.
 - **`Rail.Spacer`:** when the item list overflows, the body scrolls and the spacer collapses to nothing, so items after it scroll WITH the content; only `Rail.Footer` stays outside the scroll box. Use the Footer for anything that must stay visible on a tall scroll.
 - **Group auto-open and timing:** the active-route auto-open is one-shot; pass a controlled `open` for exact sync. Re-entering the trigger or the flyout cancels the pending close.
@@ -188,4 +189,5 @@ const [collapsed, setCollapsed] = useState(() => localStorage.getItem('rail') ==
 ```
 
 - ❌ Wrapping subcomponents in extra `<div>`s — the `[data-collapsed]` cascade is brittle to extra wrappers and the active-state CSS (`:has([aria-current="page"])`) won't reach where you expect.
-- ❌ Putting non-`<Rail.Item>` children inside a `<Rail.Group>` — subitems should match the item shape so the active-state cascade reaches them.
+- ❌ Putting anything other than `<Rail.Item>` or a `<Rail.Section>` of `<Rail.Item>`s inside a `<Rail.Group>` — subitems should match the item shape so the active-state cascade reaches them.
+- ❌ Nesting a `Rail.Group` inside a group's `Rail.Section` — subitems are still one level deep.

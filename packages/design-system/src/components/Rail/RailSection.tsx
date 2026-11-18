@@ -11,7 +11,7 @@ export interface RailSectionProps extends HTMLAttributes<HTMLDivElement> {
    * navigate by group.
    */
   title?: string;
-  /** Items and/or groups belonging to this section. */
+  /** Items and/or groups belonging to this section — or, nested in a `Rail.Group`, a titled chunk of its subitems. */
   children: ReactNode;
 }
 

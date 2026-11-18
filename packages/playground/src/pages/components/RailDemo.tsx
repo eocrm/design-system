@@ -12,6 +12,7 @@ import {
   Home,
   KanbanSquare,
   Layers,
+  ListTodo,
   Mail,
   Search,
   Settings as SettingsIcon,
@@ -898,6 +899,65 @@ import { Rail } from '@eocrm/design-system';
             one button, whole row.
           </Text>
         </Cluster>
+      </Example>
+
+      <Example
+        title="Group with sub-sections"
+        description="Nest `Rail.Section title` inside a `Rail.Group` to split its subitems into titled chunks. The titles line up with the subitem labels, inline and in the collapsed flyout. Still one level — a section here holds only items."
+        code={`import { ListTodo } from 'lucide-react';
+import { Rail } from '@eocrm/design-system';
+
+<Rail>
+  <Rail.Section title="Main">
+    <Rail.Group icon={<ListTodo size={16} />} label="Задачи" defaultOpen>
+      <Rail.Section title="Saved views">
+        <Rail.Item href="#/tasks/design-system" aria-current="page">
+          Design system
+        </Rail.Item>
+        <Rail.Item href="#/tasks/eocrm">Eocrm</Rail.Item>
+        <Rail.Item href="#/tasks/home-hub">Home Hub</Rail.Item>
+      </Rail.Section>
+      <Rail.Section title="Spaces">
+        <Rail.Item href="#/spaces/virtual-planner">Virtual Planner</Rail.Item>
+        <Rail.Item href="#/spaces/epics">Epics</Rail.Item>
+        <Rail.Item href="#/spaces/open-ops">Open Ops</Rail.Item>
+      </Rail.Section>
+    </Rail.Group>
+  </Rail.Section>
+
+  <Rail.Spacer />
+  <Rail.Footer>
+    <Rail.CollapseToggle />
+  </Rail.Footer>
+</Rail>;`}
+      >
+        <RailStage>
+          <Rail>
+            <Rail.Header>
+              <BrandMark />
+            </Rail.Header>
+            <Rail.Section title="Main">
+              <Rail.Group icon={<ListTodo size={16} />} label="Задачи" defaultOpen>
+                <Rail.Section title="Saved views">
+                  <Rail.Item href="#/tasks/design-system" aria-current="page">
+                    Design system
+                  </Rail.Item>
+                  <Rail.Item href="#/tasks/eocrm">Eocrm</Rail.Item>
+                  <Rail.Item href="#/tasks/home-hub">Home Hub</Rail.Item>
+                </Rail.Section>
+                <Rail.Section title="Spaces">
+                  <Rail.Item href="#/spaces/virtual-planner">Virtual Planner</Rail.Item>
+                  <Rail.Item href="#/spaces/epics">Epics</Rail.Item>
+                  <Rail.Item href="#/spaces/open-ops">Open Ops</Rail.Item>
+                </Rail.Section>
+              </Rail.Group>
+            </Rail.Section>
+            <Rail.Spacer />
+            <Rail.Footer>
+              <Rail.CollapseToggle />
+            </Rail.Footer>
+          </Rail>
+        </RailStage>
       </Example>
 
       <Example

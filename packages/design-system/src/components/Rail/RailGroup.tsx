@@ -75,7 +75,7 @@ interface RailGroupOwnProps {
   defaultOpen?: boolean;
   /** Fires whenever the inline-expand toggles. */
   onOpenChange?: (open: boolean) => void;
-  /** Subitems — typically a list of `<Rail.Item>` without icons. */
+  /** Subitems — `<Rail.Item>`s without icons, optionally split into titled chunks with `<Rail.Section>`. */
   children: ReactNode;
 }
 
