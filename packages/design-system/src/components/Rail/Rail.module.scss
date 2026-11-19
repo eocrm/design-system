@@ -234,6 +234,12 @@
   }
 }
 
+.rail:not(.collapsed) > .body > .section:first-child > .sectionTitle {
+  // The first title has no item above it, only the header edge — keep the
+  // breathing room the even-spacing rule (no top padding) would remove.
+  padding-top: var(--rail-section-title-first-padding-top);
+}
+
 .collapsed .sectionTitle {
   opacity: var(--rail-label-opacity-hidden);
   pointer-events: none;

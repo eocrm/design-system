@@ -44,7 +44,11 @@
   --rail-section-title-fg: var(--color-fg-subtle);
   --rail-section-title-font-size: var(--font-size-md);
   --rail-section-title-font-weight: var(--font-weight-regular);
-  --rail-section-title-padding: var(--space-2) var(--space-3);
+
+  // No top padding: the section gap above (12px) already matches the 8px
+  // bottom padding + 4px in-section gap below, so the title sits evenly.
+  --rail-section-title-padding: 0 var(--space-3) var(--space-2);
+  --rail-section-title-first-padding-top: var(--space-2);
   --rail-section-title-rule-gap: var(--space-2);
   --rail-section-title-rule-color: var(--color-border);
   --rail-section-title-rule-width: var(--border-width);
@@ -76,7 +80,7 @@
   --rail-subitem-padding-left: var(--space-6);
 
   // Title of a `Rail.Section` nested inside a Group, aligned to the subitem indent.
-  --rail-subsection-title-padding: var(--space-2) var(--space-3) var(--space-1)
+  --rail-subsection-title-padding: var(--space-1) var(--space-3) var(--space-1)
     var(--rail-subitem-padding-left);
 
   // Collapsed flyout (the hover popover surface for collapsed groups)
@@ -90,7 +94,7 @@
   --rail-flyout-header-padding: var(--space-2) var(--space-3);
   --rail-flyout-body-padding: var(--space-2);
   --rail-flyout-body-gap: var(--space-1);
-  --rail-flyout-subsection-title-padding: var(--space-2) var(--space-3) var(--space-1);
+  --rail-flyout-subsection-title-padding: var(--space-1) var(--space-3);
   --rail-flyout-header-fg: var(--color-fg);
   --rail-flyout-header-font-weight: var(--font-weight-semibold);
   --rail-flyout-header-border: var(--color-border);
