@@ -40,7 +40,9 @@
   // Section grouping
   --rail-section-gap: var(--space-3);
 
-  // Section title: quiet sentence-case label + a hairline to the right edge.
+  // Section title: as-written label + a hairline to the right edge.
+  // fg-subtle meets AA only on --color-bg / --color-bg-subtle; rebind this
+  // too (e.g. to --color-fg-muted) if --rail-bg moves to a darker surface.
   --rail-section-title-fg: var(--color-fg-subtle);
   --rail-section-title-font-size: var(--font-size-md);
   --rail-section-title-font-weight: var(--font-weight-regular);

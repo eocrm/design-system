@@ -4,9 +4,11 @@ import styles from './Rail.module.scss';
 
 export interface RailSectionProps extends HTMLAttributes<HTMLDivElement> {
   /**
-   * Section heading rendered as a quiet label with a trailing hairline above the section's
-   * items. Hidden when the rail is collapsed (a small visual gap remains
-   * between sections via the rail's `gap`). When provided, doubles as
+   * Section heading rendered as-written (no uppercasing) with a trailing
+   * hairline above the section's items. Hidden when the rail is collapsed (a
+   * small visual gap remains between sections via the rail's `gap`) — except
+   * a section nested in a `Rail.Group`, whose title shows in the collapsed
+   * flyout. When provided, doubles as
    * `aria-label` for the section's `role="group"` so screen readers can
    * navigate by group.
    */

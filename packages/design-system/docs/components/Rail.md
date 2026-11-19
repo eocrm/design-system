@@ -117,7 +117,7 @@ import { Home, Users, Settings } from 'lucide-react';
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `title` | `string` | no | Section heading rendered as a quiet label with a trailing hairline above the section's items. Hidden when the rail is collapsed (a small visual gap remains between sections via the rail's `gap`). When provided, doubles as `aria-label` for the section's `role="group"` so screen readers can navigate by group. |
+| `title` | `string` | no | Section heading rendered as-written (no uppercasing) with a trailing hairline above the section's items. Hidden when the rail is collapsed (a small visual gap remains between sections via the rail's `gap`) — except a section nested in a `Rail.Group`, whose title shows in the collapsed flyout. When provided, doubles as `aria-label` for the section's `role="group"` so screen readers can navigate by group. |
 | `children` | `ReactNode` | yes | Items and/or groups belonging to this section — or, nested in a `Rail.Group`, a titled chunk of its subitems. |
 | …native | | | plus native `<div>` attributes |
 
@@ -167,7 +167,7 @@ import { Home, Users, Settings } from 'lucide-react';
 - ❌ Putting an icon-less top-level item directly inside a section — when the rail collapses there's nothing visible. Items without icons belong inside a `<Rail.Group>`.
 
 - **`Rail.Item`** defaults to `<a href>`. Expanded it shows icon + label + optional `badge` on one row; collapsed (top-level) it shows the icon only, wrapped in a `<Tooltip>` so the label stays discoverable (only when the children are a string and the item is a direct rail child — group subitems show their labels in the flyout). Collapsed, a `badge` is visually hidden (still in the accessible name) and a small dot appears on the icon.
-- **`Rail.Section title="…"`** renders `<div role="group">` with the title as `aria-label`; visually the title is a quiet, as-written (not uppercased) label followed by a hairline to the right edge, faded out (height 0, opacity 0) when collapsed.
+- **`Rail.Section title="…"`** renders `<div role="group">` with the title as `aria-label`; visually the title is a quiet, as-written (not uppercased) label followed by a hairline to the right edge, faded out (height 0, opacity 0) when collapsed. The title colour (`--rail-section-title-fg`, `--color-fg-subtle`) meets AA only on `--color-bg` / `--color-bg-subtle`; if you rebind `--rail-bg` to a darker surface, rebind `--rail-section-title-fg` to `--color-fg-muted` too.
 - **`Rail.Section` inside `Rail.Group`** splits the subitems into titled chunks (e.g. a "Задачи" group with "Saved views" and "Spaces" sections of items). Same title style as a top-level section, indented to line up with the subitem labels in the inline list and in the collapsed flyout. Still one level: a group's section holds only `Rail.Item`s.
 - **`Rail.CollapseToggle`** is a ghost icon-only button whose `aria-label` flips between expand / collapse; its chevron rotates 180° when collapsed so it always points outward. Drop it in `<Rail.Footer>` or anywhere inside the rail. `Rail.Footer` typically holds a user chip, theme switcher or the toggle.
 - **`Rail.Spacer`:** when the item list overflows, the body scrolls and the spacer collapses to nothing, so items after it scroll WITH the content; only `Rail.Footer` stays outside the scroll box. Use the Footer for anything that must stay visible on a tall scroll.

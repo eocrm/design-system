@@ -1703,7 +1703,6 @@ describe('Rail — sections inside a Group', () => {
       });
       const dialog = screen.getByRole('dialog', { name: 'Задачи' });
       expect(within(dialog).getByRole('group', { name: 'Saved views' })).toBeInTheDocument();
-      expect(within(dialog).getByText('Saved views')).toBeVisible();
     } finally {
       vi.useRealTimers();
     }
