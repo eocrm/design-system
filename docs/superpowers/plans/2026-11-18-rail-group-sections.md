@@ -30,11 +30,13 @@
 ### Task 1: Nested sections in Rail.Group (tests + styles)
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Rail/Rail.module.scss` (after `.subitems .item`, and after `.flyoutBody`)
 - Modify: `packages/design-system/src/components/Rail/Rail.tokens.scss` (near line 72)
 - Test: `packages/design-system/src/components/Rail/Rail.test.tsx` (new `describe('Rail — sections inside a Group', …)` block)
 
 **Interfaces:**
+
 - Produces: tokens `--rail-subsection-title-padding: var(--space-2) var(--space-3) var(--space-1) var(--rail-subitem-padding-left)` and `--rail-flyout-subsection-title-padding: var(--space-2) var(--space-3) var(--space-1)`.
 
 - [ ] **Step 1: Write the failing/pinning tests** in the new describe block:
@@ -59,6 +61,7 @@
 ### Task 2: Docs + playground demo
 
 **Files:**
+
 - Modify: `packages/design-system/docs/components/Rail.md`
 - Modify: `packages/design-system/src/components/Rail/RailSection.tsx` (`children` JSDoc: "Items and/or groups belonging to this section — or, nested in a `Rail.Group`, a titled chunk of its subitems.")
 - Modify: `packages/design-system/src/components/Rail/RailGroup.tsx` (`children` JSDoc: "Subitems — `<Rail.Item>`s without icons, optionally split into titled chunks with `<Rail.Section>`.")
