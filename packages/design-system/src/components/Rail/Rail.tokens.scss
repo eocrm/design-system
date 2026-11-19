@@ -42,7 +42,8 @@
 
   // Section title: as-written label + a hairline to the right edge.
   // fg-subtle meets AA only on --color-bg / --color-bg-subtle; rebind this
-  // too (e.g. to --color-fg-muted) if --rail-bg moves to a darker surface.
+  // too (e.g. to --color-fg-muted) if --rail-bg or --rail-flyout-bg moves to
+  // a muted/tinted surface (holds for both themes per docs/tokens.md).
   --rail-section-title-fg: var(--color-fg-subtle);
   --rail-section-title-font-size: var(--font-size-md);
   --rail-section-title-font-weight: var(--font-weight-regular);

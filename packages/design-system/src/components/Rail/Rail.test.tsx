@@ -1703,6 +1703,8 @@ describe('Rail — sections inside a Group', () => {
       });
       const dialog = screen.getByRole('dialog', { name: 'Задачи' });
       expect(within(dialog).getByRole('group', { name: 'Saved views' })).toBeInTheDocument();
+      // The visible heading, not just the group's aria-label.
+      expect(within(dialog).getByText('Saved views')).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }
