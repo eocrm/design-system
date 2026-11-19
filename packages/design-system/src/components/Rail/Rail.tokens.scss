@@ -39,11 +39,22 @@
 
   // Section grouping
   --rail-section-gap: var(--space-3);
-  --rail-section-title-fg: var(--color-fg-muted);
-  --rail-section-title-font-size: var(--font-size-xs);
-  --rail-section-title-font-weight: var(--font-weight-semibold);
-  --rail-section-title-letter-spacing: var(--letter-spacing-caps);
-  --rail-section-title-padding: var(--space-2) var(--space-3);
+
+  // Section title: as-written label + a hairline to the right edge.
+  // fg-subtle meets AA only on --color-bg / --color-bg-subtle; rebind this
+  // too (e.g. to --color-fg-muted) if --rail-bg or --rail-flyout-bg moves to
+  // a muted/tinted surface (holds for both themes per docs/tokens.md).
+  --rail-section-title-fg: var(--color-fg-subtle);
+  --rail-section-title-font-size: var(--font-size-md);
+  --rail-section-title-font-weight: var(--font-weight-regular);
+
+  // No top padding: the section gap above (12px) already matches the 8px
+  // bottom padding + 4px in-section gap below, so the title sits evenly.
+  --rail-section-title-padding: 0 var(--space-3) var(--space-2);
+  --rail-section-title-first-padding-top: var(--space-2);
+  --rail-section-title-rule-gap: var(--space-2);
+  --rail-section-title-rule-color: var(--color-border);
+  --rail-section-title-rule-width: var(--border-width);
 
   // Item visuals
   --rail-item-padding-x: var(--space-3);
@@ -71,6 +82,10 @@
   // their group icon). No --space-7 (28px) exists, so we use --space-6 (24px).
   --rail-subitem-padding-left: var(--space-6);
 
+  // Title of a `Rail.Section` nested inside a Group, aligned to the subitem indent.
+  --rail-subsection-title-padding: var(--space-1) var(--space-3) var(--space-1)
+    var(--rail-subitem-padding-left);
+
   // Collapsed flyout (the hover popover surface for collapsed groups)
   --rail-flyout-min-width: 200px;
   --rail-flyout-z: var(--z-popover);
@@ -82,6 +97,7 @@
   --rail-flyout-header-padding: var(--space-2) var(--space-3);
   --rail-flyout-body-padding: var(--space-2);
   --rail-flyout-body-gap: var(--space-1);
+  --rail-flyout-subsection-title-padding: var(--space-1) var(--space-3);
   --rail-flyout-header-fg: var(--color-fg);
   --rail-flyout-header-font-weight: var(--font-weight-semibold);
   --rail-flyout-header-border: var(--color-border);

@@ -1627,3 +1627,86 @@ describe('Rail — Group flyout tour hold (#684)', () => {
     },
   );
 });
+
+describe('Rail — sections inside a Group', () => {
+  const tree = (
+    props: { defaultCollapsed?: boolean; currentSpace?: boolean; open?: boolean } = {},
+  ) => (
+    <Rail defaultCollapsed={props.defaultCollapsed}>
+      <Rail.Section title="Main">
+        <Rail.Group icon={<span aria-hidden />} label="Задачи" defaultOpen={props.open}>
+          <Rail.Section title="Saved views">
+            <Rail.Item href="/ds">Design system</Rail.Item>
+            <Rail.Item href="/bugs">Bugs</Rail.Item>
+          </Rail.Section>
+          <Rail.Section title="Spaces">
+            <Rail.Item href="/s1">Space one</Rail.Item>
+            <Rail.Item href="/s2" aria-current={props.currentSpace ? 'page' : undefined}>
+              Space two
+            </Rail.Item>
+          </Rail.Section>
+        </Rail.Group>
+      </Rail.Section>
+    </Rail>
+  );
+
+  it('renders nested sections as named groups inside an open group', () => {
+    render(tree({ open: true }));
+    expect(
+      within(screen.getByRole('group', { name: 'Saved views' })).getByRole('link', {
+        name: 'Design system',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('group', { name: 'Spaces' })).getByRole('link', {
+        name: 'Space one',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('auto-opens when the current item is inside a nested section', () => {
+    render(tree({ currentSpace: true }));
+    expect(screen.getByRole('link', { name: 'Space two' }).closest('[hidden]')).toBeNull();
+  });
+
+  it('keeps nested sections hidden while the group is closed', () => {
+    render(tree());
+    expect(screen.getByText('Spaces').closest('[hidden]')).not.toBeNull();
+  });
+
+  it('mixes loose items and nested sections', () => {
+    render(
+      <Rail>
+        <Rail.Section title="Main">
+          <Rail.Group icon={<span aria-hidden />} label="Задачи" defaultOpen>
+            <Rail.Item href="/all">All tasks</Rail.Item>
+            <Rail.Section title="Spaces">
+              <Rail.Item href="/s1">Space one</Rail.Item>
+            </Rail.Section>
+          </Rail.Group>
+        </Rail.Section>
+      </Rail>,
+    );
+    expect(screen.getByRole('link', { name: 'All tasks' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Space one' })).toBeInTheDocument();
+  });
+
+  it('shows nested section titles in the collapsed flyout', () => {
+    vi.useFakeTimers();
+    try {
+      render(tree({ defaultCollapsed: true }));
+      act(() => {
+        fireEvent.pointerEnter(screen.getByRole('button', { name: /Задачи/ }));
+      });
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      const dialog = screen.getByRole('dialog', { name: 'Задачи' });
+      expect(within(dialog).getByRole('group', { name: 'Saved views' })).toBeInTheDocument();
+      // The visible heading, not just the group's aria-label.
+      expect(within(dialog).getByText('Saved views')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

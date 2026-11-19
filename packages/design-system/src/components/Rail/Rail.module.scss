@@ -209,9 +209,13 @@
 .sectionTitle {
   padding: var(--rail-section-title-padding);
   font-size: var(--rail-section-title-font-size);
+
+  // Grid, not flex-grow: the trailing rule fills the remaining width.
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: var(--rail-section-title-rule-gap);
   font-weight: var(--rail-section-title-font-weight);
-  letter-spacing: var(--rail-section-title-letter-spacing);
-  text-transform: uppercase;
   color: var(--rail-section-title-fg);
   opacity: var(--rail-label-opacity-visible);
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- multi-prop shorthand for two transitioned props
@@ -222,6 +226,18 @@
   white-space: nowrap;
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- collapse clip
   overflow: hidden;
+
+  &::after {
+    content: '';
+    height: var(--rail-section-title-rule-width);
+    background: var(--rail-section-title-rule-color);
+  }
+}
+
+.rail:not(.collapsed) > .body > .section:first-child > .sectionTitle {
+  // The first title has no item above it, only the header edge — keep the
+  // breathing room the even-spacing rule (no top padding) would remove.
+  padding-top: var(--rail-section-title-first-padding-top);
 }
 
 .collapsed .sectionTitle {
@@ -453,6 +469,10 @@
   padding-left: var(--rail-subitem-padding-left);
 }
 
+.subitems .sectionTitle {
+  padding: var(--rail-subsection-title-padding);
+}
+
 // When the rail is collapsed, inline subitems disappear (they live in the
 // flyout popover instead).
 .collapsed .subitems {
@@ -530,4 +550,8 @@
   flex-direction: column;
   gap: var(--rail-flyout-body-gap);
   padding: var(--rail-flyout-body-padding);
+}
+
+.flyoutBody .sectionTitle {
+  padding: var(--rail-flyout-subsection-title-padding);
 }
