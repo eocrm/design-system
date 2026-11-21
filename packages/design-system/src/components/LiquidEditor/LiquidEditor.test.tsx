@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { useState, type ReactElement } from 'react';
 import { LiquidEditor } from './LiquidEditor';
 import { I18nProvider } from '../../i18n';
+import { DEFAULT_LIQUID_FILTERS } from '../../index';
 import type { LiquidVariable } from './types';
 
 const VARS: LiquidVariable[] = [
@@ -798,5 +799,18 @@ describe('LiquidEditor touch tokens (DS-35)', () => {
     expect(scss).toMatch(
       /@media \(pointer: coarse\)[\s\S]*--liquid-editor-font-size:\s*var\(\-\-font\-size\-lg\)/,
     );
+  });
+});
+
+describe('DEFAULT_LIQUID_FILTERS (DS-83)', () => {
+  it('exports DEFAULT_LIQUID_FILTERS from the package root so consumers can extend it', async () => {
+    expect(DEFAULT_LIQUID_FILTERS).toContain('upcase');
+
+    const user = userEvent.setup();
+    renderEditor(<Harness filters={[...DEFAULT_LIQUID_FILTERS, 'local_date']} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ x | lo');
+    expect(await screen.findByRole('option', { name: /local_date/ })).toBeInTheDocument();
   });
 });
