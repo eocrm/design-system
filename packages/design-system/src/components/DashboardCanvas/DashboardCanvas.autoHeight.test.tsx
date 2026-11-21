@@ -288,6 +288,23 @@ describe('DashboardCanvas autoHeight', () => {
     expect(row(container, 'b')).toBe('6 / span 2');
   });
 
+  it('stacked: non-auto items carry an explicit stacked block size; auto items do not', () => {
+    const value: DashboardCanvasValue = {
+      items: [
+        { id: 'a', x: 0, y: 0, w: 4, h: 2 },
+        { id: 'b', x: 0, y: 2, w: 4, h: 3 },
+      ],
+      sections: [],
+    };
+    const { container } = renderCanvas({ value });
+    expect(itemEl(container, 'b').style.getPropertyValue('--dc-stacked-block')).toBe(
+      'calc(3 * var(--dashboard-canvas-row-stacked) + 2 * var(--dashboard-canvas-gap))',
+    );
+    expect(itemEl(container, 'a').style.getPropertyValue('--dc-stacked-block')).toBe('');
+    expect(itemEl(container, 'a').hasAttribute('data-dc-auto')).toBe(true);
+    expect(itemEl(container, 'b').hasAttribute('data-dc-auto')).toBe(false);
+  });
+
   it('keeps the last span while the section is collapsed', () => {
     const value = (collapsed: boolean): DashboardCanvasValue => ({
       items: [],

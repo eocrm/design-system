@@ -41,7 +41,9 @@ describe('DashboardCanvas rendering', () => {
     const a = screen.getByTestId('item-a').parentElement as HTMLElement;
     expect(a.style.getPropertyValue('--dc-col')).toBe('1 / span 2');
     expect(a.style.getPropertyValue('--dc-row')).toBe('2 / span 1');
-    expect(a.style.getPropertyValue('--dc-h-span')).toBe('span 1');
+    expect(a.style.getPropertyValue('--dc-stacked-block')).toBe(
+      'calc(1 * var(--dashboard-canvas-row-stacked) + 0 * var(--dashboard-canvas-gap))',
+    );
   });
 
   it('renders top-level items DOM-sorted by (y, then x), independent of value order', () => {

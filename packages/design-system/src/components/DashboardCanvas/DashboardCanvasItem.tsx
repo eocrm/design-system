@@ -101,6 +101,7 @@ export function DashboardCanvasItem({
     <div
       className={styles.item}
       data-dc-item={String(id)}
+      data-dc-auto={auto ? '' : undefined}
       data-dc-drop-preview={movingId === id ? '' : undefined}
       data-dc-resizing={resizingId === id ? '' : undefined}
       data-dc-picked={pickedId === id ? '' : undefined}
@@ -112,9 +113,13 @@ export function DashboardCanvasItem({
       style={{
         ['--dc-col' as string]: `${x + 1} / span ${w}`,
         ['--dc-row' as string]: `${y + 1} / span ${h}`,
-        // Task 5's below-md single-column rule reads this to keep the
-        // item's own height once `--dc-row` stops being consumed.
-        ['--dc-h-span' as string]: `span ${h}`,
+        // Stacked (below-breakpoint) block size: the item's own `h` rows, as
+        // before. Auto items omit it and take their natural content height.
+        ...(auto
+          ? null
+          : {
+              ['--dc-stacked-block' as string]: `calc(${h} * var(--dashboard-canvas-row-stacked) + ${h - 1} * var(--dashboard-canvas-gap))`,
+            }),
       }}
       onPointerDown={readOnly ? undefined : (e) => onMovePointerDown(e, placement, container)}
       onKeyDown={readOnly ? undefined : (e) => onItemKeyDown(e, placement, container)}

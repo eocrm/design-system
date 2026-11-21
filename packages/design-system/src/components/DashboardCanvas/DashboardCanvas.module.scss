@@ -348,14 +348,18 @@
 // class). Same math for the `.container` rules.
 @mixin stacked-container {
   grid-template-columns: repeat(1, minmax(0, 1fr));
-  grid-auto-rows: var(--dashboard-canvas-row-stacked);
+  grid-auto-rows: auto;
 }
 
 @mixin stacked-item {
   // stylelint-disable-next-line property-disallowed-list -- below-breakpoint override is DashboardCanvas's own placement mechanism, same sanction as the base .item rule above
   grid-column: 1 / -1;
   // stylelint-disable-next-line property-disallowed-list -- see grid-column comment above
-  grid-row: var(--dc-h-span, auto);
+  grid-row: auto;
+
+  // Non-auto items keep `h` stacked rows via the inline `--dc-stacked-block`;
+  // auto items omit it and take their natural content height.
+  block-size: var(--dc-stacked-block, auto);
 }
 
 @container dashboard-canvas (max-width: #{bp.$collapse-sm}) {
