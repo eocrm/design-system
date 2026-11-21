@@ -57,6 +57,10 @@ beforeEach(() => {
       const id = el.closest('[data-dc-item]')?.getAttribute('data-dc-item') ?? '';
       return { height: heights[id] ?? 0, width: 100 } as DOMRect;
     }
+    if (el.hasAttribute('data-dc-container')) {
+      // 24 × 40px columns, so pointer drags snap to real cells.
+      return { left: 0, top: 0, right: 960, bottom: 1000, width: 960, height: 1000 } as DOMRect;
+    }
     return origRect.call(el);
   };
 });
@@ -171,10 +175,13 @@ describe('DashboardCanvas autoHeight', () => {
     renderItem.mockClear();
     fireObservers();
     flushFrame();
-    // One read per auto body, one measuring toggle, one re-render.
+    // One read per auto body and one measuring toggle for the whole batch
+    // (30 is this fixture's own size), and every item re-rendered with it.
     expect(bodyRectCalls).toBe(30);
     expect(setAttr.mock.calls.filter(([name]) => name === 'data-dc-measuring')).toHaveLength(1);
-    expect(renderItem).toHaveBeenCalledTimes(30);
+    expect(new Set(renderItem.mock.calls.map(([id]) => id))).toEqual(
+      new Set(value.items.map((item) => item.id)),
+    );
     setAttr.mockRestore();
   });
 
@@ -194,6 +201,37 @@ describe('DashboardCanvas autoHeight', () => {
     fireEvent.keyDown(b, { key: 'Escape' });
     flushFrame();
     expect(row(container, 'a')).toBe(`1 / span ${spanFor(container, 600)}`);
+  });
+
+  it('freezes spans during a pointer drag and applies them after pointerup', () => {
+    heights.a = 300;
+    const { container } = renderCanvas();
+    flushFrame();
+    const spanOf = () => /span (\d+)$/.exec(row(container, 'a'))?.[1];
+    const before = spanOf();
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    const b = itemEl(container, 'b');
+    fireEvent.pointerDown(b, { clientX: 10, clientY: 400, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(root, { clientX: 60, clientY: 400, pointerId: 1 });
+    heights.a = 600;
+    fireObservers();
+    flushFrame();
+    // Another move re-derives the drag preview from the effective layout.
+    fireEvent.pointerMove(root, { clientX: 100, clientY: 400, pointerId: 1 });
+    expect(spanOf()).toBe(before);
+    fireEvent.pointerUp(root, { clientX: 100, clientY: 400, pointerId: 1 });
+    flushFrame();
+    expect(spanOf()).toBe(String(spanFor(container, 600)));
+  });
+
+  it('an exact k-row fit (plus float error) spans k rows, not k + 1', () => {
+    const { container } = renderCanvas();
+    const grid = container.querySelector('[data-dc-container="top"]') as HTMLElement;
+    const gap = Number.parseFloat(getComputedStyle(grid).columnGap) || 0;
+    heights.a = 4 * 48 + 3 * gap + 1e-6;
+    fireObservers();
+    flushFrame();
+    expect(row(container, 'a')).toBe('1 / span 4');
   });
 
   it('clamps the span to minH/maxH', () => {

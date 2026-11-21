@@ -21,6 +21,9 @@ export function measureGrid(el: HTMLElement, columns: number) {
 
 type Id = string | number;
 
+/** Absorbs float error (fractional `cqw` rows) so an exact fit never gains a row. */
+const FIT_EPSILON = 1e-3;
+
 interface AutoHeightsArgs {
   rootRef: RefObject<HTMLElement | null>;
   value: DashboardCanvasValue;
@@ -104,7 +107,7 @@ export function useAutoHeights({
       let next: Map<Id, number> | null = null;
       for (const { id, px, grid } of reads) {
         const { rowHeight, gap } = grids.get(grid)!;
-        const span = s.clampSpan(id, Math.ceil((px + gap) / (rowHeight + gap)));
+        const span = s.clampSpan(id, Math.ceil((px + gap) / (rowHeight + gap) - FIT_EPSILON));
         if (s.measured.get(id) === span) continue;
         next ??= new Map(s.measured);
         next.set(id, span);
