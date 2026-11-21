@@ -166,7 +166,7 @@
   },
   {
     "name": "DateRangePicker",
-    "summary": "date-range input + two-month popover",
+    "summary": "date-range input + two-month popover (one paged month on phones)",
     "cluster": "Forms"
   },
   {

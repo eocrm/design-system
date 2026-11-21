@@ -102,6 +102,11 @@
   gap: var(--date-range-picker-popover-gap);
 }
 
+.popover[data-single] {
+  // One month: size from the grid's own fixed width instead of the two-month width.
+  width: auto;
+}
+
 .popover[data-in-overlay] {
   // #272: inside a Modal/Drawer (or another elevated surface) the base
   // z-index sits below --z-modal — elevate above the host, below toasts.
@@ -214,6 +219,10 @@
 .timeRowsPair {
   display: flex;
   gap: var(--date-range-picker-grids-gap);
+}
+
+.timeRowsPair[data-single] {
+  flex-direction: column;
 }
 
 .timeRowsPair > * {

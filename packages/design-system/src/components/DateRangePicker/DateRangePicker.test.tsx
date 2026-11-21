@@ -6,6 +6,7 @@ import { createRef, type ReactNode, useState } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { DateRangePicker } from './DateRangePicker';
 import type { DateRange } from './utils';
+import { stubMatchMedia } from '../_internal/matchMediaStub.testutil';
 import { addTourLayer, markTourTarget } from '../_internal/overlay/tourHold.testutil';
 
 function wrap(locale = 'en-US') {
@@ -932,4 +933,64 @@ it('re-points --date-range-picker-input-height-lg to size-touch on coarse pointe
   ).toMatch(
     /@media \(pointer: coarse\)[\s\S]*--date-range-picker-input-height-lg:\s*var\(--size-touch\)/,
   );
+});
+
+describe('DateRangePicker narrow viewport (≤ md)', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'matchMedia');
+  });
+
+  function openNarrow(props: Partial<React.ComponentProps<typeof DateRangePicker>> = {}) {
+    stubMatchMedia(390);
+    const user = userEvent.setup();
+    render(<DateRangePicker defaultValue={SAMPLE_RANGE} aria-label="Range" {...props} />, {
+      wrapper: wrap(),
+    });
+    return user;
+  }
+
+  it('subscribes to the md viewport query', () => {
+    stubMatchMedia(390);
+    const spy = vi.spyOn(window, 'matchMedia');
+    render(<DateRangePicker aria-label="Range" />, { wrapper: wrap() });
+    expect(spy).toHaveBeenCalledWith('(max-width: 640px)');
+  });
+
+  it('renders one month grid', async () => {
+    const user = openNarrow();
+    await user.click(screen.getByRole('textbox'));
+    expect(screen.getAllByRole('grid')).toHaveLength(1);
+  });
+
+  it('next/previous page by one month', async () => {
+    const user = openNarrow();
+    await user.click(screen.getByRole('textbox'));
+    expect(screen.getByText('May 2026')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Next month' }));
+    expect(screen.getByText('June 2026')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Previous month' }));
+    await user.click(screen.getByRole('button', { name: 'Previous month' }));
+    expect(screen.getByText('April 2026')).toBeInTheDocument();
+  });
+
+  it('selects a range across months by paging', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = openNarrow({ onChange });
+    await user.click(screen.getByRole('textbox'));
+    // First match = the in-month cell (outside days trail the grid).
+    await user.click(screen.getAllByRole('gridcell', { name: /^5$/ })[0]);
+    await user.click(screen.getByRole('button', { name: 'Next month' }));
+    await user.click(screen.getAllByRole('gridcell', { name: /^10$/ })[0]);
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    const r = onChange.mock.calls[0][0]!;
+    expect([r.start.getMonth(), r.start.getDate()]).toEqual([4, 5]);
+    expect([r.end.getMonth(), r.end.getDate()]).toEqual([5, 10]);
+  });
+
+  it('stacks start/end time rows', async () => {
+    const user = openNarrow({ granularity: 'minute' });
+    await user.click(screen.getByRole('textbox'));
+    const row = document.querySelector('[class*="timeRowsPair"]');
+    expect(row).toHaveAttribute('data-single');
+  });
 });
