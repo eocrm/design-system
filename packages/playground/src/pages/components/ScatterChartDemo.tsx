@@ -24,6 +24,7 @@ function Cell({ children, title }: { children: ReactNode; title: string }) {
 
 const grams = new Intl.NumberFormat('en-GB');
 const formatGrams = (n: number) => `${grams.format(Math.round(n))} g`;
+const formatKg = (n: number) => `${(n / 1000).toFixed(2)} kg`;
 const formatTime = (ms: number) =>
   new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 const at = (h: number, m = 0) => new Date(2026, 10, 7, h, m);
@@ -310,6 +311,28 @@ export function ScatterChartDemo() {
             formatX={formatGrams}
             formatY={formatGrams}
             footnote="Meals under 5 g not included"
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Tick-only formatter"
+        description="formatYTick formats only the y-axis tick labels (kilograms here); the tooltip, announcement and table keep using formatY (grams)."
+        code={`<ScatterChart
+  ...
+  formatY={formatGrams}
+  formatYTick={(n) => \`\${(n / 1000).toFixed(2)} kg\`}
+/>`}
+      >
+        <Cell title="Bowl vs eaten">
+          <ScatterChart
+            label="Bowl contents at meal start vs grams eaten"
+            series={bowlVsEaten}
+            xLabel="Bowl at start"
+            yLabel="Eaten"
+            formatX={formatGrams}
+            formatY={formatGrams}
+            formatYTick={formatKg}
           />
         </Cell>
       </Example>

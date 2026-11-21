@@ -987,6 +987,18 @@ describe('DateRangePicker narrow viewport (≤ md)', () => {
     expect([r.end.getMonth(), r.end.getDate()]).toEqual([5, 10]);
   });
 
+  it('keyboard ArrowRight from the last day of the shown month moves to the next month', async () => {
+    const user = openNarrow({
+      defaultValue: { start: new Date(2026, 4, 31), end: new Date(2026, 4, 31) },
+    });
+    await user.click(screen.getByRole('textbox'));
+    await user.keyboard('{ArrowDown}');
+    expect((document.activeElement as HTMLElement)?.textContent).toBe('31');
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByText('June 2026')).toBeInTheDocument();
+    expect((document.activeElement as HTMLElement)?.textContent).toBe('1');
+  });
+
   it('stacks start/end time rows', async () => {
     const user = openNarrow({ granularity: 'minute' });
     await user.click(screen.getByRole('textbox'));

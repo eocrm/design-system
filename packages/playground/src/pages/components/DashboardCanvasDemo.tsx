@@ -11,6 +11,7 @@ import {
   Drawer,
   Input,
   Modal,
+  Skeleton,
   Stack,
   Switch,
   Text,
@@ -280,6 +281,104 @@ function WidgetGallery() {
         </Drawer.Body>
       </Drawer>
     </Stack>
+  );
+}
+
+// --- Auto-height ------------------------------------------------------------
+const AUTO_INITIAL: DashboardCanvasValue = {
+  items: [
+    { id: 'short', x: 0, y: 0, w: 8, h: 4 },
+    { id: 'medium', x: 8, y: 0, w: 8, h: 4 },
+    { id: 'long', x: 16, y: 0, w: 8, h: 4 },
+    { id: 'capped', x: 0, y: 4, w: 8, h: 4 },
+  ],
+  sections: [
+    {
+      id: 'deferred-section',
+      title: 'Deferred (collapse me)',
+      collapsed: false,
+      items: [{ id: 'deferred', x: 0, y: 0, w: 12, h: 4 }],
+    },
+  ],
+};
+
+const AUTO_CONSTRAINTS = {
+  short: { autoHeight: true },
+  medium: { autoHeight: true },
+  long: { autoHeight: true },
+  capped: { autoHeight: true, minH: 2, maxH: 5 },
+  deferred: { autoHeight: true, minH: 2 },
+};
+
+const INITIAL_ROWS: Record<string, number> = { short: 3, medium: 8, long: 20, capped: 12 };
+const AUTO_TITLES: Record<string, string> = {
+  short: '3 rows',
+  medium: '8 rows',
+  long: '20 rows',
+  capped: 'Capped (maxH 5)',
+};
+
+function DeferredWidget({ visible }: { visible: boolean }) {
+  // Latch "seen once": the first time it is visible, "fetch" the data.
+  const [seen, setSeen] = useState(false);
+  if (visible && !seen) setSeen(true);
+  return (
+    <Card style={{ height: '100%' }}>
+      <Stack gap="xs">
+        <Text size="sm" tone="muted">
+          Deferred widget
+        </Text>
+        {seen ? (
+          <Text size="sm">
+            Loaded (first time it became visible). Live visible: {String(visible)}
+          </Text>
+        ) : (
+          <Skeleton width="100%" height={48} />
+        )}
+      </Stack>
+    </Card>
+  );
+}
+
+function AutoHeightExample() {
+  const [value, setValue] = useState<DashboardCanvasValue>(AUTO_INITIAL);
+  const [rows, setRows] = useState(INITIAL_ROWS);
+  const bump = (id: string, d: number) =>
+    setRows((r) => ({ ...r, [id]: Math.max(0, (r[id] ?? 0) + d) }));
+  return (
+    <DashboardCanvas
+      value={value}
+      onChange={setValue}
+      constraints={AUTO_CONSTRAINTS}
+      renderItem={(id, { visible }) => {
+        const key = String(id);
+        if (key === 'deferred') return <DeferredWidget visible={visible} />;
+        return (
+          <Card style={{ height: '100%' }}>
+            <Stack gap="xs">
+              <Cluster justify="between" gap="sm">
+                <Text size="sm" tone="muted">
+                  {AUTO_TITLES[key]}
+                </Text>
+                <Cluster gap="xs">
+                  <Button size="xs" variant="ghost" onClick={() => bump(key, -1)}>
+                    − row
+                  </Button>
+                  <Button size="xs" variant="ghost" onClick={() => bump(key, 1)}>
+                    + row
+                  </Button>
+                </Cluster>
+              </Cluster>
+              {Array.from({ length: rows[key] ?? 0 }, (_, i) => (
+                <Text key={i} size="sm">
+                  Row {i + 1}
+                </Text>
+              ))}
+            </Stack>
+          </Card>
+        );
+      }}
+    />
   );
 }
 
@@ -570,6 +669,33 @@ export function Demo() {
             renderItem={renderWidget}
           />
         </ResizablePreview>
+      </Example>
+
+      <Example
+        title="Auto-height"
+        description="constraints[id].autoHeight measures an item's row-span from its content: use + row / − row and the cell grows or shrinks while the widgets below move (the lists stretch to fill their cell, so there is no gap and no inner scroll). The 'Capped' widget has maxH 5, so beyond that it scrolls. Auto items have no S/SE resize handles. The widget in the section renders a Skeleton until renderItem's visible signal first turns true (collapse the section and expand it again to watch visible flip). Narrow the window under 640px to see natural heights in the stacked layout."
+        code={`const constraints = {
+  short: { autoHeight: true },
+  capped: { autoHeight: true, minH: 2, maxH: 5 },
+  deferred: { autoHeight: true, minH: 2 },
+};
+
+<DashboardCanvas
+  value={value}
+  onChange={setValue}
+  constraints={constraints}
+  renderItem={(id, { visible }) =>
+    id === 'deferred' ? <DeferredWidget visible={visible} /> : <ListWidget id={id} />
+  }
+/>
+
+function DeferredWidget({ visible }) {
+  const [seen, setSeen] = useState(false); // latch "seen once"
+  if (visible && !seen) setSeen(true);
+  return <Card>{seen ? <Text>Loaded</Text> : <Skeleton width="100%" height={48} />}</Card>;
+}`}
+      >
+        <AutoHeightExample />
       </Example>
 
       <Example

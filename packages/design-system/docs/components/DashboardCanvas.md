@@ -24,7 +24,7 @@ const [value, setValue] = useState<DashboardCanvasValue>(initialLayout);
 |---|---|---|---|
 | `value` | `DashboardCanvasValue` | yes | The controlled layout: top-level items plus an ordered array of collapsible sections. `DashboardCanvas` never mutates this value — every change flows out through `onChange`. |
 | `onChange` | `((next: DashboardCanvasValue) => void)` | no | Fires once per completed gesture — a drop, a resize end, a collapse toggle, a section reorder, or a cross-container move — with the whole next `value`. Omit for a read-only or fully static canvas; without it, drags preview live but nothing persists on drop. |
-| `renderItem` | `(id: string \| number) => ReactNode` | yes | Renders the body of an item by id. Called for every item on every render — including items inside a COLLAPSED section (its body stays mounted and `inert`, not unmounted, so Accordion's own collapse animation has real content to animate) — and once more for the dragged item mid-gesture (the cursor-following ghost). Keep it pure; a widget that fetches on mount pays that cost even while its section is collapsed. The cell itself is a bare positioned box with no background/border/radius/shadow of its own and no minimum height beyond its `h` row-span — that chrome belongs here, in whatever this returns (typically a `<Card>`); size the content to the cell, or accept that a shorter widget in a taller cell shows bare (dotted, in edit mode) space below it. |
+| `renderItem` | `(id: string \| number, ctx: DashboardCanvasRenderItemContext) => ReactNode` | yes | Renders the body of an item by id. Called for every item on every render — including items inside a COLLAPSED section (its body stays mounted and `inert`, not unmounted, so Accordion's own collapse animation has real content to animate) — and once more for the dragged item mid-gesture (the cursor-following ghost). Keep it pure. The cell itself is a bare positioned box with no background/border/radius/shadow of its own and no minimum height beyond its `h` row-span — that chrome belongs here, in whatever this returns (typically a `<Card>`); size the content to the cell, or accept that a shorter widget in a taller cell shows bare (dotted, in edit mode) space below it. `ctx.visible` is a live signal for deferred loading: `true` while the cell is within one viewport above or below the visible area AND not in a collapsed section. It starts `false` until first observed (on-screen items flip to `true` a frame later), is always `true` for the drag ghost, and without `IntersectionObserver` (SSR/jsdom) follows collapse only. To defer a fetch, latch it in the widget ("seen once": `const [seen, setSeen] = useState(false); if (visible && !seen) setSeen(true);` and fetch when `seen`); use the live value to pause polling. One-argument callbacks keep working. |
 | `renderSectionHeader` | `((id: string \| number) => ReactNode)` | no | Optional extra controls in a section's header (a title editor, a `DropdownMenu` trigger) rendered by section id, to the right of the title. Keep it small — the header row is not a general-purpose toolbar. Pointer presses inside the slot never start a band-reorder drag. |
 | `highlightedSectionId` | `string \| number` | no | Id of a section whose band to highlight (scrolls into view, then a ring with outward waves, same as `Highlight`) — e.g. a section the user just added. Collapsed bands highlight too. Does not move focus. Clear it in `onSectionHighlightDone`; setting the same id again after that re-triggers. |
 | `onSectionHighlightDone` | `(() => void)` | no | Fires once the highlight run on `highlightedSectionId` has finished. |
@@ -42,6 +42,8 @@ const [value, setValue] = useState<DashboardCanvasValue>(initialLayout);
 
 When NOT to use: a single ordered list (priority queue, simple reordering) — use `Sortable`; fixed kanban-style columns — use `Kanban`; a free-form node/edge graph — use `FlowCanvas`. The canvas is ALWAYS a size container (named `dashboard-canvas`, unconditionally) — give it a parent with a concrete width; an intrinsic-width context (a `Cluster` item, `width: max-content`) renders it at width 0, same caveat as Grid's `collapseBelow`.
 
+When NOT to use `autoHeight`: content with no intrinsic height — a chart (or any `height: 100%` / SVG-fills-parent body) that fills its cell has nothing to measure; give it a fixed `h` (and `minH`/`maxH` constraints). Also avoid it on content that animates its DOM every frame (see Auto-height items).
+
 A collapsed section's band is NOT a drop target — expand it first (no hover-to-expand). Escape or a pointer cancel mid-gesture restores the current `value` without firing `onChange`.
 
 #### Touch
@@ -49,6 +51,43 @@ A collapsed section's band is NOT a drop target — expand it first (no hover-to
 On a touch screen a finger **holds an item still for ~300ms to pick it up**. The item lifts (shadow plus a slight scale, no scale under `prefers-reduced-motion: reduce`; themable via `--dashboard-canvas-item-lifted-shadow` / `--dashboard-canvas-item-lifted-scale`), then follows the finger and drops exactly like a mouse drag, through the same `onChange`. Resize handles arm the same way. A swipe that moves more than a few px before the hold completes is a page scroll, never a drag, so a dashboard full of widgets still scrolls. Once an item is lifted, the page does not scroll under the finger.
 
 A finger on a control inside a widget (a button, link, input, `role="button"`, …) is that control's press: it never lifts the item, however long it's held. Pick the widget up from its non-interactive surface. Mouse and pen are unchanged: no hold, a drag arms after 5px from anywhere in the cell.
+
+#### Auto-height items
+
+Opt in per item through `constraints` (record or function form): `constraints={{ list: { autoHeight: true, minH: 2, maxH: 8 } }}`. The item's row-span is then measured from its content instead of taken from `h`, so a list that gains rows grows its cell and the widgets below move down (and back up when it shrinks). `h` in `value` is only the first-paint / SSR value.
+
+- The body stretches to fill the cell: a `height: 100%` `Card` has no empty strip under it even though the span is rounded up to whole rows.
+- `minH` is the floor (empty or loading content); `maxH` caps the span, and beyond it the cell scrolls.
+- Measurement never calls `onChange`. Any gesture commit (drop, resize, keyboard move, collapse toggle, section reorder) carries the measured `h` for auto items and the re-packed `y` of every item, so the saved layout converges on what was last seen.
+- No vertical resize: the S and SE handles are not rendered and Shift+Up/Down does nothing on an auto item. E (width) still works and triggers a re-measure.
+- Stacked (single-column) layout: auto items take their natural height, with no stretch or rounding.
+- Item ids must be unique across the whole canvas (top level and all sections): measurements are keyed by id alone, and a cross-container move keeps its measurement.
+- Re-packing is instant (not animated), so `prefers-reduced-motion` needs nothing.
+- Content that mutates DOM attributes every frame (a JS-animated widget, a ticking clock) triggers one measure pass (a forced layout) per frame. Prefer a fixed `h` for such widgets.
+
+#### Deferring work with `visible`
+
+`renderItem(id, { visible })` receives `visible`: `true` when the item's section is expanded AND it is within about one viewport of the screen (one shared `IntersectionObserver`). It is `false` until the first observer callback, so an on-screen widget may show its skeleton for a frame; the drag ghost is always `true`. Client-only: SSR markup may differ (without `IntersectionObserver`, `visible` is simply "section expanded"). One-argument `renderItem` callbacks keep working.
+
+```tsx
+// Defer the first fetch: latch "seen once" in the widget, keep polling live.
+function Revenue({ visible }: { visible: boolean }) {
+  const [seen, setSeen] = useState(false);
+  if (visible && !seen) setSeen(true);
+  const { data } = useQuery(['revenue'], fetchRevenue, {
+    enabled: seen, // first fetch only once it has been visible
+    refetchInterval: visible ? 30_000 : false, // pause polling off-screen / collapsed
+  });
+  return <Card>{data ? <Chart data={data} /> : <Skeleton />}</Card>;
+}
+
+<DashboardCanvas
+  value={value}
+  onChange={setValue}
+  constraints={{ revenue: { autoHeight: true, minH: 2 } }}
+  renderItem={(id, { visible }) => <Revenue visible={visible} />}
+/>;
+```
 
 #### Anti-patterns
 
