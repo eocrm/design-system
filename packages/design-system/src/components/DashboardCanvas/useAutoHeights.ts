@@ -19,6 +19,20 @@ export function measureGrid(el: HTMLElement, columns: number) {
   return { rect, colWidth, rowHeight, gap };
 }
 
+/**
+ * The CSS stack rule already applies (`grid-auto-rows: auto`) but the JS
+ * `stacked` flag hasn't caught up: on a narrow first mount the first pass's
+ * rAF runs before the root's width ResizeObserver reports. Measuring then
+ * would turn full-width bodies into 48px-row spans, so the grid is skipped.
+ * Only a non-empty, non-px value counts: an empty value (no CSS engine) keeps
+ * the `FALLBACK_ROW_PX` path. jsdom reports `auto` (the initial value) because
+ * it never applies the module styles, so tests stub a px value.
+ */
+function rowUnitPending(grid: HTMLElement): boolean {
+  const raw = getComputedStyle(grid).gridAutoRows;
+  return raw !== '' && !raw.endsWith('px');
+}
+
 type Id = string | number;
 
 /** Absorbs float error (fractional `cqw` rows) so an exact fit never gains a row. */
@@ -92,7 +106,8 @@ export function useAutoHeights({
       pendingRef.current = false;
       const byKey = new Map(s.autoIds.map((id) => [String(id), id]));
       const reads: Array<{ id: Id; px: number; grid: HTMLElement }> = [];
-      const grids = new Map<HTMLElement, { rowHeight: number; gap: number }>();
+      // `null`: the grid's row unit isn't a length right now — see rowUnitPending.
+      const grids = new Map<HTMLElement, { rowHeight: number; gap: number } | null>();
       // Synchronous set → read → remove: one forced layout for the batch, and
       // neither ResizeObserver nor paint ever sees the unstretched state.
       root.setAttribute('data-dc-measuring', '');
@@ -101,12 +116,20 @@ export function useAutoHeights({
         const grid = body.closest<HTMLElement>('[data-dc-container]');
         if (id === undefined || !grid || s.collapsedIds.has(id)) continue;
         reads.push({ id, px: body.getBoundingClientRect().height, grid });
-        if (!grids.has(grid)) grids.set(grid, measureGrid(grid, s.columns));
+        if (!grids.has(grid)) {
+          grids.set(grid, rowUnitPending(grid) ? null : measureGrid(grid, s.columns));
+        }
       }
       root.removeAttribute('data-dc-measuring');
       let next: Map<Id, number> | null = null;
       for (const { id, px, grid } of reads) {
-        const { rowHeight, gap } = grids.get(grid)!;
+        const geometry = grids.get(grid);
+        if (!geometry) {
+          // Keep the last span; the stacked → wide flip reschedules a pass.
+          pendingRef.current = true;
+          continue;
+        }
+        const { rowHeight, gap } = geometry;
         const span = s.clampSpan(id, Math.ceil((px + gap) / (rowHeight + gap) - FIT_EPSILON));
         if (s.measured.get(id) === span) continue;
         next ??= new Map(s.measured);

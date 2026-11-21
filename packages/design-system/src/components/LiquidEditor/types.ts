@@ -89,7 +89,7 @@ export interface LiquidEditorProps {
    * spread `DEFAULT_LIQUID_FILTERS`: `filters={[...DEFAULT_LIQUID_FILTERS, 'local_date']}`.
    * Default: `DEFAULT_LIQUID_FILTERS` (`upcase`, `downcase`, `date`, `default`, …).
    */
-  filters?: string[];
+  filters?: readonly string[];
   /** Minimum visible rows. Default `4`. */
   minRows?: number;
   /** Maximum visible rows before the editor scrolls internally. Default unbounded. */

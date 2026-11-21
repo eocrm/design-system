@@ -32,7 +32,7 @@ const VARS = [
 | `showToolbar` | `boolean` | no | Show the toolbar (Insert tag and Insert variable menus). Default `true`. |
 | `toolbarActions` | `ReactNode` | no | Custom action buttons rendered in the toolbar, right-aligned just before the "Insert tag" and "Insert variable" buttons (e.g. a Docs / Help link). Pass `<Button size="sm">` elements (or a fragment of them); a `ghost` variant pairs well next to the bordered "Insert variable" button. Only renders when `showToolbar` is true. |
 | `tags` | `readonly LiquidTag[]` | no | Liquid tags offered by the "Insert tag" toolbar menu (and `{%` autocomplete). Default: all six (`if`, `unless`, `case`, `assign`, `capture`, `comment`). `[]` hides the menu and disables `{%` autocomplete. Loop tags (`for`) are never offered. |
-| `filters` | `string[]` | no | Filter names offered in autocomplete after `\|`. Replaces the defaults, so to add to them spread `DEFAULT_LIQUID_FILTERS`: `filters={[...DEFAULT_LIQUID_FILTERS, 'local_date']}`. Default: `DEFAULT_LIQUID_FILTERS` (`upcase`, `downcase`, `date`, `default`, …). |
+| `filters` | `readonly string[]` | no | Filter names offered in autocomplete after `\|`. Replaces the defaults, so to add to them spread `DEFAULT_LIQUID_FILTERS`: `filters={[...DEFAULT_LIQUID_FILTERS, 'local_date']}`. Default: `DEFAULT_LIQUID_FILTERS` (`upcase`, `downcase`, `date`, `default`, …). |
 | `minRows` | `number` | no | Minimum visible rows. Default `4`. |
 | `maxRows` | `number` | no | Maximum visible rows before the editor scrolls internally. Default unbounded. |
 | `readOnly` | `boolean` | no | Read-only: caret + selection allowed, no edits. Default `false`. |

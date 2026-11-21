@@ -231,6 +231,7 @@ export const en: Messages = {
     dropped: 'Dropped',
     cancelled: 'Move cancelled',
     resized: ({ w, h }) => `Resized to ${w as number} by ${h as number}`,
+    autoHeightResize: 'Height follows content',
     sectionMoved: ({ title, position }) =>
       position != null
         ? `${title as string} section moved to position ${position as number}`

@@ -498,6 +498,8 @@ export interface Messages {
     cancelled: string;
     /** Live announcement after a Shift+arrow resize (the engine-clamped size, in grid units). */
     resized: (params: { w: number; h: number }) => string;
+    /** Live announcement when Shift+ArrowUp/Down is pressed on an `autoHeight` item (its height is not resizable). */
+    autoHeightResize: string;
     /** Live announcement after a section band moves (1-based position). */
     sectionMoved: (params: { title: string; position?: number }) => string;
     /** Live announcement when a picked item crosses into a section. */

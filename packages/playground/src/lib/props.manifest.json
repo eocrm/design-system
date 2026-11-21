@@ -1914,7 +1914,7 @@
           "type": "DashboardCanvasConstraintsProp",
           "required": false,
           "default": "",
-          "description": "Per-item size constraints, consulted when clamping resize gestures."
+          "description": "Per-item size constraints, consulted when clamping resize gestures.\n`autoHeight: true` makes the item's row span follow its content instead\nof `h` (see the Auto-height section of the docs)."
         },
         {
           "name": "columns",
@@ -4633,7 +4633,7 @@
         },
         {
           "name": "filters",
-          "type": "string[]",
+          "type": "readonly string[]",
           "required": false,
           "default": "DEFAULT_LIQUID_FILTERS",
           "description": "Filter names offered in autocomplete after `|`. Replaces the defaults, so to add to them\nspread `DEFAULT_LIQUID_FILTERS`: `filters={[...DEFAULT_LIQUID_FILTERS, 'local_date']}`.\nDefault: `DEFAULT_LIQUID_FILTERS` (`upcase`, `downcase`, `date`, `default`, …)."

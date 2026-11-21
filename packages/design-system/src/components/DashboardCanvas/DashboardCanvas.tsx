@@ -120,7 +120,11 @@ export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement
   highlightedSectionId?: string | number;
   /** Fires once the highlight run on `highlightedSectionId` has finished. */
   onSectionHighlightDone?: () => void;
-  /** Per-item size constraints, consulted when clamping resize gestures. */
+  /**
+   * Per-item size constraints, consulted when clamping resize gestures.
+   * `autoHeight: true` makes the item's row span follow its content instead
+   * of `h` (see the Auto-height section of the docs).
+   */
   constraints?: DashboardCanvasConstraintsProp;
   /**
    * Column count of every container grid (top level and each section's
@@ -1097,8 +1101,12 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       }
       if (event.shiftKey && key.startsWith('Arrow')) {
         event.preventDefault();
-        // Auto item: height follows content — Shift+Up/Down silently do nothing.
-        if ((key === 'ArrowUp' || key === 'ArrowDown') && isAuto(placement.id)) return;
+        // Auto item: height follows content — Shift+Up/Down don't resize,
+        // but say why instead of failing silently.
+        if ((key === 'ArrowUp' || key === 'ArrowDown') && isAuto(placement.id)) {
+          announce(t('dashboardCanvas.autoHeightResize'));
+          return;
+        }
         const w = placement.w + (key === 'ArrowRight' ? 1 : key === 'ArrowLeft' ? -1 : 0);
         const h = placement.h + (key === 'ArrowDown' ? 1 : key === 'ArrowUp' ? -1 : 0);
         // Committed per keypress — no resize mode (FlowCanvas nudge precedent).

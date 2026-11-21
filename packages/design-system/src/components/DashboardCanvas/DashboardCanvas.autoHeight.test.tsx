@@ -10,7 +10,10 @@ let moCallbacks: Array<() => void>;
 let frames: FrameRequestCallback[];
 let heights: Record<string, number>;
 let bodyRectCalls: number;
+/** Containers' computed `grid-auto-rows` (jsdom alone reports `auto`). */
+let gridAutoRows: string;
 const origRect = Element.prototype.getBoundingClientRect;
+const origComputedStyle = window.getComputedStyle;
 
 beforeEach(() => {
   roCallbacks = [];
@@ -18,6 +21,18 @@ beforeEach(() => {
   frames = [];
   heights = {};
   bodyRectCalls = 0;
+  gridAutoRows = '48px';
+  vi.stubGlobal('getComputedStyle', (el: Element, pseudo?: string | null) => {
+    const style = origComputedStyle(el, pseudo);
+    if (!el.hasAttribute('data-dc-container')) return style;
+    return new Proxy(style, {
+      get: (target, prop) => {
+        if (prop === 'gridAutoRows') return gridAutoRows;
+        const v = Reflect.get(target, prop, target) as unknown;
+        return typeof v === 'function' ? (v as () => unknown).bind(target) : v;
+      },
+    });
+  });
   vi.stubGlobal(
     'ResizeObserver',
     class {
@@ -264,7 +279,7 @@ describe('DashboardCanvas autoHeight', () => {
     fireEvent.keyDown(a, { key: 'ArrowDown', shiftKey: true });
     fireEvent.keyDown(a, { key: 'ArrowUp', shiftKey: true });
     expect(onChange).not.toHaveBeenCalled();
-    expect(screen.getByRole('status').textContent).toBe('');
+    expect(screen.getByRole('status').textContent).toBe('Height follows content');
     fireEvent.keyDown(a, { key: 'ArrowRight', shiftKey: true });
     expect(onChange).toHaveBeenCalledTimes(1);
     const next = onChange.mock.calls[0][0] as DashboardCanvasValue;
@@ -331,6 +346,28 @@ describe('DashboardCanvas autoHeight', () => {
     );
     flushFrame();
     expect(row(container, 'c')).toBe(span(600));
+  });
+
+  it('skips a grid whose row unit is not a length yet (narrow first mount) and measures once it is', () => {
+    // The CSS stack rule (`grid-auto-rows: auto`) applies before the JS
+    // narrow flag catches up; a measure then would store a wrong span.
+    const value: DashboardCanvasValue = {
+      ...twoItems(),
+      sections: [{ id: 's', title: 'S', collapsed: false, items: [] }],
+    };
+    gridAutoRows = 'auto';
+    heights.a = 300;
+    const { container, onChange } = renderCanvas({ value });
+    flushFrame();
+    expect(row(container, 'a')).toBe('1 / span 2');
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse S section' }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const next = onChange.mock.calls[0][0] as DashboardCanvasValue;
+    expect(next.items.find((i) => i.id === 'a')?.h).toBe(2);
+    gridAutoRows = '48px';
+    fireObservers();
+    flushFrame();
+    expect(row(container, 'a')).toBe(`1 / span ${spanFor(container, 300)}`);
   });
 
   it('measurement does not loop', () => {
