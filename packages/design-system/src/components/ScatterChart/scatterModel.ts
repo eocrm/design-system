@@ -162,6 +162,8 @@ export interface ScatterLayoutInput {
   height: number;
   formatX: (x: number) => string;
   formatY: (y: number) => string;
+  /** Formats only the y tick labels; default `formatY`. */
+  formatYTick?: (y: number) => string;
   reference?: ScatterReference | ScatterReference[];
   trendLine?: boolean;
   /** Build `stems`: a vertical line from y = 0 (or the nearest plot edge) to each dot. */
@@ -307,7 +309,7 @@ export function computeScatterLayout(input: ScatterLayoutInput): ScatterLayout {
     y.domain([lo >= 0 ? 0 : lo, hi]).nice(yCount);
   }
   const yValues = y.ticks(yCount);
-  const yLabels = yValues.map(formatY);
+  const yLabels = yValues.map(input.formatYTick ?? formatY);
   const left = Math.max(0, ...yLabels.map(estimateTextWidth)) + LABEL_GAP;
   const plot: Rect = {
     x: left,

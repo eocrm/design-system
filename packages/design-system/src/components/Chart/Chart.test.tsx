@@ -89,6 +89,19 @@ describe('Chart', () => {
     expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
   });
 
+  it('formatValueTick labels axis ticks while the data table keeps formatValue', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...base} formatValueTick={(n) => `${n} tick`} />);
+    layout.fire();
+    const ticks = [...container.querySelectorAll('svg text')].map((t) => t.textContent);
+    expect(ticks.some((t) => t?.endsWith(' tick'))).toBe(true);
+    expect(
+      within(screen.getByRole('table'))
+        .getAllByRole('cell')
+        .some((c) => c.textContent === '8 deals'),
+    ).toBe(true);
+  });
+
   it('data table mirrors values through formatValue, null as No data', () => {
     stubLayout();
     render(<Chart {...base} />);
