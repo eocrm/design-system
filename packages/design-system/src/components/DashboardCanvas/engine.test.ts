@@ -806,6 +806,11 @@ describe('withSpans', () => {
     expect(out.sections[0].items).toBe(sectionItems);
   });
 
+  it('compacts an uncompacted container even when the span equals the stored h', () => {
+    const v = val([p('a', 0, 0, 4, 2), p('b', 0, 7, 4, 2)]);
+    expect(byId(withSpans(v, new Map([['a', 2]])).items, 'b').y).toBe(2);
+  });
+
   it('applies to section containers', () => {
     const v = val(
       [],

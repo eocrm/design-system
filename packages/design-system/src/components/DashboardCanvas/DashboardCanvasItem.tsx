@@ -59,6 +59,8 @@ interface DashboardCanvasItemProps {
   placement: DashboardPlacement;
   container: ContainerRef;
   gestures: CanvasGestures;
+  /** autoHeight item: body wrapped for measurement, no S/SE handles (height follows content). */
+  auto: boolean;
   children: ReactNode;
 }
 
@@ -79,6 +81,7 @@ export function DashboardCanvasItem({
   placement,
   container,
   gestures,
+  auto,
   children,
 }: DashboardCanvasItemProps) {
   const t = useTranslation();
@@ -116,7 +119,13 @@ export function DashboardCanvasItem({
       onPointerDown={readOnly ? undefined : (e) => onMovePointerDown(e, placement, container)}
       onKeyDown={readOnly ? undefined : (e) => onItemKeyDown(e, placement, container)}
     >
-      {children}
+      {auto ? (
+        <div className={styles.autoBody} data-dc-auto-body>
+          {children}
+        </div>
+      ) : (
+        children
+      )}
       {!readOnly && (
         <>
           <div
@@ -125,18 +134,22 @@ export function DashboardCanvasItem({
             aria-hidden="true"
             onPointerDown={(e) => onResizePointerDown(e, placement, container, 'e')}
           />
-          <div
-            className={styles.handleS}
-            data-dc-resize="s"
-            aria-hidden="true"
-            onPointerDown={(e) => onResizePointerDown(e, placement, container, 's')}
-          />
-          <div
-            className={styles.handleSE}
-            data-dc-resize="se"
-            aria-hidden="true"
-            onPointerDown={(e) => onResizePointerDown(e, placement, container, 'se')}
-          />
+          {!auto && (
+            <>
+              <div
+                className={styles.handleS}
+                data-dc-resize="s"
+                aria-hidden="true"
+                onPointerDown={(e) => onResizePointerDown(e, placement, container, 's')}
+              />
+              <div
+                className={styles.handleSE}
+                data-dc-resize="se"
+                aria-hidden="true"
+                onPointerDown={(e) => onResizePointerDown(e, placement, container, 'se')}
+              />
+            </>
+          )}
         </>
       )}
     </div>

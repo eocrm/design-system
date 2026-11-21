@@ -157,6 +157,18 @@
   overflow: auto;
 }
 
+// DS-85 autoHeight body: stretches to the cell (a `height: 100%` Card has
+// no gap under it); a measure pass briefly drops the stretch to read the
+// content's natural height.
+.autoBody {
+  display: grid;
+  min-height: 100%;
+}
+
+.canvas[data-dc-measuring] .autoBody {
+  min-height: 0;
+}
+
 // The dragged item's cell renders the snapped drop preview — the ghost
 // carries the content, so the cell shows only the highlighted slot. Its own
 // full border (the idle `.item` has none to inherit from).
