@@ -12,6 +12,7 @@ import {
   reorderSection,
   stackOrder,
   toggleSection,
+  withSpans,
 } from './engine';
 import type { DashboardCanvasValue, DashboardPlacement } from './engine';
 
@@ -760,5 +761,66 @@ describe('clampGhost', () => {
 
   it('never goes negative when the ghost is larger than the bounds', () => {
     expect(clampGhost(50, 50, 900, 700, 800, 600)).toEqual({ left: 0, top: 0 });
+  });
+});
+
+describe('withSpans', () => {
+  const val = (items: DashboardPlacement[], sections: DashboardCanvasValue['sections'] = []) => ({
+    items,
+    sections,
+  });
+
+  it('returns the same reference when spans is empty or matches no item', () => {
+    const v = val([p('a', 0, 0, 4, 2)]);
+    expect(withSpans(v, new Map())).toBe(v);
+    expect(withSpans(v, new Map([['zzz', 5]]))).toBe(v);
+  });
+
+  it('returns the same reference when spans already match the layout', () => {
+    const v = val([p('a', 0, 0, 4, 2), p('b', 0, 2, 4, 2)]);
+    expect(withSpans(v, new Map([['a', 2]]))).toBe(v);
+  });
+
+  it('grows an item and pushes the item below down', () => {
+    const v = val([p('a', 0, 0, 4, 2), p('b', 0, 2, 4, 2)]);
+    const out = withSpans(v, new Map([['a', 5]]));
+    expect(byId(out.items, 'a').h).toBe(5);
+    expect(byId(out.items, 'b').y).toBe(5);
+    expect(v.items[0].h).toBe(2);
+  });
+
+  it('shrinks an item and pulls the item below up', () => {
+    const v = val([p('a', 0, 0, 4, 4), p('b', 0, 4, 4, 2)]);
+    const out = withSpans(v, new Map([['a', 1]]));
+    expect(byId(out.items, 'b').y).toBe(1);
+  });
+
+  it('leaves containers without spanned items untouched (reference-equal), even if uncompacted', () => {
+    const sectionItems = [p('s', 0, 0, 4, 2), p('t', 0, 7, 4, 2)];
+    const v = val(
+      [p('a', 0, 0, 4, 2)],
+      [{ id: 'sec', title: 'S', collapsed: false, items: sectionItems }],
+    );
+    const out = withSpans(v, new Map([['a', 3]]));
+    expect(byId(out.items, 'a').h).toBe(3);
+    expect(out.sections[0].items).toBe(sectionItems);
+  });
+
+  it('applies to section containers', () => {
+    const v = val(
+      [],
+      [
+        {
+          id: 'sec',
+          title: 'S',
+          collapsed: false,
+          items: [p('s', 0, 0, 4, 2), p('t', 0, 2, 4, 2)],
+        },
+      ],
+    );
+    const out = withSpans(v, new Map([['s', 4]]));
+    expect(byId(out.sections[0].items, 's').h).toBe(4);
+    expect(byId(out.sections[0].items, 't').y).toBe(4);
+    expect(out.items).toBe(v.items);
   });
 });
