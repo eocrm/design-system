@@ -223,6 +223,13 @@ export function Lightbox({
   }
 
   // Inert the rest of the page while we're the top overlay (mirrors Modal.Overlay).
+  // Self-heal gesture state if a pointerup/cancel was missed.
+  useEffect(() => {
+    const g = swipeRef.current;
+    g.pointers.clear();
+    g.cancelled = false;
+  }, [open, current]);
+
   useEffect(() => {
     if (!open || !isTop) return;
     const kids = Array.from(document.body.children) as HTMLElement[];
@@ -311,10 +318,10 @@ export function Lightbox({
 
   // Touch swipe on the stage: left = next, right = previous.
   const swipeDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== 'touch' || !multi) return;
     const g = swipeRef.current;
-    if (g.pointers.size === 0)
-      Object.assign(g, { x0: e.clientX, y0: e.clientY, cancelled: false, swiped: false });
+    g.swiped = false; // any pointerdown ends the post-swipe click swallow
+    if (e.pointerType !== 'touch' || !multi) return;
+    if (g.pointers.size === 0) Object.assign(g, { x0: e.clientX, y0: e.clientY, cancelled: false });
     else g.cancelled = true;
     g.pointers.add(e.pointerId);
   };

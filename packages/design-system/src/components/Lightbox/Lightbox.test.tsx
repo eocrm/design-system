@@ -671,6 +671,18 @@ describe('Lightbox — actions (#608)', () => {
       expect(onOpenChange).toHaveBeenCalledWith(false);
     });
 
+    it('a mouse click on the backdrop after a touch swipe still closes', () => {
+      const onOpenChange = vi.fn();
+      open({ onOpenChange });
+      const stage = getStage();
+      const p = { pointerType: 'touch', pointerId: 1 };
+      fireEvent.pointerDown(stage, { ...p, clientX: 200, clientY: 200 });
+      fireEvent.pointerUp(stage, { ...p, clientX: 120, clientY: 200 });
+      fireEvent.pointerDown(stage, { pointerType: 'mouse', pointerId: 2 });
+      fireEvent.click(stage);
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+
     it('single item: swipe does nothing', () => {
       const onIndexChange = vi.fn();
       open({ items: [ITEMS[0]], onIndexChange });
