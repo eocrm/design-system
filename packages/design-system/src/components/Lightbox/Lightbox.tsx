@@ -222,7 +222,6 @@ export function Lightbox({
     setStageState('loading');
   }
 
-  // Inert the rest of the page while we're the top overlay (mirrors Modal.Overlay).
   // Self-heal gesture state if a pointerup/cancel was missed.
   useEffect(() => {
     const g = swipeRef.current;
@@ -230,6 +229,7 @@ export function Lightbox({
     g.cancelled = false;
   }, [open, current]);
 
+  // Inert the rest of the page while we're the top overlay (mirrors Modal.Overlay).
   useEffect(() => {
     if (!open || !isTop) return;
     const kids = Array.from(document.body.children) as HTMLElement[];
