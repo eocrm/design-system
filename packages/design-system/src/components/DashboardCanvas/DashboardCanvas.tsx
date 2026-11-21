@@ -45,6 +45,7 @@ import type { CanvasGestures, ResizeEdge } from './DashboardCanvasItem';
 import { DashboardCanvasSection } from './DashboardCanvasSection';
 import { LONG_PRESS_MS, pastSlop } from '../_internal/longPress';
 import { measureGrid, useAutoHeights } from './useAutoHeights';
+import { useItemVisibility } from './useItemVisibility';
 import styles from './DashboardCanvas.module.scss';
 
 /**
@@ -56,6 +57,15 @@ import styles from './DashboardCanvas.module.scss';
 export type DashboardCanvasConstraintsProp =
   | Record<string, DashboardItemConstraints>
   | ((id: string | number) => DashboardItemConstraints | undefined);
+
+/** Per-call context passed to `DashboardCanvasProps.renderItem`. */
+export interface DashboardCanvasRenderItemContext {
+  /**
+   * Live: the cell is near the viewport (within one viewport height) and not
+   * in a collapsed section. Always `true` for the drag ghost.
+   */
+  visible: boolean;
+}
 
 export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /**
@@ -76,16 +86,24 @@ export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement
    * render — including items inside a COLLAPSED section (its body stays
    * mounted and `inert`, not unmounted, so Accordion's own collapse
    * animation has real content to animate) — and once more for the dragged
-   * item mid-gesture (the cursor-following ghost). Keep it pure; a widget
-   * that fetches on mount pays that cost even while its section is
-   * collapsed. The cell itself is a bare positioned box with no
-   * background/border/radius/shadow of its own and no minimum height beyond
-   * its `h` row-span — that chrome belongs here, in whatever this returns
-   * (typically a `<Card>`); size the content to the cell, or accept that a
-   * shorter widget in a taller cell shows bare (dotted, in edit mode) space
-   * below it.
+   * item mid-gesture (the cursor-following ghost). Keep it pure. The cell
+   * itself is a bare positioned box with no background/border/radius/shadow
+   * of its own and no minimum height beyond its `h` row-span — that chrome
+   * belongs here, in whatever this returns (typically a `<Card>`); size the
+   * content to the cell, or accept that a shorter widget in a taller cell
+   * shows bare (dotted, in edit mode) space below it.
+   *
+   * `ctx.visible` is a live signal for deferred loading: `true` while the
+   * cell is within one viewport above or below the visible area AND not in a
+   * collapsed section. It starts `false` until first observed (on-screen
+   * items flip to `true` a frame later), is always `true` for the drag
+   * ghost, and without `IntersectionObserver` (SSR/jsdom) follows collapse
+   * only. To defer a fetch, latch it in the widget ("seen once":
+   * `const [seen, setSeen] = useState(false); if (visible && !seen) setSeen(true);`
+   * and fetch when `seen`); use the live value to pause polling. One-argument
+   * callbacks keep working.
    */
-  renderItem: (id: string | number) => ReactNode;
+  renderItem: (id: string | number, ctx: DashboardCanvasRenderItemContext) => ReactNode;
   /**
    * Optional extra controls in a section's header (a title editor, a
    * `DropdownMenu` trigger) rendered by section id, to the right of the
@@ -410,6 +428,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     // any). Everything that renders or computes geometry reads it, so a
     // gesture commit carries the measured `h` — a measurement alone never
     // calls onChange.
+    const collapsedIds = new Set(
+      value.sections.filter((s) => s.collapsed).flatMap((s) => s.items.map((p) => p.id)),
+    );
     const spans = useAutoHeights({
       rootRef,
       value,
@@ -418,11 +439,11 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         clampPlacement({ id, x: 0, y: 0, w: 1, h: span }, constraintsFor(id)).h,
       frozen: live != null || pick != null,
       stacked: isNarrow,
-      collapsedIds: new Set(
-        value.sections.filter((s) => s.collapsed).flatMap((s) => s.items.map((p) => p.id)),
-      ),
+      collapsedIds,
       columns,
     });
+    const isVisible = useItemVisibility(rootRef, collapsedIds);
+    const renderBody = (id: string | number) => renderItem(id, { visible: isVisible(id) });
     const effective = useMemo(() => withSpans(value, spans), [value, spans]);
 
     // Single choke point for EVERY gesture commit: the engine ops return
@@ -1397,7 +1418,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
                 gestures={gestures}
                 auto={isAuto(item.id)}
               >
-                {renderItem(item.id)}
+                {renderBody(item.id)}
               </DashboardCanvasItem>
             ))}
           </div>
@@ -1415,7 +1436,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
                 {bandSlot === index && bandIndicator}
                 <DashboardCanvasSection
                   section={section}
-                  renderItem={renderItem}
+                  renderItem={renderBody}
                   renderSectionHeader={renderSectionHeader}
                   gestures={gestures}
                   isAuto={isAuto}
@@ -1447,7 +1468,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
               transform: `translate(${live.ghost.left}px, ${live.ghost.top}px)`,
             }}
           >
-            {renderItem(live.id)}
+            {renderItem(live.id, { visible: true })}
           </div>
         )}
         <div id={instructionsId} className={styles.srOnly}>

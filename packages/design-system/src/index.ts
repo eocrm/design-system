@@ -896,6 +896,7 @@ export { DashboardCanvas, DASHBOARD_COLUMNS } from './components/DashboardCanvas
 export type {
   DashboardCanvasProps,
   DashboardCanvasConstraintsProp,
+  DashboardCanvasRenderItemContext,
   DashboardPlacement,
   DashboardSection,
   DashboardCanvasValue,
