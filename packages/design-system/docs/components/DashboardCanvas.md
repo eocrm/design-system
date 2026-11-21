@@ -58,7 +58,7 @@ Opt in per item through `constraints` (record or function form): `constraints={{
 
 - The body stretches to fill the cell: a `height: 100%` `Card` has no empty strip under it even though the span is rounded up to whole rows.
 - `minH` is the floor (empty or loading content); `maxH` caps the span, and beyond it the cell scrolls.
-- Measurement never calls `onChange`. Any gesture commit (drop, resize, keyboard move, collapse toggle, section reorder) carries the measured `h` for auto items and the re-packed `y` of every item, so the saved layout converges on what was last seen.
+- Measurement never calls `onChange`. Any gesture commit (drop, resize, keyboard move, collapse toggle, section reorder) carries the measured `h` for auto items and the re-packed `y` of every item in containers that hold an auto item, so the saved layout converges on what was last seen.
 - No vertical resize: the S and SE handles are not rendered and Shift+Up/Down does nothing on an auto item. E (width) still works and triggers a re-measure.
 - Stacked (single-column) layout: auto items take their natural height, with no stretch or rounding.
 - Item ids must be unique across the whole canvas (top level and all sections): measurements are keyed by id alone, and a cross-container move keeps its measurement.

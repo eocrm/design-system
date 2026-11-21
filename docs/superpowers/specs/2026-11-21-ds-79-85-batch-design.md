@@ -6,12 +6,12 @@ Epic: DS-86. One branch, one PR. All changes land in `@eocrm/design-system`, wit
 
 Five consumer asks from eocrm (EO-99 dashboard, Reports) and Home Hub (HH-22, HH-29, HH-42). Each one removes a consumer shim or workaround:
 
-| Task  | Consumer pain today                                                              | Workaround it removes                          |
-| ----- | -------------------------------------------------------------------------------- | ---------------------------------------------- |
-| DS-79 | Can't show kg on ScatterChart ticks with grams in the tooltip                    | none (lives with one unit)                     |
-| DS-82 | DateRangePicker popover widens a 390px page to ~520px                            | two `DatePicker`s (From / To)                  |
-| DS-83 | Can't add `local_date` to LiquidEditor autocomplete without copying the defaults | none (autocomplete lacks it)                   |
-| DS-84 | No swipe to move between Lightbox items on touch                                 | `SwipeLightbox.tsx` shim                       |
+| Task  | Consumer pain today                                                                     | Workaround it removes                                |
+| ----- | --------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| DS-79 | Can't show kg on ScatterChart ticks with grams in the tooltip                           | none (lives with one unit)                           |
+| DS-82 | DateRangePicker popover widens a 390px page to ~520px                                   | two `DatePicker`s (From / To)                        |
+| DS-83 | Can't add `local_date` to LiquidEditor autocomplete without copying the defaults        | none (autocomplete lacks it)                         |
+| DS-84 | No swipe to move between Lightbox items on touch                                        | `SwipeLightbox.tsx` shim                             |
 | DS-85 | Dashboard widgets with variable content need manual `h`, which is wrong at other widths | manual resizing; eager fetches in collapsed sections |
 
 Anti-goal for all five: a change that alters behaviour for consumers who don't opt in. Every new prop is optional, and every default stays as it is today.
@@ -116,6 +116,7 @@ Rows have a fixed size, so `ceil` leaves up to one row of empty space under natu
 Engine: `withSpans` replaces `h` and re-compacts, pushing neighbours down and pulling them back up.
 
 Component:
+
 - An auto item's span follows the mocked content height (the `--dc-row` span), and the neighbour below moves.
 - `onChange` isn't called on measurement; a later drop emits the measured `h`.
 - Coalescing: 30 auto items changing in one frame give one state update and one forced layout pass.
