@@ -63,6 +63,7 @@
 }
 
 .stage {
+  touch-action: pan-y pinch-zoom; // horizontal swipe = prev/next (DS-84)
   // Size container so the image can be bounded by the stage box (100cqw/100cqh):
   // the flex child .imageWrap has no definite height, so a percentage max-height
   // on the <img> would be ignored and a tall image cropped (#607). Safe: the

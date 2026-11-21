@@ -616,4 +616,66 @@ describe('Lightbox — actions (#608)', () => {
     expect(screen.getByAltText('Alpha')).toBeInTheDocument();
     expect(screen.getByRole('menu')).toBeInTheDocument();
   });
+
+  describe('touch swipe (DS-84)', () => {
+    const getStage = () =>
+      screen.getByRole('dialog').querySelector<HTMLElement>('[class*="stage"]')!;
+    function swipe(el: Element, dx: number, dy: number, type = 'touch', secondPointer = false) {
+      const p = { pointerType: type, pointerId: 1 };
+      fireEvent.pointerDown(el, { ...p, clientX: 200, clientY: 200 });
+      if (secondPointer)
+        fireEvent.pointerDown(el, { pointerType: type, pointerId: 2, clientX: 10, clientY: 10 });
+      fireEvent.pointerMove(el, { ...p, clientX: 200 + dx, clientY: 200 + dy });
+      fireEvent.pointerUp(el, { ...p, clientX: 200 + dx, clientY: 200 + dy });
+      fireEvent.click(el);
+    }
+
+    it('swipe left goes to next and fires onIndexChange', () => {
+      const onIndexChange = vi.fn();
+      open({ defaultIndex: 0, onIndexChange });
+      swipe(getStage(), -80, 5);
+      expect(onIndexChange).toHaveBeenCalledWith(1);
+    });
+
+    it('swipe right goes to previous (wraps with loop)', () => {
+      const onIndexChange = vi.fn();
+      open({ defaultIndex: 0, onIndexChange });
+      swipe(getStage(), 80, 0);
+      expect(onIndexChange).toHaveBeenCalledWith(2);
+    });
+
+    it('ignores short, vertical, mouse and multi-touch gestures', () => {
+      const onIndexChange = vi.fn();
+      open({ defaultIndex: 0, onIndexChange });
+      const stage = getStage();
+      swipe(stage, -30, 0);
+      swipe(stage, -60, 90);
+      swipe(stage, -80, 0, 'mouse');
+      swipe(stage, -80, 0, 'touch', true);
+      expect(onIndexChange).not.toHaveBeenCalled();
+    });
+
+    it('does not wrap with loop={false} at the end', () => {
+      const onIndexChange = vi.fn();
+      open({ defaultIndex: 2, loop: false, onIndexChange });
+      swipe(getStage(), -80, 0);
+      expect(onIndexChange).not.toHaveBeenCalled();
+    });
+
+    it('a swipe ending on the backdrop does not close', () => {
+      const onOpenChange = vi.fn();
+      open({ onOpenChange });
+      swipe(getStage(), -80, 0);
+      expect(onOpenChange).not.toHaveBeenCalled();
+      fireEvent.click(getStage());
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+
+    it('single item: swipe does nothing', () => {
+      const onIndexChange = vi.fn();
+      open({ items: [ITEMS[0]], onIndexChange });
+      swipe(getStage(), -80, 0);
+      expect(onIndexChange).not.toHaveBeenCalled();
+    });
+  });
 });

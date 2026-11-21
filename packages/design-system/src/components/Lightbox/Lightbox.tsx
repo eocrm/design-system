@@ -7,6 +7,7 @@ import {
   useState,
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -19,6 +20,8 @@ import { useScrollLock } from '../_internal/overlay/useScrollLock';
 import { overlayStack, restoreFocusTo, useOverlayStack } from '../_internal/overlay';
 import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Lightbox.module.scss';
+
+const SWIPE_MIN_PX = 50;
 
 /** One item (image or document) in a `<Lightbox>`. */
 export interface LightboxItem {
@@ -161,6 +164,13 @@ export function Lightbox({
   //  - RESTORE is a PASSIVE effect so it runs AFTER the inert-background cleanup
   //    (also passive) has removed `inert` from the trigger's subtree — otherwise
   //    `.focus()` would silently fail on a still-inert element (→ falls to <body>).
+  const swipeRef = useRef({
+    x0: 0,
+    y0: 0,
+    pointers: new Set<number>(),
+    cancelled: false,
+    swiped: false,
+  });
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const prevOpenRef = useRef<boolean>(open);
   useLayoutEffect(() => {
@@ -299,7 +309,35 @@ export function Lightbox({
   const atStart = current === 0;
   const atEnd = current === n - 1;
 
+  // Touch swipe on the stage: left = next, right = previous.
+  const swipeDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'touch' || !multi) return;
+    const g = swipeRef.current;
+    if (g.pointers.size === 0)
+      Object.assign(g, { x0: e.clientX, y0: e.clientY, cancelled: false, swiped: false });
+    else g.cancelled = true;
+    g.pointers.add(e.pointerId);
+  };
+  const swipeUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const g = swipeRef.current;
+    if (e.pointerType !== 'touch' || !g.pointers.delete(e.pointerId)) return;
+    const dx = e.clientX - g.x0;
+    if (!g.cancelled && Math.abs(dx) > SWIPE_MIN_PX && Math.abs(dx) > Math.abs(e.clientY - g.y0)) {
+      g.swiped = true;
+      if (dx < 0) goNext();
+      else goPrev();
+    }
+  };
+  const swipeCancel = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const g = swipeRef.current;
+    if (g.pointers.delete(e.pointerId)) g.cancelled = true;
+  };
+
   const closeIfBackdrop = (e: ReactMouseEvent<HTMLDivElement>) => {
+    if (swipeRef.current.swiped) {
+      swipeRef.current.swiped = false;
+      return;
+    }
     if (e.target === e.currentTarget) close();
   };
 
@@ -347,7 +385,13 @@ export function Lightbox({
         </button>
       </div>
 
-      <div className={styles.stage} onClick={closeIfBackdrop}>
+      <div
+        className={styles.stage}
+        onClick={closeIfBackdrop}
+        onPointerDown={swipeDown}
+        onPointerUp={swipeUp}
+        onPointerCancel={swipeCancel}
+      >
         {multi && (
           <button
             type="button"
