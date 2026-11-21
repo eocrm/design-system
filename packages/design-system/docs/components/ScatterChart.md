@@ -98,7 +98,8 @@ Inside a [`ChartSync`](./ChartSync.md), inspecting a point shows a crosshair and
 | `xLabel` | `string` | yes | Name of the x quantity, e.g. "Bowl weight"; drawn as the x-axis title under the ticks at the plot's end, heads the data-table column and names x in the announcement. Required. |
 | `yLabel` | `string` | yes | Name of the y quantity, e.g. "Meal size"; drawn as the y-axis title above the plot, heads the data-table column and names y in the announcement. Required. |
 | `formatX` | `(x: number) => string` | yes | Formats x for ticks, tooltip, announcement and table (epoch ms on a `'time'` axis). Required. |
-| `formatY` | `(y: number) => string` | yes | Formats y for ticks, tooltip, announcement and table. Required. |
+| `formatY` | `(y: number) => string` | yes | Formats y for the tooltip, announcement and table, and for ticks when no `formatYTick` is set. Required. |
+| `formatYTick` | `((y: number) => string)` | no | Formats only the y-axis tick labels (e.g. kg on ticks, g in the tooltip). Default: `formatY`. |
 | `formatSize` | `((size: number) => string)` | no | Formats `size` for tooltip, announcement and table. Required when any point has `size` (dev warning otherwise). |
 | `sizeLabel` | `string` | no | Name of `size` in the tooltip, announcement and table header, e.g. "Calories". Default: translated "Size". |
 | `reference` | `ScatterReference \| ScatterReference[]` | no | App-computed reference line(s) (e.g. a recommended ratio), drawn dashed (a different pattern per line) and each listed in the legend. |

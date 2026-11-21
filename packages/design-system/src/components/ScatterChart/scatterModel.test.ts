@@ -24,6 +24,24 @@ const base = {
 const resolve = (pts: { x: number | Date; y: number; size?: number }[], key = 'a') =>
   resolveScatterSeries([{ key, label: key, points: pts }]);
 
+describe('computeScatterLayout tick formatter', () => {
+  const pts = resolve([
+    { x: 1, y: 1000 },
+    { x: 2, y: 5000 },
+  ]);
+  it('labels y ticks with formatYTick and falls back to formatY', () => {
+    const withTick = computeScatterLayout({
+      ...base,
+      series: pts,
+      formatY: (y) => `${y} g`,
+      formatYTick: (y) => `${y / 1000} kg`,
+    });
+    expect(withTick.yTicks.every((t) => t.label.endsWith('kg'))).toBe(true);
+    const without = computeScatterLayout({ ...base, series: pts, formatY: (y) => `${y} g` });
+    expect(without.yTicks.every((t) => t.label.endsWith(' g'))).toBe(true);
+  });
+});
+
 describe('linearFit', () => {
   it('fits a line', () => {
     expect(

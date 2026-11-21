@@ -62,8 +62,10 @@ export interface ScatterChartProps extends Omit<HTMLAttributes<HTMLElement>, 'ch
   yLabel: string;
   /** Formats x for ticks, tooltip, announcement and table (epoch ms on a `'time'` axis). Required. */
   formatX: (x: number) => string;
-  /** Formats y for ticks, tooltip, announcement and table. Required. */
+  /** Formats y for the tooltip, announcement and table, and for ticks when no `formatYTick` is set. Required. */
   formatY: (y: number) => string;
+  /** Formats only the y-axis tick labels (e.g. kg on ticks, g in the tooltip). Default: `formatY`. */
+  formatYTick?: (y: number) => string;
   /** Formats `size` for tooltip, announcement and table. Required when any point has `size` (dev warning otherwise). */
   formatSize?: (size: number) => string;
   /** Name of `size` in the tooltip, announcement and table header, e.g. "Calories". Default: translated "Size". */
@@ -126,6 +128,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
     yLabel,
     formatX,
     formatY,
+    formatYTick,
     formatSize,
     sizeLabel,
     reference,
@@ -209,6 +212,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
             height: size.height,
             formatX,
             formatY,
+            formatYTick,
             reference: references,
             trendLine,
             stems,
@@ -227,6 +231,7 @@ export const ScatterChart = forwardRef<HTMLElement, ScatterChartProps>(function 
       yDomain,
       formatX,
       formatY,
+      formatYTick,
       references,
       trendLine,
       stems,

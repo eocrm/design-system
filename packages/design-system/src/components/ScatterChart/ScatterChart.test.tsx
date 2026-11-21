@@ -75,6 +75,22 @@ describe('ScatterChart', () => {
     expect(dots(container)).toHaveLength(3);
   });
 
+  it('formatYTick labels axis ticks while the data table keeps formatY', () => {
+    const layout = stubLayout();
+    const { container } = render(
+      <ScatterChart {...base} formatY={(y) => `${y} g`} formatYTick={(y) => `${y} kg`} />,
+    );
+    layout.fire();
+    const ticks = [...container.querySelectorAll('svg text')].map((t) => t.textContent);
+    expect(ticks.some((t) => t?.endsWith(' kg'))).toBe(true);
+    expect(ticks.some((t) => t?.endsWith(' g'))).toBe(false);
+    expect(
+      within(screen.getByRole('table'))
+        .getAllByRole('cell')
+        .some((c) => c.textContent === '5 g'),
+    ).toBe(true);
+  });
+
   it('draws marks inside a clip path sized to the plot', () => {
     const layout = stubLayout();
     const { container } = render(<ScatterChart {...base} trendLine />);

@@ -84,8 +84,12 @@ export interface LiquidEditorProps {
    * `[]` hides the menu and disables `{%` autocomplete. Loop tags (`for`) are never offered.
    */
   tags?: readonly LiquidTag[];
-  /** Filter names offered in autocomplete after `|`. Defaults to a common Liquid set. */
-  filters?: string[];
+  /**
+   * Filter names offered in autocomplete after `|`. Replaces the defaults, so to add to them
+   * spread `DEFAULT_LIQUID_FILTERS`: `filters={[...DEFAULT_LIQUID_FILTERS, 'local_date']}`.
+   * Default: `DEFAULT_LIQUID_FILTERS` (`upcase`, `downcase`, `date`, `default`, …).
+   */
+  filters?: readonly string[];
   /** Minimum visible rows. Default `4`. */
   minRows?: number;
   /** Maximum visible rows before the editor scrolls internally. Default unbounded. */

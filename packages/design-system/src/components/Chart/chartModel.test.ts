@@ -242,6 +242,17 @@ describe('computeLayout', () => {
     expect(l.yTicks[l.yTicks.length - 1].value).toBeGreaterThanOrEqual(80);
   });
 
+  it('labels value-axis ticks with formatValueTick', () => {
+    const input = {
+      type: 'line' as const,
+      series: one([1000, 2000, 3000, 4000]),
+      formatValue: (n: number) => `${n} g`,
+    };
+    const l = layout({ ...input, formatValueTick: (n) => `${n / 1000} kg` });
+    expect(l.yTicks.every((t) => t.label.endsWith('kg'))).toBe(true);
+    expect(layout(input).yTicks.every((t) => t.label.endsWith(' g'))).toBe(true);
+  });
+
   it('sizes the y axis from the widest tick label', () => {
     const narrow = layout({ type: 'line', series: one([1, 2, 3, 4]) });
     const wide = layout({

@@ -59,6 +59,8 @@ interface DashboardCanvasItemProps {
   placement: DashboardPlacement;
   container: ContainerRef;
   gestures: CanvasGestures;
+  /** autoHeight item: body wrapped for measurement, no S/SE handles (height follows content). */
+  auto: boolean;
   children: ReactNode;
 }
 
@@ -79,6 +81,7 @@ export function DashboardCanvasItem({
   placement,
   container,
   gestures,
+  auto,
   children,
 }: DashboardCanvasItemProps) {
   const t = useTranslation();
@@ -98,6 +101,7 @@ export function DashboardCanvasItem({
     <div
       className={styles.item}
       data-dc-item={String(id)}
+      data-dc-auto={auto ? '' : undefined}
       data-dc-drop-preview={movingId === id ? '' : undefined}
       data-dc-resizing={resizingId === id ? '' : undefined}
       data-dc-picked={pickedId === id ? '' : undefined}
@@ -109,14 +113,24 @@ export function DashboardCanvasItem({
       style={{
         ['--dc-col' as string]: `${x + 1} / span ${w}`,
         ['--dc-row' as string]: `${y + 1} / span ${h}`,
-        // Task 5's below-md single-column rule reads this to keep the
-        // item's own height once `--dc-row` stops being consumed.
-        ['--dc-h-span' as string]: `span ${h}`,
+        // Stacked (below-breakpoint) block size: the item's own `h` rows, as
+        // before. Auto items omit it and take their natural content height.
+        ...(auto
+          ? null
+          : {
+              ['--dc-stacked-block' as string]: `calc(${h} * var(--dashboard-canvas-row-stacked) + ${h - 1} * var(--dashboard-canvas-gap))`,
+            }),
       }}
       onPointerDown={readOnly ? undefined : (e) => onMovePointerDown(e, placement, container)}
       onKeyDown={readOnly ? undefined : (e) => onItemKeyDown(e, placement, container)}
     >
-      {children}
+      {auto ? (
+        <div className={styles.autoBody} data-dc-auto-body>
+          {children}
+        </div>
+      ) : (
+        children
+      )}
       {!readOnly && (
         <>
           <div
@@ -125,18 +139,22 @@ export function DashboardCanvasItem({
             aria-hidden="true"
             onPointerDown={(e) => onResizePointerDown(e, placement, container, 'e')}
           />
-          <div
-            className={styles.handleS}
-            data-dc-resize="s"
-            aria-hidden="true"
-            onPointerDown={(e) => onResizePointerDown(e, placement, container, 's')}
-          />
-          <div
-            className={styles.handleSE}
-            data-dc-resize="se"
-            aria-hidden="true"
-            onPointerDown={(e) => onResizePointerDown(e, placement, container, 'se')}
-          />
+          {!auto && (
+            <>
+              <div
+                className={styles.handleS}
+                data-dc-resize="s"
+                aria-hidden="true"
+                onPointerDown={(e) => onResizePointerDown(e, placement, container, 's')}
+              />
+              <div
+                className={styles.handleSE}
+                data-dc-resize="se"
+                aria-hidden="true"
+                onPointerDown={(e) => onResizePointerDown(e, placement, container, 'se')}
+              />
+            </>
+          )}
         </>
       )}
     </div>

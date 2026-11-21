@@ -515,7 +515,7 @@ export type { CursorPaginationProps } from './components/CursorPagination';
 export { Textarea } from './components/Textarea';
 export type { TextareaProps, TextareaSize, TextareaResize } from './components/Textarea';
 
-export { LiquidEditor } from './components/LiquidEditor';
+export { LiquidEditor, DEFAULT_LIQUID_FILTERS } from './components/LiquidEditor';
 export type {
   LiquidEditorProps,
   LiquidVariable,
@@ -896,6 +896,7 @@ export { DashboardCanvas, DASHBOARD_COLUMNS } from './components/DashboardCanvas
 export type {
   DashboardCanvasProps,
   DashboardCanvasConstraintsProp,
+  DashboardCanvasRenderItemContext,
   DashboardPlacement,
   DashboardSection,
   DashboardCanvasValue,

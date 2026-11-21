@@ -68,7 +68,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
       showToolbar = true,
       toolbarActions,
       tags = ALL_LIQUID_TAGS,
-      filters = DEFAULT_LIQUID_FILTERS as string[],
+      filters = DEFAULT_LIQUID_FILTERS,
       minRows = 4,
       maxRows,
       readOnly = false,

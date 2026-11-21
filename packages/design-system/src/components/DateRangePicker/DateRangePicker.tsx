@@ -17,6 +17,7 @@ import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from 'lucide-react';
 import { useLocale } from '../../i18n/useLocale';
+import { useBelowBreakpoint } from '../../hooks/useBelowBreakpoint';
 import { useTranslation } from '../../i18n/useTranslation';
 import { mergeRefs } from '../_internal/refs';
 import { addMonths } from '../../calendar/dateMath';
@@ -74,7 +75,7 @@ export interface DateRangePickerProps extends Omit<
 
   /**
    * Field height + type scale. Same scale as `<DatePicker>`. Defaults to `'md'`.
-   * Affects only the trigger row; the two-month popover grid is fixed-size.
+   * Affects only the trigger row; the popover grid is fixed-size.
    *
    * - `'sm'` — 24px tall.
    * - `'md'` — 32px tall (default).
@@ -97,7 +98,7 @@ export interface DateRangePickerProps extends Omit<
    *
    * - `'day'` (default) — date only; behavior unchanged from prior releases.
    * - `'minute'` — adds two manual-entry time inputs (start + end) below
-   *   the two-month grid. The trigger text shows `HH:mm` after each date.
+   *   the month grid(s). The trigger text shows `HH:mm` after each date.
    *   Hidden form mirrors (when `nameStart` / `nameEnd` are set) emit ISO
    *   local datetime (`2026-05-28T14:30`).
    *
@@ -139,7 +140,7 @@ const ICON_SIZE_FOR: Record<DateRangePickerSize, number> = {
 };
 
 /**
- * Single-field date-range input with a two-month Floating-UI popover, hover preview and auto-swap.
+ * Single-field date-range input with a Floating-UI popover (two months; one paged month at ≤ 640px viewport), hover preview and auto-swap.
  * @see docs/components/DateRangePicker.md
  */
 // Built on `DatePickerGrid` with `selectionMode='range'`.
@@ -524,6 +525,8 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
     const gridRangeEnd = selectionStart != null ? null : (value?.end ?? null);
 
     const rightCursor = addMonths(cursor, 1);
+    // Viewport ≤ md: one paged month so the popover fits a phone screen.
+    const single = useBelowBreakpoint('md');
 
     return (
       <div
@@ -608,6 +611,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
               ref={refs.setFloating}
               style={floatingStyles}
               className={styles.popover}
+              data-single={single ? '' : undefined}
               data-in-overlay={inOverlay ? '' : undefined}
               role="dialog"
               aria-modal="false"
@@ -650,25 +654,27 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
                   onHoverDate={setHoverDate}
                   chevrons={false}
                 />
-                <DatePickerGrid
-                  cursor={rightCursor}
-                  value={null}
-                  onCursorChange={handleRightGridCursorChange}
-                  onSelect={handleGridSelect}
-                  min={min}
-                  max={max}
-                  isDateDisabled={isDateDisabled}
-                  locale={locale}
-                  selectionMode="range"
-                  rangeStart={gridRangeStart}
-                  rangeEnd={gridRangeEnd}
-                  hoverDate={hoverDate}
-                  onHoverDate={setHoverDate}
-                  chevrons={false}
-                />
+                {!single && (
+                  <DatePickerGrid
+                    cursor={rightCursor}
+                    value={null}
+                    onCursorChange={handleRightGridCursorChange}
+                    onSelect={handleGridSelect}
+                    min={min}
+                    max={max}
+                    isDateDisabled={isDateDisabled}
+                    locale={locale}
+                    selectionMode="range"
+                    rangeStart={gridRangeStart}
+                    rangeEnd={gridRangeEnd}
+                    hoverDate={hoverDate}
+                    onHoverDate={setHoverDate}
+                    chevrons={false}
+                  />
+                )}
               </div>
               {granularity === 'minute' && (
-                <div className={styles.timeRowsPair}>
+                <div className={styles.timeRowsPair} data-single={single ? '' : undefined}>
                   <div className={styles.timeRow}>
                     <label className={styles.timeLabel} htmlFor={`${inputId}-start-time`}>
                       {t('dateRangePicker.startTimeLabel')}

@@ -1,4 +1,13 @@
-import { Fragment, forwardRef, useCallback, useEffect, useId, useRef, useState } from 'react';
+import {
+  Fragment,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type {
   FocusEvent as ReactFocusEvent,
   HTMLAttributes,
@@ -19,9 +28,11 @@ import {
   applyResize,
   cellFromPoint,
   clampGhost,
+  clampPlacement,
   insertionCell,
   reorderSection,
   toggleSection,
+  withSpans,
 } from './engine';
 import type {
   ContainerRef,
@@ -33,6 +44,8 @@ import { DashboardCanvasItem, sortByPosition } from './DashboardCanvasItem';
 import type { CanvasGestures, ResizeEdge } from './DashboardCanvasItem';
 import { DashboardCanvasSection } from './DashboardCanvasSection';
 import { LONG_PRESS_MS, pastSlop } from '../_internal/longPress';
+import { measureGrid, useAutoHeights } from './useAutoHeights';
+import { useItemVisibility } from './useItemVisibility';
 import styles from './DashboardCanvas.module.scss';
 
 /**
@@ -44,6 +57,15 @@ import styles from './DashboardCanvas.module.scss';
 export type DashboardCanvasConstraintsProp =
   | Record<string, DashboardItemConstraints>
   | ((id: string | number) => DashboardItemConstraints | undefined);
+
+/** Per-call context passed to `DashboardCanvasProps.renderItem`. */
+export interface DashboardCanvasRenderItemContext {
+  /**
+   * Live: the cell is near the viewport (within one viewport height) and not
+   * in a collapsed section. Always `true` for the drag ghost.
+   */
+  visible: boolean;
+}
 
 export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /**
@@ -64,16 +86,24 @@ export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement
    * render — including items inside a COLLAPSED section (its body stays
    * mounted and `inert`, not unmounted, so Accordion's own collapse
    * animation has real content to animate) — and once more for the dragged
-   * item mid-gesture (the cursor-following ghost). Keep it pure; a widget
-   * that fetches on mount pays that cost even while its section is
-   * collapsed. The cell itself is a bare positioned box with no
-   * background/border/radius/shadow of its own and no minimum height beyond
-   * its `h` row-span — that chrome belongs here, in whatever this returns
-   * (typically a `<Card>`); size the content to the cell, or accept that a
-   * shorter widget in a taller cell shows bare (dotted, in edit mode) space
-   * below it.
+   * item mid-gesture (the cursor-following ghost). Keep it pure. The cell
+   * itself is a bare positioned box with no background/border/radius/shadow
+   * of its own and no minimum height beyond its `h` row-span — that chrome
+   * belongs here, in whatever this returns (typically a `<Card>`); size the
+   * content to the cell, or accept that a shorter widget in a taller cell
+   * shows bare (dotted, in edit mode) space below it.
+   *
+   * `ctx.visible` is a live signal for deferred loading: `true` while the
+   * cell is within one viewport above or below the visible area AND not in a
+   * collapsed section. It starts `false` until first observed (on-screen
+   * items flip to `true` a frame later), is always `true` for the drag
+   * ghost, and without `IntersectionObserver` (SSR/jsdom) follows collapse
+   * only. To defer a fetch, latch it in the widget ("seen once":
+   * `const [seen, setSeen] = useState(false); if (visible && !seen) setSeen(true);`
+   * and fetch when `seen`); use the live value to pause polling. One-argument
+   * callbacks keep working.
    */
-  renderItem: (id: string | number) => ReactNode;
+  renderItem: (id: string | number, ctx: DashboardCanvasRenderItemContext) => ReactNode;
   /**
    * Optional extra controls in a section's header (a title editor, a
    * `DropdownMenu` trigger) rendered by section id, to the right of the
@@ -90,7 +120,11 @@ export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement
   highlightedSectionId?: string | number;
   /** Fires once the highlight run on `highlightedSectionId` has finished. */
   onSectionHighlightDone?: () => void;
-  /** Per-item size constraints, consulted when clamping resize gestures. */
+  /**
+   * Per-item size constraints, consulted when clamping resize gestures.
+   * `autoHeight: true` makes the item's row span follow its content instead
+   * of `h` (see the Auto-height section of the docs).
+   */
   constraints?: DashboardCanvasConstraintsProp;
   /**
    * Column count of every container grid (top level and each section's
@@ -182,32 +216,15 @@ const DRAG_ACTIVATION_PX = 5;
 type TouchPhase = 'pending' | 'lifted';
 
 /**
- * Fallback row unit when `grid-auto-rows` doesn't resolve to a px length
- * (jsdom, where the square-cell `cqw` calc in `--dashboard-canvas-row` never
- * evaluates). Mirrors `--dashboard-canvas-row-stacked` (`--space-12`, 48px).
- */
-const FALLBACK_ROW_PX = 48;
-
-/**
  * Editing-gate width thresholds (px) — JS mirror of the `@container
  * dashboard-canvas (max-width: …)` step rules in DashboardCanvas.module.scss
  * (`_internal/collapse.scss` constants). `max-width` is INCLUSIVE, so a width
  * exactly at the threshold already single-columns — the gate below must match
  * with `<=`, not `<`. SCSS constants aren't readable from TS, so these
  * literals and those are kept in sync by hand, same as the
- * `FALLBACK_ROW_PX`/`--dashboard-canvas-row-stacked` pairing above.
+ * `FALLBACK_ROW_PX`/`--dashboard-canvas-row-stacked` pairing (useAutoHeights.ts).
  */
 const STACK_GATE_PX: Record<CollapseBreakpoint, number> = { sm: 480, md: 640, lg: 768 };
-
-/** Live px geometry of one container grid, re-measured per pointermove. */
-function measureGrid(el: HTMLElement, columns: number) {
-  const rect = el.getBoundingClientRect();
-  const style = getComputedStyle(el);
-  const gap = Number.parseFloat(style.columnGap) || 0;
-  const rowHeight = Number.parseFloat(style.gridAutoRows) || FALLBACK_ROW_PX;
-  const colWidth = (rect.width - gap * (columns - 1)) / columns;
-  return { rect, colWidth, rowHeight, gap };
-}
 
 /**
  * Capture always targets the ROOT: item elements REMOUNT when a preview moves
@@ -408,19 +425,43 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
 
     const constraintsFor = (id: string | number): DashboardItemConstraints | undefined =>
       typeof constraints === 'function' ? constraints(id) : constraints?.[String(id)];
+    const isAuto = (id: string | number) => !!constraintsFor(id)?.autoHeight;
+
+    // DS-85: `effective` is `value` with measured spans of autoHeight items
+    // applied (only their containers re-compact; reference-equal without
+    // any). Everything that renders or computes geometry reads it, so a
+    // gesture commit carries the measured `h` — a measurement alone never
+    // calls onChange.
+    const collapsedIds = new Set(
+      value.sections.filter((s) => s.collapsed).flatMap((s) => s.items.map((p) => p.id)),
+    );
+    const spans = useAutoHeights({
+      rootRef,
+      value,
+      isAuto,
+      clampSpan: (id, span) =>
+        clampPlacement({ id, x: 0, y: 0, w: 1, h: span }, constraintsFor(id)).h,
+      frozen: live != null || pick != null,
+      stacked: isNarrow,
+      collapsedIds,
+      columns,
+    });
+    const isVisible = useItemVisibility(rootRef, collapsedIds);
+    const renderBody = (id: string | number) => renderItem(id, { visible: isVisible(id) });
+    const effective = useMemo(() => withSpans(value, spans), [value, spans]);
 
     // Single choke point for EVERY gesture commit: the engine ops return
-    // `value` by reference when the gesture resolves to the current layout
-    // (clamped resize, unmoved band, vanished id), so one identity check
-    // kills every no-op onChange.
+    // their input by reference when the gesture resolves to the current
+    // layout (clamped resize, unmoved band, vanished id), so one identity
+    // check against `effective` kills every no-op onChange.
     const commit = (next: DashboardCanvasValue) => {
-      if (next !== value) onChange?.(next);
+      if (next !== effective) onChange?.(next);
     };
 
     const handleToggleSection = (sectionId: string | number) => {
       // Collapse stays active in readOnly AND below the narrow-editing
       // threshold — it's navigation, not editing.
-      commit(toggleSection(value, sectionId));
+      commit(toggleSection(effective, sectionId));
     };
 
     const highlightKnown = value.sections.some((s) => s.id === highlightedSectionId);
@@ -603,6 +644,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       edge: ResizeEdge,
     ) => {
       if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
+      // An auto item's height follows its content — only its width resizes.
+      if (edge !== 'e' && isAuto(placement.id)) return;
       if (isPortalEvent(event) || underOpenOverlay()) return;
       // The handle sits inside the move-drag surface — never arm both.
       event.stopPropagation();
@@ -728,11 +771,11 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         // preview can't flip the half under a still pointer).
         const colPitch = colWidth + gap;
         const rowPitch = rowHeight + gap;
-        const dragged = itemsOf(value, drag.from).find((p) => p.id === drag.id);
+        const dragged = itemsOf(effective, drag.from).find((p) => p.id === drag.id);
         const cell =
           dragged && colPitch > 0 && rowPitch > 0
             ? insertionCell(
-                itemsOf(value, drag.target),
+                itemsOf(effective, drag.target),
                 drag.id,
                 dragged.w,
                 (event.clientX - rect.left) / colPitch,
@@ -749,7 +792,15 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         ) {
           // The preview IS the engine result of the hypothetical drop — the
           // exact value a pointerup right now would commit.
-          drag.preview = applyMove(value, drag.from, drag.target, drag.id, cell.x, cell.y, columns);
+          drag.preview = applyMove(
+            effective,
+            drag.from,
+            drag.target,
+            drag.id,
+            cell.x,
+            cell.y,
+            columns,
+          );
           drag.previewKey = drag.targetKey;
           drag.cell = cell;
         }
@@ -788,7 +839,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           drag.lastW = w;
           drag.lastH = h;
           drag.preview = applyResize(
-            value,
+            effective,
             drag.container,
             drag.id,
             w,
@@ -835,7 +886,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // can never get stuck; the commit below is the conditional part.
       dragRef.current = null;
       setLive(null);
-      // Commits recompute from the CURRENT `value` closure, never the cached
+      // Commits recompute from the CURRENT `effective` closure, never the cached
       // preview — a controlled update mid-gesture must not be reverted.
       if (drag.kind === 'move') {
         if (!drag.moved || !drag.cell) return;
@@ -849,7 +900,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           return;
         }
         commit(
-          applyMove(value, drag.from, drag.target, drag.id, drag.cell.x, drag.cell.y, columns),
+          applyMove(effective, drag.from, drag.target, drag.id, drag.cell.x, drag.cell.y, columns),
         );
         return;
       }
@@ -859,7 +910,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         if (drag.lastW === drag.startW && drag.lastH === drag.startH) return;
         commit(
           applyResize(
-            value,
+            effective,
             drag.container,
             drag.id,
             drag.lastW,
@@ -874,7 +925,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // Slot counts ALL bands including the dragged one, so slots past it
       // shift down by one when it's spliced out.
       const toIndex = drag.slot > drag.fromIndex ? drag.slot - 1 : drag.slot;
-      commit(reorderSection(value, drag.id, toIndex));
+      commit(reorderSection(effective, drag.id, toIndex));
     };
 
     const handleRootPointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -951,7 +1002,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       } else {
         y = Math.max(y, 0);
       }
-      const preview = applyMove(value, current.from, container, current.id, x, y, columns);
+      const preview = applyMove(effective, current.from, container, current.id, x, y, columns);
       reclaimRef.current = { kind: 'item', id: current.id };
       setPick({ ...current, container, x, y, preview });
       if (crossed) {
@@ -1011,7 +1062,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
               pick.y === pick.homeY
             )
           ) {
-            commit(applyMove(value, pick.from, pick.container, pick.id, pick.x, pick.y, columns));
+            commit(
+              applyMove(effective, pick.from, pick.container, pick.id, pick.x, pick.y, columns),
+            );
           }
           announce(t('dashboardCanvas.dropped'));
           return;
@@ -1041,18 +1094,24 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           w: placement.w,
           x: placement.x,
           y: placement.y,
-          preview: value,
+          preview: effective,
         });
         announce(t('dashboardCanvas.pickedUp'));
         return;
       }
       if (event.shiftKey && key.startsWith('Arrow')) {
         event.preventDefault();
+        // Auto item: height follows content — Shift+Up/Down don't resize,
+        // but say why instead of failing silently.
+        if ((key === 'ArrowUp' || key === 'ArrowDown') && isAuto(placement.id)) {
+          announce(t('dashboardCanvas.autoHeightResize'));
+          return;
+        }
         const w = placement.w + (key === 'ArrowRight' ? 1 : key === 'ArrowLeft' ? -1 : 0);
         const h = placement.h + (key === 'ArrowDown' ? 1 : key === 'ArrowUp' ? -1 : 0);
         // Committed per keypress — no resize mode (FlowCanvas nudge precedent).
         const next = applyResize(
-          value,
+          effective,
           container,
           placement.id,
           w,
@@ -1084,11 +1143,11 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       if (fromIndex === -1) return;
       event.preventDefault();
       const next = reorderSection(
-        value,
+        effective,
         sectionId,
         fromIndex + (event.key === 'ArrowDown' ? 1 : -1),
       );
-      if (next === value) return; // clamped at the edge — nothing moved
+      if (next === effective) return; // clamped at the edge — nothing moved
       reclaimRef.current = { kind: 'section', id: sectionId };
       commit(next);
       announce(
@@ -1290,7 +1349,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         ? live.value
         : pick != null
           ? pick.preview
-          : value;
+          : effective;
     const gestures: CanvasGestures = {
       // The item/section internals only care whether editing is off, not
       // WHY — readOnly and narrow-width both render identically (no
@@ -1365,8 +1424,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
                 placement={item}
                 container={TOP_CONTAINER}
                 gestures={gestures}
+                auto={isAuto(item.id)}
               >
-                {renderItem(item.id)}
+                {renderBody(item.id)}
               </DashboardCanvasItem>
             ))}
           </div>
@@ -1384,9 +1444,10 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
                 {bandSlot === index && bandIndicator}
                 <DashboardCanvasSection
                   section={section}
-                  renderItem={renderItem}
+                  renderItem={renderBody}
                   renderSectionHeader={renderSectionHeader}
                   gestures={gestures}
+                  isAuto={isAuto}
                   dragging={live?.kind === 'section' && live.id === section.id}
                   dropTarget={
                     live?.kind === 'move' &&
@@ -1415,7 +1476,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
               transform: `translate(${live.ghost.left}px, ${live.ghost.top}px)`,
             }}
           >
-            {renderItem(live.id)}
+            {renderItem(live.id, { visible: true })}
           </div>
         )}
         <div id={instructionsId} className={styles.srOnly}>

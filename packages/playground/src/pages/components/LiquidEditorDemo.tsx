@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { BookOpen } from 'lucide-react';
-import { Stack, LiquidEditor, Button, type LiquidVariable } from '@eocrm/design-system';
+import {
+  Stack,
+  LiquidEditor,
+  Button,
+  DEFAULT_LIQUID_FILTERS,
+  type LiquidVariable,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -52,6 +58,7 @@ export function LiquidEditorDemo() {
   const [nested, setNested] = useState('{{ record.status.name }}');
   const [allTags, setAllTags] = useState('');
   const [fewTags, setFewTags] = useState('');
+  const [extended, setExtended] = useState('{{ join_date | local_date }}');
 
   return (
     <DemoLayout
@@ -320,6 +327,26 @@ export function Demo() {
           variables={VARS}
           invalid
           error="Unexpected end of template"
+        />
+      </Example>
+
+      <Example
+        title="Extended filters"
+        description="DEFAULT_LIQUID_FILTERS is exported, so a consumer adds its own backend filter to autocomplete without copying the defaults. Type a pipe after a variable to see local_date suggested."
+        code={`import { DEFAULT_LIQUID_FILTERS, LiquidEditor } from '@eocrm/design-system';
+
+<LiquidEditor
+  value={value}
+  onChange={setValue}
+  variables={VARS}
+  filters={[...DEFAULT_LIQUID_FILTERS, 'local_date']}
+/>`}
+      >
+        <LiquidEditor
+          value={extended}
+          onChange={setExtended}
+          variables={VARS}
+          filters={[...DEFAULT_LIQUID_FILTERS, 'local_date']}
         />
       </Example>
 

@@ -633,6 +633,8 @@ export interface LayoutInput {
   width: number;
   height: number;
   formatValue: (n: number) => string;
+  /** Formats only the value-axis tick labels; default `formatValue`. */
+  formatValueTick?: (n: number) => string;
   /** Line/area interpolation; default `'smooth'`. */
   curve?: ChartCurve;
   /** Label each bar (`bar`) or stack total (`stacked-bar`) with its value; ignored on line/area. */
@@ -780,7 +782,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     y.domain([lo, hi]);
     tickValues = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
   }
-  const tickLabels = tickValues.map(formatValue);
+  const tickLabels = tickValues.map(input.formatValueTick ?? formatValue);
   const left = input.gutterLeft ?? Math.max(0, ...tickLabels.map(textWidth)) + LABEL_GAP;
   const plot: Rect = {
     x: left,

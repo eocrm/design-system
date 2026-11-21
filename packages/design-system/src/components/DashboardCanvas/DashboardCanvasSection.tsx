@@ -18,6 +18,8 @@ interface DashboardCanvasSectionProps {
   renderItem: (id: string | number) => ReactNode;
   renderSectionHeader?: (id: string | number) => ReactNode;
   gestures: CanvasGestures;
+  /** Whether an item has `autoHeight` (wraps its body for measurement). */
+  isAuto: (id: string | number) => boolean;
   /** True while this band is being pointer-reordered (styling hook). */
   dragging: boolean;
   /** True while a move-drag hovers this body grid (it alone gets trailing drop space). */
@@ -73,6 +75,7 @@ export function DashboardCanvasSection({
   renderItem,
   renderSectionHeader,
   gestures,
+  isAuto,
   dragging,
   dropTarget,
   onHeaderPointerDown,
@@ -156,6 +159,7 @@ export function DashboardCanvasSection({
                   placement={item}
                   container={containerRef}
                   gestures={itemGestures}
+                  auto={isAuto(item.id)}
                 >
                   {renderItem(item.id)}
                 </DashboardCanvasItem>

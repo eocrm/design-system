@@ -121,8 +121,10 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
    * (e.g. previous period): a series key (line / bar) or `'total'` (stacked-bar / area).
    */
   series: ChartSeries[];
-  /** Formats a number for axis ticks, tooltip and data table (the app owns i18n and currency). Required. */
+  /** Formats a number for the tooltip, data table, announcement and value labels, and for axis ticks when no `formatValueTick` is set (the app owns i18n and currency). Required. */
   formatValue: (n: number) => string;
+  /** Formats only the value-axis tick labels (e.g. kg on ticks, g in the tooltip). Default: `formatValue`. */
+  formatValueTick?: (n: number) => string;
   /** Line/area interpolation. `'smooth'` (default) is a monotone curve; `'linear'` draws straight segments between points. */
   curve?: ChartCurve;
   /** EmptyState title when there are no categories or every value is null/zero. Default: translated "No data for this period". */
@@ -325,6 +327,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     categories: allCategories,
     series: allSeries,
     formatValue,
+    formatValueTick,
     curve,
     emptyMessage,
     hiddenSeries,
@@ -477,6 +480,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             width: size.width,
             height: size.height,
             formatValue,
+            formatValueTick,
             curve,
             valueLabels,
             includeZero,
@@ -495,6 +499,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       categories,
       visible,
       formatValue,
+      formatValueTick,
       curve,
       valueLabels,
       includeZero,

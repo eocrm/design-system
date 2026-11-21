@@ -801,7 +801,14 @@
           "type": "(n: number) => string",
           "required": true,
           "default": "",
-          "description": "Formats a number for axis ticks, tooltip and data table (the app owns i18n and currency). Required."
+          "description": "Formats a number for the tooltip, data table, announcement and value labels, and for axis ticks when no `formatValueTick` is set (the app owns i18n and currency). Required."
+        },
+        {
+          "name": "formatValueTick",
+          "type": "((n: number) => string)",
+          "required": false,
+          "default": "",
+          "description": "Formats only the value-axis tick labels (e.g. kg on ticks, g in the tooltip). Default: `formatValue`."
         },
         {
           "name": "curve",
@@ -1876,10 +1883,10 @@
         },
         {
           "name": "renderItem",
-          "type": "(id: string | number) => ReactNode",
+          "type": "(id: string | number, ctx: DashboardCanvasRenderItemContext) => ReactNode",
           "required": true,
           "default": "",
-          "description": "Renders the body of an item by id. Called for every item on every\nrender — including items inside a COLLAPSED section (its body stays\nmounted and `inert`, not unmounted, so Accordion's own collapse\nanimation has real content to animate) — and once more for the dragged\nitem mid-gesture (the cursor-following ghost). Keep it pure; a widget\nthat fetches on mount pays that cost even while its section is\ncollapsed. The cell itself is a bare positioned box with no\nbackground/border/radius/shadow of its own and no minimum height beyond\nits `h` row-span — that chrome belongs here, in whatever this returns\n(typically a `<Card>`); size the content to the cell, or accept that a\nshorter widget in a taller cell shows bare (dotted, in edit mode) space\nbelow it."
+          "description": "Renders the body of an item by id. Called for every item on every\nrender — including items inside a COLLAPSED section (its body stays\nmounted and `inert`, not unmounted, so Accordion's own collapse\nanimation has real content to animate) — and once more for the dragged\nitem mid-gesture (the cursor-following ghost). Keep it pure. The cell\nitself is a bare positioned box with no background/border/radius/shadow\nof its own and no minimum height beyond its `h` row-span — that chrome\nbelongs here, in whatever this returns (typically a `<Card>`); size the\ncontent to the cell, or accept that a shorter widget in a taller cell\nshows bare (dotted, in edit mode) space below it.\n\n`ctx.visible` is a live signal for deferred loading: `true` while the\ncell is within one viewport above or below the visible area AND not in a\ncollapsed section. It starts `false` until first observed (on-screen\nitems flip to `true` a frame later), is always `true` for the drag\nghost, and without `IntersectionObserver` (SSR/jsdom) follows collapse\nonly. To defer a fetch, latch it in the widget (\"seen once\":\n`const [seen, setSeen] = useState(false); if (visible && !seen) setSeen(true);`\nand fetch when `seen`); use the live value to pause polling. One-argument\ncallbacks keep working."
         },
         {
           "name": "renderSectionHeader",
@@ -1907,7 +1914,7 @@
           "type": "DashboardCanvasConstraintsProp",
           "required": false,
           "default": "",
-          "description": "Per-item size constraints, consulted when clamping resize gestures."
+          "description": "Per-item size constraints, consulted when clamping resize gestures.\n`autoHeight: true` makes the item's row span follow its content instead\nof `h` (see the Auto-height section of the docs)."
         },
         {
           "name": "columns",
@@ -2287,7 +2294,7 @@
           "type": "DateRangePickerSize",
           "required": false,
           "default": "",
-          "description": "Field height + type scale. Same scale as `<DatePicker>`. Defaults to `'md'`.\nAffects only the trigger row; the two-month popover grid is fixed-size.\n\n- `'sm'` — 24px tall.\n- `'md'` — 32px tall (default).\n- `'lg'` — 40px tall."
+          "description": "Field height + type scale. Same scale as `<DatePicker>`. Defaults to `'md'`.\nAffects only the trigger row; the popover grid is fixed-size.\n\n- `'sm'` — 24px tall.\n- `'md'` — 32px tall (default).\n- `'lg'` — 40px tall."
         },
         {
           "name": "clearable",
@@ -2322,7 +2329,7 @@
           "type": "DateTimeGranularity",
           "required": false,
           "default": "'day'",
-          "description": "Picker precision.\n\n- `'day'` (default) — date only; behavior unchanged from prior releases.\n- `'minute'` — adds two manual-entry time inputs (start + end) below\n  the two-month grid. The trigger text shows `HH:mm` after each date.\n  Hidden form mirrors (when `nameStart` / `nameEnd` are set) emit ISO\n  local datetime (`2026-05-28T14:30`).\n\nAt `'minute'` the start/end time inputs are shown and editable in the\npopover even before a range is picked (defaulting to `00:00` / `23:59`).\nTimes entered in the empty state are applied when the range is committed\n(instead of the bare defaults), and existing times are preserved across\ndate re-picks. Same-day ranges with end-time < start-time are silently\nclamped so end-time ≥ start-time."
+          "description": "Picker precision.\n\n- `'day'` (default) — date only; behavior unchanged from prior releases.\n- `'minute'` — adds two manual-entry time inputs (start + end) below\n  the month grid(s). The trigger text shows `HH:mm` after each date.\n  Hidden form mirrors (when `nameStart` / `nameEnd` are set) emit ISO\n  local datetime (`2026-05-28T14:30`).\n\nAt `'minute'` the start/end time inputs are shown and editable in the\npopover even before a range is picked (defaulting to `00:00` / `23:59`).\nTimes entered in the empty state are applied when the range is committed\n(instead of the bare defaults), and existing times are preserved across\ndate re-picks. Same-day ranges with end-time < start-time are silently\nclamped so end-time ≥ start-time."
         },
         {
           "name": "timeStep",
@@ -4626,10 +4633,10 @@
         },
         {
           "name": "filters",
-          "type": "string[]",
+          "type": "readonly string[]",
           "required": false,
-          "default": "",
-          "description": "Filter names offered in autocomplete after `|`. Defaults to a common Liquid set."
+          "default": "DEFAULT_LIQUID_FILTERS",
+          "description": "Filter names offered in autocomplete after `|`. Replaces the defaults, so to add to them\nspread `DEFAULT_LIQUID_FILTERS`: `filters={[...DEFAULT_LIQUID_FILTERS, 'local_date']}`.\nDefault: `DEFAULT_LIQUID_FILTERS` (`upcase`, `downcase`, `date`, `default`, …)."
         },
         {
           "name": "minRows",
@@ -6249,7 +6256,14 @@
           "type": "(y: number) => string",
           "required": true,
           "default": "",
-          "description": "Formats y for ticks, tooltip, announcement and table. Required."
+          "description": "Formats y for the tooltip, announcement and table, and for ticks when no `formatYTick` is set. Required."
+        },
+        {
+          "name": "formatYTick",
+          "type": "((y: number) => string)",
+          "required": false,
+          "default": "",
+          "description": "Formats only the y-axis tick labels (e.g. kg on ticks, g in the tooltip). Default: `formatY`."
         },
         {
           "name": "formatSize",
@@ -8323,6 +8337,7 @@
     "FieldRenderProps": "{ id: string; aria-describedby: string; aria-labelledby: string; aria-invalid: boolean; invalid: boolean; required: boolean; labelId: string }",
     "SettingRowControlWidth": "\"sm\" | \"md\" | \"xs\" | \"auto\"",
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
+    "DashboardCanvasRenderItemContext": "{ visible: boolean }",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
     "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\" | \"stats\"",
     "DashboardWidgetActionsReveal": "\"always\" | \"hover\"",

@@ -234,6 +234,7 @@ export const ru: Messages = {
     dropped: 'Виджет размещён',
     cancelled: 'Перемещение отменено',
     resized: ({ w, h }) => `Размер: ${w as number} на ${h as number}`,
+    autoHeightResize: 'Высота подстраивается под содержимое',
     sectionMoved: ({ title, position }) =>
       position != null
         ? `Секция «${title as string}» перемещена на позицию ${position as number}`

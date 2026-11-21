@@ -34,6 +34,8 @@ export interface DashboardItemConstraints {
   minW?: number;
   minH?: number;
   maxH?: number;
+  /** Row span follows the rendered content; see DashboardCanvas docs. `minH`/`maxH` clamp it. */
+  autoHeight?: boolean;
 }
 
 /** Identifies a placement container: the top-level canvas or one section's sub-grid. */
@@ -154,6 +156,32 @@ function withContainerItems(
       section.id === ref.id ? { ...section, items } : section,
     ),
   };
+}
+
+/**
+ * Effective layout for auto-height items: in every container holding an item
+ * whose id is in `spans`, sets that item's `h` to the span and compacts. Pure;
+ * containers without spanned items, or whose layout is unchanged, keep their
+ * reference, and `value` itself is returned when nothing changes. Does not
+ * clamp — callers pass already-clamped spans.
+ */
+export function withSpans(
+  value: DashboardCanvasValue,
+  spans: ReadonlyMap<string | number, number>,
+): DashboardCanvasValue {
+  const refs: ContainerRef[] = [
+    { kind: 'top' },
+    ...value.sections.map((s): ContainerRef => ({ kind: 'section', id: s.id })),
+  ];
+  let out = value;
+  for (const ref of refs) {
+    const items = containerItems(out, ref)!;
+    if (!items.some((i) => spans.has(i.id))) continue;
+    const next = compact(items.map((i) => (spans.has(i.id) ? { ...i, h: spans.get(i.id)! } : i)));
+    if (next.every((n, k) => n.y === items[k].y && n.h === items[k].h)) continue;
+    out = withContainerItems(out, ref, next);
+  }
+  return out;
 }
 
 function sameContainer(a: ContainerRef, b: ContainerRef): boolean {
