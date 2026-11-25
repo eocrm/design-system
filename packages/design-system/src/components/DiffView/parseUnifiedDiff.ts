@@ -72,12 +72,9 @@ export function parseUnifiedDiff(diff: string): DiffHunk[] {
     const text = line.slice(1);
     // Count-driven: once both counts are exhausted, only a trailing `\ No newline` note belongs
     // to the hunk; anything else (e.g. the next file's `---`/`+++`) waits for the next `@@`.
-    // An unnumbered hunk has no counts: it runs to the next `@@`, or to the next file's header pair.
+    // An unnumbered hunk has no counts: it runs to the next `@@`. (Input is a single-file diff,
+    // so a `--- `/`+++ ` pair inside it is content — e.g. `-- sig` edited to `++ sig` — not a header.)
     const unnumbered = hunk.oldStart === null;
-    if (unnumbered && line.startsWith('--- ') && lines[i + 1]?.startsWith('+++ ')) {
-      hunk = null;
-      continue;
-    }
     const expecting =
       unnumbered ||
       oldNo - hunk.oldStart! < hunk.oldLines! ||

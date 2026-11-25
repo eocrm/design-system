@@ -30,10 +30,10 @@
 
 <!-- props:end -->
 
-- **Input:** a **single-file** unified diff (`@@ -a,b +c,d @@` hunks), e.g. PHP `sebastian/diff`. Line numbers come from the `@@` ranges. An empty or hunk-less diff renders "No changes".
+- **Input:** a **single-file** unified diff (`@@ -a,b +c,d @@` hunks, or bare `@@ @@` hunks without ranges), e.g. PHP `sebastian/diff`. Line numbers come from the `@@` ranges; bare hunks render without gutters. An empty or hunk-less diff renders "No changes".
 - **sebastian/diff:** ranges and gutters need `new UnifiedDiffOutputBuilder($header, true)` (or `StrictUnifiedDiffOutputBuilder`). Without line numbers it emits bare `@@ @@` hunks, which render as "Change 1", "Change 2"… with no gutters.
 - **`too_large` pattern:** DiffView renders whatever it is given, so very large diffs should take this path rather than be rendered. When the backend refuses to produce a diff (`too_large`), the consumer renders its own notice instead of `DiffView`.
-- **Accessibility:** a table named by the header label (or "Changes" without labels); each hunk is a row group labelled "Lines 12–15 → 12–17"; `+`/`−` are paired with hidden "Added"/"Removed" text, so colour is never the only signal.
+- **Accessibility:** a table named by the header label (or "Changes" without labels); each hunk is a row group labelled "Lines 12–15 → 12–17" (bare hunks: "Change 1", "Change 2"…); when the body scrolls (`maxHeight` / `wrap={false}`) it is a focusable, named group so keyboard users can scroll it; `+`/`−` are paired with hidden "Added"/"Removed" text, so colour is never the only signal.
 - **`maxHeight`** caps the diff body; the header stays fixed above it.
 
 ## When NOT to use

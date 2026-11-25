@@ -152,8 +152,24 @@ describe('parseUnifiedDiff', () => {
     expect(hunks[1].lines.map((l) => l.kind)).toEqual(['context', 'note']);
   });
 
-  it('ends a bare hunk at the next file header pair', () => {
-    const hunks = parseUnifiedDiff('@@ @@\n-a\n--- y\n+++ z\n@@ @@\n+b');
-    expect(hunks.map((h) => h.lines.map((l) => l.text))).toEqual([['a'], ['b']]);
+  it('keeps `-- x` / `++ y` content lines inside a bare hunk (not a file header)', () => {
+    const [hunk] = parseUnifiedDiff('--- v1\n+++ v2\n@@ @@\n a\n--- sig\n+++ sig2\n b\n-c\n+d\n');
+    expect(hunk.lines.map((l) => `${l.kind}:${l.text}`)).toEqual([
+      'context:a',
+      'removed:-- sig',
+      'added:++ sig2',
+      'context:b',
+      'removed:c',
+      'added:d',
+    ]);
+  });
+
+  it('parses verbatim sebastian/diff output (default header, no line numbers, no-newline note)', () => {
+    const out =
+      '--- Original\n+++ New\n@@ @@\n Title\n-Old body\n+New body\n\\ No newline at end of file\n';
+    const [hunk] = parseUnifiedDiff(out);
+    expect(hunk.oldStart).toBeNull();
+    expect(hunk.lines.map((l) => l.kind)).toEqual(['context', 'removed', 'added', 'note']);
+    expect(hunk.lines.every((l) => l.oldNumber === null && l.newNumber === null)).toBe(true);
   });
 });

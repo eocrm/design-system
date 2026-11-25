@@ -1,4 +1,5 @@
 @use './DiffView.tokens';
+@use '../../styles/mixins' as *;
 
 .root {
   border: var(--border-width) solid var(--diff-view-border-color);
@@ -23,6 +24,11 @@
 
 .body {
   overflow-x: auto;
+
+  // Focusable only when it scrolls; inset so the frame doesn't clip the ring.
+  &:focus-visible {
+    @include focus-ring($offset: calc(var(--ring-width) * -1));
+  }
 }
 
 .empty {
