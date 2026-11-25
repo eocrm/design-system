@@ -74,12 +74,21 @@ describe('heatmapBuckets / heatmapLegend', () => {
     expect(l.kind === 'ranges' && l.items.map((e) => e.step)).toEqual([1, 2, 4, 5]);
   });
 
-  it('puts all-equal values in one middle bucket with one label', () => {
+  it('puts all-equal values in one lightest bucket with one label (DS-91)', () => {
     const b = expectCovers([[5, 5]]);
-    expect(b.steps).toEqual([3]);
+    expect(b.steps).toEqual([1]);
     expect(texts(heatmapLegend(b, String))).toEqual(['5']);
+    expect(
+      heatmapBuckets(
+        [
+          [0, 0],
+          [0, 0],
+        ],
+        String,
+      )!.steps,
+    ).toEqual([1]);
     const frac = heatmapBuckets([[2.5, 2.5]], String)!;
-    expect(frac.steps).toEqual([3]);
+    expect(frac.steps).toEqual([1]);
     expect(bucketOf(2.5, frac)).toBe(0);
     expect(texts(heatmapLegend(frac, String))).toEqual(['2.5']);
   });
@@ -121,9 +130,9 @@ describe('heatmapBuckets / heatmapLegend', () => {
     expect(new Set(labels).size).toBe(labels.length);
     expect(b.steps.length).toBeLessThanOrEqual(2);
     if (l.kind === 'scale') expect(l.boundaries).toEqual(['0', '1']);
-    // Too close to tell apart at all: one bucket, step 3, one label.
+    // Too close to tell apart at all: one bucket, step 1, one label.
     const tight = heatmapBuckets([[0.1, 0.2]], fmt)!;
-    expect(tight.steps).toEqual([3]);
+    expect(tight.steps).toEqual([1]);
     expect(texts(heatmapLegend(tight, fmt))).toEqual(['0']);
   });
 
@@ -157,7 +166,7 @@ describe('heatmapBuckets / heatmapLegend', () => {
 
     const thousands: Fmt = (n) => `${Math.round(n / 1000)}k`;
     const tiny = expectCovers(intRange(0, 10), thousands);
-    expect(tiny.steps).toEqual([3]);
+    expect(tiny.steps).toEqual([1]);
     expect(texts(heatmapLegend(tiny, thousands))).toEqual(['0k']);
   });
 
@@ -204,6 +213,15 @@ describe('computeHeatmapLayout', () => {
       const gap = l.columnLabels[i].x - l.columnLabels[i - 1].x;
       expect(gap).toBeGreaterThanOrEqual(estimateTextWidth('00'));
     }
+  });
+
+  it('thins column labels on an even stride, without a squeezed-in last label (DS-91)', () => {
+    const l = computeHeatmapLayout({ rows, columns: hours, width: 560 });
+    const idx = l.columnLabels.map((c) => c.index);
+    expect(idx.length).toBeGreaterThan(2);
+    const stride = idx[1] - idx[0];
+    expect(stride).toBeGreaterThan(1);
+    expect(idx.every((v, i) => v === i * stride)).toBe(true);
   });
 
   it('keeps every column label when they fit', () => {

@@ -36,9 +36,12 @@ export type HeatmapLegend =
   | { kind: 'scale'; steps: HeatmapStep[]; boundaries: string[] };
 
 const MAX_BUCKETS = 5;
-/** Fewer buckets keep the ramp ends and spread the rest evenly. */
+/**
+ * Fewer buckets keep the ramp ends and spread the rest evenly. One bucket (all values equal, e.g. an all-zero grid)
+ * takes the lightest step: nothing stands out, so nothing should read as busy (DS-91).
+ */
 const SPREAD: Record<number, HeatmapStep[]> = {
-  1: [3],
+  1: [1],
   2: [1, 5],
   3: [1, 3, 5],
   4: [1, 2, 4, 5],
@@ -214,7 +217,7 @@ export function computeHeatmapLayout({
       x: plotX - LABEL_GAP,
       y: plotY + (index + 0.5) * cell,
     })),
-    columnLabels: thinLabels(columns, cell).map((index) => ({
+    columnLabels: thinLabels(columns, cell, false).map((index) => ({
       index,
       x: plotX + (index + 0.5) * cell,
       y: height - X_LABEL_BASELINE,

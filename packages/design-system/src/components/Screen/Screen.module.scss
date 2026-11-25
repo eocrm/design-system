@@ -23,6 +23,10 @@
 .main {
   flex: 1;
   display: grid;
+
+  // minmax(0, …) so a child's min-content (e.g. a nowrap/truncated run) can't
+  // widen the track past the viewport (DS-89).
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .alignCenter {
