@@ -81,4 +81,18 @@ describe('parseUnifiedDiff', () => {
       'function foo()',
     );
   });
+
+  it('counts a bare empty line as context while the hunk expects lines', () => {
+    const [h] = parseUnifiedDiff('@@ -1,3 +1,3 @@\n a\n\n-b\n+c\n');
+    expect(h.lines).toEqual([
+      { kind: 'context', text: 'a', oldNumber: 1, newNumber: 1 },
+      { kind: 'context', text: '', oldNumber: 2, newNumber: 2 },
+      { kind: 'removed', text: 'b', oldNumber: 3, newNumber: null },
+      { kind: 'added', text: 'c', oldNumber: null, newNumber: 3 },
+    ]);
+  });
+
+  it('ignores empty lines once the hunk counts are exhausted', () => {
+    expect(parseUnifiedDiff('@@ -1 +1 @@\n-a\n+b\n\n\n')[0].lines).toHaveLength(2);
+  });
 });

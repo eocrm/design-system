@@ -49,7 +49,11 @@ export function parseUnifiedDiff(diff: string): DiffHunk[] {
     }
     if (!hunk) continue;
     const text = line.slice(1);
-    switch (line[0]) {
+    // A bare empty line is a context line whose trailing space was stripped, but only while
+    // the hunk still expects lines (else it is just the final newline).
+    const expecting =
+      oldNo - hunk.oldStart < hunk.oldLines || newNo - hunk.newStart < hunk.newLines;
+    switch (line === '' && expecting ? ' ' : line[0]) {
       case '+':
         hunk.lines.push({ kind: 'added', text, oldNumber: null, newNumber: newNo++ });
         break;
