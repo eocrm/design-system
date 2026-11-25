@@ -38,7 +38,7 @@ export function parseUnifiedDiff(diff: string): DiffHunk[] {
   // Strip exactly one final newline so an overcounting header can't turn it into a blank context line.
   const normalized = diff.replace(/\r\n/g, '\n');
   const lines = (normalized.endsWith('\n') ? normalized.slice(0, -1) : normalized).split('\n');
-  for (const [i, line] of lines.entries()) {
+  for (const line of lines) {
     const bare = BARE_HEADER.exec(line);
     if (bare) {
       hunk = {
