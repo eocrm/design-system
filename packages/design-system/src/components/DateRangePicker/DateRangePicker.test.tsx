@@ -117,6 +117,13 @@ describe('DateRangePicker', () => {
     await new Promise((r) => setTimeout(r, 10));
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith(null);
+    // The parent kept its value: the typed text is discarded, so leaving the
+    // input afterwards commits nothing more.
+    expect(input).toHaveValue('05/21/2026 — 06/04/2026');
+    await user.tab();
+    await user.tab();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
 
   it('tabbing through without typing does not fire onChange', async () => {

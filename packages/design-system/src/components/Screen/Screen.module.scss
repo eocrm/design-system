@@ -32,10 +32,12 @@
 .alignCenter {
   // `safe`: a child wider than the (now zero-minimum) track overflows to the
   // end only, so its start is never cut off unreachably (DS-89).
+  place-items: center; // fallback: engines without `safe` (Safari < 17.6) drop the next line
   place-items: safe center;
 }
 
 .alignStart {
+  place-items: start center; // fallback, as above
   place-items: start safe center;
 }
 

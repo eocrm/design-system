@@ -457,12 +457,16 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         e.stopPropagation();
+        // Discard typed text too, so a parent that keeps its value doesn't get
+        // it committed by the next blur.
+        typedRef.current = false;
+        setDraft(formattedValue);
         setValue(null);
         setSelectionStart(null);
         setHoverDate(null);
         inputRef.current?.focus();
       },
-      [setValue],
+      [setValue, formattedValue],
     );
 
     const handleToggle = useCallback(
