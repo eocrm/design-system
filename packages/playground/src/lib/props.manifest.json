@@ -610,6 +610,13 @@
           "description": "Fires when the user clicks a day cell's empty space.\n- Month view: empty space in a day cell, the \"+N more\" overflow chip, or\n  keyboard activation (Enter/Space) on a focused cell.\n- Week/Day view: empty hour-grid space inside that day's column —\n  **mouse click only**. There is no keyboard equivalent in v3; consumers\n  needing keyboard activation in week/day should surface their detail UI\n  through the focusable event chips (which fire `onEventClick`)."
         },
         {
+          "name": "dayAction",
+          "type": "CalendarDayAction",
+          "required": false,
+          "default": "",
+          "description": "Per-day action button (e.g. \"+ add event on this day\"); activating it never\nalso fires `onDayClick`.\n- Month: beside the day number, shown on cell hover / focus-within; only the\n  roving-focused cell's button is a tab stop. Hidden on coarse pointers.\n- Week: in each date column header, after the date. Hidden on coarse pointers.\n- Day: in the date column header (not rendered in resource columns); always shown.\n- Agenda: beside each day heading, always shown. Agenda lists only days that\n  have events, so other days get no action."
+        },
+        {
           "name": "onEventClick",
           "type": "((event: CalendarEvent) => void)",
           "required": false,
