@@ -51,6 +51,7 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`.
 - `Text` — body / inline text; typography hard rule in its doc
 - `Code` — inline `<code>` chip
 - `CodeBlock` — multi-line, highlighted, copyable code
+- `DiffView` — read-only unified text diff (added/removed lines, line numbers)
 - `HighlightedText` — `Text` with matched runs in `<mark>` (search excerpts)
 - `Kbd` — keyboard-shortcut chips
 - `RichText` — read-only rich-text renderer

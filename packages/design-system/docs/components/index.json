@@ -185,6 +185,11 @@
     "cluster": "Display"
   },
   {
+    "name": "DiffView",
+    "summary": "unified text diff with added/removed/context lines",
+    "cluster": "Display"
+  },
+  {
     "name": "Divider",
     "summary": "separator primitive",
     "cluster": "Layout"

@@ -100,6 +100,7 @@ const CLUSTERS = {
   CircularProgress: 'Display',
   Code: 'Display',
   CodeBlock: 'Display',
+  DiffView: 'Display',
   HighlightedText: 'Display',
   CursorPagination: 'Display',
   DashboardCanvas: 'Display',

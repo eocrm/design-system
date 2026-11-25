@@ -21,6 +21,7 @@ export type ComponentName =
   | 'Cluster'
   | 'Code'
   | 'CodeBlock'
+  | 'DiffView'
   | 'HighlightedText'
   | 'ColorPicker'
   | 'ConfirmationPopover'

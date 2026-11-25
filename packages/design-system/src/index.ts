@@ -675,6 +675,8 @@ export type {
   CodeBlockMaxHeight,
   CodeBlockLanguage,
 } from './components/CodeBlock';
+export { DiffView } from './components/DiffView';
+export type { DiffViewProps, DiffViewMaxHeight } from './components/DiffView';
 
 export { HighlightedText } from './components/HighlightedText';
 export type { HighlightedTextProps, HighlightRange } from './components/HighlightedText';

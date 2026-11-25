@@ -1334,6 +1334,21 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Col>
     </Col>
   ),
+  DiffView: (
+    <Col gap={0} style={{ width: 150 }}>
+      <Outline w="100%" h={14} style={{ display: 'flex', alignItems: 'center', padding: '0 8px' }}>
+        <Bar w={40} />
+      </Outline>
+      <Col gap={6} style={{ padding: 8 }}>
+        <Bar w={100} />
+        <Box w="100%" h={10} style={{ display: 'flex', alignItems: 'center', padding: '0 4px' }}>
+          <Bar w={60} />
+        </Box>
+        <SolidBar w={84} />
+        <Bar w={70} />
+      </Col>
+    </Col>
+  ),
   HighlightedText: (
     <Row gap={4}>
       <Bar w={30} />

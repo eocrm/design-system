@@ -677,6 +677,30 @@ describe('CodeBlock syntax colours and header title clear AA on their surfaces',
   });
 });
 
+/** DiffView's +/- sign sits on its added / removed row tints. */
+describe('DiffView sign colours clear AA on their row tints', () => {
+  const file = readFileSync(
+    resolve(__dirname, '../components/DiffView/DiffView.tokens.scss'),
+    'utf8',
+  );
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
+    const layered = `${file}\n${source}`;
+    for (const kind of ['added', 'removed']) {
+      const fg = `--diff-view-${kind}-fg`;
+      const bg = `--diff-view-${kind}-bg`;
+      expect(
+        contrast(tokenValue(fg, layered), tokenValue(bg, layered)),
+        `${fg} on ${bg}`,
+      ).toBeGreaterThanOrEqual(4.5);
+      const muted = '--diff-view-muted-fg';
+      expect(
+        contrast(tokenValue(muted, layered), tokenValue(bg, layered)),
+        `${muted} on ${bg}`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
+
 /**
  * TableOfContents links sit on the page background: muted when inactive,
  * accent when current. Both carry text, so both need AA.
