@@ -36,7 +36,8 @@
   white-space: pre;
 }
 
-.wrap .table {
+.wrap .text {
+  // Only the text column wraps; gutters and the sign never break.
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -50,6 +51,7 @@
 }
 
 .gutter {
+  white-space: nowrap;
   padding-inline: var(--space-2);
   color: var(--diff-view-muted-fg);
   text-align: end;
@@ -58,6 +60,7 @@
 }
 
 .sign {
+  white-space: nowrap;
   padding-inline: var(--space-2);
   vertical-align: top;
   user-select: none;
@@ -65,6 +68,7 @@
 
 .text {
   width: 100%;
+  vertical-align: top;
   padding-inline-end: var(--diff-view-padding-x);
 }
 
@@ -115,6 +119,7 @@
   overflow-y: auto;
 }
 
-.noWrap .table {
+// No wrap: long lines keep their shape and the body scrolls horizontally.
+.noWrap .text {
   white-space: pre;
 }
