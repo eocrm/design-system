@@ -49,11 +49,14 @@ export function parseUnifiedDiff(diff: string): DiffHunk[] {
     }
     if (!hunk) continue;
     const text = line.slice(1);
-    // A bare empty line is a context line whose trailing space was stripped, but only while
-    // the hunk still expects lines (else it is just the final newline).
+    // Count-driven: once both counts are exhausted, only a trailing `\ No newline` note belongs
+    // to the hunk; anything else (e.g. the next file's `---`/`+++`) waits for the next `@@`.
     const expecting =
       oldNo - hunk.oldStart < hunk.oldLines || newNo - hunk.newStart < hunk.newLines;
-    switch (line === '' && expecting ? ' ' : line[0]) {
+    if (!expecting && line[0] !== '\\') continue;
+    // A bare empty line is a context line whose trailing space was stripped.
+    const prefix = line === '' ? ' ' : line[0];
+    switch (prefix) {
       case '+':
         hunk.lines.push({ kind: 'added', text, oldNumber: null, newNumber: newNo++ });
         break;

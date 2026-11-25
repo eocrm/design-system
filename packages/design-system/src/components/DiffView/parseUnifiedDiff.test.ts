@@ -95,4 +95,27 @@ describe('parseUnifiedDiff', () => {
   it('ignores empty lines once the hunk counts are exhausted', () => {
     expect(parseUnifiedDiff('@@ -1 +1 @@\n-a\n+b\n\n\n')[0].lines).toHaveLength(2);
   });
+
+  it('skips file headers that follow a completed hunk', () => {
+    const hunks = parseUnifiedDiff('@@ -1 +1 @@\n-a\n+b\n--- a/y\n+++ b/y\n@@ -1 +1 @@\n-c\n+d');
+    expect(hunks).toHaveLength(2);
+    expect(hunks[0].lines.map((l) => l.text)).toEqual(['a', 'b']);
+    expect(hunks[1].lines).toEqual([
+      { kind: 'removed', text: 'c', oldNumber: 1, newNumber: null },
+      { kind: 'added', text: 'd', oldNumber: null, newNumber: 1 },
+    ]);
+  });
+
+  it('keeps ---/+++-looking lines inside a hunk that still expects lines', () => {
+    const [h] = parseUnifiedDiff('@@ -1,2 +1,2 @@\n--- x\n+++ y\n a');
+    expect(h.lines.map((l) => [l.kind, l.text])).toEqual([
+      ['removed', '-- x'],
+      ['added', '++ y'],
+      ['context', 'a'],
+    ]);
+  });
+
+  it('ignores a malformed @@ line', () => {
+    expect(parseUnifiedDiff('@@ -x +y @@\n-a\n+b')).toEqual([]);
+  });
 });
