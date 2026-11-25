@@ -84,7 +84,7 @@ describe('DiffView', () => {
 
   it('formats 0-count and 1-line hunk ranges', () => {
     render(<DiffView diff={'@@ -0,0 +1,3 @@\n+a\n+b\n+c'} />);
-    expect(screen.getByRole('rowheader', { name: 'Lines 0 → 1–3' })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: 'Lines none → 1–3' })).toBeInTheDocument();
   });
 
   it('forwards ref, merges className, spreads rest props', () => {
@@ -92,5 +92,36 @@ describe('DiffView', () => {
     render(<DiffView ref={ref} diff={DIFF} className="x" data-testid="dv" />);
     expect(ref.current).toBe(screen.getByTestId('dv'));
     expect(ref.current!.className).toMatch(/x/);
+  });
+
+  it('renders bare @@ hunks as "Change N" with no gutters', () => {
+    const { container } = render(
+      <DiffView diff={'--- v3\n+++ v4\n@@ @@ intro\n-a\n+b\n@@ @@\n c'} />,
+    );
+    expect(screen.getByRole('rowheader', { name: 'Change 1 intro' })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: 'Change 2' })).toBeInTheDocument();
+    expect(screen.queryByText('Old line')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('td')).toHaveLength(6);
+  });
+
+  it('treats an empty fromLabel as absent', () => {
+    render(<DiffView diff={DIFF} fromLabel="" toLabel="v2" />);
+    expect(screen.getByText('v2')).toBeInTheDocument();
+  });
+
+  it('joins labels through i18n', () => {
+    render(<DiffView diff={DIFF} fromLabel="v1" toLabel="v2" />);
+    expect(screen.getByText('v1 → v2')).toBeInTheDocument();
+  });
+
+  it('makes the scrolling body a focusable named group only when it can scroll', () => {
+    const { container, rerender } = render(<DiffView diff={DIFF} fromLabel="a" />);
+    const body = () => container.querySelector('table')!.parentElement!;
+    expect(body()).not.toHaveAttribute('tabindex');
+    rerender(<DiffView diff={DIFF} fromLabel="a" maxHeight="md" />);
+    expect(screen.getByRole('group', { name: 'a' })).toBe(body());
+    expect(body()).toHaveAttribute('tabindex', '0');
+    rerender(<DiffView diff={DIFF} wrap={false} />);
+    expect(screen.getByRole('group', { name: 'Changes' })).toBe(body());
   });
 });

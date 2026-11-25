@@ -213,6 +213,12 @@ export interface Messages {
     text: string;
     /** Function leaf — hunk header; `from`/`to` are old/new range strings, e.g. "Lines 12–15 → 12–17". */
     hunk: (params: { from: string; to: string }) => string;
+    /** Function leaf — hunk header without line ranges; `index` is the 1-based hunk number. */
+    hunkUnnumbered: (params: { index: number }) => string;
+    /** Range side with zero lines (pure insertion or deletion). */
+    none: string;
+    /** Function leaf — header label joining the old and new side labels. */
+    labels: (params: { from: string; to: string }) => string;
   };
   tableOfContents: {
     /** Accessible name of the `<nav>`, its visible heading, and the collapsed summary. */

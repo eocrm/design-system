@@ -16,20 +16,21 @@ const MAX_CLASS: Record<DiffViewMaxHeight, string> = {
   xl: styles.maxXl,
 };
 
-/** "N" for 0 or 1 lines (unified-diff convention for a 0 count), else "a–b". */
-function range(start: number, count: number): string {
+/** "N" for 1 line, "a–b" for more, `none` for a 0 count. */
+function range(start: number, count: number, none: string): string {
+  if (count === 0) return none;
   return count > 1 ? `${start}–${start + count - 1}` : String(start);
 }
 
 export interface DiffViewProps extends HTMLAttributes<HTMLDivElement> {
-  /** Unified text diff (with hunk headers), e.g. from `git diff` or PHP `sebastian/diff`. */
+  /** Single-file unified text diff (with hunk headers), e.g. PHP `sebastian/diff`. Ranges and gutters need numbered hunks: with sebastian/diff use `new UnifiedDiffOutputBuilder($header, true)`; hunks without ranges render as "Change 1, 2…" with no gutters. */
   diff: string;
   /** Header label for the old side; shown as "fromLabel → toLabel", or alone when `toLabel` is unset. */
   fromLabel?: string;
   /** Header label for the new side. */
   toLabel?: string;
   /**
-   * Show old/new line-number gutters, computed from the `@@` ranges.
+   * Show old/new line-number gutters, computed from the `@@` ranges (only when every hunk is numbered).
    * @default true
    */
   lineNumbers?: boolean;
@@ -52,9 +53,68 @@ export const DiffView = forwardRef<HTMLDivElement, DiffViewProps>(function DiffV
 ) {
   const t = useTranslation();
   const hunks = useMemo(() => parseUnifiedDiff(diff), [diff]);
-  const label = fromLabel && toLabel ? `${fromLabel} → ${toLabel}` : (fromLabel ?? toLabel);
+  const label =
+    fromLabel && toLabel
+      ? t('diffView.labels', { from: fromLabel, to: toLabel })
+      : fromLabel || toLabel;
   const labelId = useId();
-  const cols = lineNumbers ? 4 : 2;
+  const showGutters = lineNumbers && hunks.every((h) => h.oldStart !== null);
+  const cols = showGutters ? 4 : 2;
+  const scrollable = wrap === false || maxHeight !== undefined;
+  const tableLabel = t('diffView.tableLabel');
+  const none = t('diffView.none');
+  const added = t('diffView.added');
+  const removed = t('diffView.removed');
+  const rows = useMemo(
+    () =>
+      hunks.map((h, i) => (
+        <tbody key={i}>
+          <tr>
+            <th scope="rowgroup" colSpan={cols} className={styles.hunk}>
+              {h.oldStart === null
+                ? t('diffView.hunkUnnumbered', { index: i + 1 })
+                : t('diffView.hunk', {
+                    from: range(h.oldStart, h.oldLines!, none),
+                    to: range(h.newStart!, h.newLines!, none),
+                  })}
+              {h.section ? ` ${h.section}` : ''}
+            </th>
+          </tr>
+          {h.lines.map((l, j) => (
+            <tr
+              key={j}
+              className={clsx(
+                l.kind === 'added' && styles.added,
+                l.kind === 'removed' && styles.removed,
+                l.kind === 'note' && styles.note,
+              )}
+            >
+              {showGutters ? (
+                <>
+                  <td className={styles.gutter}>{l.oldNumber}</td>
+                  <td className={styles.gutter}>{l.newNumber}</td>
+                </>
+              ) : null}
+              <td className={styles.sign}>
+                {l.kind === 'added' ? (
+                  <>
+                    <span aria-hidden="true">+</span>
+                    <VisuallyHidden>{added}</VisuallyHidden>
+                  </>
+                ) : l.kind === 'removed' ? (
+                  <>
+                    <span aria-hidden="true">−</span>
+                    <VisuallyHidden>{removed}</VisuallyHidden>
+                  </>
+                ) : null}
+              </td>
+              <td className={styles.text}>{l.text}</td>
+            </tr>
+          ))}
+        </tbody>
+      )),
+    [hunks, showGutters, cols, none, added, removed, t],
+  );
 
   return (
     <div
@@ -70,15 +130,24 @@ export const DiffView = forwardRef<HTMLDivElement, DiffViewProps>(function DiffV
       {hunks.length === 0 ? (
         <div className={styles.empty}>{t('diffView.noChanges')}</div>
       ) : (
-        <div className={clsx(styles.body, maxHeight && MAX_CLASS[maxHeight])}>
+        <div
+          className={clsx(styles.body, maxHeight && MAX_CLASS[maxHeight])}
+          // A scrollable region must be keyboard-reachable and named (axe scrollable-region-focusable).
+          {...(scrollable && {
+            tabIndex: 0,
+            role: 'group',
+            'aria-labelledby': label ? labelId : undefined,
+            'aria-label': label ? undefined : tableLabel,
+          })}
+        >
           <table
             className={styles.table}
             aria-labelledby={label ? labelId : undefined}
-            aria-label={label ? undefined : t('diffView.tableLabel')}
+            aria-label={label ? undefined : tableLabel}
           >
             <thead>
               <tr>
-                {lineNumbers ? (
+                {showGutters ? (
                   <>
                     <th scope="col">
                       <VisuallyHidden>{t('diffView.oldLine')}</VisuallyHidden>
@@ -96,50 +165,7 @@ export const DiffView = forwardRef<HTMLDivElement, DiffViewProps>(function DiffV
                 </th>
               </tr>
             </thead>
-            {hunks.map((h, i) => (
-              <tbody key={i}>
-                <tr>
-                  <th scope="rowgroup" colSpan={cols} className={styles.hunk}>
-                    {t('diffView.hunk', {
-                      from: range(h.oldStart, h.oldLines),
-                      to: range(h.newStart, h.newLines),
-                    })}
-                    {h.section ? ` ${h.section}` : ''}
-                  </th>
-                </tr>
-                {h.lines.map((l, j) => (
-                  <tr
-                    key={j}
-                    className={clsx(
-                      l.kind === 'added' && styles.added,
-                      l.kind === 'removed' && styles.removed,
-                      l.kind === 'note' && styles.note,
-                    )}
-                  >
-                    {lineNumbers ? (
-                      <>
-                        <td className={styles.gutter}>{l.oldNumber}</td>
-                        <td className={styles.gutter}>{l.newNumber}</td>
-                      </>
-                    ) : null}
-                    <td className={styles.sign}>
-                      {l.kind === 'added' ? (
-                        <>
-                          <span aria-hidden="true">+</span>
-                          <VisuallyHidden>{t('diffView.added')}</VisuallyHidden>
-                        </>
-                      ) : l.kind === 'removed' ? (
-                        <>
-                          <span aria-hidden="true">−</span>
-                          <VisuallyHidden>{t('diffView.removed')}</VisuallyHidden>
-                        </>
-                      ) : null}
-                    </td>
-                    <td className={styles.text}>{l.text}</td>
-                  </tr>
-                ))}
-              </tbody>
-            ))}
+            {rows}
           </table>
         </div>
       )}

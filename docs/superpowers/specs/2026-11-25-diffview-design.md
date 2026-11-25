@@ -35,6 +35,11 @@ interface DiffViewProps extends HTMLAttributes<HTMLDivElement> {
 - `@@ -a[,b] +c[,d] @@[ section]` starts a hunk; missing counts default to 1.
 - Line prefixes: `+` added, `-` removed, ` ` context; `\ No newline at end of file` → a `note` line attached
   to the hunk; anything else ignored. CRLF tolerated. A trailing empty line from the final newline is not a line.
+- A bare `@@ @@[ section]` header (sebastian/diff `UnifiedDiffOutputBuilder` without line numbers, as eocrm
+  uses) starts an _unnumbered_ hunk: range fields and line numbers are `null`; it is not count-driven and takes
+  `+`/`-`/` `/`\` lines and bare empty lines (context) until the next `@@`, or a `--- ` line directly followed by
+  `+++ ` (next file header, skipped). The component then shows no gutters and labels the hunk "Change N".
+- Exactly one trailing `\n` is stripped before splitting, so an overcounting header can't yield a phantom line.
 - Old/new line numbers advance per hunk from `a` / `c` (context advances both, removed advances old, added new).
 - No hunks → empty state.
 

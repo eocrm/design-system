@@ -95,6 +95,9 @@ export const en: Messages = {
     change: 'Change',
     text: 'Text',
     hunk: ({ from, to }) => `Lines ${from as string} → ${to as string}`,
+    hunkUnnumbered: ({ index }) => `Change ${index as number}`,
+    none: 'none',
+    labels: ({ from, to }) => `${from as string} → ${to as string}`,
   },
   tableOfContents: {
     label: 'On this page',

@@ -692,6 +692,11 @@ describe('DiffView sign colours clear AA on their row tints', () => {
         contrast(tokenValue(fg, layered), tokenValue(bg, layered)),
         `${fg} on ${bg}`,
       ).toBeGreaterThanOrEqual(4.5);
+      const muted = '--diff-view-muted-fg';
+      expect(
+        contrast(tokenValue(muted, layered), tokenValue(bg, layered)),
+        `${muted} on ${bg}`,
+      ).toBeGreaterThanOrEqual(4.5);
     }
   });
 });

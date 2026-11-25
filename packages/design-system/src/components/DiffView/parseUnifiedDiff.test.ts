@@ -3,7 +3,7 @@ import { parseUnifiedDiff } from './parseUnifiedDiff';
 const SAMPLE = [
   '--- Original',
   '+++ New',
-  '@@ -1,4 +1,4 @@',
+  '@@ -1,3 +1,3 @@',
   ' keep',
   '-old',
   '+new',
@@ -13,7 +13,7 @@ const SAMPLE = [
 describe('parseUnifiedDiff', () => {
   it('numbers lines of the eocrm sample', () => {
     const [h] = parseUnifiedDiff(SAMPLE);
-    expect(h).toMatchObject({ oldStart: 1, oldLines: 4, newStart: 1, newLines: 4, section: '' });
+    expect(h).toMatchObject({ oldStart: 1, oldLines: 3, newStart: 1, newLines: 3, section: '' });
     expect(h.lines).toEqual([
       { kind: 'context', text: 'keep', oldNumber: 1, newNumber: 1 },
       { kind: 'removed', text: 'old', oldNumber: 2, newNumber: null },
@@ -117,5 +117,43 @@ describe('parseUnifiedDiff', () => {
 
   it('ignores a malformed @@ line', () => {
     expect(parseUnifiedDiff('@@ -x +y @@\n-a\n+b')).toEqual([]);
+  });
+
+  it('adds no phantom line when a header overcounts and the input ends with a newline', () => {
+    expect(parseUnifiedDiff('@@ -1,4 +1,4 @@\n a\n-b\n+c\n')[0].lines).toHaveLength(3);
+  });
+
+  it('parses bare "@@ @@" hunks (sebastian/diff without line numbers)', () => {
+    const [h] = parseUnifiedDiff('--- v3\n+++ v4\n@@ @@\n-a\n+b\n c\n');
+    expect(h).toMatchObject({
+      oldStart: null,
+      oldLines: null,
+      newStart: null,
+      newLines: null,
+      section: '',
+    });
+    expect(h.lines).toEqual([
+      { kind: 'removed', text: 'a', oldNumber: null, newNumber: null },
+      { kind: 'added', text: 'b', oldNumber: null, newNumber: null },
+      { kind: 'context', text: 'c', oldNumber: null, newNumber: null },
+    ]);
+  });
+
+  it('parses several bare hunks, empty context lines and notes', () => {
+    const hunks = parseUnifiedDiff(
+      '--- v3\n+++ v4\n@@ @@\n-a\n\n+b\n@@ @@\n x\n\\ No newline at end of file\n',
+    );
+    expect(hunks).toHaveLength(2);
+    expect(hunks[0].lines.map((l) => [l.kind, l.text])).toEqual([
+      ['removed', 'a'],
+      ['context', ''],
+      ['added', 'b'],
+    ]);
+    expect(hunks[1].lines.map((l) => l.kind)).toEqual(['context', 'note']);
+  });
+
+  it('ends a bare hunk at the next file header pair', () => {
+    const hunks = parseUnifiedDiff('@@ @@\n-a\n--- y\n+++ z\n@@ @@\n+b');
+    expect(hunks.map((h) => h.lines.map((l) => l.text))).toEqual([['a'], ['b']]);
   });
 });

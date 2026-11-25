@@ -96,6 +96,9 @@ export const ru: Messages = {
     change: 'Изменение',
     text: 'Текст',
     hunk: ({ from, to }) => `Строки ${from as string} → ${to as string}`,
+    hunkUnnumbered: ({ index }) => `Изменение ${index as number}`,
+    none: 'нет',
+    labels: ({ from, to }) => `${from as string} → ${to as string}`,
   },
   tableOfContents: {
     label: 'На этой странице',

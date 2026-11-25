@@ -42,6 +42,11 @@
   overflow-wrap: anywhere;
 }
 
+.wrap .hunk {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .hunk {
   padding: var(--space-1) var(--diff-view-padding-x);
   background: var(--diff-view-header-bg);
@@ -67,6 +72,7 @@
 }
 
 .text {
+  unicode-bidi: plaintext; // RTL wiki text
   width: 100%;
   vertical-align: top;
   padding-inline-end: var(--diff-view-padding-x);
