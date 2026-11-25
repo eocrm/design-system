@@ -1,12 +1,15 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { useDay } from '../../calendar/useDay';
 import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { AllDayBand } from './AllDayBand';
+import { Cluster } from '../Cluster';
+import { DayActionButton } from './DayActionButton';
 import { HourGrid, HOUR_GUTTER_WIDTH, type HourGridColumn } from './HourGrid';
 import { layoutBackgroundIntervals, layoutEventsForHourGrid, needsUnassignedColumn } from './utils';
 import type {
   CalendarBackgroundInterval,
+  CalendarDayAction,
   CalendarDropCandidate,
   CalendarDropResult,
   CalendarEvent,
@@ -18,6 +21,8 @@ import type {
 import styles from './DayView.module.scss';
 
 export interface DayViewProps {
+  /** Per-day action in the day header. Not rendered in resource mode. */
+  dayAction?: CalendarDayAction;
   /** The date to display. */
   cursor: Date;
   /** Events to display for the day. */
@@ -76,6 +81,7 @@ export function DayView({
   canDropEvent,
   dragSnapMinutes,
   renderEvent,
+  dayAction,
 }: DayViewProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
@@ -87,7 +93,7 @@ export function DayView({
     const date = day.day.date;
     if (!resources || resources.length === 0) {
       const single: HourGridColumn[] = [{ date, key: day.day.key, isWeekend: day.day.isWeekend }];
-      return { columns: single, headers: [<span key={day.day.key}>{day.dayLabel}</span>] };
+      return { columns: single, headers: null };
     }
 
     const cols: HourGridColumn[] = resources.map((r) => ({
@@ -111,15 +117,18 @@ export function DayView({
       labels.push(<span key="__unassigned">{unassignedLabel}</span>);
     }
     return { columns: cols, headers: labels };
-  }, [
-    day.day.date,
-    day.day.key,
-    day.day.isWeekend,
-    day.dayLabel,
-    events,
-    resources,
-    unassignedLabel,
-  ]);
+  }, [day.day.date, day.day.key, day.day.isWeekend, events, resources, unassignedLabel]);
+
+  // Built outside the memo so an inline `dayAction` object doesn't re-run the
+  // event layout on every render. Resource columns get no action.
+  const headerLabelId = useId();
+  const columnHeaders = headers ?? [
+    <Cluster key={day.day.key} gap="xs" justify="center" align="center">
+      <span id={headerLabelId}>{day.dayLabel}</span>
+      {dayAction && <DayActionButton action={dayAction} date={day.day.date} view="day" />}
+    </Cluster>,
+  ];
+  const columnHeaderLabelIds = headers ? undefined : [headerLabelId];
 
   const layout = useMemo(
     () => layoutEventsForHourGrid(events, columns, hourRange),
@@ -143,7 +152,8 @@ export function DayView({
       />
       <HourGrid
         columns={columns}
-        columnHeaders={headers}
+        columnHeaders={columnHeaders}
+        columnHeaderLabelIds={columnHeaderLabelIds}
         hourRange={hourRange}
         hourRowHeight={hourRowHeight}
         timedBlocks={layout.timedBlocks}

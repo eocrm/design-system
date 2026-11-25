@@ -1,9 +1,16 @@
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+} from 'react';
 import clsx from 'clsx';
-import type { MonthGrid } from '../../calendar/types';
+import type { Day, MonthGrid } from '../../calendar/types';
 import { addDays, addMonths, isSameDay, startOfWeek } from '../../calendar/dateMath';
 import { useTranslation } from '../../i18n/useTranslation';
-import type { CalendarEvent, EventBar, RenderEvent } from './types';
+import type { CalendarDayAction, CalendarEvent, EventBar, RenderEvent } from './types';
 import { layoutEventsForMonth } from './utils';
 import { DayCell } from './DayCell';
 import { EventChip } from './EventChip';
@@ -38,6 +45,8 @@ export interface MonthViewProps {
   onChange?: (date: Date) => void;
   /** Fires when a day cell (or its "+N more" chip) is clicked, or Enter/Space is pressed on it. */
   onDayClick?: (date: Date) => void;
+  /** Per-day action button rendered in each cell. See `CalendarDayAction`. */
+  dayAction?: CalendarDayAction;
   /** Fires when an event chip is clicked. */
   onEventClick?: (event: CalendarEvent) => void;
   /** Optional custom event renderer. See `RenderEvent` in `types.ts`. */
@@ -78,6 +87,7 @@ export function MonthView({
   cursor,
   onChange,
   onDayClick,
+  dayAction,
   onEventClick,
   renderEvent,
 }: MonthViewProps) {
@@ -188,6 +198,18 @@ export function MonthView({
     [grid.weeks, onChange, onDayClick, weekStartsOn],
   );
 
+  // DS-88: the DayCell only covers the day-number row (events sit in the lanes
+  // below), so `dayAction`'s hover reveal tracks which column the pointer is
+  // over across the whole week row, event bars included.
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  const trackHover = (e: PointerEvent<HTMLDivElement>, week: readonly Day[]) => {
+    if (e.pointerType !== 'mouse') return;
+    const r = e.currentTarget.getBoundingClientRect();
+    let col = Math.floor(((e.clientX - r.left) / r.width) * 7);
+    if (getComputedStyle(e.currentTarget).direction === 'rtl') col = 6 - col;
+    setHoveredKey(week[Math.min(6, Math.max(0, col))]?.key ?? null);
+  };
+
   return (
     <div role="grid" aria-label={grid.monthLabel} aria-readonly="true" className={styles.grid}>
       <div role="row" className={styles.weekdayHeader}>
@@ -205,7 +227,12 @@ export function MonthView({
           : 0;
         const hasHidden = week.some((d) => (layout.hiddenCounts.get(d.key) ?? 0) > 0);
         return (
-          <div key={weekIndex} className={styles.week}>
+          <div
+            key={weekIndex}
+            className={styles.week}
+            onPointerMove={dayAction ? (e) => trackHover(e, week) : undefined}
+            onPointerLeave={dayAction ? () => setHoveredKey(null) : undefined}
+          >
             {/* Background day-column layers — span all rows in the week's grid.
                 `span 99` covers implicit lane rows; `-1` would only reach the
                 end of the explicit grid (row 1), leaving events visually outside
@@ -231,6 +258,8 @@ export function MonthView({
                   day={day}
                   isFocused={day.key === focusedKey}
                   onDayClick={onDayClick}
+                  dayAction={dayAction}
+                  isHovered={day.key === hoveredKey}
                   onKeyDown={handleKeyDown}
                   style={{ gridColumn: i + 1, gridRow: 1 }}
                 />

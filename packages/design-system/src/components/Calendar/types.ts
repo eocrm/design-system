@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { PaletteColor } from '../../palette';
 
 export type CalendarEventTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
@@ -250,6 +251,19 @@ export type CalendarDropResult = void | boolean | Promise<void | boolean>;
  * scannable list of events grouped by day for the cursor's current week.
  */
 export type CalendarView = 'month' | 'week' | 'day' | 'agenda';
+
+/**
+ * A per-day action button (e.g. "+ add event on this day"). Activating it never
+ * also fires `onDayClick`.
+ */
+export interface CalendarDayAction {
+  /** Accessible name (and tooltip) for the given day. Consumer-translated. */
+  label: (date: Date) => string;
+  /** Fires on activation, with the view that rendered the button. */
+  onActivate: (date: Date, ctx: { view: CalendarView }) => void;
+  /** Icon; defaults to a plus. */
+  icon?: ReactNode;
+}
 
 /**
  * One placed event bar inside the month grid. Produced by

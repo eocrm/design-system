@@ -3,6 +3,7 @@ export type { CalendarProps } from './Calendar';
 export type {
   CalendarBackgroundInterval,
   CalendarBackgroundTone,
+  CalendarDayAction,
   CalendarDropCandidate,
   CalendarDropResult,
   CalendarEvent,

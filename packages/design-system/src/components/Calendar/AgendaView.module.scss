@@ -230,3 +230,8 @@
 .danger {
   color: var(--calendar-agenda-tone-danger);
 }
+
+// The h3 sits inside the `.dayHeader` row; it inherits the band's typography.
+.dayTitle {
+  font: inherit;
+}

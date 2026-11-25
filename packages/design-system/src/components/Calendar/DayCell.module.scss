@@ -28,3 +28,22 @@
   color: var(--calendar-day-cell-today-fg);
   font-weight: var(--calendar-day-cell-today-font-weight);
 }
+
+// Fine pointers: revealed on hover / focus-within (visibility keeps it focusable
+// only while shown; focus-within reveals it as soon as the cell is focused).
+.monthAction {
+  visibility: hidden;
+}
+
+.cell:hover .monthAction,
+.hovered .monthAction,
+.cell:focus-within .monthAction {
+  visibility: visible;
+}
+
+// Cell is ~44px wide on touch; a tap opens the day instead.
+@media (pointer: coarse) {
+  .monthAction {
+    display: none;
+  }
+}

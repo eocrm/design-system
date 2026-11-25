@@ -311,3 +311,31 @@ describe('Calendar touch tokens (DS-35)', () => {
     expect(mod).toContain('min-block-size: var(--calendar-agenda-row-min-height)');
   });
 });
+
+describe('AgendaView dayAction (DS-88)', () => {
+  const events: CalendarEvent[] = [
+    { id: 'a', title: 'A', startsAt: new Date(2026, 4, 20, 9), endsAt: new Date(2026, 4, 20, 10) },
+    { id: 'b', title: 'B', startsAt: new Date(2026, 4, 22, 9), endsAt: new Date(2026, 4, 22, 10) },
+  ];
+  it('each day heading has an action (view "agenda") and the heading stays an h3', async () => {
+    const onActivate = vi.fn();
+    render(
+      <AgendaView
+        days={WEEK_DAYS}
+        rangeLabel="x"
+        events={events}
+        dayAction={{ label: (d) => `Add on ${d.toDateString()}`, onActivate }}
+      />,
+      { wrapper: wrap() },
+    );
+    expect(screen.getAllByRole('button', { name: /^Add on / })).toHaveLength(2);
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(2);
+    expect(
+      screen.getByRole('heading', { level: 3, name: /Wednesday, May 20/ }),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Add on ' + new Date(2026, 4, 22).toDateString() }),
+    );
+    expect(onActivate).toHaveBeenCalledWith(new Date(2026, 4, 22), { view: 'agenda' });
+  });
+});

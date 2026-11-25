@@ -217,7 +217,10 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
         : formatDateRange(value, locale)
       : '';
     const [draft, setDraft] = useState(formattedValue);
+    // True while the input holds text the user typed and hasn't committed.
+    const typedRef = useRef(false);
     useEffect(() => {
+      typedRef.current = false;
       setDraft(formattedValue);
     }, [formattedValue]);
 
@@ -280,6 +283,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
 
     const commit = useCallback(
       (raw: string) => {
+        typedRef.current = false;
         if (raw.trim() === '') {
           setValue(null);
           return;
@@ -301,11 +305,14 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
 
     const handleInputBlur = useCallback(
       (e: FocusEvent<HTMLInputElement>) => {
+        // DS-87: leaving the input for anywhere — the calendar toggle, the
+        // popover or out of the component — commits typed text, as Enter does,
+        // whether or not the popover is open. An outside click already
+        // committed it (typedRef is then false), so onChange fires once.
+        if (typedRef.current) commit(draft);
         // Defer so in-wrapper / in-popover focus moves can complete first.
         window.setTimeout(() => {
-          // If the outside-click pointerdown handler already closed us,
-          // skip — it already committed the draft in the same user action.
-          // Without this guard, onChange double-fires on outside click.
+          // Closed already (e.g. by the outside-click handler): nothing to close.
           if (!openRef.current) return;
           const active = document.activeElement;
           const insideWrapper = wrapperRef.current?.contains(active);
@@ -322,7 +329,6 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           // #684: a tour pointing into the picker took focus — not a dismiss.
           const tourHeld = isTourHeld(active, refs.floating.current, wrapperRef.current);
           if (!insideWrapper && !insideFloating && !insideTimeFieldPopover && !tourHeld) {
-            commit(draft);
             setOpen(false);
             setSelectionStart(null);
             setHoverDate(null);
@@ -451,12 +457,16 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
       (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         e.stopPropagation();
+        // Discard typed text too, so a parent that keeps its value doesn't get
+        // it committed by the next blur.
+        typedRef.current = false;
+        setDraft(formattedValue);
         setValue(null);
         setSelectionStart(null);
         setHoverDate(null);
         inputRef.current?.focus();
       },
-      [setValue],
+      [setValue, formattedValue],
     );
 
     const handleToggle = useCallback(
@@ -508,7 +518,7 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
         }
         // #684: a tour pointing into the picker doesn't dismiss it.
         if (isTourHeld(target, floating, wrapperRef.current)) return;
-        commit(draft);
+        if (typedRef.current) commit(draft);
         setOpen(false);
         setSelectionStart(null);
         setHoverDate(null);
@@ -546,7 +556,10 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           type="text"
           className={styles.input}
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => {
+            typedRef.current = true;
+            setDraft(e.target.value);
+          }}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           onClick={handleInputClick}
@@ -565,6 +578,11 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
             type="button"
             className={styles.clearButton}
             aria-label={t('datePicker.clear')}
+            // Keep focus in the input: a blur here would commit typed text
+            // first, so Clear would fire onChange(range) then onChange(null).
+            onMouseDown={(e) => {
+              if (document.activeElement === inputRef.current) e.preventDefault();
+            }}
             onClick={handleClear}
           >
             <X size={ICON_SIZE_FOR[size]} />

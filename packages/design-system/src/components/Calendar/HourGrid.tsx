@@ -44,6 +44,11 @@ export interface HourGridProps {
   columns: readonly HourGridColumn[];
   /** Localized column header content (one per column). */
   columnHeaders: readonly ReactNode[];
+  /**
+   * Per-column id of the element that names the header (`aria-labelledby`), so
+   * extra controls in a header (DS-88 `dayAction`) stay out of its name.
+   */
+  columnHeaderLabelIds?: readonly (string | undefined)[];
   /** Inclusive start, exclusive end. */
   hourRange: readonly [number, number];
   /** Pixel height per hour row. */
@@ -89,6 +94,7 @@ export interface HourGridProps {
 export function HourGrid({
   columns,
   columnHeaders,
+  columnHeaderLabelIds,
   hourRange,
   hourRowHeight,
   timedBlocks,
@@ -278,6 +284,7 @@ export function HourGrid({
             <div
               key={`header-${columns[i].key}`}
               role="columnheader"
+              aria-labelledby={columnHeaderLabelIds?.[i]}
               className={clsx(
                 styles.columnHeader,
                 columns[i].isWeekend && styles.weekendHeader,

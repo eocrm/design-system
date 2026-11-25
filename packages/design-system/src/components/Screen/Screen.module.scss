@@ -23,14 +23,22 @@
 .main {
   flex: 1;
   display: grid;
+
+  // minmax(0, …) so a child's min-content (e.g. a nowrap/truncated run) can't
+  // widen the track past the viewport (DS-89).
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .alignCenter {
-  place-items: center;
+  // `safe`: a child wider than the (now zero-minimum) track overflows to the
+  // end only, so its start is never cut off unreachably (DS-89).
+  place-items: center; // fallback: engines without `safe` (Safari < 17.6) drop the next line
+  place-items: safe center;
 }
 
 .alignStart {
-  place-items: start center;
+  place-items: start center; // fallback, as above
+  place-items: start safe center;
 }
 
 .backdropPlain {

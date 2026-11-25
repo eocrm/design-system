@@ -293,15 +293,23 @@
 // ---- Strip-level endContent (only rendered when the prop is set) ----
 // The scroll region fills the row so the tablist's bottom border spans the full
 // tab area, and endContent carries a matching border so the track runs unbroken
-// under it (full-width, not cut at the last tab). align-items: flex-end
-// bottom-aligns both so their borders — and the indicator — land on one line.
+// under it (full-width, not cut at the last tab).
 .root {
   display: flex;
-  align-items: flex-end;
+
+  // Both children stretch to the row height (DS-90): endContent centres its
+  // controls on the tab labels instead of sitting at the bottom, and the
+  // scroll region pins the tablist to its bottom edge so the two border
+  // tracks still meet on one line when endContent is the taller of the two.
+  align-items: stretch;
 
   .scrollWrap {
     flex: 1; // fill the row (shorthand, not the disallowed flex-grow longhand)
     min-width: 0; // let the tabs overflow-scroll instead of forcing the row wider
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start; // keep the tablist content-sized so it still scrolls
   }
 }
 
@@ -323,6 +331,7 @@
   // Vertical has no bottom track: the rail is content-height, endContent below.
   .scrollWrap {
     flex: initial;
+    display: block;
     width: 100%;
   }
 

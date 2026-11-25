@@ -28,7 +28,7 @@
   "all": {
     "code": "import * as DS from '@eocrm/design-system'; console.log(DS);",
     "jsGzip": 364200,
-    "cssGzip": 83300
+    "cssGzip": 83700
   },
   "global-css": {
     "code": "import '@eocrm/design-system/styles/global.css';",

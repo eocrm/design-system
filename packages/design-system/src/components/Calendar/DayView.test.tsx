@@ -322,3 +322,45 @@ describe('DayView — availability underlay (issue #473)', () => {
     expect(onDayClick).toHaveBeenCalledWith(cursor);
   });
 });
+
+describe('DayView dayAction (DS-88)', () => {
+  const cursor = new Date(2026, 4, 20);
+  const dayAction = (onActivate = vi.fn()) => ({
+    label: (d: Date) => `Add on ${d.toDateString()}`,
+    onActivate,
+  });
+  it('renders one header action; view "day"', async () => {
+    const onActivate = vi.fn();
+    const onDayClick = vi.fn();
+    render(
+      <DayView
+        cursor={cursor}
+        events={[]}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        onDayClick={onDayClick}
+        dayAction={dayAction(onActivate)}
+      />,
+      { wrapper: wrap() },
+    );
+    const btn = screen.getByRole('button', { name: 'Add on ' + cursor.toDateString() });
+    expect(btn.closest('[role="columnheader"]')).not.toBeNull();
+    await userEvent.click(btn);
+    expect(onActivate).toHaveBeenCalledWith(cursor, { view: 'day' });
+    expect(onDayClick).not.toHaveBeenCalled();
+  });
+  it('resource day view renders no header action', () => {
+    render(
+      <DayView
+        cursor={cursor}
+        events={[]}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        resources={[{ id: 'a', label: 'Alice' }]}
+        dayAction={dayAction()}
+      />,
+      { wrapper: wrap() },
+    );
+    expect(screen.queryByRole('button', { name: /^Add on / })).toBeNull();
+  });
+});

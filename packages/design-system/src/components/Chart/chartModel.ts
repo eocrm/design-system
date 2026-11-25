@@ -507,8 +507,11 @@ export function estimateTextWidth(text: string): number {
 }
 const textWidth = estimateTextWidth;
 
-/** Indices of the x labels to draw so none overlap; first always kept, last kept when it fits. */
-export function thinLabels(categories: readonly string[], step: number): number[] {
+/**
+ * Indices of the x labels to draw so none overlap; first always kept, last kept when it fits unless `keepLast` is
+ * false (an even stride for regular grids, e.g. hours, where an odd last label reads as uneven spacing).
+ */
+export function thinLabels(categories: readonly string[], step: number, keepLast = true): number[] {
   const n = categories.length;
   if (n === 0) return [];
   const labelWidth = Math.max(...categories.map(textWidth)) + LABEL_GAP;
@@ -516,7 +519,7 @@ export function thinLabels(categories: readonly string[], step: number): number[
   const kept: number[] = [];
   for (let i = 0; i < n; i += every) kept.push(i);
   const last = n - 1;
-  if (kept[kept.length - 1] !== last) {
+  if (keepLast && kept[kept.length - 1] !== last) {
     while (kept.length > 1 && (last - kept[kept.length - 1]) * step < labelWidth) kept.pop();
     if ((last - kept[kept.length - 1]) * step >= labelWidth) kept.push(last);
   }

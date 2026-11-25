@@ -3,6 +3,7 @@ import {
   Calendar,
   I18nProvider,
   Stack,
+  Text,
   type CalendarBackgroundInterval,
   type CalendarEvent,
   type CalendarDropCandidate,
@@ -431,6 +432,24 @@ function ViewSwitcherDemo() {
   );
 }
 
+function DayActionDemo() {
+  const [last, setLast] = useState<string | null>(null);
+  return (
+    <Stack gap="sm">
+      <Calendar
+        defaultValue={TODAY}
+        defaultView="month"
+        events={SAMPLE_EVENTS}
+        dayAction={{
+          label: (d) => `Add event on ${d.toLocaleDateString()}`,
+          onActivate: (d, { view }) => setLast(`${d.toDateString()} (${view} view)`),
+        }}
+      />
+      <Text>{last ? `Activated: ${last}` : 'Hover a day (or switch to Day/Agenda on touch).'}</Text>
+    </Stack>
+  );
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export function CalendarDemo() {
@@ -792,6 +811,28 @@ export function Demo() {
 }`}
       >
         <Calendar defaultValue={fromToday(0)} defaultView="month" events={TYPED_EVENTS} />
+      </Example>
+
+      <Example
+        title="Per-day action"
+        description="`dayAction` adds an 'add event on this day' button: beside the day number in Month (on hover / focus), in the date header in Week and Day, beside each heading in Agenda. On touch devices Month and Week hide it. It never fires `onDayClick`."
+        code={`import { useState } from 'react';
+import { Calendar } from '@eocrm/design-system';
+
+export function Demo() {
+  const [last, setLast] = useState<string | null>(null);
+  return (
+    <Calendar
+      events={events}
+      dayAction={{
+        label: (d) => \`Add event on \${d.toLocaleDateString()}\`,
+        onActivate: (d, { view }) => setLast(\`\${d.toDateString()} (\${view} view)\`),
+      }}
+    />
+  );
+}`}
+      >
+        <DayActionDemo />
       </Example>
     </DemoLayout>
   );

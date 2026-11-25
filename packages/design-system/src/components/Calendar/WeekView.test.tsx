@@ -278,3 +278,36 @@ describe('WeekView', () => {
     expect(text).toMatch(/[Ѐ-ӿ]/);
   });
 });
+
+describe('WeekView dayAction (DS-88)', () => {
+  const cursor = new Date(2026, 4, 20);
+  it('renders a header action per day; click → onActivate(date, week), onDayClick not called', async () => {
+    const onActivate = vi.fn();
+    const onDayClick = vi.fn();
+    render(
+      <WeekView
+        cursor={cursor}
+        events={[]}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        onDayClick={onDayClick}
+        dayAction={{ label: (d) => `Add on ${d.toDateString()}`, onActivate }}
+      />,
+      { wrapper: wrap() },
+    );
+    const buttons = screen.getAllByRole('button', { name: /^Add on / });
+    expect(buttons).toHaveLength(7);
+    const wed = screen.getByRole('button', { name: 'Add on ' + cursor.toDateString() });
+    expect(wed.closest('[role="columnheader"]')).not.toBeNull();
+    await userEvent.click(wed);
+    expect(onActivate).toHaveBeenCalledWith(cursor, { view: 'week' });
+    expect(onDayClick).not.toHaveBeenCalled();
+    // The header is named by its date alone, not the action's label: browsers
+    // fold a descendant button's name into a columnheader's name from content
+    // (jsdom's accname doesn't, so assert the labelling wiring directly).
+    const header = wed.closest('[role="columnheader"]') as HTMLElement;
+    const label = document.getElementById(header.getAttribute('aria-labelledby') ?? '');
+    expect(label).toHaveTextContent(new RegExp(`\\b${cursor.getDate()}$`));
+    expect(label).not.toContainElement(wed);
+  });
+});

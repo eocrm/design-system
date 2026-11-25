@@ -32,6 +32,7 @@ const [view, setView] = useState<CalendarView>('month');
 | `defaultValue` | `Date` | no | Initial cursor (uncontrolled). Defaults to `new Date()`. |
 | `onChange` | `((date: Date) => void)` | no | Fires on prev/next/today/keyboard navigation. |
 | `onDayClick` | `((date: Date) => void)` | no | Fires when the user clicks a day cell's empty space. - Month view: empty space in a day cell, the "+N more" overflow chip, or keyboard activation (Enter/Space) on a focused cell. - Week/Day view: empty hour-grid space inside that day's column — **mouse click only**. There is no keyboard equivalent in v3; consumers needing keyboard activation in week/day should surface their detail UI through the focusable event chips (which fire `onEventClick`). |
+| `dayAction` | `CalendarDayAction` | no | Per-day action button (e.g. "+ add event on this day"); activating it never also fires `onDayClick`. - Month: beside the day number, shown on cell hover / focus-within; only the roving-focused cell's button is a tab stop. Hidden on coarse pointers. - Week: in each date column header, after the date. Hidden on coarse pointers. - Day: in the date column header (not rendered in resource columns); always shown. - Agenda: beside each day heading, always shown. Agenda lists only days that have events, so other days get no action. |
 | `onEventClick` | `((event: CalendarEvent) => void)` | no | Fires when the user clicks an event chip. |
 | `locale` | `string` | no | Override locale. Defaults to `useLocale()`. |
 | `weekStartsOn` | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6` | no | Override locale-derived first day of week. |
@@ -145,6 +146,32 @@ const [view, setView] = useState<CalendarView>('month');
 - The click that terminates a drag is swallowed, so `onEventClick` doesn't fire on a reschedule. A plain click still opens your detail UI.
 - Drag-to-**create** (dragging empty grid space to draft a new event) is still out of scope — use `onDayClick` plus your own form.
 
+#### Per-day action (`dayAction`)
+
+```tsx
+<Calendar
+  events={appointments}
+  dayAction={{
+    label: (d) => t('calendar.addOn', { date: fmt(d) }),
+    onActivate: (d, { view }) => openCreate(d, view),
+  }}
+/>
+```
+
+A per-day button, typically "+ add event on this day". `icon` is optional (default: Plus). `label` is the accessible name and tooltip and must be your translated text. Activating it never fires `onDayClick`.
+
+| View                 | Fine pointer                                       | Coarse pointer (`pointer: coarse`) |
+| -------------------- | -------------------------------------------------- | ---------------------------------- |
+| Month                | Beside the day number on cell hover / focus-within | Hidden                             |
+| Week                 | In the date column header                          | Hidden                             |
+| Day                  | In the date column header                          | Shown, 44px hit area               |
+| Agenda               | Beside each day heading                            | Shown, 44px hit area               |
+| Day with `resources` | None                                               | None                               |
+
+- In Month only the roving-focused cell's button is tabbable, so the grid stays one tab stop.
+- Month reveals the button while the pointer is anywhere over that day (events included). Its row reserves the button's height even while hidden, so month event lanes start a few pixels lower when `dayAction` is set.
+- Agenda lists only days that have events, so a day with no events has no action there. Use Month, Week or Day to add to an empty day.
+
 #### When NOT to use
 
 - ❌ Single-date or date-range selection → `<DatePicker>` / `<DateRangePicker>`.
@@ -155,6 +182,9 @@ const [view, setView] = useState<CalendarView>('month');
 - ❌ Mounting `<Calendar>` with no `events` AND no `onDayClick`: the grid is fully inert.
 - ❌ Pre-grouping events by day in the consumer. Pass the flat array; the layout algorithms group and lane internally.
 - ❌ Treating `onEventMove` as the thing that moves the event. It proposes; your state disposes, and not committing means the block snaps back.
+- ❌ Overloading `onDayClick` for "create event". It also fires for plain navigation clicks; use `dayAction` for an explicit create affordance.
+- ❌ Expecting `dayAction` on empty Agenda days or in resource-column day views — it is not rendered there.
+- ❌ Hardcoding the `dayAction.label` in English. It is the consumer's translated text.
 - ❌ Faking the availability underlay with all-day events, or approximating resource columns with N side-by-side day calendars (see above). Use `backgroundIntervals` and `resources`.
 
 **Touch devices:** On touch devices (`pointer: coarse`) agenda rows are at least 44px tall; the view switcher tabs follow Tabs. Override `--calendar-agenda-row-min-height` in your own `@media (pointer: coarse)` block to opt out.

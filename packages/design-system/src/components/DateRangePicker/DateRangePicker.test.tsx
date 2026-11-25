@@ -69,6 +69,94 @@ describe('DateRangePicker', () => {
     expect(committed.end.getDate()).toBe(4);
   });
 
+  // DS-87: with the popover closed (focus arrived by Tab), leaving the input —
+  // onto the calendar toggle, then out — must commit like Enter, exactly once.
+  it('a range typed with the popover closed commits once when Tab leaves the input', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    function Driver() {
+      const [v, setV] = useState<DateRange | null>(null);
+      return (
+        <DateRangePicker
+          value={v}
+          onChange={(r) => {
+            onChange(r);
+            setV(r);
+          }}
+          clearable={false}
+          aria-label="Range"
+        />
+      );
+    }
+    render(<Driver />, { wrapper: wrap() });
+    const input = screen.getByRole('textbox');
+    await user.tab();
+    expect(input).toHaveFocus();
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+    await user.keyboard('5/21/2026 — 6/4/2026');
+    await user.tab(); // onto the calendar toggle
+    await user.tab(); // out of the component
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    const committed = onChange.mock.calls[0][0]!;
+    expect(committed.start.getDate()).toBe(21);
+    expect(committed.end.getDate()).toBe(4);
+    expect(input).toHaveValue('05/21/2026 — 06/04/2026');
+  });
+
+  it('Clear after editing the text fires a single onChange(null)', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(<DateRangePicker value={SAMPLE_RANGE} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
+    const input = screen.getByRole('textbox');
+    await user.click(input);
+    await user.clear(input);
+    await user.type(input, '5/1/2026 — 5/7/2026');
+    await user.click(screen.getByRole('button', { name: /clear/i }));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(null);
+    // The parent kept its value: the typed text is discarded, so leaving the
+    // input afterwards commits nothing more.
+    expect(input).toHaveValue('05/21/2026 — 06/04/2026');
+    await user.tab();
+    await user.tab();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('tabbing through without typing does not fire onChange', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(<DateRangePicker value={SAMPLE_RANGE} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
+    await user.tab();
+    await user.tab();
+    await user.tab();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('a typed range commits once when an outside click closes the popover', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(
+      <>
+        <DateRangePicker onChange={onChange} aria-label="Range" />
+        <button type="button">Elsewhere</button>
+      </>,
+      { wrapper: wrap() },
+    );
+    const input = screen.getByRole('textbox');
+    await user.type(input, '5/21/2026 — 6/4/2026');
+    expect(input).toHaveAttribute('aria-expanded', 'true');
+    await user.click(screen.getByRole('button', { name: 'Elsewhere' }));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
   it('typing an invalid range reverts to the previous value', async () => {
     const user = userEvent.setup();
     function Driver() {
