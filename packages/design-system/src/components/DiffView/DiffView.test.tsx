@@ -17,6 +17,14 @@ describe('DiffView', () => {
     expect(screen.getByRole('rowheader', { name: 'Lines 10 → 10–11' })).toBeInTheDocument();
   });
 
+  it('names the table by the header label, else "Changes"', () => {
+    const { unmount } = render(<DiffView diff={DIFF} fromLabel="v1" toLabel="v2" />);
+    expect(screen.getByRole('table', { name: 'v1 → v2' })).toBeInTheDocument();
+    unmount();
+    render(<DiffView diff={DIFF} />);
+    expect(screen.getByRole('table', { name: 'Changes' })).toBeInTheDocument();
+  });
+
   it('marks added and removed rows with a sign and hidden text', () => {
     render(<DiffView diff={DIFF} />);
     const added = screen.getByText('new').closest('tr')!;
