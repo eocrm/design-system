@@ -1,0 +1,115 @@
+@use './DiffView.tokens';
+
+.root {
+  overflow-x: auto;
+  border: var(--border-width) solid var(--diff-view-border-color);
+  border-radius: var(--diff-view-radius);
+  background: var(--diff-view-bg);
+  color: var(--diff-view-fg);
+  font-family: var(--font-family-mono);
+  font-size: var(--diff-view-font-size);
+  line-height: var(--diff-view-line-height);
+}
+
+.header {
+  min-height: var(--size-md);
+  padding: var(--space-2) var(--diff-view-padding-x);
+  border-bottom: var(--border-width) solid var(--diff-view-border-color);
+  background: var(--diff-view-header-bg);
+  font-size: var(--font-size-sm);
+  color: var(--diff-view-muted-fg);
+}
+
+.empty {
+  padding: var(--space-3) var(--diff-view-padding-x);
+  color: var(--diff-view-muted-fg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: pre;
+}
+
+.wrap .table {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.hunk {
+  padding: var(--space-1) var(--diff-view-padding-x);
+  background: var(--diff-view-header-bg);
+  color: var(--diff-view-muted-fg);
+  text-align: start;
+  font-weight: inherit;
+}
+
+.gutter {
+  padding-inline: var(--space-2);
+  color: var(--diff-view-muted-fg);
+  text-align: end;
+  vertical-align: top;
+  user-select: none;
+}
+
+.sign {
+  padding-inline: var(--space-2);
+  vertical-align: top;
+  user-select: none;
+}
+
+.text {
+  width: 100%;
+  padding-inline-end: var(--diff-view-padding-x);
+}
+
+.added {
+  background: var(--diff-view-added-bg);
+
+  .sign {
+    color: var(--diff-view-added-fg);
+  }
+}
+
+.removed {
+  background: var(--diff-view-removed-bg);
+
+  .sign {
+    color: var(--diff-view-removed-fg);
+  }
+}
+
+.note {
+  color: var(--diff-view-muted-fg);
+  font-style: italic;
+}
+
+// The frame's own internal scroll box (like CodeBlock's body), not outer layout.
+.maxXs {
+  max-height: var(--measure-xs);
+  overflow-y: auto;
+}
+
+.maxSm {
+  max-height: var(--measure-sm);
+  overflow-y: auto;
+}
+
+.maxMd {
+  max-height: var(--measure-md);
+  overflow-y: auto;
+}
+
+.maxLg {
+  max-height: var(--measure-lg);
+  overflow-y: auto;
+}
+
+.maxXl {
+  max-height: var(--measure-xl);
+  overflow-y: auto;
+}
+
+.noWrap .table {
+  white-space: pre;
+}

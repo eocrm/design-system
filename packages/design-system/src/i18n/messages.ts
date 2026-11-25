@@ -194,6 +194,24 @@ export interface Messages {
     /** Header label when there is no `title` and the language is not a known one. */
     plainText: string;
   };
+  diffView: {
+    /** Hidden text on an added row, read before its content. */
+    added: string;
+    /** Hidden text on a removed row, read before its content. */
+    removed: string;
+    /** Empty-state text when the diff has no hunks. */
+    noChanges: string;
+    /** Hidden column header of the old-line-number gutter. */
+    oldLine: string;
+    /** Hidden column header of the new-line-number gutter. */
+    newLine: string;
+    /** Hidden column header of the change (+/-) column. */
+    change: string;
+    /** Hidden column header of the line text column. */
+    text: string;
+    /** Function leaf — hunk header, e.g. "Lines 12–15 → 12–17". */
+    hunk: (params: { oldFrom: number; oldTo: number; newFrom: number; newTo: number }) => string;
+  };
   tableOfContents: {
     /** Accessible name of the `<nav>`, its visible heading, and the collapsed summary. */
     label: string;

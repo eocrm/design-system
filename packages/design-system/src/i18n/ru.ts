@@ -86,6 +86,17 @@ export const ru: Messages = {
     wrap: 'Переносить строки',
     plainText: 'Текст',
   },
+  diffView: {
+    added: 'Добавлено',
+    removed: 'Удалено',
+    noChanges: 'Нет изменений',
+    oldLine: 'Старая строка',
+    newLine: 'Новая строка',
+    change: 'Изменение',
+    text: 'Текст',
+    hunk: ({ oldFrom, oldTo, newFrom, newTo }) =>
+      `Строки ${oldFrom as number}–${oldTo as number} → ${newFrom as number}–${newTo as number}`,
+  },
   tableOfContents: {
     label: 'На этой странице',
   },

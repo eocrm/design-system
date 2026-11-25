@@ -1,0 +1,20 @@
+// DiffView.tokens.scss — Component-scoped tokens for <DiffView>. Frame surface (mirrors CodeBlock) and added / removed row tints.
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
+  // Surface
+  --diff-view-bg: var(--color-bg-subtle);
+  --diff-view-border-color: var(--color-border);
+  --diff-view-radius: var(--radius-md);
+  --diff-view-header-bg: var(--color-bg);
+  --diff-view-fg: var(--color-fg);
+  --diff-view-muted-fg: var(--color-fg-muted);
+  --diff-view-font-size: var(--font-size-code);
+  --diff-view-line-height: var(--line-height-normal);
+  --diff-view-padding-x: var(--space-3);
+
+  // Changes
+  --diff-view-added-bg: var(--color-success-bg-subtle);
+  --diff-view-added-fg: var(--color-success-fg);
+  --diff-view-removed-bg: var(--color-danger-bg-subtle);
+  --diff-view-removed-fg: var(--color-danger-fg);
+}
