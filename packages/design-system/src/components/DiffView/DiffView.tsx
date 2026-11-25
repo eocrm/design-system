@@ -16,6 +16,11 @@ const MAX_CLASS: Record<DiffViewMaxHeight, string> = {
   xl: styles.maxXl,
 };
 
+/** "N" for 0 or 1 lines (unified-diff convention for a 0 count), else "a–b". */
+function range(start: number, count: number): string {
+  return count > 1 ? `${start}–${start + count - 1}` : String(start);
+}
+
 export interface DiffViewProps extends HTMLAttributes<HTMLDivElement> {
   /** Unified text diff (`@@ -a,b +c,d @@` hunks), e.g. from `git diff` or PHP `sebastian/diff`. */
   diff: string;
@@ -54,85 +59,80 @@ export const DiffView = forwardRef<HTMLDivElement, DiffViewProps>(function DiffV
     <div
       {...props}
       ref={ref}
-      className={clsx(
-        styles.root,
-        wrap ? styles.wrap : styles.noWrap,
-        maxHeight && MAX_CLASS[maxHeight],
-        className,
-      )}
+      className={clsx(styles.root, wrap ? styles.wrap : styles.noWrap, className)}
     >
       {label ? <div className={styles.header}>{label}</div> : null}
       {hunks.length === 0 ? (
         <div className={styles.empty}>{t('diffView.noChanges')}</div>
       ) : (
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              {lineNumbers ? (
-                <>
-                  <th scope="col">
-                    <VisuallyHidden>{t('diffView.oldLine')}</VisuallyHidden>
-                  </th>
-                  <th scope="col">
-                    <VisuallyHidden>{t('diffView.newLine')}</VisuallyHidden>
-                  </th>
-                </>
-              ) : null}
-              <th scope="col">
-                <VisuallyHidden>{t('diffView.change')}</VisuallyHidden>
-              </th>
-              <th scope="col">
-                <VisuallyHidden>{t('diffView.text')}</VisuallyHidden>
-              </th>
-            </tr>
-          </thead>
-          {hunks.map((h, i) => (
-            <tbody key={i}>
+        <div className={clsx(styles.body, maxHeight && MAX_CLASS[maxHeight])}>
+          <table className={styles.table}>
+            <thead>
               <tr>
-                <th scope="rowgroup" colSpan={cols} className={styles.hunk}>
-                  {t('diffView.hunk', {
-                    oldFrom: h.oldStart,
-                    oldTo: h.oldStart + Math.max(h.oldLines - 1, 0),
-                    newFrom: h.newStart,
-                    newTo: h.newStart + Math.max(h.newLines - 1, 0),
-                  })}
-                  {h.section ? ` ${h.section}` : ''}
+                {lineNumbers ? (
+                  <>
+                    <th scope="col">
+                      <VisuallyHidden>{t('diffView.oldLine')}</VisuallyHidden>
+                    </th>
+                    <th scope="col">
+                      <VisuallyHidden>{t('diffView.newLine')}</VisuallyHidden>
+                    </th>
+                  </>
+                ) : null}
+                <th scope="col">
+                  <VisuallyHidden>{t('diffView.change')}</VisuallyHidden>
+                </th>
+                <th scope="col">
+                  <VisuallyHidden>{t('diffView.text')}</VisuallyHidden>
                 </th>
               </tr>
-              {h.lines.map((l, j) => (
-                <tr
-                  key={j}
-                  className={clsx(
-                    l.kind === 'added' && styles.added,
-                    l.kind === 'removed' && styles.removed,
-                    l.kind === 'note' && styles.note,
-                  )}
-                >
-                  {lineNumbers ? (
-                    <>
-                      <td className={styles.gutter}>{l.oldNumber}</td>
-                      <td className={styles.gutter}>{l.newNumber}</td>
-                    </>
-                  ) : null}
-                  <td className={styles.sign}>
-                    {l.kind === 'added' ? (
+            </thead>
+            {hunks.map((h, i) => (
+              <tbody key={i}>
+                <tr>
+                  <th scope="rowgroup" colSpan={cols} className={styles.hunk}>
+                    {t('diffView.hunk', {
+                      from: range(h.oldStart, h.oldLines),
+                      to: range(h.newStart, h.newLines),
+                    })}
+                    {h.section ? ` ${h.section}` : ''}
+                  </th>
+                </tr>
+                {h.lines.map((l, j) => (
+                  <tr
+                    key={j}
+                    className={clsx(
+                      l.kind === 'added' && styles.added,
+                      l.kind === 'removed' && styles.removed,
+                      l.kind === 'note' && styles.note,
+                    )}
+                  >
+                    {lineNumbers ? (
                       <>
-                        <span aria-hidden="true">+</span>
-                        <VisuallyHidden>{t('diffView.added')}</VisuallyHidden>
-                      </>
-                    ) : l.kind === 'removed' ? (
-                      <>
-                        <span aria-hidden="true">−</span>
-                        <VisuallyHidden>{t('diffView.removed')}</VisuallyHidden>
+                        <td className={styles.gutter}>{l.oldNumber}</td>
+                        <td className={styles.gutter}>{l.newNumber}</td>
                       </>
                     ) : null}
-                  </td>
-                  <td className={styles.text}>{l.text}</td>
-                </tr>
-              ))}
-            </tbody>
-          ))}
-        </table>
+                    <td className={styles.sign}>
+                      {l.kind === 'added' ? (
+                        <>
+                          <span aria-hidden="true">+</span>
+                          <VisuallyHidden>{t('diffView.added')}</VisuallyHidden>
+                        </>
+                      ) : l.kind === 'removed' ? (
+                        <>
+                          <span aria-hidden="true">−</span>
+                          <VisuallyHidden>{t('diffView.removed')}</VisuallyHidden>
+                        </>
+                      ) : null}
+                    </td>
+                    <td className={styles.text}>{l.text}</td>
+                  </tr>
+                ))}
+              </tbody>
+            ))}
+          </table>
+        </div>
       )}
     </div>
   );

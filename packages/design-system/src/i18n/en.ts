@@ -93,8 +93,7 @@ export const en: Messages = {
     newLine: 'New line',
     change: 'Change',
     text: 'Text',
-    hunk: ({ oldFrom, oldTo, newFrom, newTo }) =>
-      `Lines ${oldFrom as number}–${oldTo as number} → ${newFrom as number}–${newTo as number}`,
+    hunk: ({ from, to }) => `Lines ${from as string} → ${to as string}`,
   },
   tableOfContents: {
     label: 'On this page',

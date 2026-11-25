@@ -94,8 +94,7 @@ export const ru: Messages = {
     newLine: 'Новая строка',
     change: 'Изменение',
     text: 'Текст',
-    hunk: ({ oldFrom, oldTo, newFrom, newTo }) =>
-      `Строки ${oldFrom as number}–${oldTo as number} → ${newFrom as number}–${newTo as number}`,
+    hunk: ({ from, to }) => `Строки ${from as string} → ${to as string}`,
   },
   tableOfContents: {
     label: 'На этой странице',

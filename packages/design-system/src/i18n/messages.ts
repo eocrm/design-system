@@ -209,8 +209,8 @@ export interface Messages {
     change: string;
     /** Hidden column header of the line text column. */
     text: string;
-    /** Function leaf — hunk header, e.g. "Lines 12–15 → 12–17". */
-    hunk: (params: { oldFrom: number; oldTo: number; newFrom: number; newTo: number }) => string;
+    /** Function leaf — hunk header; `from`/`to` are old/new range strings, e.g. "Lines 12–15 → 12–17". */
+    hunk: (params: { from: string; to: string }) => string;
   };
   tableOfContents: {
     /** Accessible name of the `<nav>`, its visible heading, and the collapsed summary. */

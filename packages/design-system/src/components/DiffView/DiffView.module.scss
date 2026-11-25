@@ -1,7 +1,6 @@
 @use './DiffView.tokens';
 
 .root {
-  overflow-x: auto;
   border: var(--border-width) solid var(--diff-view-border-color);
   border-radius: var(--diff-view-radius);
   background: var(--diff-view-bg);
@@ -12,12 +11,18 @@
 }
 
 .header {
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
   min-height: var(--size-md);
   padding: var(--space-2) var(--diff-view-padding-x);
   border-bottom: var(--border-width) solid var(--diff-view-border-color);
   background: var(--diff-view-header-bg);
   font-size: var(--font-size-sm);
   color: var(--diff-view-muted-fg);
+}
+
+.body {
+  overflow-x: auto;
 }
 
 .empty {

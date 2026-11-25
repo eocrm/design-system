@@ -14,7 +14,7 @@ describe('DiffView', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getAllByRole('rowgroup')).toHaveLength(3); // thead + 2 hunks
     expect(screen.getByRole('rowheader', { name: 'Lines 1–2 → 1–2' })).toBeInTheDocument();
-    expect(screen.getByRole('rowheader', { name: 'Lines 10–10 → 10–11' })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: 'Lines 10 → 10–11' })).toBeInTheDocument();
   });
 
   it('marks added and removed rows with a sign and hidden text', () => {
@@ -68,8 +68,15 @@ describe('DiffView', () => {
   });
 
   it('maxHeight sets the class', () => {
-    const { container } = render(<DiffView diff={DIFF} maxHeight="md" />);
-    expect(container.firstElementChild!.className).toMatch(/maxMd/);
+    const { container } = render(<DiffView diff={DIFF} fromLabel="a" maxHeight="md" />);
+    expect(container.querySelector('table')!.parentElement!.className).toMatch(/maxMd/);
+    expect(container.firstElementChild!.className).not.toMatch(/maxMd/);
+    expect(screen.getByText('a').className).not.toMatch(/maxMd/);
+  });
+
+  it('formats 0-count and 1-line hunk ranges', () => {
+    render(<DiffView diff={'@@ -0,0 +1,3 @@\n+a\n+b\n+c'} />);
+    expect(screen.getByRole('rowheader', { name: 'Lines 0 → 1–3' })).toBeInTheDocument();
   });
 
   it('forwards ref, merges className, spreads rest props', () => {
