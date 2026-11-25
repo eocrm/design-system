@@ -516,6 +516,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['CodeBlock'],
   },
   {
+    to: '/components/diff-view',
+    name: 'DiffView',
+    description:
+      'Read-only unified text diff — added/removed lines with line numbers and a fixed header.',
+    preview: SCHEMATICS['DiffView'],
+  },
+  {
     to: '/components/highlighted-text',
     name: 'HighlightedText',
     description:

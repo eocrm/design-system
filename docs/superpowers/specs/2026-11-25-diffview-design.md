@@ -18,11 +18,11 @@ shim with the same props (`apps/web/src/shared/ds-shims/DiffView.tsx`).
 
 ```ts
 interface DiffViewProps extends HTMLAttributes<HTMLDivElement> {
-  diff: string;              // unified format
-  fromLabel?: string;        // header bar "fromLabel → toLabel" (either alone is shown alone)
+  diff: string; // unified format
+  fromLabel?: string; // header bar "fromLabel → toLabel" (either alone is shown alone)
   toLabel?: string;
-  lineNumbers?: boolean;     // default true: old/new gutters computed from @@ ranges
-  wrap?: boolean;            // default true (prose); false = no wrap, horizontal scroll
+  lineNumbers?: boolean; // default true: old/new gutters computed from @@ ranges
+  wrap?: boolean; // default true (prose); false = no wrap, horizontal scroll
   maxHeight?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'; // CodeBlock's scale; scrolls past it
 }
 ```

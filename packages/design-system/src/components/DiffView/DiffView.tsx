@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, type HTMLAttributes } from 'react';
+import { forwardRef, useId, useMemo, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { VisuallyHidden } from '../VisuallyHidden';
@@ -22,7 +22,7 @@ function range(start: number, count: number): string {
 }
 
 export interface DiffViewProps extends HTMLAttributes<HTMLDivElement> {
-  /** Unified text diff (`@@ -a,b +c,d @@` hunks), e.g. from `git diff` or PHP `sebastian/diff`. */
+  /** Unified text diff (with hunk headers), e.g. from `git diff` or PHP `sebastian/diff`. */
   diff: string;
   /** Header label for the old side; shown as "fromLabel → toLabel", or alone when `toLabel` is unset. */
   fromLabel?: string;
@@ -53,6 +53,7 @@ export const DiffView = forwardRef<HTMLDivElement, DiffViewProps>(function DiffV
   const t = useTranslation();
   const hunks = useMemo(() => parseUnifiedDiff(diff), [diff]);
   const label = fromLabel && toLabel ? `${fromLabel} → ${toLabel}` : (fromLabel ?? toLabel);
+  const labelId = useId();
   const cols = lineNumbers ? 4 : 2;
 
   return (
@@ -61,12 +62,20 @@ export const DiffView = forwardRef<HTMLDivElement, DiffViewProps>(function DiffV
       ref={ref}
       className={clsx(styles.root, wrap ? styles.wrap : styles.noWrap, className)}
     >
-      {label ? <div className={styles.header}>{label}</div> : null}
+      {label ? (
+        <div id={labelId} className={styles.header}>
+          {label}
+        </div>
+      ) : null}
       {hunks.length === 0 ? (
         <div className={styles.empty}>{t('diffView.noChanges')}</div>
       ) : (
         <div className={clsx(styles.body, maxHeight && MAX_CLASS[maxHeight])}>
-          <table className={styles.table}>
+          <table
+            className={styles.table}
+            aria-labelledby={label ? labelId : undefined}
+            aria-label={label ? undefined : t('diffView.tableLabel')}
+          >
             <thead>
               <tr>
                 {lineNumbers ? (

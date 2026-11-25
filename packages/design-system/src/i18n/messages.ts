@@ -195,6 +195,8 @@ export interface Messages {
     plainText: string;
   };
   diffView: {
+    /** Accessible name of the diff table when no header label is shown. */
+    tableLabel: string;
     /** Hidden text on an added row, read before its content. */
     added: string;
     /** Hidden text on a removed row, read before its content. */

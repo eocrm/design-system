@@ -108,6 +108,7 @@ import {
   Workflow,
   QrCode,
   SquareTerminal,
+  Diff,
   Signpost,
   EyeOff,
   Megaphone,
@@ -222,6 +223,7 @@ export const componentGroups: NavGroup[] = [
     items: [
       { to: '/components/code', label: 'Code', icon: CodeIcon, end: false },
       { to: '/components/code-block', label: 'CodeBlock', icon: SquareTerminal, end: false },
+      { to: '/components/diff-view', label: 'DiffView', icon: Diff, end: false },
       {
         to: '/components/highlighted-text',
         label: 'HighlightedText',

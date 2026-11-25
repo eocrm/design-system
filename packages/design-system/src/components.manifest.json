@@ -367,6 +367,14 @@
     "composes": [],
     "composedBy": []
   },
+  "DiffView": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
   "Divider": {
     "tier": "primitive",
     "cluster": "Layout",
@@ -1235,6 +1243,7 @@
       "DashboardWidget",
       "DateStrip",
       "DateTile",
+      "DiffView",
       "DonutChart",
       "FunnelChart",
       "Heatmap",

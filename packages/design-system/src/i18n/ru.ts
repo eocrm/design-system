@@ -87,6 +87,7 @@ export const ru: Messages = {
     plainText: 'Текст',
   },
   diffView: {
+    tableLabel: 'Изменения',
     added: 'Добавлено',
     removed: 'Удалено',
     noChanges: 'Нет изменений',

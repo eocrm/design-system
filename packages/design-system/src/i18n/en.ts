@@ -86,6 +86,7 @@ export const en: Messages = {
     plainText: 'Plain text',
   },
   diffView: {
+    tableLabel: 'Changes',
     added: 'Added',
     removed: 'Removed',
     noChanges: 'No changes',
