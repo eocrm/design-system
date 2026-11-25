@@ -117,14 +117,7 @@ export function DayView({
       labels.push(<span key="__unassigned">{unassignedLabel}</span>);
     }
     return { columns: cols, headers: labels };
-  }, [
-    day.day.date,
-    day.day.key,
-    day.day.isWeekend,
-    events,
-    resources,
-    unassignedLabel,
-  ]);
+  }, [day.day.date, day.day.key, day.day.isWeekend, events, resources, unassignedLabel]);
 
   // Built outside the memo so an inline `dayAction` object doesn't re-run the
   // event layout on every render. Resource columns get no action.
