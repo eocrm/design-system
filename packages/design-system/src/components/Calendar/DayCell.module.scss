@@ -36,6 +36,7 @@
 }
 
 .cell:hover .monthAction,
+.hovered .monthAction,
 .cell:focus-within .monthAction {
   visibility: visible;
 }

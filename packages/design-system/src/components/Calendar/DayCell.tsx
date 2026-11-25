@@ -15,6 +15,8 @@ export interface DayCellProps {
   onDayClick?: (date: Date) => void;
   /** Per-day action button shown beside the day number. */
   dayAction?: CalendarDayAction;
+  /** The pointer is over this day's column (anywhere in it, events included); reveals `dayAction`. */
+  isHovered?: boolean;
   /** Roving-tab-index keyboard handler from MonthView. */
   onKeyDown?: (e: KeyboardEvent<HTMLDivElement>, date: Date) => void;
   /** Inline grid placement set by MonthView (e.g. `{ gridColumn: 3, gridRow: 1 }`). */
@@ -37,6 +39,7 @@ export function DayCell({
   isFocused = false,
   onDayClick,
   dayAction,
+  isHovered = false,
   onKeyDown,
   style,
 }: DayCellProps) {
@@ -49,7 +52,11 @@ export function DayCell({
       tabIndex={isFocused ? 0 : -1}
       aria-selected={false}
       data-date-key={day.key}
-      className={clsx(styles.cell, !day.isCurrentMonth && styles.otherMonth)}
+      className={clsx(
+        styles.cell,
+        !day.isCurrentMonth && styles.otherMonth,
+        isHovered && styles.hovered,
+      )}
       style={style}
       onClick={handleClick}
       onKeyDown={handleKey}

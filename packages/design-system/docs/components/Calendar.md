@@ -169,6 +169,7 @@ A per-day button, typically "+ add event on this day". `icon` is optional (defau
 | Day with `resources` | None                                               | None                               |
 
 - In Month only the roving-focused cell's button is tabbable, so the grid stays one tab stop.
+- Month reveals the button while the pointer is anywhere over that day (events included). Its row reserves the button's height even while hidden, so month event lanes start a few pixels lower when `dayAction` is set.
 - Agenda lists only days that have events, so a day with no events has no action there. Use Month, Week or Day to add to an empty day.
 
 #### When NOT to use

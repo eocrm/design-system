@@ -103,6 +103,22 @@ describe('DateRangePicker', () => {
     expect(input).toHaveValue('05/21/2026 — 06/04/2026');
   });
 
+  it('Clear after editing the text fires a single onChange(null)', async () => {
+    const onChange = vi.fn<(r: DateRange | null) => void>();
+    const user = userEvent.setup();
+    render(<DateRangePicker value={SAMPLE_RANGE} onChange={onChange} aria-label="Range" />, {
+      wrapper: wrap(),
+    });
+    const input = screen.getByRole('textbox');
+    await user.click(input);
+    await user.clear(input);
+    await user.type(input, '5/1/2026 — 5/7/2026');
+    await user.click(screen.getByRole('button', { name: /clear/i }));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
   it('tabbing through without typing does not fire onChange', async () => {
     const onChange = vi.fn<(r: DateRange | null) => void>();
     const user = userEvent.setup();

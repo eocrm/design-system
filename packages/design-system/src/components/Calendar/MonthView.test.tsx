@@ -187,6 +187,18 @@ describe('dayAction (DS-88)', () => {
     return { onActivate };
   };
 
+  it('hovering anywhere in a day column (not just the number row) reveals its action', () => {
+    setup();
+    const cell = screen.getAllByRole('gridcell')[10];
+    const week = cell.parentElement!.parentElement as HTMLElement; // .dayRow → .week
+    week.getBoundingClientRect = () => ({ left: 0, width: 700, top: 0, height: 100 }) as DOMRect;
+    const col = [...cell.parentElement!.children].indexOf(cell);
+    fireEvent.pointerMove(week, { pointerType: 'mouse', clientX: col * 100 + 50, clientY: 90 });
+    expect(cell.className).toMatch(/hovered/);
+    fireEvent.pointerLeave(week);
+    expect(cell.className).not.toMatch(/hovered/);
+  });
+
   it('renders one action per day labelled by label(date)', () => {
     setup();
     expect(screen.getAllByRole('button', { name: /^Add on / }).length).toBe(

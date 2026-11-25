@@ -235,7 +235,3 @@
 .dayTitle {
   font: inherit;
 }
-
-.dayAction {
-  @include touch-hit-area;
-}

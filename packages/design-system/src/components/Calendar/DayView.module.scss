@@ -9,7 +9,3 @@
   overflow: hidden;
   background: var(--calendar-bg);
 }
-
-.headerAction {
-  @include touch-hit-area;
-}

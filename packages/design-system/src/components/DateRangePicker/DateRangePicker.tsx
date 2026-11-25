@@ -574,6 +574,11 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
             type="button"
             className={styles.clearButton}
             aria-label={t('datePicker.clear')}
+            // Keep focus in the input: a blur here would commit typed text
+            // first, so Clear would fire onChange(range) then onChange(null).
+            onMouseDown={(e) => {
+              if (document.activeElement === inputRef.current) e.preventDefault();
+            }}
             onClick={handleClear}
           >
             <X size={ICON_SIZE_FOR[size]} />

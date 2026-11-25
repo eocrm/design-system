@@ -90,14 +90,7 @@ export function AgendaView({
         >
           <Cluster justify="between" align="center" className={styles.dayHeader}>
             <h3 className={styles.dayTitle}>{formatDayLong(day.date, locale)}</h3>
-            {dayAction && (
-              <DayActionButton
-                action={dayAction}
-                date={day.date}
-                view="agenda"
-                className={styles.dayAction}
-              />
-            )}
+            {dayAction && <DayActionButton action={dayAction} date={day.date} view="agenda" />}
           </Cluster>
           <div className={styles.rows}>
             {rows.map((row) => (

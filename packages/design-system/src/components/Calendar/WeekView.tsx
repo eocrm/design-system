@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { useWeek } from '../../calendar/useWeek';
 import { useLocale } from '../../i18n/useLocale';
 import { formatWeekdayShort } from '../../calendar/formatters';
@@ -104,9 +104,12 @@ export function WeekView({
     [backgroundIntervals, columns, hourRange],
   );
 
-  const headers = week.days.map((d) => (
-    <Cluster gap="xs" justify="center" align="center">
-      <span>
+  // The columnheader is named by the date alone, not the action's label.
+  const idBase = useId();
+  const headerLabelIds = week.days.map((d) => `${idBase}-${d.key}`);
+  const headers = week.days.map((d, i) => (
+    <Cluster key={d.key} gap="xs" justify="center" align="center">
+      <span id={headerLabelIds[i]}>
         {formatWeekdayShort(d.date, locale)} <strong>{d.dayOfMonth}</strong>
       </span>
       {dayAction && (
@@ -133,6 +136,7 @@ export function WeekView({
       <HourGrid
         columns={columns}
         columnHeaders={headers}
+        columnHeaderLabelIds={headerLabelIds}
         hourRange={hourRange}
         hourRowHeight={hourRowHeight}
         timedBlocks={layout.timedBlocks}

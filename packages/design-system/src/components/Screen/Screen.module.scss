@@ -30,11 +30,13 @@
 }
 
 .alignCenter {
-  place-items: center;
+  // `safe`: a child wider than the (now zero-minimum) track overflows to the
+  // end only, so its start is never cut off unreachably (DS-89).
+  place-items: safe center;
 }
 
 .alignStart {
-  place-items: start center;
+  place-items: start safe center;
 }
 
 .backdropPlain {

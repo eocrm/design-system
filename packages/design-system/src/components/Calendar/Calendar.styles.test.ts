@@ -19,13 +19,16 @@ describe('dayAction touch behaviour', () => {
       /@media \(pointer: coarse\)\s*\{[^}]*\.headerAction\s*\{[^}]*display:\s*none/,
     );
   });
-  it('day and agenda actions take touch-hit-area', () => {
-    for (const [f, cls] of [
-      ['DayView.module.scss', 'headerAction'],
-      ['AgendaView.module.scss', 'dayAction'],
-    ]) {
-      const block = read(f).match(new RegExp(`\\.${cls}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
-      expect(block).toMatch(/@include touch-hit-area/);
-    }
+  it('month action is hidden under pointer: coarse', () => {
+    expect(read('DayCell.module.scss')).toMatch(
+      /@media \(pointer: coarse\)\s*\{[^}]*\.monthAction\s*\{[^}]*display:\s*none/,
+    );
+  });
+  // Day and Agenda keep the action on touch; its 44px target comes from the
+  // xs Button itself, so neither view adds its own.
+  it('the xs Button the action renders carries touch-hit-area', () => {
+    const button = readFileSync(resolve(__dirname, '../Button/Button.module.scss'), 'utf8');
+    const xs = button.match(/\n\.xs\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(xs).toMatch(/@include touch-hit-area/);
   });
 });

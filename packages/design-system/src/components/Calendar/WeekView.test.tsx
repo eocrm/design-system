@@ -302,5 +302,12 @@ describe('WeekView dayAction (DS-88)', () => {
     await userEvent.click(wed);
     expect(onActivate).toHaveBeenCalledWith(cursor, { view: 'week' });
     expect(onDayClick).not.toHaveBeenCalled();
+    // The header is named by its date alone, not the action's label: browsers
+    // fold a descendant button's name into a columnheader's name from content
+    // (jsdom's accname doesn't, so assert the labelling wiring directly).
+    const header = wed.closest('[role="columnheader"]') as HTMLElement;
+    const label = document.getElementById(header.getAttribute('aria-labelledby') ?? '');
+    expect(label).toHaveTextContent(new RegExp(`\\b${cursor.getDate()}$`));
+    expect(label).not.toContainElement(wed);
   });
 });
