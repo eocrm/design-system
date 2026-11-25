@@ -19,6 +19,7 @@ import { AgendaView } from './AgendaView';
 import { ViewSwitcher } from './ViewSwitcher';
 import type {
   CalendarBackgroundInterval,
+  CalendarDayAction,
   CalendarDropCandidate,
   CalendarDropResult,
   CalendarEvent,
@@ -58,6 +59,17 @@ export interface CalendarProps extends Omit<
    *   through the focusable event chips (which fire `onEventClick`).
    */
   onDayClick?: (date: Date) => void;
+  /**
+   * Per-day action button (e.g. "+ add event on this day"); activating it never
+   * also fires `onDayClick`.
+   * - Month: beside the day number, shown on cell hover / focus-within; only the
+   *   roving-focused cell's button is a tab stop. Hidden on coarse pointers.
+   * - Week: in each date column header, after the date. Hidden on coarse pointers.
+   * - Day: in the date column header (not rendered in resource columns); always shown.
+   * - Agenda: beside each day heading, always shown. Agenda lists only days that
+   *   have events, so other days get no action.
+   */
+  dayAction?: CalendarDayAction;
   /** Fires when the user clicks an event chip. */
   onEventClick?: (event: CalendarEvent) => void;
   /** Override locale. Defaults to `useLocale()`. */
@@ -184,6 +196,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
     defaultValue,
     onChange,
     onDayClick,
+    dayAction,
     onEventClick,
     locale,
     weekStartsOn,
@@ -313,6 +326,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
           cursor={cursor}
           onChange={handleChange}
           onDayClick={onDayClick}
+          dayAction={dayAction}
           onEventClick={onEventClick}
           renderEvent={renderEvent}
         />

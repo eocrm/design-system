@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import type { MonthGrid } from '../../calendar/types';
 import { addDays, addMonths, isSameDay, startOfWeek } from '../../calendar/dateMath';
 import { useTranslation } from '../../i18n/useTranslation';
-import type { CalendarEvent, EventBar, RenderEvent } from './types';
+import type { CalendarDayAction, CalendarEvent, EventBar, RenderEvent } from './types';
 import { layoutEventsForMonth } from './utils';
 import { DayCell } from './DayCell';
 import { EventChip } from './EventChip';
@@ -38,6 +38,8 @@ export interface MonthViewProps {
   onChange?: (date: Date) => void;
   /** Fires when a day cell (or its "+N more" chip) is clicked, or Enter/Space is pressed on it. */
   onDayClick?: (date: Date) => void;
+  /** Per-day action button rendered in each cell. See `CalendarDayAction`. */
+  dayAction?: CalendarDayAction;
   /** Fires when an event chip is clicked. */
   onEventClick?: (event: CalendarEvent) => void;
   /** Optional custom event renderer. See `RenderEvent` in `types.ts`. */
@@ -78,6 +80,7 @@ export function MonthView({
   cursor,
   onChange,
   onDayClick,
+  dayAction,
   onEventClick,
   renderEvent,
 }: MonthViewProps) {
@@ -231,6 +234,7 @@ export function MonthView({
                   day={day}
                   isFocused={day.key === focusedKey}
                   onDayClick={onDayClick}
+                  dayAction={dayAction}
                   onKeyDown={handleKeyDown}
                   style={{ gridColumn: i + 1, gridRow: 1 }}
                 />

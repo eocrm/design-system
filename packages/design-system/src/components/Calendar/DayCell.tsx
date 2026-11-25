@@ -1,6 +1,9 @@
 import { type CSSProperties, type KeyboardEvent } from 'react';
 import clsx from 'clsx';
 import type { Day } from '../../calendar/types';
+import { Cluster } from '../Cluster';
+import { DayActionButton } from './DayActionButton';
+import type { CalendarDayAction } from './types';
 import styles from './DayCell.module.scss';
 
 export interface DayCellProps {
@@ -10,6 +13,8 @@ export interface DayCellProps {
   isFocused?: boolean;
   /** Click on the cell — fires with the day's date. */
   onDayClick?: (date: Date) => void;
+  /** Per-day action button shown beside the day number. */
+  dayAction?: CalendarDayAction;
   /** Roving-tab-index keyboard handler from MonthView. */
   onKeyDown?: (e: KeyboardEvent<HTMLDivElement>, date: Date) => void;
   /** Inline grid placement set by MonthView (e.g. `{ gridColumn: 3, gridRow: 1 }`). */
@@ -27,7 +32,14 @@ export interface DayCellProps {
  * it is an internal building block consumed by `MonthView`. Use `Calendar` (or
  * `MonthView`) from the design system and pass events via the `events` prop.
  */
-export function DayCell({ day, isFocused = false, onDayClick, onKeyDown, style }: DayCellProps) {
+export function DayCell({
+  day,
+  isFocused = false,
+  onDayClick,
+  dayAction,
+  onKeyDown,
+  style,
+}: DayCellProps) {
   const handleClick = () => onDayClick?.(day.date);
   const handleKey = (e: KeyboardEvent<HTMLDivElement>) => onKeyDown?.(e, day.date);
 
@@ -42,9 +54,20 @@ export function DayCell({ day, isFocused = false, onDayClick, onKeyDown, style }
       onClick={handleClick}
       onKeyDown={handleKey}
     >
-      <div className={clsx(styles.dayNumber, day.isToday && styles.todayNumber)}>
-        {day.dayOfMonth}
-      </div>
+      <Cluster justify="between" align="center" gap="xs">
+        <div className={clsx(styles.dayNumber, day.isToday && styles.todayNumber)}>
+          {day.dayOfMonth}
+        </div>
+        {dayAction && (
+          <DayActionButton
+            action={dayAction}
+            date={day.date}
+            view="month"
+            tabbable={isFocused}
+            className={styles.monthAction}
+          />
+        )}
+      </Cluster>
     </div>
   );
 }
