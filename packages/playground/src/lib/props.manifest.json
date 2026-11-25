@@ -2541,6 +2541,52 @@
         }
       ]
     },
+    "DiffView": {
+      "props": [
+        {
+          "name": "diff",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Unified text diff (with hunk headers), e.g. from `git diff` or PHP `sebastian/diff`."
+        },
+        {
+          "name": "fromLabel",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Header label for the old side; shown as \"fromLabel → toLabel\", or alone when `toLabel` is unset."
+        },
+        {
+          "name": "toLabel",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Header label for the new side."
+        },
+        {
+          "name": "lineNumbers",
+          "type": "boolean",
+          "required": false,
+          "default": "true",
+          "description": "Show old/new line-number gutters, computed from the `@@` ranges."
+        },
+        {
+          "name": "wrap",
+          "type": "boolean",
+          "required": false,
+          "default": "true",
+          "description": "Wrap long lines. `false` keeps each line on one row and scrolls horizontally."
+        },
+        {
+          "name": "maxHeight",
+          "type": "DiffViewMaxHeight",
+          "required": false,
+          "default": "",
+          "description": "Frame max-height step; the diff scrolls past it."
+        }
+      ]
+    },
     "Divider": {
       "props": [
         {
@@ -8307,6 +8353,7 @@
     "CodeBlockHighlightLines": "readonly (number | readonly [number, number])[]",
     "CodeBlockMaxHeight": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\"",
     "CodeBlockLanguage": "\"json\" | \"bash\" | \"javascript\" | \"typescript\" | \"python\" | \"go\" | \"kotlin\" | \"java\" | \"csharp\" | \"rust\"",
+    "DiffViewMaxHeight": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\"",
     "HighlightRange": "{ start: number; length: number }",
     "RichTextImageActivateHandler": "(image: { src: string; alt?: string; }, trigger: HTMLElement) => void",
     "RichDoc": "{ blocks: Block[] }",
