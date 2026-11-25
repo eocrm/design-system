@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Calendar.tokens';
 
 .dayView {
@@ -7,4 +8,8 @@
   border-radius: var(--calendar-radius);
   overflow: hidden;
   background: var(--calendar-bg);
+}
+
+.headerAction {
+  @include touch-hit-area;
 }

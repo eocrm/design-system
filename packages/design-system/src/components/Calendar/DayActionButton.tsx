@@ -17,7 +17,7 @@ export interface DayActionButtonProps {
 
 /**
  * Internal: the icon-only per-day action button shared by every Calendar view.
- * Click and keydown stop propagation so the surrounding cell's `onDayClick`
+ * Click and Enter/Space keydown stop propagation so the surrounding cell's `onDayClick`
  * (click, Enter/Space) never also fires.
  */
 export function DayActionButton({
@@ -41,7 +41,9 @@ export function DayActionButton({
         e.stopPropagation();
         action.onActivate(date, { view });
       }}
-      onKeyDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
+      }}
     >
       {action.icon ?? <Plus aria-hidden="true" />}
     </Button>

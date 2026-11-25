@@ -8,3 +8,10 @@
   overflow: hidden;
   background: var(--calendar-bg);
 }
+
+// A tap on the column is the touch path; the header action is pointer-only.
+@media (pointer: coarse) {
+  .headerAction {
+    display: none;
+  }
+}

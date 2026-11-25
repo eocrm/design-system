@@ -1,16 +1,20 @@
 import { useMemo, type MouseEvent } from 'react';
 import clsx from 'clsx';
+import { Cluster } from '../Cluster';
+import { DayActionButton } from './DayActionButton';
 import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { formatDayLong, formatTime } from '../../calendar';
 import { startOfDay } from '../../calendar/dateMath';
 import type { Day } from '../../calendar/types';
 import { formatEventDuration } from './utils';
-import type { CalendarEvent, RenderEvent } from './types';
+import type { CalendarDayAction, CalendarEvent, RenderEvent } from './types';
 import { resolveEventColor } from './eventColor';
 import styles from './AgendaView.module.scss';
 
 export interface AgendaViewProps {
+  /** Per-day action beside each day heading. */
+  dayAction?: CalendarDayAction;
   /** One `Day` per calendar day in the agenda window (inclusive at both ends). */
   days: readonly Day[];
   /** Localized range label for the agenda window (e.g., "May 18 – 24, 2026"). */
@@ -60,6 +64,7 @@ export function AgendaView({
   locale: localeOverride,
   onEventClick,
   renderEvent,
+  dayAction,
 }: AgendaViewProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
@@ -83,7 +88,17 @@ export function AgendaView({
           role="listitem"
           className={clsx(styles.dayGroup, day.isToday && styles.todayGroup)}
         >
-          <h3 className={styles.dayHeader}>{formatDayLong(day.date, locale)}</h3>
+          <Cluster justify="between" align="center" className={styles.dayHeader}>
+            <h3 className={styles.dayTitle}>{formatDayLong(day.date, locale)}</h3>
+            {dayAction && (
+              <DayActionButton
+                action={dayAction}
+                date={day.date}
+                view="agenda"
+                className={styles.dayAction}
+              />
+            )}
+          </Cluster>
           <div className={styles.rows}>
             {rows.map((row) => (
               <AgendaRowItem

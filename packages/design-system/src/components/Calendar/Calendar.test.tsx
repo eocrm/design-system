@@ -239,3 +239,25 @@ describe('Calendar — resource columns and underlay routing', () => {
     expect(screen.getByRole('grid')).not.toHaveAttribute('aria-readonly');
   });
 });
+
+describe('Calendar dayAction wiring (DS-88)', () => {
+  it.each(['week', 'day', 'agenda'] as const)('%s view renders the action', (view) => {
+    render(
+      <Calendar
+        view={view}
+        onViewChange={() => {}}
+        defaultValue={new Date(2026, 4, 20)}
+        events={[
+          {
+            id: 'a',
+            title: 'A',
+            startsAt: new Date(2026, 4, 20, 9),
+            endsAt: new Date(2026, 4, 20, 10),
+          },
+        ]}
+        dayAction={{ label: (d) => `Add on ${d.toDateString()}`, onActivate: () => {} }}
+      />,
+    );
+    expect(screen.getAllByRole('button', { name: /^Add on / }).length).toBeGreaterThan(0);
+  });
+});

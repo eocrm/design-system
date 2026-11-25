@@ -3,10 +3,13 @@ import { useDay } from '../../calendar/useDay';
 import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
 import { AllDayBand } from './AllDayBand';
+import { Cluster } from '../Cluster';
+import { DayActionButton } from './DayActionButton';
 import { HourGrid, HOUR_GUTTER_WIDTH, type HourGridColumn } from './HourGrid';
 import { layoutBackgroundIntervals, layoutEventsForHourGrid, needsUnassignedColumn } from './utils';
 import type {
   CalendarBackgroundInterval,
+  CalendarDayAction,
   CalendarDropCandidate,
   CalendarDropResult,
   CalendarEvent,
@@ -18,6 +21,8 @@ import type {
 import styles from './DayView.module.scss';
 
 export interface DayViewProps {
+  /** Per-day action in the day header. Not rendered in resource mode. */
+  dayAction?: CalendarDayAction;
   /** The date to display. */
   cursor: Date;
   /** Events to display for the day. */
@@ -76,6 +81,7 @@ export function DayView({
   canDropEvent,
   dragSnapMinutes,
   renderEvent,
+  dayAction,
 }: DayViewProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
@@ -87,7 +93,22 @@ export function DayView({
     const date = day.day.date;
     if (!resources || resources.length === 0) {
       const single: HourGridColumn[] = [{ date, key: day.day.key, isWeekend: day.day.isWeekend }];
-      return { columns: single, headers: [<span key={day.day.key}>{day.dayLabel}</span>] };
+      return {
+        columns: single,
+        headers: [
+          <Cluster key={day.day.key} gap="xs" justify="center" align="center">
+            <span>{day.dayLabel}</span>
+            {dayAction && (
+              <DayActionButton
+                action={dayAction}
+                date={date}
+                view="day"
+                className={styles.headerAction}
+              />
+            )}
+          </Cluster>,
+        ],
+      };
     }
 
     const cols: HourGridColumn[] = resources.map((r) => ({
@@ -119,6 +140,7 @@ export function DayView({
     events,
     resources,
     unassignedLabel,
+    dayAction,
   ]);
 
   const layout = useMemo(

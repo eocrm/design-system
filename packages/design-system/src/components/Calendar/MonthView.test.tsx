@@ -211,6 +211,15 @@ describe('dayAction (DS-88)', () => {
     expect(onDayClick).not.toHaveBeenCalled();
   });
 
+  it('Space on a focused action calls onActivate once and not onDayClick', async () => {
+    const onDayClick = vi.fn();
+    const { onActivate } = setup({ onDayClick });
+    screen.getByRole('button', { name: 'Add on ' + cursor.toDateString() }).focus();
+    await userEvent.keyboard(' ');
+    expect(onActivate).toHaveBeenCalledTimes(1);
+    expect(onDayClick).not.toHaveBeenCalled();
+  });
+
   it("only the roving cell's action is tabbable", async () => {
     setup();
     const tabbable = () =>

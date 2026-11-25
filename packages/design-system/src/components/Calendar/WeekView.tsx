@@ -2,11 +2,14 @@ import { useMemo } from 'react';
 import { useWeek } from '../../calendar/useWeek';
 import { useLocale } from '../../i18n/useLocale';
 import { formatWeekdayShort } from '../../calendar/formatters';
+import { Cluster } from '../Cluster';
+import { DayActionButton } from './DayActionButton';
 import { AllDayBand } from './AllDayBand';
 import { HourGrid, HOUR_GUTTER_WIDTH, type HourGridColumn } from './HourGrid';
 import { layoutBackgroundIntervals, layoutEventsForHourGrid } from './utils';
 import type {
   CalendarBackgroundInterval,
+  CalendarDayAction,
   CalendarDropCandidate,
   CalendarDropResult,
   CalendarEvent,
@@ -17,6 +20,8 @@ import type {
 import styles from './WeekView.module.scss';
 
 export interface WeekViewProps {
+  /** Per-day action rendered in each day header (hidden on coarse pointers). */
+  dayAction?: CalendarDayAction;
   /** Navigation cursor — any date in the target week works. */
   cursor: Date;
   /** Events to display across the week. */
@@ -78,6 +83,7 @@ export function WeekView({
   dragSnapMinutes,
   renderEvent,
   now,
+  dayAction,
 }: WeekViewProps) {
   const contextLocale = useLocale();
   const locale = localeOverride ?? contextLocale;
@@ -99,9 +105,19 @@ export function WeekView({
   );
 
   const headers = week.days.map((d) => (
-    <span>
-      {formatWeekdayShort(d.date, locale)} <strong>{d.dayOfMonth}</strong>
-    </span>
+    <Cluster gap="xs" justify="center" align="center">
+      <span>
+        {formatWeekdayShort(d.date, locale)} <strong>{d.dayOfMonth}</strong>
+      </span>
+      {dayAction && (
+        <DayActionButton
+          action={dayAction}
+          date={d.date}
+          view="week"
+          className={styles.headerAction}
+        />
+      )}
+    </Cluster>
   ));
 
   return (
