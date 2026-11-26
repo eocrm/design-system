@@ -315,6 +315,72 @@ describe("RichTextEditor shared editing: history='external' never steals focus",
     expect(readSelection(editor)).toEqual(at('p1', 5));
   });
 
+  it('an upload settling while the menu has focus keeps the held caret and the focus', async () => {
+    const user = userEvent.setup();
+    const controller = createRef<RichTextEditorController>();
+    let finish!: () => void;
+    const { container, editor, outside, api } = setup(doc2('hello', 'world'), {
+      history: 'external',
+      blockControls: true,
+      toolbar: true,
+      controller,
+      upload: {
+        onUpload: () =>
+          new Promise((res) => (finish = () => res({ url: 'https://cdn.test/f.png' }))),
+      },
+    });
+    act(() => editor.focus());
+    caret(editor, 'p1', 2);
+    const file = new File(['x'], 'f.png', { type: 'image/png' });
+    fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [file] } });
+    await user.hover(editor.querySelector('[data-block-id="p2"]')!);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    const item = await screen.findByRole('menuitem', { name: 'Text color' });
+    act(() => item.focus());
+    act(() => controller.current!.setSelection(at('p1', 4)));
+    outside({ blocks: api.value.blocks.map((b) => (b.id === 'p1' ? para('p1', 'hello!') : b)) });
+    caret(editor, 'p1', 1); // the DOM selection drifted; the held caret is the truth
+    const addRange = vi.spyOn(Selection.prototype, 'addRange');
+    try {
+      await act(async () => finish());
+      expect(api.value.blocks.find((b) => b.type === 'attachment')).toMatchObject({
+        status: 'ready',
+      });
+      expect(addRange).not.toHaveBeenCalled();
+      expect(document.activeElement).toBe(item);
+    } finally {
+      addRange.mockRestore();
+    }
+    expect(controller.current!.getSelection()).toEqual(at('p1', 4));
+    fireEvent.focusIn(editor);
+    expect(readSelection(editor)).toEqual(at('p1', 4));
+  });
+
+  it('a colour pick keeps a held caret', async () => {
+    const controller = createRef<RichTextEditorController>();
+    const { editor, user, api, outside } = await openBlockMenu({ controller });
+    act(() => controller.current!.setSelection(at('p1', 4)));
+    outside(doc2('hello!', 'world'));
+    await user.click(screen.getByRole('menuitem', { name: 'Text color' }));
+    const green = await screen.findByRole('button', { name: 'Green' });
+    act(() => green.focus());
+    caret(editor, 'p1', 1);
+    fireEvent.click(green);
+    outside(structuredClone(api.value));
+    expect(controller.current!.getSelection()).toEqual(at('p1', 4));
+    fireEvent.focusIn(editor);
+    expect(readSelection(editor)).toEqual(at('p1', 4));
+  });
+
+  it('without history="external", a held setSelection caret is clamped to the new value', () => {
+    const controller = createRef<RichTextEditorController>();
+    const { editor, outside } = setup(doc2('hello', 'world'), { controller });
+    act(() => controller.current!.setSelection(at('p2', 3)));
+    outside({ blocks: [para('p1', 'x')] });
+    fireEvent.focusIn(editor);
+    expect(readSelection(editor)).toEqual(at('p1', 0));
+  });
+
   it('a selection kept by a render React discarded is never applied to a later value', async () => {
     // A transition render reads the caret for its value, then suspends (never commits).
     let release = () => {};
@@ -606,8 +672,9 @@ describe('RichTextEditor shared editing: presence', () => {
     );
     const carets = [...container.querySelectorAll('[data-presence-caret]')];
     expect(carets.map((c) => c.textContent)).toEqual(['Bob', '', '']);
+    // A nameless peer is left out of the list (no dangling separator).
     expect(container.querySelector('[data-sync-status]')).toHaveTextContent(
-      '3 others editing: Bob, Cy,',
+      /^2 others editing: Bob, Cy$/,
     );
   });
 

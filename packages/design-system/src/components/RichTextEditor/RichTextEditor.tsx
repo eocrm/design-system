@@ -176,6 +176,24 @@ function clampRange(range: RichRange, doc: RichDoc, before: readonly RichDoc[]):
   return { anchor: clamp(range.anchor), focus: clamp(range.focus) };
 }
 
+// Write a pending caret into the DOM. `afterVoid` (a commit / undo / redo bundled it with this
+// selection) puts it at the END of that figure's content — where Chrome's own Ctrl+End puts it:
+// a root-level caret after a trailing contentEditable=false figure has no visible position,
+// Chrome snaps it to the start of the editor.
+function placeCaret(root: HTMLElement, pending: { range: RichRange; afterVoid: string | null }) {
+  writeSelection(root, pending.range);
+  const fig = pending.afterVoid
+    ? root.querySelector(`[data-block-id="${CSS.escape(pending.afterVoid)}"]`)
+    : null;
+  if (!fig) return;
+  const r = fig.ownerDocument.createRange();
+  r.setStart(fig, fig.childNodes.length);
+  r.collapse(true);
+  const sel = fig.ownerDocument.getSelection();
+  sel?.removeAllRanges();
+  sel?.addRange(r);
+}
+
 // Give blocks new in `result.doc` (not in `known`) ids from `newId`, moving the caret with them.
 function renameNewBlocks(
   result: { doc: RichDoc; selection: RichRange },
@@ -775,8 +793,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // Every commit path writes pendingSelectionRef (null = "place no caret on
         // this render"), so a pending selection left by a commit the parent
         // rejected can never fire on a later, unrelated render.
+        // keepSelection keeps a held caret (outside value / setSelection) for when focus returns.
         pendingSelectionRef.current = options?.keepSelection
-          ? null
+          ? pendingSelectionRef.current?.held
+            ? pendingSelectionRef.current
+            : null
           : { range: result.selection, afterVoid };
         emit(result.doc, prevHistory);
       },
@@ -840,8 +861,16 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         reconcile();
         sync.current.onEdit?.({ kind: 'silent' });
         const root = rootRef.current;
-        const sel = root ? readSelection(root) : null;
-        pendingSelectionRef.current = sel ? { range: sel, afterVoid: null } : null;
+        // A held caret stays; otherwise re-pin the DOM one, held while focus is elsewhere (a menu).
+        const held = pendingSelectionRef.current?.held ? pendingSelectionRef.current : null;
+        const sel = held?.range ?? (root ? readSelection(root) : null);
+        pendingSelectionRef.current =
+          held ??
+          (sel && {
+            range: sel,
+            afterVoid: null,
+            held: !root?.contains(root.ownerDocument.activeElement),
+          });
         const prevHistory = historyRef.current;
         historyRef.current = {
           ...historyRef.current,
@@ -1113,7 +1142,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       }
       let pending = pendingSelectionRef.current;
       if (!pending && kept && valueChanged) pending = { range: kept, afterVoid: null, held: true };
-      if (pending && external && valueChanged)
+      if (pending && (external || pending.held) && valueChanged)
         pending = {
           ...pending,
           range: clampRange(pending.range, value, [prevValue, emittedRef.current ?? prevValue]),
@@ -1127,25 +1156,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           pendingSelectionRef.current = pending;
           return;
         }
-        writeSelection(root, pending.range);
         pendingSelectionRef.current = null;
-        // Only with the selection it was bundled with (a commit / undo / redo) —
-        // never on an unrelated re-run such as a readOnly toggle.
-        const afterVoid = pending.afterVoid;
-        const fig = afterVoid
-          ? root.querySelector(`[data-block-id="${CSS.escape(afterVoid)}"]`)
-          : null;
-        if (fig) {
-          // At the END of the figure's content — where Chrome's own Ctrl+End puts
-          // it. A root-level caret after a trailing contentEditable=false figure
-          // has no visible position: Chrome snaps it to the start of the editor.
-          const r = fig.ownerDocument.createRange();
-          r.setStart(fig, fig.childNodes.length);
-          r.collapse(true);
-          const sel = fig.ownerDocument.getSelection();
-          sel?.removeAllRanges();
-          sel?.addRange(r);
-        }
+        placeCaret(root, pending);
       }
     }, [value, syncHistoryFlags, mentionsEnabled, recomputeMention, external]);
 
@@ -1364,7 +1376,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         const p = pendingSelectionRef.current;
         if (e.target !== root || !p?.held || unconfirmedRef.current) return;
         pendingSelectionRef.current = null;
-        writeSelection(root, p.range);
+        placeCaret(root, p);
       };
       root.addEventListener('focusin', land);
       return () => root.removeEventListener('focusin', land);
@@ -2186,7 +2198,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // One name per id (the first: an app may relay duplicates). Untrusted: tolerate junk entries.
     const othersEditing = (presence ?? [])
       .filter((p, i, all) => p && all.findIndex((q) => q?.id === p.id) === i)
-      .map((p) => (typeof p.name === 'string' ? p.name : ''));
+      .map((p) => (typeof p.name === 'string' ? p.name : ''))
+      .filter(Boolean);
     // Always rendered (null without the prop) so setting uploadOwner never remounts the editable.
     const withUploadOwner = (node: React.ReactNode) => (
       <UploadOwnerContext.Provider value={uploadOwner ?? null}>{node}</UploadOwnerContext.Provider>
