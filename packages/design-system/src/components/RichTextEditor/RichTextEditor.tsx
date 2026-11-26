@@ -359,7 +359,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // block controls need the anchor). The image resize handle anchors into the
     // shell, so its hover tracking + element are gated on this. Declared up here
     // (vs. near the shell render) so the image-hover effect below can depend on it.
-    const usesShell = toolbar === true || autoToolbar || controlsOn;
+    // Collaborative mode always uses it: the presence overlay and status must stay inside one root.
+    const usesShell = toolbar === true || autoToolbar || controlsOn || !!seam;
     // The same gate the mention menu uses — drives both `useMention`'s `enabled`
     // and the consolidated selectionchange listener's mention fan-out below.
     const mentionsEnabled = !!mentions && !readOnly;
@@ -1940,15 +1941,20 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         <>
           {uploadStatus}
           {editable}
-          {seam?.overlay}
-          {footer}
           {linkBubble}
           {mentionMenu}
         </>
       );
     }
     return (
-      <div className={styles.shell} ref={shellRef}>
+      <div
+        className={clsx(
+          styles.shell,
+          // A shell only the seam asked for has nothing above the editable to tuck under.
+          toolbar !== true && !autoToolbar && !controlsOn && styles.bare,
+        )}
+        ref={shellRef}
+      >
         {toolbarBar}
         {uploadInput}
         {uploadStatus}

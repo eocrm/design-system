@@ -29,6 +29,7 @@ import {
   decodeSelection,
   encodeSelection,
   readChanged,
+  type CollabPoint,
   type CollabSelection,
   type LocalResult,
 } from './bridge';
@@ -49,7 +50,7 @@ const isOwn = (origin: unknown) => origin === LOCAL_ORIGIN || origin === UNTRACK
 /** Minimum gap between two `onPresenceChange` calls for selection moves. */
 const PRESENCE_THROTTLE_MS = 100;
 
-export type { CollabSelection };
+export type { CollabPoint, CollabSelection };
 
 /** The local user as others see them. */
 export interface CollabUser {
@@ -120,8 +121,8 @@ export interface CollaborativeRichTextEditorProps extends Omit<
 > {
   /**
    * The shared document. The app owns it and its transport (`doc.on('update')` → send;
-   * `Y.applyUpdate` on receive). Seed an empty one with `fromRichDoc`. Swapping it remounts nothing
-   * but starts a fresh undo history.
+   * `Y.applyUpdate` on receive). Apply the stored Y update log first; seed with `fromRichDoc` only
+   * a doc still empty after that. Swapping it remounts nothing but starts a fresh undo history.
    */
   doc: Y.Doc;
   /** The local user (name and colour) as other editors show them. */
@@ -137,7 +138,8 @@ export interface CollaborativeRichTextEditorProps extends Omit<
    */
   presence?: readonly CollabPresence[];
   /**
-   * Fires with this user's presence (`clientId: doc.clientID`) when the local selection moves
+   * Fires with this user's presence (`clientId: doc.clientID`) on mount, on a `doc` swap and
+   * when `user` changes (`selection: null` unless focused), when the local selection moves
    * (throttled to one call per ~100ms) and with `selection: null` when the editor loses focus.
    * Relay it to the other clients.
    */
@@ -378,6 +380,21 @@ export const CollaborativeRichTextEditor = forwardRef<
     else st.timer = setTimeout(fire, wait);
   };
   useEffect(() => () => clearTimeout(sendRef.current.timer), []);
+  // Announce this client on mount, on a doc swap and when the user changes, focused or not:
+  // others treat an uploader with no presence entry as gone ("Upload interrupted").
+  const announce = !!onPresenceChange;
+  useEffect(() => {
+    const cb = latestRef.current.onPresenceChange;
+    if (!cb) return;
+    const now = handle.current?.readSelection() ?? null;
+    sendRef.current.nulled = !now;
+    cb({
+      clientId: doc.clientID,
+      name: user.name,
+      color: user.color,
+      selection: now && encodeSelection(doc, now, renderedRef.current),
+    });
+  }, [announce, doc, user.name, user.color]);
 
   const presenceData = useMemo<PresenceData>(
     () => ({ doc, view, presence }),

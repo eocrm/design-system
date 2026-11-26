@@ -6,6 +6,9 @@
   // Presence
   --collab-user-color: var(--color-accent);
   --collab-caret-width: var(--border-width-emphasis);
+
+  // No `--opacity-*` primitive fits (the nearest, --opacity-dragging, is 0.4): a full-strength
+  // user colour at that alpha hides the selected text. A tint, not a state opacity.
   --collab-selection-opacity: 0.25;
   --collab-flag-fg: var(--color-fg-on-overlay);
   --collab-flag-font-size: var(--font-size-xs);

@@ -14,9 +14,22 @@ import { Example } from './Example';
 const LATENCY_MS = 300;
 const REMOTE = Symbol('remote');
 
-const SAMPLE = fromMarkdown(
-  '# Meeting notes\n\nEdit on both sides: carets, selections and edits cross a 300 ms in-memory relay.\n\n- Seeded on BOTH docs with `fromRichDoc` (idempotent: one copy, not two)\n- Toggle Offline on a side, edit, then reconnect to merge',
+/** The page as it was stored before co-editing (a plain RichDoc): migrated once, by the first load. */
+const LEGACY_PAGE = fromMarkdown(
+  '# Meeting notes\n\nEdit on both sides: carets, selections and edits cross a 300 ms in-memory relay.\n\n- Each side loads the stored Y update log first; only an empty doc is seeded from the legacy page\n- Toggle Offline on a side, edit, then reconnect to merge',
 );
+
+/** The server's stored Y update log: the source of truth every load starts from. */
+const serverLog: Uint8Array[] = [];
+
+/** Load a page: stored Y state first, then seed the legacy page only if the doc is still empty. */
+const loadDoc = () => {
+  const doc = new Y.Doc();
+  if (serverLog.length) Y.applyUpdate(doc, Y.mergeUpdates(serverLog), REMOTE);
+  fromRichDoc(LEGACY_PAGE, doc); // no-op once the log has blocks
+  if (!serverLog.length) serverLog.push(Y.encodeStateAsUpdate(doc)); // the one-time migration
+  return doc;
+};
 
 type Side = {
   doc: Y.Doc;
@@ -31,7 +44,7 @@ type Side = {
 };
 
 const makeSide = (name: string, color: string): Side => {
-  const doc = fromRichDoc(SAMPLE, new Y.Doc());
+  const doc = loadDoc();
   const user = { name, color };
   return {
     doc,
@@ -53,12 +66,14 @@ const deliver = (to: Side, apply: () => void, buffer: () => void) =>
 const sendUpdate = (from: Side, update: Uint8Array) => {
   const to = from.peer!;
   if (from.offline) from.outbox.push(update);
-  else
+  else {
+    serverLog.push(update);
     deliver(
       to,
       () => Y.applyUpdate(to.doc, update, REMOTE),
       () => to.inbox.push(update),
     );
+  }
 };
 
 const sendPresence = (from: Side, p: CollabPresence) => {
@@ -107,9 +122,9 @@ function useRelay() {
   const [a, b] = sides.current;
   const [statusA, setStatusA] = useState<CollabStatus>('synced');
   const [statusB, setStatusB] = useState<CollabStatus>('synced');
-  // Every connected client has an entry from the start, even before it focuses (selection: null).
-  const [othersA, setOthersA] = useState<CollabPresence[]>([b.lastPresence]);
-  const [othersB, setOthersB] = useState<CollabPresence[]>([a.lastPresence]);
+  // Starts empty: each editor announces itself on mount (selection: null), before any focus.
+  const [othersA, setOthersA] = useState<CollabPresence[]>([]);
+  const [othersB, setOthersB] = useState<CollabPresence[]>([]);
   a.setStatus = setStatusA;
   b.setStatus = setStatusB;
   a.setOthers = setOthersA;
@@ -138,8 +153,17 @@ import {
 
 const REMOTE = Symbol('remote');
 
-export function Page({ snapshot, send, onIncoming, sendPresence, onIncomingPresence }) {
-  const [doc] = useState(() => fromRichDoc(snapshot, new Y.Doc())); // one canonical snapshot
+export function Page({ storedState, legacyPage, send, onIncoming, sendPresence, onIncomingPresence }) {
+  const [doc] = useState(() => {
+    const d = new Y.Doc();
+    // 1. The stored Y update log / merged state FIRST.
+    if (storedState) Y.applyUpdate(d, storedState, REMOTE);
+    // 2. Only a still-empty doc (a never-migrated page) is seeded; a no-op once it has blocks.
+    //    Never seed from a toRichDoc snapshot: seed-then-merge duplicates the document.
+    fromRichDoc(legacyPage, d);
+    return d;
+  });
+  // Starts empty: every editor announces itself through onPresenceChange on mount.
   const [others, setOthers] = useState<CollabPresence[]>([]);
   const [status] = useState<CollabStatus>('synced');
 
@@ -213,7 +237,7 @@ export function CollaborativeRichTextEditorDemo() {
     >
       <Example
         title="Two editors, one document"
-        description="Ana and Ben each own a Y.Doc, both seeded from the same snapshot with fromRichDoc (concurrent seeding of the same snapshot merges into one copy). Click into both to see the other caret and its name flag (shown 2 s after it moves). Undo only reverts your own edits."
+        description="Ana and Ben each own a Y.Doc, loaded from the server's stored Y update log; the first load found it empty and migrated the legacy page with fromRichDoc, the second applied the log and seeded nothing. Click into both to see the other caret and its name flag (shown 2 s after it moves). Undo only reverts your own edits."
         code={CODE}
         fullWidth
       >

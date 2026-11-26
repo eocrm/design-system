@@ -53,8 +53,10 @@ type Replica = ReturnType<typeof replica>;
 
 /** Apply a local edit and assert the core invariant. */
 function edit(r: Replica, next: RichDoc, prev = r.view) {
-  r.view = applyLocal(r.doc, prev, next, LOCAL).view;
+  const res = applyLocal(r.doc, prev, next, LOCAL);
+  r.view = res.view;
   expect(toRichDoc(r.doc)).toEqual(norm(r.view));
+  return res;
 }
 
 function sync(...rs: Replica[]) {
@@ -390,6 +392,24 @@ describe('applyLocal', () => {
       expect(b.view.blocks[0].inlines).toEqual([run('aYZf')]);
     });
 
+    it('text: a remote emoji change never leaves half a surrogate pair', () => {
+      const a = seeded({ blocks: [blk('x', [run('a😀b')])] }, 1);
+      const b = seeded({ blocks: [blk('x', [run('a😀b')])] }, 2);
+      edit(a, setBlock(a.view, 0, { inlines: [run('a😁b')] })); // shares 😀's high surrogate
+      quiet(b, () => sync(a, b));
+      edit(b, setBlock(b.view, 0, { inlines: [run('ab')] })); // delete 😀
+      expect(b.view.blocks[0].inlines).toEqual([run('a😁b')]);
+    });
+
+    it('text: deleting an emoji right after a remote emoji deletes the right pair', () => {
+      const a = seeded({ blocks: [blk('x', [run('a😀b')])] }, 1);
+      const b = seeded({ blocks: [blk('x', [run('a😀b')])] }, 2);
+      edit(a, setBlock(a.view, 0, { inlines: [run('a😁😀b')] }));
+      quiet(b, () => sync(a, b));
+      edit(b, setBlock(b.view, 0, { inlines: [run('ab')] }));
+      expect(b.view.blocks[0].inlines).toEqual([run('a😁b')]);
+    });
+
     it('marks: a remote mark on other text is kept; a local mark is added per key', () => {
       const a = seeded({ blocks: [blk('x', [run('hello world')])] }, 1);
       const b = seeded({ blocks: [blk('x', [run('hello world')])] }, 2);
@@ -570,6 +590,16 @@ describe('selection remap', () => {
     expect(remap(b, caret(z.id, 2), () => edit(a, { blocks: [a.view.blocks[0]] }), a)).toEqual(
       caret(x.id, runsLength(x.inlines)),
     );
+  });
+
+  it('a hostile relative position naming a root type never creates it', () => {
+    const { b, id } = setup();
+    const rel = Y.createRelativePositionFromJSON({ tname: 'evil', item: null, type: null });
+    const enc = Buffer.from(Y.encodeRelativePosition(rel)).toString('base64');
+    const before = [...b.doc.share.keys()];
+    const point = { blockId: id, rel: enc };
+    expect(decodeSelection(b.doc, { anchor: point, focus: point }, b.view)).toEqual(caret(id, 0));
+    expect([...b.doc.share.keys()]).toEqual(before);
   });
 
   it('a block that moved keeps the caret', () => {
@@ -802,7 +832,7 @@ function randomOp(d: RichDoc, rnd: () => number, newId: () => string): RichDoc {
 
 describe('randomised convergence', () => {
   // Override to sweep seeds locally: SEED=n npx vitest run src/collab/bridge -t randomised
-  const DEFAULT_SEED = 0xd5_92;
+  const DEFAULT_SEED = 17; // a seed that hits every class below
   const SEED = Number(process.env.SEED ?? DEFAULT_SEED);
   const OPS_PER_REPLICA = 300;
 
@@ -831,7 +861,18 @@ describe('randomised convergence', () => {
         Y.applyUpdate(msg.to.doc, msg.u, REMOTE);
       }
     };
-    const seen = { moveEdit: 0, deleteEdit: 0, sameBlockEdits: 0, moveMove: 0, stalePrev: 0 };
+    // A junk entry (relayed like any update) makes seeding impossible on replicas that see it
+    // before their first edit: their placeholder is renamed instead.
+    rs[0].doc.getMap(BLOCKS).set('junk', 'nope');
+    const seen = {
+      moveEdit: 0,
+      deleteEdit: 0,
+      sameBlockEdits: 0,
+      moveMove: 0,
+      stalePrev: 0,
+      rename: 0,
+      placeholderRename: 0,
+    };
     const done = rs.map(() => 0);
     let step = 0;
     let peak = 0;
@@ -848,7 +889,10 @@ describe('randomised convergence', () => {
           deliver(1 + Math.floor(rnd() * 4), r);
           if (r.view !== prev) seen.stalePrev++;
         }
-        const next = randomOp(prev, rnd, () => `${r.doc.clientID.toString(36)}-${++counters[ri]}`);
+        // Half the new ids are editor-style `rtN` (alike on every client), fuzzing the rename path.
+        const next = randomOp(prev, rnd, () =>
+          rnd() < 0.5 ? `rt${++counters[ri]}` : `${r.doc.clientID.toString(36)}-${++counters[ri]}`,
+        );
         // Concurrent pairs: an op on a block another replica changed in an update r hasn't seen yet.
         for (const m of inflight) {
           if (m.to !== r || m.meta.id !== lastOp.id || lastOp.kind === 'none') continue;
@@ -859,7 +903,10 @@ describe('randomised convergence', () => {
           if (pair === 'move+move') seen.moveMove++;
         }
         meta = { from: r, ...lastOp };
-        edit(r, next, prev);
+        for (const { from } of edit(r, next, prev).renamed ?? []) {
+          if (from.startsWith('rt')) seen.rename++;
+          else seen.placeholderRename++;
+        }
         meta = null;
         peak = Math.max(peak, r.view.blocks.length);
         if (rnd() < 0.5) deliver(Math.floor(rnd() * 8)); // random delays: some updates wait

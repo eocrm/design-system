@@ -12,7 +12,10 @@ npm i yjs
 import * as Y from 'yjs';
 import { CollaborativeRichTextEditor, fromRichDoc } from '@eocrm/design-system/collab';
 
-const doc = fromRichDoc(initialSnapshot, new Y.Doc()); // seed once (see Persistence)
+// Load order matters (see Persistence): stored Y state first, legacy seed only if still empty.
+const doc = new Y.Doc();
+if (storedState) Y.applyUpdate(doc, storedState); // the stored Y update log / merged state
+fromRichDoc(legacyPage, doc); // no-op once the doc has blocks: migrates a never-migrated page
 
 <CollaborativeRichTextEditor
   doc={doc}
@@ -33,10 +36,10 @@ The component's CSS is imported by its own JS chunk. It is not part of `styles.c
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `doc` | `Doc` | yes | The shared document. The app owns it and its transport (`doc.on('update')` → send; `Y.applyUpdate` on receive). Seed an empty one with `fromRichDoc`. Swapping it remounts nothing but starts a fresh undo history. |
+| `doc` | `Doc` | yes | The shared document. The app owns it and its transport (`doc.on('update')` → send; `Y.applyUpdate` on receive). Apply the stored Y update log first; seed with `fromRichDoc` only a doc still empty after that. Swapping it remounts nothing but starts a fresh undo history. |
 | `user` | `CollabUser` | yes | The local user (name and colour) as other editors show them. |
 | `presence` | `readonly CollabPresence[]` | no | Other users' presence, as relayed by the app: drawn as carets and selection tints, and listed in the status area's accessible text. The entry for `doc.clientID` and entries whose selection no longer resolves are skipped. Removing users who left is the app's job. Once passed, keep an entry for **every connected client**, including ones that never focused the editor (`selection: null`): an `uploading` attachment whose uploader has no entry shows as "Upload interrupted" with Remove. Omit the prop and no upload ever reads as interrupted. |
-| `onPresenceChange` | `((presence: CollabPresence) => void)` | no | Fires with this user's presence (`clientId: doc.clientID`) when the local selection moves (throttled to one call per ~100ms) and with `selection: null` when the editor loses focus. Relay it to the other clients. |
+| `onPresenceChange` | `((presence: CollabPresence) => void)` | no | Fires with this user's presence (`clientId: doc.clientID`) on mount, on a `doc` swap and when `user` changes (`selection: null` unless focused), when the local selection moves (throttled to one call per ~100ms) and with `selection: null` when the editor loses focus. Relay it to the other clients. |
 | `status` | `'synced' \| 'connecting' \| 'offline'` | no | Connection state of the app's transport, shown as a small text + icon indicator in the toolbar row (`toolbar={true}`) or below the editor, and announced politely on change. Default: `'synced'`. |
 | `invalid` | `boolean` | no | `aria-invalid` on the textbox. Field / SettingRow inject it. Default: `false`. |
 | `required` | `boolean` | no | `aria-required` on the textbox. Field / SettingRow inject it. Default: `false`. |
@@ -55,7 +58,7 @@ The component's CSS is imported by its own JS chunk. It is not part of `styles.c
 
 <!-- props:end -->
 
-`CollabUser` is `{ name: string; color: string }`. `CollabPresence` is a `CollabUser` plus `clientId` (the user's `doc.clientID`) and `selection: CollabSelection | null` (`null` when the editor is not focused). `CollabStatus` is `'synced' | 'connecting' | 'offline'`. Also exported: `toRichDoc(doc)` and `fromRichDoc(rich, doc?)`.
+`CollabUser` is `{ name: string; color: string }`. `CollabPresence` is a `CollabUser` plus `clientId` (the user's `doc.clientID`) and `selection: CollabSelection | null` (`null` when the editor is not focused). `CollabSelection` (and its ends, `CollabPoint`) is opaque and JSON-serialisable: relay it as-is between clients. `CollabStatus` is `'synced' | 'connecting' | 'offline'`. Also exported: `toRichDoc(doc)` and `fromRichDoc(rich, doc?)`.
 
 ## Transport wiring
 
@@ -73,24 +76,33 @@ doc.on('update', (update: Uint8Array, origin: unknown) => {
 onIncoming((update: Uint8Array) => Y.applyUpdate(doc, update, REMOTE));
 ```
 
-Presence rides the same channel: `onPresenceChange` fires with this user's presence (throttled; `selection: null` on blur) - broadcast it. Keep what arrives in state and pass it as `presence`:
+Presence rides the same channel: `onPresenceChange` fires with this user's presence on mount (and on a `doc` swap or `user` change, with `selection: null` until the editor is focused), on selection moves (throttled) and with `selection: null` on blur - broadcast it. Every client therefore announces itself without being focused. Keep what arrives in state and pass it as `presence`; start empty, since each client's mount announcement fills it in:
 
 ```tsx
 const [others, setOthers] = useState<CollabPresence[]>([]);
 onIncomingPresence((p) => setOthers((all) => [...all.filter((x) => x.clientId !== p.clientId), p]));
 ```
 
+Remove an entry only when that client disconnects, and keep it through brief transport blips (a short grace period, e.g. a few seconds) before removing it: removal makes that client's in-flight uploads read as "Upload interrupted" for everyone else.
+
 Give a client that connects the other side's state (`Y.encodeStateAsUpdate(doc)` from a peer or the stored log); Yjs updates are idempotent, so duplicates and reordering are safe.
 
 ## Persistence
 
 - Store the **Y update log** (or a periodically merged `Y.encodeStateAsUpdate(doc)`) as the source of truth. Do not rebuild the doc from a `RichDoc` on every load.
-- Store `toRichDoc(doc)` snapshots next to it for search, version history and read-only display with `<RichText>`. They are derived data.
-- Migrate an existing page with `fromRichDoc(page, new Y.Doc())`. Seeding is deterministic and content-hashed: clients that seed the **same** snapshot concurrently merge into one copy. Seeding **different** snapshots yields duplicate content (never corruption), so seed from one canonical snapshot. Seeding is a no-op on a doc that already has blocks, and re-seeding after every seeded block was deleted does nothing (the deletions stay).
+- Store `toRichDoc(doc)` snapshots next to it for search, version history and read-only display with `<RichText>`. They are derived data: **never seed a doc from a snapshot taken from a Y doc.**
+- Load in this order, every time:
+  1. create the doc: `const doc = new Y.Doc()`;
+  2. apply the stored Y update log or merged state: `Y.applyUpdate(doc, stored)`;
+  3. only if the doc still has no blocks (a never-migrated legacy page), seed it: `fromRichDoc(legacyPage, doc)`. `fromRichDoc` is a no-op on a doc that already has blocks, so calling it unconditionally after step 2 is safe.
+
+  Seeding first and applying the log afterwards **duplicates the document**: seeding is content-hashed, so a seed from the latest `toRichDoc` snapshot is a new writer whose blocks differ from the logged ones, and both survive the merge.
+
+- Seeding is deterministic and content-hashed: clients that migrate the **same** legacy page concurrently merge into one copy. Seeding **different** `RichDoc`s yields duplicate content (never corruption), so migrate from the one canonical legacy page. Re-seeding after every seeded block was deleted does nothing (the deletions stay).
 
 ## Presence and status
 
-- `presence` must contain an entry for **every connected client**, including ones that never focused the editor (`selection: null`). Interrupted-upload detection depends on it: an upload whose uploader has no entry reads as interrupted. Removing entries of users who left is the app's job; the editor never expires them.
+- `presence` must contain an entry for **every connected client**, including ones that never focused the editor (`selection: null`). Interrupted-upload detection depends on it: an upload whose uploader has no entry reads as interrupted. Each editor announces itself through `onPresenceChange` on mount, so relaying every call keeps the list complete. Removing entries of users who left is the app's job (the editor never expires them); give a dropped connection a short grace period before removing its entry, so a brief blip does not flash "Upload interrupted" for others.
 - A remote caret's name flag shows for 2 seconds after that caret moves. There is no hover reveal: the overlay ignores the pointer.
 - `status` is supplied by the app (the editor cannot see your socket). It shows as a text + icon indicator and is announced politely on change. While `'offline'` or `'connecting'` edits are kept and sync on reconnect, provided your transport buffers and flushes them.
 
@@ -108,7 +120,8 @@ Give a client that connects the other side's state (`Y.encodeStateAsUpdate(doc)`
 
 ## Anti-patterns
 
-- Seeding per client from different snapshots (each client's own cached copy): content duplicates. Seed from one canonical snapshot.
+- Seeding per client from different snapshots (each client's own cached copy): content duplicates. Migrate from the one canonical legacy page.
+- Seeding from the latest `toRichDoc` snapshot and then applying the stored update log: the document duplicates. Apply the log first; seed only a doc that is still empty.
 - Passing `presence` without deduping at the transport level: a stale or duplicated entry for the same `clientId` keeps a ghost caret. Keep one entry per `clientId` and drop it when the client disconnects.
 - Applying incoming updates without an origin tag and echoing every `update` event: an infinite relay loop.
 - Using raw colours elsewhere: the `user.color` presence colours are the only raw colours the library accepts. Style everything else with tokens.

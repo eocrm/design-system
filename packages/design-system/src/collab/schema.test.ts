@@ -270,6 +270,38 @@ describe('deterministic seeding', () => {
     expect(client({ blocks: [p('z', [{ text: 'x', marks: [] }])] })).not.toEqual([c1]);
   });
 
+  // PINNED: the seed's clientID and ids are a hash of the canonical content. Clients on different
+  // library versions that seed the same page must agree, or they write it twice (duplicate
+  // content). If a change to ATTRS, MARK_ORDER, normalisation or the hash moves this value, it
+  // splits mixed-version clients: ship it only as a deliberate, documented migration.
+  it('seeds a fixed RichDoc under a fixed clientID and ids', () => {
+    const d = fromRichDoc({
+      blocks: [
+        p('a', [{ text: 'Notes', marks: [] }], { type: 'heading', level: 2 }),
+        p('b', [
+          { text: 'plain ', marks: [] },
+          { text: 'bold', marks: [{ type: 'bold' }] },
+          { text: ' link', marks: [{ type: 'link', href: 'https://x.test' }] },
+        ]),
+        p('c', [{ text: 'item', marks: [{ type: 'textColor', color: 'red' }] }], {
+          type: 'bullet_item',
+          depth: 1,
+        }),
+        p('d', [], {
+          type: 'attachment',
+          name: 'f.png',
+          mime: 'image/png',
+          src: 'https://cdn.test/f.png',
+          width: 10,
+          height: 20,
+          status: 'ready',
+        }),
+      ],
+    });
+    expect([...Y.decodeStateVector(Y.encodeStateVector(d)).keys()]).toEqual([232462597]);
+    expect(ids(toRichDoc(d))).toEqual(['s3uehad_0', 's3uehad_1', 's3uehad_2', 's3uehad_3']);
+  });
+
   it.each([
     [
       'mark order',

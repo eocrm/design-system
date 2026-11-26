@@ -1,11 +1,38 @@
 // textDiff.ts — a character diff (Myers) for mapping offsets across a remote text change.
 
+const SURROGATE = /[\uD800-\uDFFF]/;
+
 /**
- * For each character of `a`, its index in `b` when a shortest edit script (Myers, O((N+M)·D))
+ * For each UTF-16 unit of `a`, its index in `b` when a shortest edit script (Myers, O((N+M)·D))
  * keeps it, else -1. Kept indices strictly increase. Common prefix and suffix are matched first.
+ * Strings with surrogates are diffed by code point, so a pair is kept or dropped whole.
  * @internal
  */
 export function keptIndices(a: string, b: string, maxD = 1000): Int32Array {
+  if (!SURROGATE.test(a) && !SURROGATE.test(b)) return kept(a, b, maxD);
+  const ca = Array.from(a);
+  const cb = Array.from(b);
+  const units = (cs: string[]) => {
+    const at: number[] = [];
+    let u = 0;
+    for (const c of cs) {
+      at.push(u);
+      u += c.length;
+    }
+    return at;
+  };
+  const ua = units(ca);
+  const ub = units(cb);
+  const keepCp = kept(ca, cb, maxD);
+  const keep = new Int32Array(a.length).fill(-1);
+  keepCp.forEach((j, i) => {
+    // Equal code points have equal lengths.
+    if (j >= 0) for (let t = 0; t < ca[i].length; t++) keep[ua[i] + t] = ub[j] + t;
+  });
+  return keep;
+}
+
+function kept(a: string | string[], b: string | string[], maxD: number): Int32Array {
   const keep = new Int32Array(a.length).fill(-1);
   let pre = 0;
   while (pre < a.length && pre < b.length && a[pre] === b[pre]) keep[pre] = pre++;

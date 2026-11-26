@@ -169,7 +169,7 @@
 }
 
 // Square the editable surface's top corners so it tucks under the toolbar.
-.shell .root {
+.shell:not(.bare) .root {
   border-start-start-radius: 0;
   border-start-end-radius: 0;
 }

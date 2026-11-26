@@ -8,4 +8,5 @@ export type {
   CollabPresence,
   CollabStatus,
   CollabSelection,
+  CollabPoint,
 } from './CollaborativeRichTextEditor';

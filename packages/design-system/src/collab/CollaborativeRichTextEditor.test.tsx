@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import * as Y from 'yjs';
 import { CollaborativeRichTextEditor } from './CollaborativeRichTextEditor';
 import { BLOCKS, blockMeta, fromRichDoc, toRichDoc } from './schema';
@@ -67,6 +68,49 @@ describe('CollaborativeRichTextEditor', () => {
     expect(ref.current).toHaveAttribute('role', 'textbox');
     expect(ref.current).toHaveClass('custom');
     expect(ref.current).toHaveTextContent('hello');
+  });
+
+  it('without a toolbar, status and presence stay inside one root; className/ref stay on the textbox', () => {
+    const { a } = pair('hello');
+    const ref = { current: null as HTMLDivElement | null };
+    const { container } = render(
+      <CollaborativeRichTextEditor ref={ref} doc={a} user={ME} className="custom" />,
+    );
+    expect(container.childElementCount).toBe(1);
+    const root = container.firstElementChild!;
+    expect(root).toContainElement(ref.current);
+    expect(root).toContainElement(container.querySelector('[data-collab-status]') as HTMLElement);
+    expect(root.querySelectorAll(':scope > *').length).toBeGreaterThan(1);
+    expect(ref.current).toHaveClass('custom');
+    // Plain mode is unchanged: the editable is the only root.
+    const plain = render(<RichTextEditor value={docFromText('x')} onChange={() => {}} />);
+    expect(plain.container.childElementCount).toBe(1);
+    expect(plain.container.firstElementChild).toHaveAttribute('role', 'textbox');
+  });
+
+  it('under StrictMode: one Y update per edit, one observer, undo works', () => {
+    const { a, b } = pair('hello');
+    const updates: Uint8Array[] = [];
+    a.on('update', (u: Uint8Array, origin: unknown) => origin !== REMOTE && updates.push(u));
+    render(
+      <StrictMode>
+        <CollaborativeRichTextEditor doc={a} user={ME} aria-label="Editor" />
+      </StrictMode>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Editor' });
+    const id = firstId(a);
+    caret(editor, id, 5);
+    type(editor, '!');
+    expect(updates).toHaveLength(1);
+    type(editor, '?');
+    expect(updates).toHaveLength(2);
+    // A remote change renders once (a duplicate observer would double-apply nothing, but a
+    // leaked UndoManager would also track it): the text shows it exactly.
+    b.transact(() => yText(b, id).insert(0, 'X'));
+    expect(editor).toHaveTextContent(/^Xhello!\?$/);
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(textOf(a)).toBe('Xhello');
+    expect(editor).toHaveTextContent(/^Xhello$/);
   });
 
   it('typing writes a Y update carrying the text', () => {
@@ -387,6 +431,15 @@ describe('CollaborativeRichTextEditor presence', () => {
         />,
       );
       const editor = screen.getByRole('textbox', { name: 'Editor' });
+      // Announced on mount, before any focus, so others count this client as present.
+      expect(onPresenceChange).toHaveBeenCalledTimes(1);
+      expect(onPresenceChange).toHaveBeenLastCalledWith({
+        clientId: a.clientID,
+        name: 'Me',
+        color: '#123456',
+        selection: null,
+      });
+      onPresenceChange.mockClear();
       editor.focus();
       const id = firstId(a);
       const move = (o: number) => {
@@ -438,6 +491,37 @@ describe('CollaborativeRichTextEditor presence', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('CollaborativeRichTextEditor presence announce', () => {
+  it('announces presence on mount, on a doc swap and when the user changes, without focus', () => {
+    const { a } = pair('hello');
+    const b = new Y.Doc();
+    const cb = vi.fn();
+    const ui = (doc: Y.Doc, name: string) => (
+      <CollaborativeRichTextEditor
+        doc={doc}
+        user={{ name, color: '#123456' }}
+        onPresenceChange={cb}
+        toolbar
+      />
+    );
+    const { rerender } = render(ui(a, 'Me'));
+    expect(cb).toHaveBeenLastCalledWith(
+      expect.objectContaining({ clientId: a.clientID, name: 'Me', selection: null }),
+    );
+    rerender(ui(b, 'Me'));
+    expect(cb).toHaveBeenLastCalledWith(
+      expect.objectContaining({ clientId: b.clientID, name: 'Me', selection: null }),
+    );
+    rerender(ui(b, 'Renamed'));
+    expect(cb).toHaveBeenLastCalledWith(
+      expect.objectContaining({ clientId: b.clientID, name: 'Renamed', selection: null }),
+    );
+    const n = cb.mock.calls.length;
+    rerender(ui(b, 'Renamed'));
+    expect(cb).toHaveBeenCalledTimes(n);
   });
 });
 

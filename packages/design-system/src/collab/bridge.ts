@@ -443,9 +443,7 @@ export function readChanged(
 }
 
 /**
- * One end of a selection, portable across edits: the block id and a base64 `Y.RelativePosition` in
- * that block's `Y.Text` (`null` when the block is not in the doc yet, e.g. the empty-doc placeholder).
- * @internal
+ * One end of a `CollabSelection`. Opaque and JSON-serialisable: relay it as-is between clients.
  */
 export interface CollabPoint {
   /** Block the point was in when encoded; used to fall back when the block is gone. */
@@ -455,8 +453,8 @@ export interface CollabPoint {
 }
 
 /**
- * A selection encoded against a `Y.Doc` (see `encodeSelection`).
- * @internal
+ * A user's selection in a `CollabPresence`, portable across concurrent edits. Opaque and
+ * JSON-serialisable: relay it as-is between clients; never build or edit one yourself.
  */
 export interface CollabSelection {
   /** Encoded `Range.anchor`. */
@@ -523,10 +521,13 @@ function decodePoint(doc: Y.Doc, p: CollabPoint, fallback: RichDoc): Point | nul
     let offset = 0;
     if (typeof p.rel === 'string' && t instanceof Y.Text) {
       try {
-        const abs = Y.createAbsolutePositionFromRelativePosition(
-          Y.decodeRelativePosition(fromB64(p.rel)),
-          doc,
-        );
+        const rel = Y.decodeRelativePosition(fromB64(p.rel));
+        // Only positions anchored to an item or a type ID: resolving one that names a root type
+        // (`tname`) calls `doc.get(tname)`, which would create that root type in the shared doc.
+        const abs =
+          rel.item !== null || rel.type !== null
+            ? Y.createAbsolutePositionFromRelativePosition(rel, doc)
+            : null;
         if (abs?.type === t) offset = Math.min(abs.index, t.length);
       } catch {
         // Malformed (remote) data: fall back to the block start.
