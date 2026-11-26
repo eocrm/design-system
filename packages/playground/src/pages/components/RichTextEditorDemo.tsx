@@ -159,6 +159,7 @@ function SharedEditingExample() {
     canRedo: redo.length > 0,
     syncStatus: status,
     toolbar: true,
+    blockControls: true,
   } as const;
   return (
     <Stack gap="sm">
@@ -621,7 +622,7 @@ export function Demo() {
 
       <Example
         title="Shared editing hooks"
-        description="Two editors kept in sync by a naive whole-document relay: each onChange replaces the other's value. It is a toy (last writer wins, not a CRDT) that stands in for a real sync layer. history='external' routes undo/redo to one app-owned stack, grouped by onEdit's kind (a typing burst is one undo step); presence is relayed both ways from onSelectionChange; the status buttons drive syncStatus; createBlockId gives each editor its own id prefix so block ids never collide."
+        description="Two editors kept in sync by a naive whole-document relay: each onChange replaces the other's value. It is a toy (last writer wins, not a CRDT) that stands in for a real sync layer. history='external' routes undo/redo to one app-owned stack, grouped by onEdit's kind (a typing burst is one undo step); presence is relayed both ways from onSelectionChange; the status buttons drive syncStatus; createBlockId gives each editor its own id prefix so block ids never collide — including blocks made by the block controls (＋ insert, Duplicate, drag/move; hover a block's left gutter or press Shift+F10)."
         code={`import { useMemo, useRef, useState } from 'react';
 import {
   RichTextEditor,
@@ -694,7 +695,7 @@ export function Demo() {
   const createIdA = useMemo(() => makeId('a'), []);
   const createIdB = useMemo(() => makeId('b'), []);
 
-  const shared = { history: 'external', onUndo, onRedo, canUndo: undo.length > 0, canRedo: redo.length > 0, syncStatus: status, toolbar: true } as const;
+  const shared = { history: 'external', onUndo, onRedo, canUndo: undo.length > 0, canRedo: redo.length > 0, syncStatus: status, toolbar: true, blockControls: true } as const;
   return (
     <Stack gap="sm">
       <Cluster gap="sm">
