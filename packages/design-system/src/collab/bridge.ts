@@ -16,6 +16,7 @@ import {
   sliceInlines,
 } from '../components/RichText/engine/inlines';
 import { compareOrder, orderBetween } from './order';
+import { keptIndices } from './textDiff';
 import {
   BLOCKS,
   blockToRich,
@@ -118,9 +119,10 @@ function markDiffs(base: Inline[], want: Inline[], from: number): MarkDiff[] {
 /**
  * Apply the local text edit `base` → `inlines` to `t` (dropping foreign embeds first). The edit is a
  * prefix/suffix splice plus per-key re-marking of the kept prefix/suffix. When `t` has drifted from
- * `base` (a stale view: remote text already in the doc), the edit is transformed across the remote
- * splice: offsets before it are kept, offsets after it shift by its length change, offsets inside it
- * move to its end, and remote text inside a locally deleted span survives.
+ * `base` (a stale view: remote text already in the doc), the edit's offsets are mapped through a
+ * character diff of base → `t`: each base offset goes to where its character now is (offsets inside
+ * remotely deleted text go to the end of that change), only surviving base characters are deleted
+ * or re-marked, and remote text inside a locally deleted span survives.
  */
 function syncText(t: Y.Text, base: Inline[] | undefined, inlines: Inline[]) {
   let pos = 0;
@@ -135,20 +137,30 @@ function syncText(t: Y.Text, base: Inline[] | undefined, inlines: Inline[]) {
   const b = runsText(want);
   const y = runsText(yRuns);
   const { p, s } = splice(a, b); // local edit, base offsets
-  const r = splice(a, y); // remote drift: base [r.p, rEnd) became y [r.p, rEnd + shift)
-  const rEnd = a.length - r.s;
-  const shift = y.length - a.length;
-  const map = (x: number) => (x < r.p ? x : x >= rEnd ? x + shift : rEnd + shift);
-  // A base span's characters that still exist in `t`, as `t` offsets.
-  const pieces = (lo: number, hi: number): [number, number][] =>
-    (
-      [
-        [lo, Math.min(hi, r.p)],
-        [Math.max(lo, rEnd), hi],
-      ] as [number, number][]
-    )
-      .filter(([u, v]) => v > u)
-      .map(([u, v]) => [map(u), map(u) + v - u]);
+  // Base offset → `t` offset, and a base span's surviving characters as `t` spans. Identity on the
+  // fast path; on a stale base, through a character diff of base → `t` (every remote hunk mapped).
+  let map = (x: number) => x;
+  let pieces = (lo: number, hi: number): [number, number][] => (hi > lo ? [[lo, hi]] : []);
+  if (a !== y) {
+    const keep = keptIndices(a, y);
+    // A deleted base character maps to the next kept one: offsets inside remotely deleted (or
+    // replaced) text land at the end of the remote change.
+    map = (x) => {
+      for (let j = x; j < a.length; j++) if (keep[j] >= 0) return keep[j];
+      return y.length;
+    };
+    pieces = (lo, hi) => {
+      const out: [number, number][] = [];
+      for (let j = lo; j < hi; j++) {
+        const k = keep[j];
+        if (k < 0) continue;
+        const last = out[out.length - 1];
+        if (last && last[1] === k) last[1] = k + 1;
+        else out.push([k, k + 1]);
+      }
+      return out;
+    };
+  }
   // Formats first (they move no offsets), then deletes right to left, then the insert.
   const diffs = [
     ...markDiffs(sliceInlines(baseRuns, 0, p), sliceInlines(want, 0, p), 0),
@@ -279,30 +291,45 @@ const hasLive = (blocks: Y.Map<unknown>) =>
   [...blocks.entries()].some(([k, v]) => isBlockEntry(k, v));
 
 /**
- * Apply a local editor change (`prev` → `next`) to `doc` in one transaction tagged `origin`, and
- * return the `RichDoc` the editor must now show (adopt it: it is `next` itself unless the doc holds
- * more than the edit).
+ * What `applyLocal` returns.
+ * @internal
+ */
+export interface LocalResult {
+  /** The `RichDoc` the editor must now show. */
+  view: RichDoc;
+  /** A block id of `next` that was written (and appears in `view`) under a new id. */
+  renamed?: { from: string; to: string };
+}
+
+/**
+ * Apply a local editor change (`prev` → `next`) to `doc` in one transaction tagged `origin`.
+ * Returns `{ view, renamed? }`: `view` is the `RichDoc` the editor must now show (adopt it: it is
+ * `next` itself unless the doc holds more than the edit); `renamed` is set when a block of `next`
+ * was written under a different id (see the placeholder case below) — move a selection on
+ * `renamed.from` to `renamed.to`, same offsets.
  *
  * - Blocks diff by id: delete, insert, and `order`-only moves that keep the `Y.Text`. Attrs are
  *   written only where `prev` → `next` changed them; text is a prefix/suffix splice plus per-key
  *   re-marking of re-marked runs.
  * - A stale `prev` (remote changes already in `doc`, not yet in the editor) is tolerated: the local
- *   edit is rebased onto the doc (text offsets transformed across the remote splice, untouched attrs
- *   and marks kept), a block deleted remotely stays deleted, and the return value is the merged doc.
+ *   edit is rebased onto the doc (text offsets mapped through a character diff of the remote change,
+ *   untouched attrs and marks kept), a block deleted remotely stays deleted, and the return value is the merged doc.
  * - The first edit of an empty doc seeds the placeholder paragraph (`fromRichDoc`, deterministic, so
  *   clients doing it concurrently collapse) in its own untracked transaction first. When seeding
  *   cannot produce a block (the doc holds only junk entries, or its seeded blocks were deleted), the
- *   placeholder gets a fresh client-scoped id instead, so concurrent first edits cannot collide.
+ *   placeholder gets a fresh client-scoped id instead (reported as `renamed`), so concurrent first
+ *   edits cannot collide.
  * - Never throws on foreign order keys: it re-keys the neighbouring run instead.
  * @internal
  */
-export function applyLocal(doc: Y.Doc, prev: RichDoc, next: RichDoc, origin: unknown): RichDoc {
+export function applyLocal(doc: Y.Doc, prev: RichDoc, next: RichDoc, origin: unknown): LocalResult {
   const unchanged =
     prev.blocks.length === next.blocks.length &&
     next.blocks.every((b, i) => b.id === prev.blocks[i].id && blockEqual(b, prev.blocks[i]));
   // ponytail: re-reads every block per call (O(doc)) so a stale `prev` can never leave the editor
   // out of sync; take a "prev is current" hint from the caller if large docs make this measurable.
-  if (unchanged) return viewOf(doc, next, () => true);
+  if (unchanged) return { view: viewOf(doc, next, () => true) };
+  let renamed: LocalResult['renamed'];
   const blocks = blocksOf(doc);
   if (!hasLive(blocks)) {
     fromRichDoc(toRichDoc(doc), doc);
@@ -310,7 +337,13 @@ export function applyLocal(doc: Y.Doc, prev: RichDoc, next: RichDoc, origin: unk
       // The clock is unique per client and grows with the write below.
       const placeholder = toRichDoc(doc).blocks[0].id;
       const id = `${doc.clientID.toString(36)}-s${Y.getState(doc.store, doc.clientID)}`;
-      next = { ...next, blocks: next.blocks.map((b) => (b.id === placeholder ? { ...b, id } : b)) };
+      if (next.blocks.some((b) => b.id === placeholder)) {
+        renamed = { from: placeholder, to: id };
+        next = {
+          ...next,
+          blocks: next.blocks.map((b) => (b.id === placeholder ? { ...b, id } : b)),
+        };
+      }
     }
   }
   doc.transact(() => {
@@ -340,7 +373,8 @@ export function applyLocal(doc: Y.Doc, prev: RichDoc, next: RichDoc, origin: unk
       if (t instanceof Y.Text) syncText(t, old?.inlines, b.inlines ?? []);
     });
   }, origin);
-  return viewOf(doc, next, () => true);
+  const view = viewOf(doc, next, () => true);
+  return renamed ? { view, renamed } : { view };
 }
 
 // The `blocks` key of the block map an event happened in (or under).

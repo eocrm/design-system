@@ -53,7 +53,7 @@ type Replica = ReturnType<typeof replica>;
 
 /** Apply a local edit and assert the core invariant. */
 function edit(r: Replica, next: RichDoc, prev = r.view) {
-  r.view = applyLocal(r.doc, prev, next, LOCAL);
+  r.view = applyLocal(r.doc, prev, next, LOCAL).view;
   expect(toRichDoc(r.doc)).toEqual(norm(r.view));
 }
 
@@ -258,6 +258,71 @@ describe('applyLocal', () => {
       expect(b.view.blocks[0].inlines).toEqual([run('aXf')]);
     });
 
+    it('text: two separate remote hunks each map on their own', () => {
+      for (const [local, want] of [
+        ['hello, world', 'Xhello, worldY'],
+        ['hd', 'XhdY'],
+        ['hello world!', 'Xhello worldY!'],
+      ]) {
+        const a = seeded({ blocks: [blk('x', [run('hello world')])] }, 1);
+        const b = seeded({ blocks: [blk('x', [run('hello world')])] }, 2);
+        edit(a, setBlock(a.view, 0, { inlines: [run('Xhello worldY')] }));
+        quiet(b, () => sync(a, b));
+        edit(b, setBlock(b.view, 0, { inlines: [run(local)] }));
+        expect(b.view.blocks[0].inlines).toEqual([run(want)]);
+      }
+    });
+
+    it('text: a local mark between two remote hunks lands on the same characters', () => {
+      const a = seeded({ blocks: [blk('x', [run('hello world')])] }, 1);
+      const b = seeded({ blocks: [blk('x', [run('hello world')])] }, 2);
+      edit(a, setBlock(a.view, 0, { inlines: [run('Xhello worldY')] }));
+      quiet(b, () => sync(a, b));
+      edit(b, setBlock(b.view, 0, { inlines: [run('hello '), run('wor', B), run('ld')] }));
+      expect(b.view.blocks[0].inlines).toEqual([run('Xhello '), run('wor', B), run('ldY')]);
+    });
+
+    it('text (property): multi-hunk remote edits keep every remote insertion and the local edit in place', () => {
+      const rnd = prng(0x5a1e);
+      const int = (n: number) => Math.floor(rnd() * n);
+      for (let iter = 0; iter < 300; iter++) {
+        // Distinct characters, so every check below is unambiguous.
+        const baseText = [...'abcdefghijklmnop'].filter(() => rnd() < 0.7).join('') || 'a';
+        const a = seeded({ blocks: [blk('x', [run(baseText)])] }, 1);
+        const b = seeded({ blocks: [blk('x', [run(baseText)])] }, 2);
+        // Remote: a few separate inserts (uppercase) and deletes, straight on a's Y.Text.
+        const t = a.doc
+          .getMap<Y.Map<unknown>>(BLOCKS)
+          .get(a.view.blocks[0].id)!
+          .get('text') as Y.Text;
+        const ups = [...'ABCDEFGH'].slice(0, 1 + int(4));
+        for (const up of ups) t.insert(int(t.length + 1), up);
+        for (let k = int(3); k > 0 && t.length > 1; k--) {
+          const at = int(t.length);
+          if (!/[A-Z]/.test(t.toString()[at])) t.delete(at, 1);
+        }
+        const remoteLeft = new Set([...t.toString()].filter((c) => /[a-z]/.test(c)));
+        quiet(b, () => sync(a, b));
+        // Local, on the stale base: delete [p, e) and insert digits at p.
+        const p = int(baseText.length + 1);
+        const e = p + int(baseText.length - p + 1);
+        const ins = ['1', '12', ''][int(3)];
+        const local = baseText.slice(0, p) + ins + baseText.slice(e);
+        if (local === baseText) continue;
+        edit(b, setBlock(b.view, 0, { inlines: local ? [run(local)] : [run('')] }));
+        const merged = b.view.blocks[0].inlines.map((r) => r.text).join('');
+        const msg = `iter=${iter} base=${baseText} remote=${t.toString()} local=${local} merged=${merged}`;
+        for (const up of ups) expect(merged, msg).toContain(up);
+        // Surviving base characters plus the local insertion, in base order.
+        const keep = (c: string, i: number) => remoteLeft.has(c) && (i < p || i >= e);
+        const want =
+          [...baseText.slice(0, p)].filter((c, i) => keep(c, i)).join('') +
+          ins +
+          [...baseText.slice(e)].filter((c, i) => keep(c, i + e)).join('');
+        expect(merged.replace(/[A-Z]/g, ''), msg).toBe(want);
+      }
+    });
+
     it('text: a local delete overlapping a remote replace keeps the remote text', () => {
       const a = seeded({ blocks: [blk('x', [run('abcdef')])] }, 1);
       const b = seeded({ blocks: [blk('x', [run('abcdef')])] }, 2);
@@ -321,7 +386,16 @@ describe('applyLocal', () => {
       prep(a);
       sync(a, b);
       expect(a.view.blocks).toHaveLength(1); // the placeholder
-      edit(a, { blocks: [{ ...a.view.blocks[0], inlines: [run('A')] }] });
+      const from = a.view.blocks[0].id;
+      const res = applyLocal(
+        a.doc,
+        a.view,
+        { blocks: [{ ...a.view.blocks[0], inlines: [run('A')] }] },
+        LOCAL,
+      );
+      expect(res.renamed).toEqual({ from, to: res.view.blocks[0].id });
+      expect(res.renamed!.to).not.toBe(from);
+      a.view = res.view;
       edit(b, { blocks: [{ ...b.view.blocks[0], inlines: [run('B')] }] });
       sync(a, b);
       const texts = toRichDoc(a.doc).blocks.map((x) => x.inlines.map((i) => i.text).join(''));
