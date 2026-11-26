@@ -19,6 +19,11 @@
     "jsGzip": 74800,
     "cssGzip": 10600
   },
+  "collab": {
+    "code": "import { CollaborativeRichTextEditor } from '@eocrm/design-system/collab'; console.log(CollaborativeRichTextEditor);",
+    "jsGzip": 81600,
+    "cssGzip": 11200
+  },
   "i18n-en": {
     "code": "import { I18nProvider, Button } from '@eocrm/design-system'; console.log(I18nProvider, Button);",
     "jsGzip": 8820,

@@ -34,7 +34,7 @@ async function measure(name, code, root) {
   try {
     symlinkSync(join(root, 'node_modules'), join(dir, 'node_modules'));
     writeFileSync(join(dir, 'main.js'), code);
-    const ext = ['react', 'react-dom', 'react/jsx-runtime', 'lucide-react'];
+    const ext = ['react', 'react-dom', 'react/jsx-runtime', 'lucide-react', 'yjs'];
     const res = await build({
       root: dir,
       logLevel: 'error',

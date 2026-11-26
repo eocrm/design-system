@@ -265,6 +265,12 @@ export const componentGroups: NavGroup[] = [
       },
       { to: '/components/phone-input', label: 'PhoneInput', icon: Phone, end: false },
       { to: '/components/rich-text-editor', label: 'RichTextEditor', icon: Pencil, end: false },
+      {
+        to: '/components/collaborative-rich-text-editor',
+        label: 'CollaborativeRichTextEditor',
+        icon: Pencil,
+        end: false,
+      },
       { to: '/components/textarea', label: 'Textarea', icon: MessageSquareText, end: false },
     ],
   },

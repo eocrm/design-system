@@ -60,14 +60,21 @@ function fail(message) {
 
 const configFile = ts.readConfigFile(join(PKG, 'tsconfig.json'), ts.sys.readFile);
 const { options } = ts.parseJsonConfigFileContent(configFile.config, ts.sys, PKG);
-const program = ts.createProgram([join(PKG, 'src/index.ts')], options);
+// The main entry plus the `/collab` subpath entry (its components are documented too).
+const ENTRIES = ['src/index.ts', 'src/collab/index.ts'].map((e) => join(PKG, e));
+const program = ts.createProgram(ENTRIES, options);
 const checker = program.getTypeChecker();
-const moduleSymbol = checker.getSymbolAtLocation(program.getSourceFile(join(PKG, 'src/index.ts')));
 
 const propsTypes = new Map();
-for (const exp of checker.getExportsOfModule(moduleSymbol)) {
-  if (!exp.name.endsWith('Props')) continue;
-  propsTypes.set(exp.name, exp.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(exp) : exp);
+for (const entry of ENTRIES) {
+  const moduleSymbol = checker.getSymbolAtLocation(program.getSourceFile(entry));
+  for (const exp of checker.getExportsOfModule(moduleSymbol)) {
+    if (!exp.name.endsWith('Props')) continue;
+    propsTypes.set(
+      exp.name,
+      exp.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(exp) : exp,
+    );
+  }
 }
 
 const docNames = readdirSync(COMPONENT_DOCS)

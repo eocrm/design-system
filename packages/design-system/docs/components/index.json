@@ -120,6 +120,11 @@
     "cluster": "Display"
   },
   {
+    "name": "CollaborativeRichTextEditor",
+    "summary": "real-time co-editing of RichTextEditor over a Yjs doc",
+    "cluster": "Forms"
+  },
+  {
     "name": "ColorPicker",
     "summary": "controlled HEX color picker (popover + inline)",
     "cluster": "Forms"

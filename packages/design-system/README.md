@@ -25,6 +25,8 @@ If your `.npmrc` still maps `@eocrm` to another registry, remove that line.
 npm install @eocrm/design-system
 ```
 
+Real-time co-editing (`CollaborativeRichTextEditor`) ships from the `@eocrm/design-system/collab` subpath and needs the optional peer `yjs` (`npm i yjs`). The main entry never imports it. See `docs/components/CollaborativeRichTextEditor.md`.
+
 ### 3. Use
 
 ```ts
