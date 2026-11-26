@@ -152,6 +152,7 @@ import {
   type CollabPresence,
   type CollabStatus,
 } from '@eocrm/design-system/collab';
+import type { RichDoc } from '@eocrm/design-system';
 
 const REMOTE = Symbol('remote');
 
@@ -159,9 +160,15 @@ const REMOTE = Symbol('remote');
 // the state as the log's first entry (relay it too); else a brand-new page starts empty.
 // Seed only when there is NO stored log (a log whose blocks were all deleted is still a log).
 // Never seed from a toRichDoc snapshot; never write snapshots back into the legacy field.
-function loadDoc(storedLog: Uint8Array | null, legacyPage, persist: (u: Uint8Array) => void) {
+// Assumes \`onIncoming\` buffers updates that arrive before it is attached: subscribe to SSE
+// BEFORE fetching the stored log (or resume with Mercure's Last-Event-ID), never after.
+function loadDoc(
+  storedUpdates: Uint8Array[],
+  legacyPage: RichDoc | null,
+  persist: (u: Uint8Array) => void, // stores AND relays
+) {
   const d = new Y.Doc();
-  if (storedLog) Y.applyUpdate(d, storedLog, REMOTE);
+  if (storedUpdates.length > 0) Y.applyUpdate(d, Y.mergeUpdates(storedUpdates), REMOTE);
   else if (legacyPage) {
     fromRichDoc(legacyPage, d);
     persist(Y.encodeStateAsUpdate(d)); // the migration; the legacy field is never read again
@@ -169,8 +176,19 @@ function loadDoc(storedLog: Uint8Array | null, legacyPage, persist: (u: Uint8Arr
   return d;
 }
 
+interface PageProps {
+  storedUpdates: Uint8Array[]; // the stored Y update log (your API returns a list)
+  legacyPage: RichDoc | null; // never-migrated content, read once
+  persist: (u: Uint8Array) => void; // store + relay
+  send: (u: Uint8Array) => void;
+  onIncoming: (cb: (u: Uint8Array) => void) => () => void;
+  sendPresence: (p: CollabPresence) => void;
+  onIncomingPresence: (cb: (p: CollabPresence) => void) => () => void;
+  onPeerJoined: (cb: () => void) => () => void;
+}
+
 export function Page({
-  storedLog,
+  storedUpdates,
   legacyPage,
   persist,
   send,
@@ -178,18 +196,19 @@ export function Page({
   sendPresence,
   onIncomingPresence,
   onPeerJoined,
-}) {
-  const [doc] = useState(() => loadDoc(storedLog, legacyPage, persist));
+}: PageProps) {
+  const [doc] = useState(() => loadDoc(storedUpdates, legacyPage, persist));
   // Starts empty: a peer's mount announcement may predate this subscription, so peers re-send.
   const [others, setOthers] = useState<CollabPresence[]>([]);
   const [status] = useState<CollabStatus>('synced');
-  // On a doc swap, also drop the old doc.clientID's entry from \`others\`.
+  // On a doc swap, broadcast a "left" for the old doc.clientID so peers drop its entry.
   const lastPresence = useRef<CollabPresence | null>(null);
 
   useEffect(() => {
     const onUpdate = (u: Uint8Array, origin: unknown) => origin !== REMOTE && send(u);
     doc.on('update', onUpdate);
-    // A client that joins or reconnects re-receives each peer's last presence.
+    // When a peer joins or reconnects, re-send our last presence to it (it missed the mount
+    // announcement). After our own reconnect, re-send it too (peers may have dropped us).
     const offJoin = onPeerJoined(() => lastPresence.current && sendPresence(lastPresence.current));
     const offIn = onIncoming((u: Uint8Array) => Y.applyUpdate(doc, u, REMOTE));
     const offPresence = onIncomingPresence((p: CollabPresence) =>
