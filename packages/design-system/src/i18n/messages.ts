@@ -1190,8 +1190,12 @@ export interface Messages {
     offline: string;
     /** Follows `offline` in the announcement and accessible text: edits are kept and sync on reconnect. */
     offlineHint: string;
-    /** Function leaf — status area's accessible text listing the other people editing (quote names, don't inflect them). */
-    othersEditing: (params: { names: readonly string[] }) => string;
+    /**
+     * Function leaf — status area's accessible text listing the other people editing (quote
+     * names, don't inflect them). `count` (all of them, default `names.length`) can exceed
+     * `names`: a peer without a name is counted but not listed.
+     */
+    othersEditing: (params: { names: readonly string[]; count?: number }) => string;
     /** An `uploading` attachment whose uploader has left the document. */
     uploadInterrupted: string;
     /** Default aria-label for the editable region when none is supplied. */

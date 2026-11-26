@@ -356,6 +356,40 @@ describe("RichTextEditor shared editing: history='external' never steals focus",
     expect(readSelection(editor)).toEqual(at('p1', 4));
   });
 
+  it('an upload settling while the menu has focus pins the DOM caret as held', async () => {
+    const user = userEvent.setup();
+    let finish!: () => void;
+    const { container, editor } = setup(doc2('hello', 'world'), {
+      history: 'external',
+      blockControls: true,
+      toolbar: true,
+      upload: {
+        onUpload: () =>
+          new Promise((res) => (finish = () => res({ url: 'https://cdn.test/f.png' }))),
+      },
+    });
+    act(() => editor.focus());
+    caret(editor, 'p1', 2);
+    const file = new File(['x'], 'f.png', { type: 'image/png' });
+    fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [file] } });
+    await user.hover(editor.querySelector('[data-block-id="p2"]')!);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    const item = await screen.findByRole('menuitem', { name: 'Text color' });
+    act(() => item.focus());
+    caret(editor, 'p1', 1); // the insert split p1 at 2
+    const addRange = vi.spyOn(Selection.prototype, 'addRange');
+    try {
+      await act(async () => finish());
+      expect(addRange).not.toHaveBeenCalled();
+      expect(document.activeElement).toBe(item);
+    } finally {
+      addRange.mockRestore();
+    }
+    document.getSelection()!.removeAllRanges();
+    fireEvent.focusIn(editor);
+    expect(readSelection(editor)).toEqual(at('p1', 1));
+  });
+
   it('a colour pick keeps a held caret', async () => {
     const controller = createRef<RichTextEditorController>();
     const { editor, user, api, outside } = await openBlockMenu({ controller });
@@ -672,9 +706,9 @@ describe('RichTextEditor shared editing: presence', () => {
     );
     const carets = [...container.querySelectorAll('[data-presence-caret]')];
     expect(carets.map((c) => c.textContent)).toEqual(['Bob', '', '']);
-    // A nameless peer is left out of the list (no dangling separator).
+    // A nameless peer is counted but not listed (no dangling separator).
     expect(container.querySelector('[data-sync-status]')).toHaveTextContent(
-      /^2 others editing: Bob, Cy$/,
+      /^3 others editing: Bob, Cy$/,
     );
   });
 

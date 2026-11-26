@@ -2195,11 +2195,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // `usesShell` (the stable `.shell` gate) is declared near the top so the
     // image-hover effect can depend on it; it's reused here for the shell render.
 
-    // One name per id (the first: an app may relay duplicates). Untrusted: tolerate junk entries.
+    // One entry per id (the first: an app may relay duplicates); '' for a nameless one, counted
+    // but not listed. Untrusted: tolerate junk entries.
     const othersEditing = (presence ?? [])
       .filter((p, i, all) => p && all.findIndex((q) => q?.id === p.id) === i)
-      .map((p) => (typeof p.name === 'string' ? p.name : ''))
-      .filter(Boolean);
+      .map((p) => (typeof p.name === 'string' ? p.name : ''));
     // Always rendered (null without the prop) so setting uploadOwner never remounts the editable.
     const withUploadOwner = (node: React.ReactNode) => (
       <UploadOwnerContext.Provider value={uploadOwner ?? null}>{node}</UploadOwnerContext.Provider>

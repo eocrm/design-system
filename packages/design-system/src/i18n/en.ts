@@ -640,8 +640,8 @@ export const en: Messages = {
     connecting: 'Connecting…',
     offline: 'Offline',
     offlineHint: 'changes will sync when reconnected',
-    othersEditing: ({ names }) =>
-      `${names.length} ${names.length === 1 ? 'other' : 'others'} editing: ${names.join(', ')}`,
+    othersEditing: ({ names, count = names.length }) =>
+      `${count} ${count === 1 ? 'other' : 'others'} editing${names.length ? `: ${names.join(', ')}` : ''}`,
     uploadInterrupted: 'Upload interrupted',
     editorLabel: 'Rich text editor',
     toolbar: 'Formatting',
