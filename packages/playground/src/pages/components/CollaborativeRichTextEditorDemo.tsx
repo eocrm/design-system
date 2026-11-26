@@ -205,7 +205,7 @@ export function Page({
   // Starts empty: a peer's mount announcement may predate this subscription, so peers re-send.
   const [others, setOthers] = useState<CollabPresence[]>([]);
   const [status] = useState<CollabStatus>('synced');
-  // On a doc swap, broadcast a "left" for the old doc.clientID so peers drop its entry.
+  // Our last presence, re-sent when a peer joins or after our own reconnect.
   const lastPresence = useRef<CollabPresence | null>(null);
 
   useEffect(() => {
