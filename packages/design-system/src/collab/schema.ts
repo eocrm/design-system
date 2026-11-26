@@ -72,7 +72,11 @@ function fnv1a(s: string): number {
   return h >>> 0 || 1;
 }
 
-function marksToAttrs(marks: Mark[]): Record<string, unknown> {
+/**
+ * A mark set as `Y.Text` formatting attributes (keys in `MARK_ORDER`).
+ * @internal
+ */
+export function marksToAttrs(marks: Mark[]): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   // MARK_ORDER, so the Y.Text format items (emitted in key order) don't depend on input order.
   const sorted = [...marks].sort((a, b) => MARK_ORDER.indexOf(a.type) - MARK_ORDER.indexOf(b.type));
@@ -118,15 +122,24 @@ export function blockToRich(m: Y.Map<unknown>): Block {
     if (VALID[k](v)) (block as unknown as Record<string, unknown>)[k] = v;
   }
   const text = m.get('text');
-  const delta = (text instanceof Y.Text ? text.toDelta() : []) as {
+  block.inlines = block.type === 'attachment' ? [] : textRuns(text instanceof Y.Text ? text : null);
+  return block;
+}
+
+/**
+ * A `Y.Text`'s string content as normalised runs with validated marks (embeds are skipped).
+ * @internal
+ */
+export function textRuns(text: Y.Text | null): Inline[] {
+  const delta = (text ? text.toDelta() : []) as {
     insert: unknown;
     attributes?: Record<string, unknown>;
   }[];
-  const runs: Inline[] = delta
-    .filter((d) => isStr(d.insert))
-    .map((d) => ({ text: d.insert as string, marks: attrsToMarks(d.attributes) }));
-  block.inlines = block.type === 'attachment' ? [] : normalizeInlines(runs);
-  return block;
+  return normalizeInlines(
+    delta
+      .filter((d) => isStr(d.insert))
+      .map((d) => ({ text: d.insert as string, marks: attrsToMarks(d.attributes) })),
+  );
 }
 
 /**
@@ -136,8 +149,9 @@ export function blockToRich(m: Y.Map<unknown>): Block {
  * @internal
  */
 export function writeBlock(m: Y.Map<unknown>, b: Block): void {
-  m.set('id', b.id);
-  m.set('type', b.type);
+  // Unchanged values are not re-set: a redundant write would win over a concurrent remote change.
+  if (m.get('id') !== b.id) m.set('id', b.id);
+  if (m.get('type') !== b.type) m.set('type', b.type);
   for (const k of ATTRS) {
     const v = b[k];
     if (v === undefined) {
