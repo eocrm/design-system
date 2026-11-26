@@ -175,6 +175,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   } | null>(null);
   const announceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [message, setMessage] = useState('');
+  // Bumped per move attempt so an identical message (same refusal twice) is announced again.
+  const [announceKey, setAnnounceKey] = useState(0);
   // The node a keyboard move is carrying: re-focused once the app renders it in its new place.
   const pendingFocus = useRef<string | null>(null);
   useEffect(() => {
@@ -346,6 +348,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   }, [flat, focusKey, inTree]);
 
   const moveNode = (item: TreeItem & { kind: 'node' }, dir: MoveDirection) => {
+    setAnnounceKey((k) => k + 1);
     const r = keyboardMove(flat, item.node.id, dir, canDrop);
     if ('refusal' in r) {
       setMessage(t(r.refusal === 'boundary' ? BOUNDARY[dir] : 'treeView.moveRefused'));
@@ -612,7 +615,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       </div>
       {/* Outside the tree: a tree may own only groups and treeitems. */}
       {chart && <VisuallyHidden id={hintId}>{t('treeView.chartHint')}</VisuallyHidden>}
-      <LiveRegion>{message}</LiveRegion>
+      <LiveRegion announceKey={announceKey}>{message}</LiveRegion>
     </>
   );
 });

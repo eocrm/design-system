@@ -793,6 +793,22 @@ describe('TreeView keyboard move', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
+  it('re-announces an identical boundary refusal on a repeated attempt', async () => {
+    render(<Move />);
+    focus('Intro');
+    press('ArrowUp');
+    await said("Can't move further up");
+    const region = screen.getByRole('status');
+    // Clear-then-write: the region goes empty before the identical text returns.
+    const seen: string[] = [];
+    const mo = new MutationObserver(() => seen.push(region.textContent ?? ''));
+    mo.observe(region, { childList: true, characterData: true, subtree: true });
+    press('ArrowUp');
+    await waitFor(() => expect(seen).toContain(''));
+    await said("Can't move further up");
+    mo.disconnect();
+  });
+
   it('refused by canDrop announces "Can\'t move here"', async () => {
     const spy = vi.fn();
     render(<Move onMoveSpy={spy} canDrop={(_id, p) => p === null} />);
