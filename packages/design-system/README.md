@@ -266,6 +266,11 @@ Grouped for navigation. Per-component contracts are in `docs/components/<Name>.m
 
 ---
 
+## Migrating to 0.9
+
+- **Removed:** the `@eocrm/design-system/collab` subpath and `CollaborativeRichTextEditor` are gone, and `yjs` is no longer a peer dependency (uninstall it unless your app uses it directly).
+- **Build the sync binding in your app** on `RichTextEditor`'s shared-editing props (`history="external"`, `onUndo`/`onRedo`, `onEdit`, `createBlockId`, `controller`, `presence`, `syncStatus`, …) — see "Shared editing" in [RichTextEditor.md](./docs/components/RichTextEditor.md). The library no longer reads Y.Doc data.
+
 ## Migrating to 0.7
 
 - **Stylesheet:** `@eocrm/design-system/styles/global.scss` is now `@eocrm/design-system/styles/global.css`. `styles.css` bundles every component's CSS; per-component CSS is also imported automatically by the JS chunks — use one or the other, not both.

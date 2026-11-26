@@ -104,23 +104,27 @@ plain `@label` text in `toMarkdown`. Chips are inert references, not links.
 
 Read-only display of an existing document: `<RichTextEditor value={doc} onChange={() => {}} readOnly />` (or use `<RichText>`). `@`-mentions: `<RichTextEditor value={doc} onChange={setDoc} mentions={{ onQuery: (q) => searchUsers(q) }} />`.
 
-**Shared editing (sync hooks):** the props `history`, `onUndo`/`onRedo`/`canUndo`/`canRedo`, `onEdit`, `createBlockId`, `onSelectionChange`, `controller`, `onCompositionEnd`, `presence`, `syncStatus` and `uploadOwner` let a sync layer (e.g. a CRDT) drive the editor. The library ships no sync engine and no yjs dependency; eocrm's Yjs binding lives in the eocrm app (EO-287).
+**Shared editing (sync hooks):** the props `history`, `onUndo`/`onRedo`/`canUndo`/`canRedo`, `onEdit`, `createBlockId`, `onSelectionChange`, `controller`, `onCompositionEnd`, `presence`, `syncStatus` and `uploadOwner` let a sync layer (e.g. a CRDT) drive the editor. The library ships no sync engine and no yjs dependency; the Yjs binding lives in the app.
 
 - **`history="external"`**: the editor keeps no undo stack. ⌘Z / ⌘⇧Z, the menu and the toolbar buttons call `onUndo` / `onRedo`; enable the toolbar buttons with `canUndo` / `canRedo`. An outside `value` is accepted as-is (never a rejected edit, no history reset) and the caret stays where it was (clamped to the new doc) unless `controller.setSelection` moves it. `onEdit({ kind })` fires once per local edit right before `onChange`; `'silent'` edits are not undo steps.
+- **`controller`** (a ref to `RichTextEditorController`): `getSelection()` returns the editor's selection, `setSelection(range)` sets the caret the next `value` gets (map it through remote changes yourself), `isComposing()` is `true` during an IME composition. While composing, hold outside values and apply them in `onCompositionEnd` — replacing the DOM mid-composition breaks the IME. Inside `onEdit`, `getSelection()` is still the pre-edit caret: store it with the undo step so undo can put the caret back. Outside values and `setSelection` never move focus: while a menu or slider of the editor has focus, the caret is held and placed when the editable is focused again.
+- **Local transactions**: with `history="external"`, pass `onChange`'s exact object back as `value` (not a doc rebuilt from your shared state) — the editor tells its own edits from outside values by identity.
 - **`createBlockId`**: id source for every block the editor creates; the ids are applied before `onChange` sees the doc. Use it when ids must be unique across users (prefix a client id).
 - **`presence`**: other users as `{ id, name, color, selection }`, drawn as carets, name flags and selection tints (hidden from assistive tech) and named in the status text. Leave out the local user. Feed your own `onSelectionChange` (throttled) to the peers.
 - **`syncStatus`** (`'synced' | 'connecting' | 'offline'`): small indicator, announced politely on change; the initial value is not announced.
 - **`uploadOwner(blockId)`**: `'mine'` | `'theirs'` | `'orphaned'`. Retry shows only for `'mine'`; `'orphaned'` reads "Upload interrupted". Pass a new function whenever ownership changes.
-- Set `presence` / `syncStatus` from the first render (`presence={[]}` while alone): toggling `undefined` and set remounts the editable when neither `toolbar` nor `blockControls` wraps it.
+- Set `history`, `presence` and `syncStatus` from the first render (`presence={[]}` while alone); switching them at runtime is unsupported — toggling `presence` / `syncStatus` between `undefined` and set remounts the editable when neither `toolbar` nor `blockControls` wraps it.
 
 ```tsx
-// Two editors + one app-owned undo stack (toy whole-document relay; a real app syncs ops).
+// One editor + an app-owned undo/redo stack (toy whole-document history; a real app syncs ops).
 const [doc, setDoc] = useState(emptyDoc());
 const [undo, setUndo] = useState<RichDoc[]>([]);
+const [redo, setRedo] = useState<RichDoc[]>([]);
 const [sel, setSel] = useState<RichRange | null>(null); // local user's selection, relayed to peers
 const change = (d: RichDoc) => {
   setUndo((u) => [...u, doc]);
-  setDoc(d);
+  setRedo([]);
+  setDoc(d); // the exact object onChange gave
 };
 <RichTextEditor
   value={doc}
@@ -128,12 +132,20 @@ const change = (d: RichDoc) => {
   history="external"
   onUndo={() => {
     const prev = undo.at(-1);
-    if (prev) {
-      setUndo(undo.slice(0, -1));
-      setDoc(prev);
-    }
+    if (!prev) return;
+    setUndo(undo.slice(0, -1));
+    setRedo([...redo, doc]);
+    setDoc(prev);
+  }}
+  onRedo={() => {
+    const next = redo.at(-1);
+    if (!next) return;
+    setRedo(redo.slice(0, -1));
+    setUndo([...undo, doc]);
+    setDoc(next);
   }}
   canUndo={undo.length > 0}
+  canRedo={redo.length > 0}
   createBlockId={() => `${clientId}-${crypto.randomUUID()}`}
   onSelectionChange={setSel}
   presence={[{ id: 'bob', name: 'Bob', color: 'var(--color-success)', selection: bobSel }]}
