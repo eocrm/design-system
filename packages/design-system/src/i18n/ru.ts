@@ -568,6 +568,19 @@ export const ru: Messages = {
     retry: 'Повторить',
     chartHint:
       'Стрелки вверх и вниз — переход между уровнями, влево и вправо — между соседними элементами.',
+    moveHint:
+      'Ctrl или Command с Shift и стрелками перемещает элемент: вверх и вниз меняют порядок, вправо делает его дочерним предыдущего, влево выносит на уровень родителя.',
+    moveBoundaryUp: 'Выше переместить нельзя',
+    moveBoundaryDown: 'Ниже переместить нельзя',
+    moveBoundaryIn: 'Глубже переместить нельзя',
+    moveBoundaryOut: 'Дальше наружу переместить нельзя',
+    moveRefused: 'Сюда переместить нельзя',
+    movedInto: ({ name, parent, position, total }) =>
+      `${name as string} перемещён в ${parent as string}, позиция ${position as number} из ${total as number}`,
+    movedIntoNoPosition: ({ name, parent }) => `${name as string} перемещён в ${parent as string}`,
+    movedToRoot: ({ name, position, total }) =>
+      `${name as string} перемещён на верхний уровень, позиция ${position as number} из ${total as number}`,
+    movedToRootNoPosition: ({ name }) => `${name as string} перемещён на верхний уровень`,
   },
   catalogPicker: {
     search: 'Поиск…',

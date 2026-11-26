@@ -1,5 +1,5 @@
 import { createRef, useRef, useState, type Ref } from 'react';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TreeView, type TreeViewChildren, type TreeViewNode, type TreeViewProps } from '.';
 
@@ -680,5 +680,150 @@ describe('onHoverChange', () => {
     fireEvent.pointerEnter(row('Loading…'));
     fireEvent.pointerLeave(row('Loading…'));
     expect(onHoverChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('TreeView keyboard move', () => {
+  type Tree = Record<string, string[]>; // parent ('' = root) -> child ids
+  const start = (): Tree => ({ '': ['Intro', 'Setup', 'FAQ'], Intro: ['A', 'B'], Setup: [] });
+  const apply = (tree: Tree, m: { id: string; parentId: string | null; index: number | null }) => {
+    const next: Tree = Object.fromEntries(
+      Object.entries(tree).map(([k, v]) => [k, v.filter((c) => c !== m.id)]),
+    );
+    const key = m.parentId ?? '';
+    const list = next[key] ?? [];
+    list.splice(m.index ?? list.length, 0, m.id);
+    next[key] = list;
+    return next;
+  };
+
+  function Move(props: {
+    onMoveSpy?: (m: unknown) => void;
+    canDrop?: (id: string, p: string | null) => boolean;
+    view?: 'list' | 'chart';
+    noMove?: boolean;
+    onExpandedSpy?: (id: string, open: boolean) => void;
+    initial?: string[];
+  }) {
+    const [tree, setTree] = useState(start);
+    const [expanded, setExpanded] = useState(() => new Set(props.initial ?? ['Intro']));
+    const node = (id: string) => n(id, id in tree);
+    return (
+      <TreeView
+        aria-label="Wiki"
+        view={props.view}
+        roots={tree[''].map(node)}
+        childrenOf={(id) => (tree[id] ?? []).map(node)}
+        expandedIds={expanded}
+        onExpandedChange={(id, open) => {
+          props.onExpandedSpy?.(id, open);
+          setExpanded((p) => {
+            const next = new Set(p);
+            if (open) next.add(id);
+            else next.delete(id);
+            return next;
+          });
+        }}
+        canDrop={props.canDrop}
+        onMove={
+          props.noMove
+            ? undefined
+            : (m) => {
+                props.onMoveSpy?.(m);
+                setTree((t0) => apply(t0, m));
+              }
+        }
+      />
+    );
+  }
+  const press = (key: string) =>
+    fireEvent.keyDown(document.activeElement!, { key, ctrlKey: true, shiftKey: true });
+  const focus = (name: string) => act(() => item(name).focus());
+  const said = (text: string | RegExp) =>
+    waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(text));
+
+  it('moves with the four shortcuts, announces, and keeps focus on the node', async () => {
+    const spy = vi.fn();
+    render(<Move onMoveSpy={spy} />);
+    focus('Setup');
+    press('ArrowUp');
+    expect(spy).toHaveBeenLastCalledWith({ id: 'Setup', parentId: null, index: 0 });
+    expect(item('Setup')).toHaveFocus();
+    press('ArrowDown');
+    expect(spy).toHaveBeenLastCalledWith({ id: 'Setup', parentId: null, index: 1 });
+    press('ArrowRight'); // into Intro (expanded): after its 2 children
+    expect(spy).toHaveBeenLastCalledWith({ id: 'Setup', parentId: 'Intro', index: 2 });
+    await said('Setup moved into Intro, position 3 of 3');
+    expect(item('Setup')).toHaveFocus();
+    expect(item('Setup')).toHaveAttribute('aria-level', '2');
+    press('ArrowLeft');
+    expect(spy).toHaveBeenLastCalledWith({ id: 'Setup', parentId: null, index: 1 });
+    await said('Setup moved to the top level, position 2 of 3');
+    expect(item('Setup')).toHaveFocus();
+  });
+
+  it('indent into a collapsed sibling announces without position, then expands after onMove', async () => {
+    const order: string[] = [];
+    render(
+      <Move
+        initial={[]}
+        onMoveSpy={() => order.push('move')}
+        onExpandedSpy={(id, open) => order.push(`expand:${id}:${open}`)}
+      />,
+    );
+    focus('Setup');
+    press('ArrowRight');
+    expect(order).toEqual(['move', 'expand:Intro:true']);
+    await said(/^Setup moved into Intro$/);
+  });
+
+  it('announces boundaries and refusals without calling onMove', async () => {
+    const spy = vi.fn();
+    render(<Move onMoveSpy={spy} canDrop={(_id, p) => p !== 'FAQ'} />);
+    focus('Intro');
+    press('ArrowUp');
+    await said("Can't move further up");
+    press('ArrowRight');
+    await said("Can't move further in");
+    press('ArrowLeft');
+    await said("Can't move further out");
+    focus('FAQ');
+    press('ArrowDown');
+    await said("Can't move further down");
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('refused by canDrop announces "Can\'t move here"', async () => {
+    const spy = vi.fn();
+    render(<Move onMoveSpy={spy} canDrop={(_id, p) => p === null} />);
+    focus('Setup');
+    press('ArrowRight');
+    await said("Can't move here");
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('has aria-description only with onMove; shortcuts do nothing without it or in chart view', () => {
+    const spy = vi.fn();
+    const { unmount } = render(<Move />);
+    expect(screen.getByRole('tree')).toHaveAttribute('aria-description');
+    unmount();
+    const r = render(<Move noMove onMoveSpy={spy} />);
+    expect(screen.getByRole('tree')).not.toHaveAttribute('aria-description');
+    focus('Setup');
+    press('ArrowUp');
+    expect(spy).not.toHaveBeenCalled();
+    r.unmount();
+    render(<Move view="chart" onMoveSpy={spy} />);
+    expect(screen.getByRole('tree')).not.toHaveAttribute('aria-description');
+    focus('Setup');
+    press('ArrowUp');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('plain arrows still navigate', () => {
+    render(<Move />);
+    focus('Intro');
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowDown' });
+    expect(item('A')).toHaveFocus();
   });
 });

@@ -559,6 +559,19 @@ export const en: Messages = {
     retry: 'Retry',
     chartHint:
       'Use up and down arrows to move between levels, left and right arrows to move between siblings.',
+    moveHint:
+      'Ctrl or Command with Shift and the arrow keys moves the item: up and down reorder, right makes it a child of the previous item, left moves it out to its parent level.',
+    moveBoundaryUp: "Can't move further up",
+    moveBoundaryDown: "Can't move further down",
+    moveBoundaryIn: "Can't move further in",
+    moveBoundaryOut: "Can't move further out",
+    moveRefused: "Can't move here",
+    movedInto: ({ name, parent, position, total }) =>
+      `${name as string} moved into ${parent as string}, position ${position as number} of ${total as number}`,
+    movedIntoNoPosition: ({ name, parent }) => `${name as string} moved into ${parent as string}`,
+    movedToRoot: ({ name, position, total }) =>
+      `${name as string} moved to the top level, position ${position as number} of ${total as number}`,
+    movedToRootNoPosition: ({ name }) => `${name as string} moved to the top level`,
   },
   catalogPicker: {
     search: 'Search…',

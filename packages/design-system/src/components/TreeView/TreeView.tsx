@@ -33,6 +33,7 @@ import {
   type TreeViewOverflow,
   type TreeViewView,
 } from './treeModel';
+import { keyboardMove, type MoveDirection, type TreeViewMove } from './treeMove';
 import styles from './TreeView.module.scss';
 
 export interface TreeViewProps extends Omit<
@@ -73,7 +74,28 @@ export interface TreeViewProps extends Omit<
   highlightedIds?: ReadonlySet<string>;
   /** Pointer entered/left a node's row (list) or box (chart); `null` on leave. Pointer only — no ARIA, focus or selection effect. Pair with `highlightedIds` to paint a hover chain. */
   onHoverChange?: (id: string | null) => void;
+  /**
+   * Opt in to moving nodes (list view only). Fires after a keyboard move (Ctrl/Cmd+Shift+↑/↓ reorder, → into the
+   * previous sibling, ← out to the grandparent). TreeView stays controlled: update `roots` / `childrenOf`.
+   * A no-op never fires. When the node is moved into a collapsed node, `onExpandedChange(id, true)` follows.
+   */
+  onMove?: (move: TreeViewMove) => void;
+  /** App veto for a candidate new parent (`null` = root level), checked for every move. Default: allow. */
+  canDrop?: (id: string, targetParentId: string | null) => boolean;
 }
+
+const MOVE_KEYS: Record<string, MoveDirection> = {
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+  ArrowRight: 'indent',
+  ArrowLeft: 'outdent',
+};
+const BOUNDARY = {
+  up: 'treeView.moveBoundaryUp',
+  down: 'treeView.moveBoundaryDown',
+  indent: 'treeView.moveBoundaryIn',
+  outdent: 'treeView.moveBoundaryOut',
+} as const;
 
 const has = (flat: TreeItem[], key: string | null) =>
   key !== null && flat.some((i) => i.key === key);
@@ -121,6 +143,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     overflowOf,
     highlightedIds,
     onHoverChange,
+    onMove,
+    canDrop,
     className,
     onFocus,
     onBlur,
@@ -151,6 +175,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   } | null>(null);
   const announceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [message, setMessage] = useState('');
+  // The node a keyboard move is carrying: re-focused once the app renders it in its new place.
+  const pendingFocus = useRef<string | null>(null);
   useEffect(() => {
     const ta = typeahead.current;
     return () => {
@@ -313,6 +339,46 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     announceTimer.current = null;
   }, [flat, focusedKey, focusKey, inTree, t]);
 
+  useLayoutEffect(() => {
+    const key = pendingFocus.current;
+    const el = key ? itemEls.current.get(key) : undefined;
+    if (el && document.activeElement !== el && inTree()) focusKey(key!);
+  }, [flat, focusKey, inTree]);
+
+  const moveNode = (item: TreeItem & { kind: 'node' }, dir: MoveDirection) => {
+    const r = keyboardMove(flat, item.node.id, dir, canDrop);
+    if ('refusal' in r) {
+      setMessage(t(r.refusal === 'boundary' ? BOUNDARY[dir] : 'treeView.moveRefused'));
+      return;
+    }
+    const { move } = r;
+    const parent = flat.find((i) => i.kind === 'node' && i.node.id === move.parentId);
+    const name = item.node.label;
+    const total =
+      (parent?.kind === 'node' ? parent.children : flat.filter((i) => i.parentId === null)).filter(
+        (i) => i.kind === 'node',
+      ).length + (move.parentId === item.parentId ? 0 : 1);
+    const at = move.index === null ? null : { position: move.index + 1, total };
+    if (parent?.kind === 'node') {
+      const p = parent.node.label;
+      setMessage(
+        at
+          ? t('treeView.movedInto', { name, parent: p, ...at })
+          : t('treeView.movedIntoNoPosition', { name, parent: p }),
+      );
+    } else {
+      setMessage(
+        at
+          ? t('treeView.movedToRoot', { name, ...at })
+          : t('treeView.movedToRootNoPosition', { name }),
+      );
+    }
+    pendingFocus.current = item.key;
+    setFocusedKey(item.key);
+    onMove!(move);
+    if (r.expand) onExpandedChange(r.expand, true);
+  };
+
   const run = (action: TreeAction) => {
     if (action.type === 'focus') focusKey(action.key);
     else if (action.type === 'expand') expand(action.id);
@@ -344,6 +410,19 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       if (match) focusKey(match);
       event.preventDefault();
       event.stopPropagation();
+      return;
+    }
+    if (
+      onMove &&
+      !chart &&
+      item.kind === 'node' &&
+      (event.ctrlKey || event.metaKey) &&
+      event.shiftKey &&
+      MOVE_KEYS[event.key]
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      moveNode(item, MOVE_KEYS[event.key]);
       return;
     }
     const action = keyAction(flat, item.key, event.key, view);
@@ -385,7 +464,9 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       if (e.button === 0 && !(e.target as Element).closest('[data-row]')) e.preventDefault();
     },
     onFocus: (e: FocusEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) setFocusedKey(item.key);
+      if (e.target !== e.currentTarget) return;
+      if (pendingFocus.current !== item.key) pendingFocus.current = null;
+      setFocusedKey(item.key);
     },
     style: { '--tree-view-level': item.level - 1 } as CSSProperties,
   });
@@ -508,6 +589,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
             ? [rest['aria-describedby'], hintId].filter(Boolean).join(' ')
             : rest['aria-describedby']
         }
+        aria-description={onMove && !chart ? t('treeView.moveHint') : undefined}
         data-view={view}
         className={clsx(styles.root, className)}
         onFocus={chain(() => {
