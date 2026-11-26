@@ -153,6 +153,86 @@ describe('fromRichDoc → toRichDoc', () => {
   });
 });
 
+describe('hostile remote data', () => {
+  const seeded = () => {
+    const doc = fromRichDoc({ blocks: [p('a', [{ text: 'hi', marks: [] }])] });
+    const blocks = doc.getMap<unknown>(BLOCKS);
+    return { doc, blocks, m: [...blocks.values()][0] as Y.Map<unknown> };
+  };
+
+  it('sanitises block attributes', () => {
+    const { doc, m } = seeded();
+    for (const [k, v] of Object.entries({
+      type: 'iframe',
+      level: 99,
+      depth: -1,
+      width: NaN,
+      height: Infinity,
+      src: 'javascript:alert(1)',
+      name: 5,
+      alt: {},
+      mime: null,
+      align: 'justify',
+      status: 'pwned',
+      uploadedBy: -3,
+    }))
+      m.set(k, v);
+    const [b] = toRichDoc(doc).blocks;
+    expect(b).toEqual({ id: b.id, type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] });
+    expect(blockMeta(m)).toEqual({});
+  });
+
+  it('keeps valid values and drops only the bad ones', () => {
+    const { doc, m } = seeded();
+    m.set('type', 'heading');
+    m.set('level', 2);
+    m.set('depth', 1.5);
+    const [b] = toRichDoc(doc).blocks;
+    expect(b).toMatchObject({ type: 'heading', level: 2 });
+    expect(b).not.toHaveProperty('depth');
+    m.set('type', 'attachment');
+    m.set('src', 'https://cdn.test/x.png');
+    m.set('width', 10);
+    expect(toRichDoc(doc).blocks[0]).toMatchObject({ src: 'https://cdn.test/x.png', width: 10 });
+  });
+
+  it('sanitises mark attributes', () => {
+    const { doc, m } = seeded();
+    (m.get('text') as Y.Text).format(0, 2, {
+      link: { href: 'javascript:alert(1)' },
+      bold: 'yes',
+      mention: { id: 1, label: 'x' },
+      textColor: 'url(evil)',
+      bgColor: 7,
+      junk: true,
+    });
+    expect(toRichDoc(doc).blocks[0].inlines).toEqual([{ text: 'hi', marks: [] }]);
+  });
+
+  it('skips entries with a non-map value, non-string or mismatched id, or non-string order', () => {
+    const { doc, blocks } = seeded();
+    blocks.set('x', 5);
+    const bad = (id: unknown, order: unknown) => {
+      const m = blocks.set(`k${blocks.size}`, new Y.Map<unknown>());
+      m.set('id', id);
+      m.set('order', order);
+      m.set('text', new Y.Text('evil'));
+    };
+    bad(42, 'a');
+    bad('other', 'a');
+    bad(`k${blocks.size}`, 7);
+    const out = toRichDoc(doc);
+    expect(out.blocks).toHaveLength(1);
+    expect(out.blocks[0].inlines).toEqual([{ text: 'hi', marks: [] }]);
+  });
+
+  it('treats a non-Y.Text text as empty', () => {
+    const { doc, m } = seeded();
+    m.set('text', '<script>');
+    expect(toRichDoc(doc).blocks[0].inlines).toEqual([{ text: '', marks: [] }]);
+  });
+});
+
 describe('deterministic seeding', () => {
   it('two docs seeded from the same RichDoc merge without duplicates', () => {
     const a = fromRichDoc(rich);

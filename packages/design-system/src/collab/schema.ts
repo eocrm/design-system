@@ -3,6 +3,8 @@ import * as Y from 'yjs';
 import type { Block, BlockType, Inline, Mark, RichDoc } from '../components/RichText/engine/model';
 import { MARK_ORDER } from '../components/RichText/engine/marks';
 import { normalizeInlines } from '../components/RichText/engine/inlines';
+import { safeHref } from '../components/RichText/engine/safeHref';
+import { isColorKey } from '../components/RichText/engine/colorMarks';
 import { compareOrder, orderBetween } from './order';
 
 /**
@@ -34,15 +36,38 @@ const TYPES: readonly BlockType[] = [
   'code_block',
   'attachment',
 ];
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+const isStr = (v: unknown): v is string => typeof v === 'string';
+const isNat = (v: unknown): v is number => Number.isSafeInteger(v) && (v as number) >= 0;
+const isPos = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && v > 0;
+const VALID: Record<(typeof ATTRS)[number], (v: unknown) => boolean> = {
+  level: (v) => v === 1 || v === 2 || v === 3,
+  depth: isNat, // the renderer clamps gaps (effectiveDepths); the engine has no max depth
+  src: (v) => isStr(v) && safeHref(v) !== undefined,
+  name: isStr,
+  mime: isStr,
+  width: isPos,
+  height: isPos,
+  alt: isStr,
+  align: (v) => v === 'left' || v === 'center' || v === 'right',
+  status: (v) => v === 'uploading' || v === 'ready' || v === 'error',
+};
+
+/**
+ * Whether a `blocks` entry is a readable block: a `Y.Map` whose `id` is its key and whose `order`
+ * is a string. Readers skip anything else.
+ * @internal
+ */
+export function isBlockEntry(key: string, v: unknown): v is Y.Map<unknown> {
+  return v instanceof Y.Map && v.get('id') === key && isStr(v.get('order'));
+}
+
 // FNV-1a 32-bit, never 0 (clientID 0 stays unused).
 function fnv1a(s: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
   return h >>> 0 || 1;
 }
-
-const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
-const isStr = (v: unknown): v is string => typeof v === 'string';
 
 function marksToAttrs(marks: Mark[]): Record<string, unknown> {
   const out: Record<string, unknown> = {};
@@ -55,17 +80,18 @@ function marksToAttrs(marks: Mark[]): Record<string, unknown> {
   return out;
 }
 
-// Attributes may come from other clients: anything not shaped like a known mark is dropped.
+// Everything below reads data any peer can write: values that fail these checks are dropped,
+// never thrown on. Hrefs/srcs go through the engine's `safeHref`, colours through `isColorKey`.
 function attrsToMarks(attrs: Record<string, unknown> = {}): Mark[] {
   const out: Mark[] = [];
   for (const type of MARK_ORDER) {
     const v = attrs[type];
     if (type === 'link') {
-      if (isObj(v) && isStr(v.href)) out.push({ type, href: v.href });
+      if (isObj(v) && isStr(v.href) && safeHref(v.href)) out.push({ type, href: v.href });
     } else if (type === 'mention') {
       if (isObj(v) && isStr(v.id) && isStr(v.label)) out.push({ type, id: v.id, label: v.label });
     } else if (type === 'textColor' || type === 'bgColor') {
-      if (isStr(v)) out.push({ type, color: v });
+      if (isStr(v) && isColorKey(v)) out.push({ type, color: v });
     } else if (v === true) out.push({ type });
   }
   return out;
@@ -83,7 +109,7 @@ export function blockToRich(m: Y.Map<unknown>): Block {
   } as Block;
   for (const k of ATTRS) {
     const v = m.get(k);
-    if (v !== undefined) (block as unknown as Record<string, unknown>)[k] = v;
+    if (VALID[k](v)) (block as unknown as Record<string, unknown>)[k] = v;
   }
   const text = m.get('text');
   const delta = (text instanceof Y.Text ? text.toDelta() : []) as {
@@ -128,7 +154,7 @@ export function writeBlock(m: Y.Map<unknown>, b: Block): void {
  */
 export function blockMeta(m: Y.Map<unknown>): { uploadedBy?: number } {
   const u = m.get('uploadedBy');
-  return typeof u === 'number' ? { uploadedBy: u } : {};
+  return isNat(u) ? { uploadedBy: u } : {};
 }
 
 /**
@@ -136,8 +162,9 @@ export function blockMeta(m: Y.Map<unknown>): { uploadedBy?: number } {
  * An empty doc reads as one empty paragraph and is never written to.
  */
 export function toRichDoc(doc: Y.Doc): RichDoc {
-  const blocks = [...doc.getMap<Y.Map<unknown>>(BLOCKS).entries()]
-    .map(([id, m]) => ({ id, order: String(m.get('order') ?? ''), m }))
+  const blocks = [...doc.getMap<unknown>(BLOCKS).entries()]
+    .filter((e): e is [string, Y.Map<unknown>] => isBlockEntry(...e))
+    .map(([id, m]) => ({ id, order: m.get('order') as string, m }))
     .sort(compareOrder)
     .map(({ m }) => blockToRich(m));
   return {
