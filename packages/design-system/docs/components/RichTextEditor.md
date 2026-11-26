@@ -108,16 +108,19 @@ Read-only display of an existing document: `<RichTextEditor value={doc} onChange
 
 - **`history="external"`**: the editor keeps no undo stack. ⌘Z / ⌘⇧Z, the menu and the toolbar buttons call `onUndo` / `onRedo`; enable the toolbar buttons with `canUndo` / `canRedo`. An outside `value` is accepted as-is (never a rejected edit, no history reset) and the caret stays where it was (clamped to the new doc) unless `controller.setSelection` moves it. `onEdit({ kind })` fires once per local edit right before `onChange`, with `kind` one of `'type'` (typing), `'delete'`, `'resize'` (an image width drag), `'other'` (formatting, Enter, paste, block actions, insert) or `'silent'` (an upload settling or a failed upload's removal). Group consecutive edits of the same kind into one undo step, never group `'other'`, and keep `'silent'` out of the undo stack.
 - **`controller`** (a ref to `RichTextEditorController`): `getSelection()` returns the editor's selection, `setSelection(range)` sets the caret the next `value` gets (map it through remote changes yourself), `isComposing()` is `true` during an IME composition. While composing, hold outside values and apply them in `onCompositionEnd` — replacing the DOM mid-composition breaks the IME. Inside `onEdit`, `getSelection()` is still the pre-edit caret: store it with the undo step so undo can put the caret back. Outside values and `setSelection` never move focus: whenever focus is outside the editable (anywhere, not just the editor's menus), their caret is held and placed when the editable regains focus.
-- **Applying a remote change**:
+- **Applying a remote change** (`rebuild`, `mapCaret` and `setValue` are your app's own functions):
 
   ```ts
-  // on a remote update:
-  if (controller.current?.isComposing()) queue.push(next);
-  else {
-    controller.current?.setSelection(mapped); // before the value: its render places it
+  // on a remote update: never replace the doc mid-composition
+  if (controller.current?.isComposing()) dirty = true;
+  else apply();
+  // onCompositionEnd={() => dirty && apply()} — the shared state now holds the composed text
+  function apply() {
+    dirty = false;
+    const next = rebuild(sharedState); // once, from the current shared state
+    controller.current?.setSelection(mapCaret(controller.current.getSelection(), next)); // before the value
     setValue(next);
   }
-  // onCompositionEnd={() => flush(queue)}  — apply the queued updates the same way
   ```
 
 - **Local transactions**: with `history="external"`, pass `onChange`'s exact object back as `value` (not a doc rebuilt from your shared state) — the editor tells its own edits from outside values by identity.
