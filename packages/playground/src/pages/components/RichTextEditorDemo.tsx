@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   RichTextEditor,
   docFromText,
@@ -14,6 +14,7 @@ import {
   Button,
   type RichDoc,
   type RichRange,
+  type RichTextEditKind,
   type RichTextSyncStatus,
   type RichTextEditorProps,
   type RenderLink,
@@ -102,14 +103,29 @@ function SharedEditingExample() {
   const [status, setStatus] = useState<RichTextSyncStatus>('synced');
 
   const apply = (d: RichDoc) => setDocs([d, d]);
+  // onEdit fires right before onChange: group a burst of typing (or deleting) into one undo
+  // step, keep 'silent' commits (upload settles) out of the stack.
+  const lastEdit = useRef<{ kind: RichTextEditKind; at: number } | null>(null);
+  const pendingKind = useRef<RichTextEditKind>('other');
+  const onEdit = ({ kind }: { kind: RichTextEditKind }) => {
+    pendingKind.current = kind;
+  };
   const change = (d: RichDoc) => {
-    setUndo((u) => [...u, docs[0]]);
+    const kind = pendingKind.current;
+    const now = Date.now();
+    const prev = lastEdit.current;
+    const coalesce =
+      kind === 'silent' ||
+      (prev !== null && prev.kind === kind && kind !== 'other' && now - prev.at < 600);
+    if (!coalesce) setUndo((u) => [...u, docs[0]]);
+    if (kind !== 'silent') lastEdit.current = { kind, at: now };
     setRedo([]);
     apply(d);
   };
   const onUndo = () => {
     const prev = undo[undo.length - 1];
     if (!prev) return;
+    lastEdit.current = null;
     setUndo(undo.slice(0, -1));
     setRedo([...redo, docs[0]]);
     apply(prev);
@@ -162,6 +178,7 @@ function SharedEditingExample() {
         {...shared}
         value={docs[0]}
         onChange={change}
+        onEdit={onEdit}
         createBlockId={createIdA}
         onSelectionChange={setSelAt(0)}
         presence={[{ ...people[1], selection: sel[1] }]}
@@ -170,6 +187,7 @@ function SharedEditingExample() {
         {...shared}
         value={docs[1]}
         onChange={change}
+        onEdit={onEdit}
         createBlockId={createIdB}
         onSelectionChange={setSelAt(1)}
         presence={[{ ...people[0], selection: sel[0] }]}
@@ -603,8 +621,8 @@ export function Demo() {
 
       <Example
         title="Shared editing hooks"
-        description="Two editors kept in sync by a naive whole-document relay: each onChange replaces the other's value. It is a toy (last writer wins, not a CRDT) that stands in for a real sync layer. history='external' routes undo/redo to one app-owned stack; presence is relayed both ways from onSelectionChange; the status buttons drive syncStatus; createBlockId gives each editor its own id prefix so block ids never collide."
-        code={`import { useMemo, useState } from 'react';
+        description="Two editors kept in sync by a naive whole-document relay: each onChange replaces the other's value. It is a toy (last writer wins, not a CRDT) that stands in for a real sync layer. history='external' routes undo/redo to one app-owned stack, grouped by onEdit's kind (a typing burst is one undo step); presence is relayed both ways from onSelectionChange; the status buttons drive syncStatus; createBlockId gives each editor its own id prefix so block ids never collide."
+        code={`import { useMemo, useRef, useState } from 'react';
 import {
   RichTextEditor,
   docFromText,
@@ -613,6 +631,7 @@ import {
   Stack,
   type RichDoc,
   type RichRange,
+  type RichTextEditKind,
   type RichTextSyncStatus,
 } from '@eocrm/design-system';
 
@@ -627,14 +646,29 @@ export function Demo() {
   const [status, setStatus] = useState<RichTextSyncStatus>('synced');
 
   const apply = (d: RichDoc) => setDocs([d, d]);
+  // onEdit fires right before onChange: group a burst of typing (or deleting) into one undo
+  // step, keep 'silent' commits (upload settles) out of the stack.
+  const lastEdit = useRef<{ kind: RichTextEditKind; at: number } | null>(null);
+  const pendingKind = useRef<RichTextEditKind>('other');
+  const onEdit = ({ kind }: { kind: RichTextEditKind }) => {
+    pendingKind.current = kind;
+  };
   const change = (d: RichDoc) => {
-    setUndo((u) => [...u, docs[0]]);
+    const kind = pendingKind.current;
+    const now = Date.now();
+    const prev = lastEdit.current;
+    const coalesce =
+      kind === 'silent' ||
+      (prev !== null && prev.kind === kind && kind !== 'other' && now - prev.at < 600);
+    if (!coalesce) setUndo((u) => [...u, docs[0]]);
+    if (kind !== 'silent') lastEdit.current = { kind, at: now };
     setRedo([]);
     apply(d);
   };
   const onUndo = () => {
     const prev = undo[undo.length - 1];
     if (!prev) return;
+    lastEdit.current = null;
     setUndo(undo.slice(0, -1));
     setRedo([...redo, docs[0]]);
     apply(prev);
@@ -674,6 +708,7 @@ export function Demo() {
         {...shared}
         value={docs[0]}
         onChange={change}
+        onEdit={onEdit}
         createBlockId={createIdA}
         onSelectionChange={setSelAt(0)}
         presence={[{ ...people[1], selection: sel[1] }]}
@@ -682,6 +717,7 @@ export function Demo() {
         {...shared}
         value={docs[1]}
         onChange={change}
+        onEdit={onEdit}
         createBlockId={createIdB}
         onSelectionChange={setSelAt(1)}
         presence={[{ ...people[0], selection: sel[0] }]}
