@@ -273,11 +273,63 @@ describe('CollaborativeRichTextEditor', () => {
 describe('CollaborativeRichTextEditor presence', () => {
   const me = { name: 'Me', color: '#123456' };
   const rect = { top: 10, left: 20, width: 30, height: 16, right: 50, bottom: 26, x: 20, y: 10 };
+  const { getBoundingClientRect, getClientRects } = Range.prototype;
   beforeEach(() => {
     // jsdom has no layout: give ranges a box.
     Range.prototype.getBoundingClientRect = () => ({ ...rect, toJSON: () => rect }) as DOMRect;
     Range.prototype.getClientRects = () =>
       Object.assign([{ ...rect }], { item: () => null }) as unknown as DOMRectList;
+  });
+  afterEach(() => {
+    Range.prototype.getBoundingClientRect = getBoundingClientRect;
+    Range.prototype.getClientRects = getClientRects;
+  });
+
+  it('a remote selection the DOM rejects (out-of-range offset) is skipped, not thrown', () => {
+    const { a, b } = pair('hello');
+    const id = firstId(a);
+    const comparePoint = vi.spyOn(Range.prototype, 'comparePoint').mockImplementation(() => {
+      throw new DOMException('offset out of range', 'IndexSizeError');
+    });
+    try {
+      const { container } = render(
+        <CollaborativeRichTextEditor
+          doc={a}
+          user={me}
+          presence={[
+            { clientId: b.clientID, name: 'Bob', color: '#ff0000', selection: remote(b, id, 0, 5) },
+          ]}
+          aria-label="Editor"
+        />,
+      );
+      expect(screen.getByRole('textbox', { name: 'Editor' })).toHaveTextContent('hello');
+      expect(container.querySelectorAll('[data-collab-caret]')).toHaveLength(0);
+    } finally {
+      comparePoint.mockRestore();
+    }
+  });
+
+  it('survives duplicate clientIds and non-string names', () => {
+    const { a, b } = pair('hello');
+    const id = firstId(a);
+    const sel = remote(b, id, 1, 1);
+    const { container } = render(
+      <CollaborativeRichTextEditor
+        doc={a}
+        user={me}
+        presence={[
+          { clientId: b.clientID, name: 'Bob', color: '#ff0000', selection: sel },
+          { clientId: b.clientID, name: 42 as unknown as string, color: '#ff0000', selection: sel },
+        ]}
+        aria-label="Editor"
+      />,
+    );
+    const carets = [...container.querySelectorAll('[data-collab-caret]')];
+    expect(carets.map((c) => c.textContent)).toEqual(['Bob', '42']);
+    // The status area names each client once.
+    expect(container.querySelector('[data-collab-status]')).toHaveTextContent(
+      '1 other editing: Bob',
+    );
   });
 
   function remote(doc: Y.Doc, blockId: string, a: number, f: number) {
@@ -326,7 +378,7 @@ describe('CollaborativeRichTextEditor presence', () => {
     try {
       const { a } = pair('hello');
       const onPresenceChange = vi.fn();
-      render(
+      const { rerender } = render(
         <CollaborativeRichTextEditor
           doc={a}
           user={me}
@@ -358,16 +410,31 @@ describe('CollaborativeRichTextEditor presence', () => {
       expect(
         decodeSelection(a, onPresenceChange.mock.calls[1][0].selection, toRichDoc(a))?.focus.offset,
       ).toBe(3);
+      // The trailing call goes to the callback and user of the latest render.
+      const next = vi.fn();
       move(4);
+      rerender(
+        <CollaborativeRichTextEditor
+          doc={a}
+          user={{ name: 'Renamed', color: '#123456' }}
+          onPresenceChange={next}
+          aria-label="Editor"
+        />,
+      );
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ name: 'Renamed' }));
+      const onBlur = next;
       act(() => editor.blur());
-      expect(onPresenceChange).toHaveBeenLastCalledWith(
+      expect(onBlur).toHaveBeenLastCalledWith(
         expect.objectContaining({ clientId: a.clientID, selection: null }),
       );
-      const calls = onPresenceChange.mock.calls.length;
+      const calls = onBlur.mock.calls.length;
       act(() => {
         vi.advanceTimersByTime(500);
       });
-      expect(onPresenceChange).toHaveBeenCalledTimes(calls);
+      expect(onBlur).toHaveBeenCalledTimes(calls);
     } finally {
       vi.useRealTimers();
     }
@@ -395,7 +462,13 @@ describe('CollaborativeRichTextEditor status', () => {
     expect(region).toHaveTextContent(/^$/);
     rerender(ui('offline'));
     expect(toolbar).toHaveTextContent('Offline');
-    await waitFor(() => expect(region).toHaveTextContent(/Offline/));
+    await waitFor(() =>
+      expect(region).toHaveTextContent('Offline — changes will sync when reconnected'),
+    );
+    // Short visible label; the explanation is in the accessible text.
+    expect(toolbar.querySelector('[data-collab-status] > span:not([class])')).toHaveTextContent(
+      /^Offline$/,
+    );
     rerender(ui('connecting'));
     await waitFor(() => expect(region).toHaveTextContent('Connecting…'));
   });
@@ -481,6 +554,23 @@ describe('CollaborativeRichTextEditor uploads', () => {
     expect(screen.queryByRole('button', { name: /Retry/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /Remove/ }));
     expect(toRichDoc(doc).blocks.some((b) => b.id === id)).toBe(false);
+  });
+
+  it('without a presence prop a remote upload is never shown as interrupted', () => {
+    const { doc } = withAttachment('uploading', 999);
+    render(
+      <I18nProvider locale="en">
+        <CollaborativeRichTextEditor
+          doc={doc}
+          user={me}
+          upload={{ onUpload: async () => ({ url: 'https://cdn.test/f' }) }}
+          aria-label="E"
+        />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('progressbar', { name: 'Uploading…' })).toBeInTheDocument();
+    expect(screen.queryByText('Upload interrupted')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Remove/ })).toBeNull();
   });
 
   it('Retry shows only for the uploader', () => {

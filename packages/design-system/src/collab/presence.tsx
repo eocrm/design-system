@@ -100,56 +100,80 @@ export function PresenceOverlay() {
   // Rendered right after the editable (see CollabSeam.overlay).
   const editable = () => ref.current?.previousElementSibling as HTMLElement | null | undefined;
 
+  const remote = !!data?.presence.some((p) => p.clientId !== data.doc.clientID && p.selection);
   useEffect(() => {
     const root = editable();
-    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(remeasure);
-    if (root) ro?.observe(root);
-    window.addEventListener('scroll', remeasure, true);
-    window.addEventListener('resize', remeasure);
-    return () => {
-      ro?.disconnect();
-      window.removeEventListener('scroll', remeasure, true);
-      window.removeEventListener('resize', remeasure);
+    if (!remote || !root) return;
+    // One re-measure per frame, however many events arrive.
+    let frame = 0;
+    const schedule = () => {
+      frame ||= requestAnimationFrame(() => {
+        frame = 0;
+        remeasure();
+      });
     };
-  }, []);
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule);
+    ro?.observe(root);
+    // Boxes are relative to this layer, which scrolls with the editor, so page scroll moves
+    // nothing; but a consumer can make the editable (or something inside it) a scroller, which
+    // moves the text under a fixed layer. Capture catches scroll from any element.
+    window.addEventListener('scroll', schedule, true);
+    window.addEventListener('resize', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      ro?.disconnect();
+      window.removeEventListener('scroll', schedule, true);
+      window.removeEventListener('resize', schedule);
+    };
+  }, [remote]);
 
   useLayoutEffect(() => {
     const root = editable();
     if (!data || !ref.current || !root) return;
     const { doc, view, presence } = data;
-    const origin = ref.current.getBoundingClientRect();
-    const has = (id: string) => view.blocks.some((b) => b.id === id);
+    const has = (id: unknown) => view.blocks.some((b) => b.id === id);
     const out: Mark[] = [];
-    for (const p of presence) {
-      const s = p.selection;
-      // Ours, idle, or pointing at blocks the doc no longer has (no "nearest point" guess here).
-      if (p.clientId === doc.clientID || !s || !has(s.anchor?.blockId) || !has(s.focus?.blockId))
-        continue;
-      const range = decodeSelection(doc, s, view);
-      const m = range && measure(root, range, origin);
-      if (!m || (!m.caret && !m.rects.length)) continue;
-      out.push({
-        clientId: p.clientId,
-        name: p.name,
-        color: p.color,
-        moved: JSON.stringify(s),
-        ...m,
-      });
+    if (remote) {
+      const origin = ref.current.getBoundingClientRect();
+      for (const p of presence) {
+        const s = p.selection;
+        // Ours, idle, or pointing at blocks the doc no longer has (no "nearest point" guess here).
+        if (p.clientId === doc.clientID || !s || !has(s.anchor?.blockId) || !has(s.focus?.blockId))
+          continue;
+        let m: ReturnType<typeof measure> = null;
+        try {
+          const range = decodeSelection(doc, s, view);
+          m = range && measure(root, range, origin);
+        } catch {
+          // Remote data the DOM rejects (e.g. an out-of-range offset): skip this entry, never
+          // take the editor down.
+        }
+        if (!m || (!m.caret && !m.rects.length)) continue;
+        out.push({
+          clientId: p.clientId,
+          name: String(p.name),
+          color: String(p.color),
+          moved: JSON.stringify(s),
+          ...m,
+        });
+      }
     }
-    setMarks(out);
-  }, [data, tick]);
+    // No re-render when nothing moved (incl. empty → empty).
+    setMarks((prev) => (JSON.stringify(prev) === JSON.stringify(out) ? prev : out));
+  }, [data, tick, remote]);
 
   return (
     <div ref={ref} className={styles.presence} aria-hidden="true" data-collab-presence="">
-      {marks.map((m) => {
+      {marks.map((m, i) => {
         // The colour is app data: it only ever reaches *-color properties, so a non-colour
         // value (e.g. `url(…)`) is simply invalid there.
         const style = (b: Box) => ({ ...b, '--collab-user-color': m.color }) as CSSProperties;
         return (
-          <Fragment key={m.clientId}>
-            {m.rects.map((r, i) => (
+          // Index too: an app may relay duplicate clientIds.
+          <Fragment key={`${m.clientId}-${i}`}>
+            {m.rects.map((r, j) => (
               <span
-                key={i}
+                key={j}
                 className={styles.selection}
                 style={style(r)}
                 data-collab-selection=""

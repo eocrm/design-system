@@ -92,15 +92,17 @@ function StatusArea() {
   const t = useTranslation();
   const [shown, setShown] = useState(status);
   const [announced, setAnnounced] = useState('');
+  const hint = status === 'offline' ? ` — ${t('collab.offlineHint')}` : '';
   if (shown !== status) {
     setShown(status);
-    setAnnounced(t(`collab.${status}`));
+    setAnnounced(t(`collab.${status}`) + hint);
   }
   const Icon = STATUS_ICON[status];
   return (
     <span className={styles.status} data-collab-status="" data-status={status}>
       <Icon size={14} aria-hidden="true" />
       <span>{t(`collab.${status}`)}</span>
+      {hint && <VisuallyHidden>{hint}</VisuallyHidden>}
       {others.length > 0 && (
         <VisuallyHidden>. {t('collab.othersEditing', { names: others })}</VisuallyHidden>
       )}
@@ -127,8 +129,11 @@ export interface CollaborativeRichTextEditorProps extends Omit<
   /**
    * Other users' presence, as relayed by the app: drawn as carets and selection tints, and listed
    * in the status area's accessible text. The entry for `doc.clientID` and entries whose
-   * selection no longer resolves are skipped. Removing users who left is the app's job; an
-   * `uploading` attachment whose uploader is missing here shows as "Upload interrupted".
+   * selection no longer resolves are skipped. Removing users who left is the app's job.
+   *
+   * Once passed, keep an entry for **every connected client**, including ones that never focused
+   * the editor (`selection: null`): an `uploading` attachment whose uploader has no entry shows
+   * as "Upload interrupted" with Remove. Omit the prop and no upload ever reads as interrupted.
    */
   presence?: readonly CollabPresence[];
   /**
@@ -173,9 +178,10 @@ export const CollaborativeRichTextEditor = forwardRef<
   HTMLDivElement,
   CollaborativeRichTextEditorProps
 >(function CollaborativeRichTextEditor(
-  { doc, user, presence = NO_PRESENCE, onPresenceChange, status = 'synced', ...rest },
+  { doc, user, presence: presenceProp, onPresenceChange, status = 'synced', ...rest },
   ref,
 ) {
+  const presence = presenceProp ?? NO_PRESENCE;
   const [state, setState] = useState(() => ({ doc, view: toRichDoc(doc) }));
   let view = state.view;
   if (state.doc !== doc) {
@@ -341,11 +347,16 @@ export const CollaborativeRichTextEditor = forwardRef<
     timer: 0 as ReturnType<typeof setTimeout> | 0,
     nulled: true,
   });
+  // The trailing call runs after later renders: it reads these, not this render's closure.
+  const latestRef = useRef({ onPresenceChange, user, doc });
+  latestRef.current = { onPresenceChange, user, doc };
   presenceRef.current = (sel) => {
-    if (!onPresenceChange) return;
+    if (!latestRef.current.onPresenceChange) return;
     const st = sendRef.current;
-    const send = (selection: CollabSelection | null) =>
-      onPresenceChange({ clientId: doc.clientID, name: user.name, color: user.color, selection });
+    const send = (selection: CollabSelection | null) => {
+      const { onPresenceChange: cb, user: u, doc: d } = latestRef.current;
+      cb?.({ clientId: d.clientID, name: u.name, color: u.color, selection });
+    };
     if (!sel) {
       clearTimeout(st.timer);
       st.timer = 0;
@@ -360,7 +371,7 @@ export const CollaborativeRichTextEditor = forwardRef<
       const now = handle.current?.readSelection() ?? null;
       if (!now) return;
       st.nulled = false;
-      send(encodeSelection(doc, now, renderedRef.current));
+      send(encodeSelection(latestRef.current.doc, now, renderedRef.current));
     };
     const wait = st.at + PRESENCE_THROTTLE_MS - Date.now();
     if (wait <= 0) fire();
@@ -375,20 +386,32 @@ export const CollaborativeRichTextEditor = forwardRef<
   const statusData = useMemo<StatusData>(
     () => ({
       status,
-      others: presence.filter((p) => p.clientId !== doc.clientID).map((p) => p.name),
+      // One name per client (the first; an app may relay duplicates).
+      others: presence
+        .filter(
+          (p, i) =>
+            p.clientId !== doc.clientID &&
+            presence.findIndex((q) => q.clientId === p.clientId) === i,
+        )
+        .map((p) => String(p.name)),
     }),
     [status, presence, doc],
   );
   // Upload state only the Y.Doc knows: who started it (and whether they are still here).
+  // Without a `presence` prop nobody can be known absent, so nothing reads as interrupted (else
+  // everyone would be offered Remove on a live upload).
   const attachmentState = useMemo(() => {
-    const here = new Set(presence.map((p) => p.clientId));
+    const here = presenceProp && new Set(presenceProp.map((p) => p.clientId));
     return (id: string) => {
       const m = doc.getMap<unknown>(BLOCKS).get(id);
       const by = isBlockEntry(id, m) ? blockMeta(m).uploadedBy : undefined;
       const mine = by === doc.clientID;
-      return { canRetry: mine, interrupted: !mine && (by === undefined || !here.has(by)) };
+      return {
+        canRetry: mine,
+        interrupted: !!here && !mine && (by === undefined || !here.has(by)),
+      };
     };
-  }, [doc, presence]);
+  }, [doc, presenceProp]);
 
   return (
     <CollabSeamContext.Provider value={seam}>

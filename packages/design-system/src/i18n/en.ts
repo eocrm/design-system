@@ -613,7 +613,8 @@ export const en: Messages = {
   collab: {
     synced: 'Synced',
     connecting: 'Connecting…',
-    offline: 'Offline — changes will sync when reconnected',
+    offline: 'Offline',
+    offlineHint: 'changes will sync when reconnected',
     othersEditing: ({ names }) =>
       `${names.length} ${names.length === 1 ? 'other' : 'others'} editing: ${names.join(', ')}`,
     uploadInterrupted: 'Upload interrupted',
