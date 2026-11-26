@@ -319,6 +319,42 @@ describe('RichTextEditor shared editing: createBlockId', () => {
   });
 });
 
+describe('RichTextEditor shared editing: with blockControls', () => {
+  it('gutter insert and Duplicate name new blocks via createBlockId; undo routes outside', async () => {
+    const user = userEvent.setup();
+    let n = 0;
+    const onUndo = vi.fn();
+    const kinds: string[] = [];
+    const { editor, api } = setup(doc2('one', 'two'), {
+      blockControls: true,
+      history: 'external',
+      onUndo,
+      onRedo: () => {},
+      canUndo: true,
+      onEdit: ({ kind }) => kinds.push(kind),
+      createBlockId: () => `c-${++n}`,
+    });
+    // ＋ in the gutter of the first block inserts an empty paragraph below it.
+    await user.hover(editor.querySelector('[data-block-id="p1"]') as HTMLElement);
+    await user.click(screen.getByRole('button', { name: 'Insert block below' }));
+    expect(api.value.blocks.map((b) => b.id)).toEqual(['p1', 'c-1', 'p2']);
+    // Duplicate from the block menu gets a factory id too.
+    await user.hover(editor.querySelector('[data-block-id="p2"]') as HTMLElement);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: /duplicate/i }));
+    const ids = api.value.blocks.map((b) => b.id);
+    expect(ids).toHaveLength(4);
+    expect(ids.filter((id) => !['p1', 'p2'].includes(id)).every((id) => /^c-\d+$/.test(id))).toBe(
+      true,
+    );
+    expect(kinds.every((k) => k === 'other')).toBe(true);
+    // Undo goes to the app's handler, not the editor's own history.
+    input(editor, 'historyUndo');
+    expect(onUndo).toHaveBeenCalledTimes(1);
+    expect(api.value.blocks).toHaveLength(4);
+  });
+});
+
 describe('RichTextEditor shared editing: createBlockId on silent commits', () => {
   it('a removal that empties the doc names its fresh paragraph with the factory', () => {
     const kinds: string[] = [];
