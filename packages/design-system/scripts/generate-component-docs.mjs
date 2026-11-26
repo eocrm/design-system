@@ -60,15 +60,27 @@ function fail(message) {
 
 const configFile = ts.readConfigFile(join(PKG, 'tsconfig.json'), ts.sys.readFile);
 const { options } = ts.parseJsonConfigFileContent(configFile.config, ts.sys, PKG);
-// The main entry plus the `/collab` subpath entry (its components are documented too).
-const ENTRIES = ['src/index.ts', 'src/collab/index.ts'].map((e) => join(PKG, e));
+const ENTRIES = [join(PKG, 'src/index.ts')];
 const program = ts.createProgram(ENTRIES, options);
 const checker = program.getTypeChecker();
 
 const propsTypes = new Map();
+// Package types exported under another name (`Range as RichRange`): the checker prints the
+// declared name, which consumers cannot import, so tables print the public one instead.
+const publicNames = new Map();
 for (const entry of ENTRIES) {
   const moduleSymbol = checker.getSymbolAtLocation(program.getSourceFile(entry));
   for (const exp of checker.getExportsOfModule(moduleSymbol)) {
+    const target = exp.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(exp) : exp;
+    const own = target.declarations?.some(
+      (d) => !d.getSourceFile().fileName.includes('/node_modules/'),
+    );
+    if (
+      own &&
+      target.name !== exp.name &&
+      target.flags & (ts.SymbolFlags.Interface | ts.SymbolFlags.TypeAlias)
+    )
+      publicNames.set(target.name, exp.name);
     if (!exp.name.endsWith('Props')) continue;
     propsTypes.set(
       exp.name,
@@ -100,7 +112,25 @@ const cell = (s) => s.replace(/\s+/g, ' ').trim().replace(/\|/g, '\\|');
 const stripIssueRefs = (s) =>
   s.replace(/\s*\(#\d+(?:,\s*#\d+)*\)/g, '').replace(/,\s*#\d+(?=\))/g, '');
 
-const typeText = (t) => checker.typeToString(t, undefined, ts.TypeFormatFlags.NoTruncation);
+// Rename an internal type to its public alias (e.g. `Range` → `RichRange`) only where the type
+// really refers to this package's declaration: the fully qualified form names its module, so a
+// DOM `Range` (a global) is never rewritten.
+const typeText = (t) => {
+  const flags = ts.TypeFormatFlags.NoTruncation;
+  const qualified = checker.typeToString(
+    t,
+    undefined,
+    flags | ts.TypeFormatFlags.UseFullyQualifiedType,
+  );
+  const own = new Set(
+    [...qualified.matchAll(/import\("([^"]+)"\)\.(\w+)/g)]
+      .filter(([, file]) => !file.includes('/node_modules/'))
+      .map(([, , name]) => name),
+  );
+  return checker
+    .typeToString(t, undefined, flags)
+    .replace(/(?<![\w."'])[A-Z]\w*\b/g, (n) => (own.has(n) && publicNames.get(n)) || n);
+};
 const LITERAL =
   ts.TypeFlags.StringLiteral | ts.TypeFlags.NumberLiteral | ts.TypeFlags.BooleanLiteral;
 

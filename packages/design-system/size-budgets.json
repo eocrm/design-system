@@ -17,12 +17,7 @@
   "rte": {
     "code": "import { RichTextEditor } from '@eocrm/design-system'; console.log(RichTextEditor);",
     "jsGzip": 74800,
-    "cssGzip": 10600
-  },
-  "collab": {
-    "code": "import { CollaborativeRichTextEditor } from '@eocrm/design-system/collab'; console.log(CollaborativeRichTextEditor);",
-    "jsGzip": 81600,
-    "cssGzip": 11200
+    "cssGzip": 10700
   },
   "i18n-en": {
     "code": "import { I18nProvider, Button } from '@eocrm/design-system'; console.log(I18nProvider, Button);",
@@ -32,8 +27,8 @@
   },
   "all": {
     "code": "import * as DS from '@eocrm/design-system'; console.log(DS);",
-    "jsGzip": 364200,
-    "cssGzip": 84490
+    "jsGzip": 364800,
+    "cssGzip": 84600
   },
   "global-css": {
     "code": "import '@eocrm/design-system/styles/global.css';",

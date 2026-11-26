@@ -33,6 +33,19 @@ const [doc, setDoc] = useState(emptyDoc());
 | `imageMaxHeight` | `number` | no | Maximum DISPLAYED height of image attachments, in px. Default: the `--size-rich-text-image-max-height` token (480px). A taller image shrinks (width follows, aspect preserved); the resize handle and width slider stop where the image hits the cap. Render-time only — stored `width`/`height` are unchanged. Pass the same value to the read-only `<RichText>` so both agree. |
 | `blockControls` | `boolean` | no | Show Notion-style per-block controls: a left gutter that appears on the hovered/focused block with an insert button (`＋`, adds an empty paragraph below) and a drag handle (`⠿`) that opens a block menu (Turn into ▸, Duplicate, Move up/down, Delete). Reordering is subtree-aware for nested lists. Keyboard: Shift+F10 / the ContextMenu key opens the focused block's menu; ⌘/Ctrl+⇧↑ / ⌘/Ctrl+⇧↓ move the block; ⌘/Ctrl+D duplicates. Default `false`. Ignored when `readOnly`. Independent of `toolbar`. |
 | `upload` | `UploadConfig` | no | Enable file upload: a toolbar button (when `toolbar`) and clipboard-file paste. `onUpload(file)` resolves with where the file landed; images render inline as a preview, other files as a download chip. Reject `onUpload` to show a retry/remove error; reject with `new UploadError(message)` to also show that (user-facing, localized) reason on the block — any other rejection shows only "Upload failed". `onUploadingChange` fires while any upload is in flight — wire it to your submit button's disabled state. Validation (size/type) belongs in `onUpload` (`accept` is only a native-picker hint and is bypassed by paste). Omit to disable. Ignored when `readOnly`. When `blockControls` is also on, a ready image attachment can be configured (alt text, alignment, replace, open/download) via the block menu's "Configure" item. The width slider appears only for an image that renders as a preview (a safe, fetchable src — an embed); an uploaded image whose object-URL src renders as a download chip isn't resizable here. Alignment + width round-trip through HTML but not Markdown. |
+| `history` | `'internal' \| 'external'` | no | Who keeps the undo history. `'internal'` (default): the editor's own. `'external'`: a sync layer's (e.g. per-user undo over a shared doc) — the editor keeps none, sends ⌘Z / ⌘⇧Z / menu undo and the toolbar buttons to `onUndo` / `onRedo`, and accepts an outside `value` as-is (never a rejected edit or a history reset), keeping the caret where `controller.setSelection` puts it (default: the current selection, clamped to the new doc). |
+| `onUndo` | `(() => void)` | no | Undo, with `history="external"` (keyboard, menu and toolbar). |
+| `onRedo` | `(() => void)` | no | Redo, with `history="external"` (keyboard, menu and toolbar). |
+| `canUndo` | `boolean` | no | Whether the toolbar's Undo button is enabled, with `history="external"`. Default: `false`. |
+| `canRedo` | `boolean` | no | Whether the toolbar's Redo button is enabled, with `history="external"`. Default: `false`. |
+| `onEdit` | `((edit: { kind: RichTextEditKind; }) => void)` | no | Fires once per local edit, right before its `onChange`, with its kind (see {@link RichTextEditKind}; `'silent'` edits are not undo steps). Not fired for undo / redo. |
+| `createBlockId` | `(() => string)` | no | Id source for every block the editor creates (Enter, paste, insert, duplicate, attachments), per editor instance. Use it when ids must be unique across users of a shared doc (e.g. prefix a client id). Omit for session-unique `rtN` ids. |
+| `onSelectionChange` | `((selection: RichRange \| null) => void)` | no | Fires on every selection change with the model selection, and with `null` when the editor loses focus or the selection leaves it. Relay it (throttled) as this user's presence. |
+| `controller` | `Ref<RichTextEditorController>` | no | Receives the {@link RichTextEditorController} for a sync layer. |
+| `onCompositionEnd` | `(() => void)` | no | Fires after the editor committed an IME composition (and its `onChange`): if remote changes arrived during it, rebuild the doc once from your shared state now and pass it as `value`. |
+| `presence` | `readonly RichTextPresence[]` | no | Other users in a shared doc: drawn as carets with a name flag and selection tints in each user's colour (hidden from assistive tech), and named in the status area's accessible text ("2 others editing: …", one per `id` with a non-empty name; nameless peers are drawn but not counted). Leave out the local user. Setting it (or `syncStatus`) wraps the editable in a root element that holds the overlay and status, so set it from the first render (`[]` while nobody else is there): switching it between `undefined` and set remounts the editable when neither `toolbar` nor `blockControls` already wraps it. |
+| `syncStatus` | `'synced' \| 'connecting' \| 'offline'` | no | Connection state of the app's sync transport, shown as a small text + icon indicator in the toolbar row (`toolbar={true}`) or below the editable, and announced politely on change. Omit to show none. Set it from the first render (e.g. `'connecting'`): going from `undefined` to set announces nothing (the live region mounts with it) and, like `presence`, can remount the editable. |
+| `uploadOwner` | `((blockId: string) => RichTextUploadOwner)` | no | Who owns each in-flight or failed upload in a shared doc (see {@link RichTextUploadOwner}): `'orphaned'` shows "Upload interrupted" with Remove; Retry appears only for `'mine'`. Omit and every failed upload offers Retry, and none reads as interrupted. Its identity drives re-rendering: pass a new function whenever ownership changes (e.g. `useMemo` on presence). |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
@@ -91,12 +104,82 @@ plain `@label` text in `toMarkdown`. Chips are inert references, not links.
 
 Read-only display of an existing document: `<RichTextEditor value={doc} onChange={() => {}} readOnly />` (or use `<RichText>`). `@`-mentions: `<RichTextEditor value={doc} onChange={setDoc} mentions={{ onQuery: (q) => searchUsers(q) }} />`.
 
+**Shared editing (sync hooks):** the props `history`, `onUndo`/`onRedo`/`canUndo`/`canRedo`, `onEdit`, `createBlockId`, `onSelectionChange`, `controller`, `onCompositionEnd`, `presence`, `syncStatus` and `uploadOwner` let a sync layer (e.g. a CRDT) drive the editor. The library ships no sync engine and no yjs dependency; the Yjs binding lives in the app.
+
+- **`history="external"`**: the editor keeps no undo stack. ⌘Z / ⌘⇧Z, the menu and the toolbar buttons call `onUndo` / `onRedo`; enable the toolbar buttons with `canUndo` / `canRedo`. An outside `value` is accepted as-is (never a rejected edit, no history reset) and the caret stays where it was (clamped to the new doc) unless `controller.setSelection` moves it. `onEdit({ kind })` fires once per local edit right before `onChange`, with `kind` one of `'type'` (typing), `'delete'`, `'resize'` (an image width drag), `'other'` (formatting, Enter, paste, block actions, insert) or `'silent'` (an upload settling or a failed upload's removal). Group consecutive edits of the same kind into one undo step, never group `'other'`, and keep `'silent'` out of the undo stack.
+- **`controller`** (a ref to `RichTextEditorController`): `getSelection()` returns the editor's selection, `setSelection(range)` sets the caret the next `value` gets (map it through remote changes yourself), `isComposing()` is `true` during an IME composition. While composing, don't pass outside values (replacing the DOM mid-composition breaks the IME): skip them and, in `onCompositionEnd`, rebuild once from your shared state. Inside `onEdit`, `getSelection()` is still the pre-edit caret: store it with the undo step so undo can put the caret back. Outside values and `setSelection` never move focus: whenever focus is outside the editable (anywhere, not just the editor's menus), their caret is held and placed when the editable regains focus.
+- **Applying a remote change** (`rebuild`, `mapCaret` and `setValue` are your app's own functions; this assumes your `onChange` writes local edits into the shared state synchronously):
+
+  ```ts
+  let dirty = false;
+  // on a remote update: never replace the doc mid-composition
+  if (controller.current?.isComposing()) dirty = true;
+  else apply();
+  // onCompositionEnd={() => dirty && apply()} — the shared state now holds the composed text
+  function apply() {
+    dirty = false;
+    const next = rebuild(sharedState); // once, from the current shared state
+    // The caret is in the coordinates of the doc the editor shows (`shown`), not of `next`:
+    // map it across that change (with Yjs: via relative positions captured before applying).
+    controller.current?.setSelection(mapCaret(controller.current.getSelection(), shown, next));
+    setValue(next); // after setSelection
+  }
+  ```
+
+- **Local transactions**: with `history="external"`, pass `onChange`'s exact object back as `value` (not a doc rebuilt from your shared state) — the editor tells its own edits from outside values by identity.
+- **`createBlockId`**: id source for every block the editor creates; the ids are applied before `onChange` sees the doc. Use it when ids must be unique across users (prefix a client id).
+- **`presence`**: other users as `{ id, name, color, selection }`, drawn as carets, name flags and selection tints (hidden from assistive tech) and named in the status text. Leave out the local user. Feed your own `onSelectionChange` (throttled) to the peers.
+- **`syncStatus`** (`'synced' | 'connecting' | 'offline'`): small indicator, announced politely on change; the initial value is not announced.
+- **`uploadOwner(blockId)`**: `'mine'` | `'theirs'` | `'orphaned'`. Retry shows only for `'mine'`; `'orphaned'` reads "Upload interrupted". Pass a new function whenever ownership changes.
+- Set `history`, `presence` and `syncStatus` from the first render (`presence={[]}` while alone); switching them at runtime is unsupported — toggling `presence` / `syncStatus` between `undefined` and set remounts the editable when neither `toolbar` nor `blockControls` wraps it.
+
+```tsx
+// One editor + an app-owned undo/redo stack (toy whole-document history; a real app syncs ops).
+const [doc, setDoc] = useState(emptyDoc());
+const [undo, setUndo] = useState<RichDoc[]>([]);
+const [redo, setRedo] = useState<RichDoc[]>([]);
+const [sel, setSel] = useState<RichRange | null>(null); // local user's selection, relayed to peers
+const change = (d: RichDoc) => {
+  setUndo((u) => [...u, doc]);
+  setRedo([]);
+  setDoc(d); // the exact object onChange gave
+};
+<RichTextEditor
+  value={doc}
+  onChange={change}
+  history="external"
+  onUndo={() => {
+    const prev = undo.at(-1);
+    if (!prev) return;
+    setUndo(undo.slice(0, -1));
+    setRedo([...redo, doc]);
+    setDoc(prev);
+  }}
+  onRedo={() => {
+    const next = redo.at(-1);
+    if (!next) return;
+    setRedo(redo.slice(0, -1));
+    setUndo([...undo, doc]);
+    setDoc(next);
+  }}
+  canUndo={undo.length > 0}
+  canRedo={redo.length > 0}
+  createBlockId={() => `${clientId}-${crypto.randomUUID()}`}
+  onSelectionChange={setSel}
+  presence={[{ id: 'bob', name: 'Bob', color: 'var(--color-success)', selection: bobSel }]}
+  syncStatus="synced"
+/>;
+```
+
 **Anti-patterns**
 
 - ❌ Treating it as uncontrolled — you MUST feed `onChange`'s doc back into `value`, or edits won't stick. Never mutate `value` in place.
 - ❌ Storing `onChange`'s doc later (debounced / `setTimeout` / after an `await`), or deferring `value` itself (`startTransition` / `useDeferredValue` on the editor's doc) — every edit builds on the current `value`, so the next keystroke can beat the late update and drop text. Store it right away; defer the expensive consumers (preview, autosave) instead. An edit whose doc hasn't arrived as `value` by the next edit, undo or upload settle is treated as rejected: its undo step is dropped and its caret isn't restored.
 - ❌ Cloning or normalizing the doc in `onChange` before storing it (`setDoc(structuredClone(d))`, a re-parse, an immutable-library copy) — the editor detects an outside `value` replacement by object identity, so a copy wipes undo history on every keystroke. Store the exact object `onChange` gave you; transform only on save.
-- ❌ Implementing your own undo/redo stack — history is tracked internally (⌘/Ctrl+Z, ⌘/Ctrl+⇧Z or ⌘/Ctrl+Y, toolbar buttons).
+- ❌ Toggling `presence` / `syncStatus` between `undefined` and set at runtime — it can remount the editable (focus and caret lost); set them from the first render.
+- ❌ `history="external"` without `onUndo` / `onRedo` — ⌘Z and the toolbar buttons do nothing.
+- ❌ Non-unique ids from `createBlockId` (a bare counter shared across users) — blocks collide in the shared doc; prefix a client id.
+- ❌ Implementing your own undo/redo stack (except with `history="external"`) — history is tracked internally (⌘/Ctrl+Z, ⌘/Ctrl+⇧Z or ⌘/Ctrl+Y, toolbar buttons).
 - ❌ Hand-rolling a link UI or a toolbar by reaching into the DOM — press ⌘/Ctrl+K or pass `toolbar`; both route through the controlled `value`/`onChange` round-trip.
 - ❌ Pre-stripping pasted HTML to plain text — paste rich HTML directly; the editor parses it (sanitized) into the model. Seed stored content with `fromHtml` / `fromMarkdown`.
 - ❌ Hand-rolling HTML/Markdown from the model — use `toHtml` / `toMarkdown`.

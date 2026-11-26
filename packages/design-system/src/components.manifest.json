@@ -241,17 +241,6 @@
     ],
     "composedBy": []
   },
-  "CollaborativeRichTextEditor": {
-    "tier": "composition",
-    "cluster": "Forms",
-    "composes": [
-      "LiveRegion",
-      "RichText",
-      "RichTextEditor",
-      "VisuallyHidden"
-    ],
-    "composedBy": []
-  },
   "ColorPicker": {
     "tier": "composition",
     "cluster": "Forms",
@@ -710,7 +699,6 @@
     "composedBy": [
       "Chart",
       "CodeBlock",
-      "CollaborativeRichTextEditor",
       "DateStrip",
       "DonutChart",
       "FunnelChart",
@@ -921,7 +909,6 @@
       "Tooltip"
     ],
     "composedBy": [
-      "CollaborativeRichTextEditor",
       "RichTextEditor"
     ]
   },
@@ -940,11 +927,10 @@
       "RichText",
       "Slider",
       "Stack",
-      "Text"
+      "Text",
+      "VisuallyHidden"
     ],
-    "composedBy": [
-      "CollaborativeRichTextEditor"
-    ]
+    "composedBy": []
   },
   "ScatterChart": {
     "tier": "composition",
@@ -1255,7 +1241,6 @@
       "Banner",
       "Chart",
       "ChatBubble",
-      "CollaborativeRichTextEditor",
       "DashboardWidget",
       "DateStrip",
       "DateTile",
@@ -1265,6 +1250,7 @@
       "Heatmap",
       "LaneChart",
       "LiveRegion",
+      "RichTextEditor",
       "ScatterChart",
       "StagePath",
       "StatGroup",

@@ -25,8 +25,6 @@ If your `.npmrc` still maps `@eocrm` to another registry, remove that line.
 npm install @eocrm/design-system
 ```
 
-Real-time co-editing (`CollaborativeRichTextEditor`) ships from the `@eocrm/design-system/collab` subpath and needs the optional peer `yjs` (`npm i yjs`). The main entry never imports it. See `docs/components/CollaborativeRichTextEditor.md`.
-
 ### 3. Use
 
 ```ts
@@ -267,6 +265,11 @@ Grouped for navigation. Per-component contracts are in `docs/components/<Name>.m
 > The library also ships an `AppProvider` (theme + i18n + locale wiring), `LocaleProvider` / `I18nProvider`, the `useTranslation` / `useLocale` hooks, the `palette` helpers, and Calendar primitive hooks (`useMonth`, `useWeek`, `useDay`, `useAgenda`). See [AI-PRIMER.md](./AI-PRIMER.md) for those.
 
 ---
+
+## Migrating to 0.9
+
+- **Removed:** the `@eocrm/design-system/collab` subpath and `CollaborativeRichTextEditor` are gone, and `yjs` is no longer a peer dependency (uninstall it unless your app uses it directly).
+- **Replace `CollaborativeRichTextEditor` with `RichTextEditor` plus an app-side binding** built on `RichTextEditor`'s shared-editing props (`history="external"`, `onUndo`/`onRedo`, `onEdit`, `createBlockId`, `controller`, `presence`, `syncStatus`, …) — see "Shared editing" in [RichTextEditor.md](./docs/components/RichTextEditor.md). The library no longer reads Y.Doc data.
 
 ## Migrating to 0.7
 

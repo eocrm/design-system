@@ -525,7 +525,14 @@ export type {
 } from './components/LiquidEditor';
 
 export { RichTextEditor } from './components/RichTextEditor';
-export type { RichTextEditorProps } from './components/RichTextEditor';
+export type {
+  RichTextEditorProps,
+  RichTextEditorController,
+  RichTextEditKind,
+  RichTextPresence,
+  RichTextSyncStatus,
+  RichTextUploadOwner,
+} from './components/RichTextEditor';
 export type { MentionItem, MentionsConfig } from './components/RichTextEditor';
 export { UploadError } from './components/RichTextEditor';
 export type { UploadConfig, UploadResult } from './components/RichTextEditor';

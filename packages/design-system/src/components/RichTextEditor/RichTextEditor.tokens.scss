@@ -1,0 +1,25 @@
+// RichTextEditor.tokens.scss — tokens for the shared-editing chrome (presence and sync status).
+// Presence colours are app data (`RichTextPresence.color`), set inline as
+// `--rich-text-presence-color`; the default below only applies when none is given.
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
+  // Presence
+  --rich-text-presence-color: var(--color-accent);
+  --rich-text-presence-caret-width: var(--border-width-emphasis);
+
+  // No `--opacity-*` primitive fits (the nearest, --opacity-dragging, is 0.4): a full-strength
+  // user colour at that alpha hides the selected text. A tint, not a state opacity.
+  --rich-text-presence-selection-opacity: 0.25;
+  --rich-text-presence-flag-fg: var(--color-fg-on-overlay);
+  --rich-text-presence-flag-font-size: var(--font-size-xs);
+  --rich-text-presence-flag-padding-x: var(--space-1);
+  --rich-text-presence-flag-radius: var(--radius-sm);
+
+  // How long a caret's name flag stays after the caret last moved.
+  --rich-text-presence-flag-idle: 2s;
+
+  // Sync status
+  --rich-text-sync-status-gap: var(--space-1);
+  --rich-text-sync-status-fg: var(--color-fg-muted);
+  --rich-text-sync-status-font-size: var(--font-size-xs);
+}

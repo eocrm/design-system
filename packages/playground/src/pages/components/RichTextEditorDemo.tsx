@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   RichTextEditor,
   docFromText,
@@ -10,7 +10,12 @@ import {
   Code,
   Text,
   Stack,
+  Cluster,
+  Button,
   type RichDoc,
+  type RichRange,
+  type RichTextEditKind,
+  type RichTextSyncStatus,
   type RichTextEditorProps,
   type RenderLink,
   type RenderMention,
@@ -83,6 +88,108 @@ function ToolbarExample() {
       <Text size="sm" tone="muted">
         Markdown → <Code>{toMarkdown(doc).replace(/\n/g, '⏎')}</Code>
       </Text>
+    </Stack>
+  );
+}
+
+function SharedEditingExample() {
+  const [docs, setDocs] = useState<[RichDoc, RichDoc]>(() => {
+    const d = docFromText('Edit me in either editor.');
+    return [d, d];
+  });
+  const [undo, setUndo] = useState<RichDoc[]>([]);
+  const [redo, setRedo] = useState<RichDoc[]>([]);
+  const [sel, setSel] = useState<[RichRange | null, RichRange | null]>([null, null]);
+  const [status, setStatus] = useState<RichTextSyncStatus>('synced');
+
+  const apply = (d: RichDoc) => setDocs([d, d]);
+  // onEdit fires right before onChange: group a burst of typing (or deleting) into one undo
+  // step, keep 'silent' commits (upload settles) out of the stack.
+  const lastEdit = useRef<{ kind: RichTextEditKind; at: number } | null>(null);
+  const pendingKind = useRef<RichTextEditKind>('other');
+  const onEdit = ({ kind }: { kind: RichTextEditKind }) => {
+    pendingKind.current = kind;
+  };
+  const change = (d: RichDoc) => {
+    const kind = pendingKind.current;
+    const now = Date.now();
+    const prev = lastEdit.current;
+    const coalesce =
+      kind === 'silent' ||
+      (prev !== null && prev.kind === kind && kind !== 'other' && now - prev.at < 600);
+    if (!coalesce) setUndo((u) => [...u, docs[0]]);
+    if (kind !== 'silent') lastEdit.current = { kind, at: now };
+    setRedo([]);
+    apply(d);
+  };
+  const onUndo = () => {
+    const prev = undo[undo.length - 1];
+    if (!prev) return;
+    lastEdit.current = null;
+    setUndo(undo.slice(0, -1));
+    setRedo([...redo, docs[0]]);
+    apply(prev);
+  };
+  const onRedo = () => {
+    const next = redo[redo.length - 1];
+    if (!next) return;
+    setRedo(redo.slice(0, -1));
+    setUndo([...undo, docs[0]]);
+    apply(next);
+  };
+  const setSelAt = (i: 0 | 1) => (r: RichRange | null) =>
+    setSel((s) => (i === 0 ? [r, s[1]] : [s[0], r]));
+
+  const people = [
+    { id: 'a', name: 'Alice', color: 'var(--color-accent)' },
+    { id: 'b', name: 'Bob', color: 'var(--color-success)' },
+  ];
+  // Unique across reloads and tabs: a client prefix plus a random UUID.
+  const createIdA = () => `a-${crypto.randomUUID()}`;
+  const createIdB = () => `b-${crypto.randomUUID()}`;
+
+  const shared = {
+    history: 'external',
+    onUndo,
+    onRedo,
+    canUndo: undo.length > 0,
+    canRedo: redo.length > 0,
+    syncStatus: status,
+    toolbar: true,
+    blockControls: true,
+  } as const;
+  return (
+    <Stack gap="sm">
+      <Cluster gap="sm">
+        {(['synced', 'connecting', 'offline'] as const).map((s) => (
+          <Button
+            key={s}
+            size="sm"
+            variant={status === s ? 'primary' : 'secondary'}
+            onClick={() => setStatus(s)}
+          >
+            {s}
+          </Button>
+        ))}
+      </Cluster>
+      <RichTextEditor
+        {...shared}
+        value={docs[0]}
+        onChange={change}
+        onEdit={onEdit}
+        createBlockId={createIdA}
+        onSelectionChange={setSelAt(0)}
+        presence={[{ ...people[1], selection: sel[1] }]}
+      />
+      <RichTextEditor
+        {...shared}
+        value={docs[1]}
+        onChange={change}
+        onEdit={onEdit}
+        createBlockId={createIdB}
+        onSelectionChange={setSelAt(1)}
+        presence={[{ ...people[0], selection: sel[0] }]}
+      />
     </Stack>
   );
 }
@@ -508,6 +615,113 @@ export function Demo() {
             <Code>https://example.com</Code> (plain link).
           </Text>
         </Stack>
+      </Example>
+
+      <Example
+        title="Shared editing hooks"
+        description="Two editors kept in sync by a naive whole-document relay: each onChange replaces the other's value. It is a toy (last writer wins, not a CRDT) that stands in for a real sync layer. history='external' routes undo/redo to one app-owned stack, grouped by onEdit's kind (a typing burst is one undo step); presence is relayed both ways from onSelectionChange; the status buttons drive syncStatus; createBlockId gives each editor its own id prefix so block ids never collide — including blocks made by the block controls (＋ insert, Duplicate, drag/move; hover a block's left gutter or press Shift+F10)."
+        code={`import { useRef, useState } from 'react';
+import {
+  RichTextEditor,
+  docFromText,
+  Cluster,
+  Button,
+  Stack,
+  type RichDoc,
+  type RichRange,
+  type RichTextEditKind,
+  type RichTextSyncStatus,
+} from '@eocrm/design-system';
+
+export function Demo() {
+  const [docs, setDocs] = useState<[RichDoc, RichDoc]>(() => {
+    const d = docFromText('Edit me in either editor.');
+    return [d, d];
+  });
+  const [undo, setUndo] = useState<RichDoc[]>([]);
+  const [redo, setRedo] = useState<RichDoc[]>([]);
+  const [sel, setSel] = useState<[RichRange | null, RichRange | null]>([null, null]);
+  const [status, setStatus] = useState<RichTextSyncStatus>('synced');
+
+  const apply = (d: RichDoc) => setDocs([d, d]);
+  // onEdit fires right before onChange: group a burst of typing (or deleting) into one undo
+  // step, keep 'silent' commits (upload settles) out of the stack.
+  const lastEdit = useRef<{ kind: RichTextEditKind; at: number } | null>(null);
+  const pendingKind = useRef<RichTextEditKind>('other');
+  const onEdit = ({ kind }: { kind: RichTextEditKind }) => {
+    pendingKind.current = kind;
+  };
+  const change = (d: RichDoc) => {
+    const kind = pendingKind.current;
+    const now = Date.now();
+    const prev = lastEdit.current;
+    const coalesce =
+      kind === 'silent' ||
+      (prev !== null && prev.kind === kind && kind !== 'other' && now - prev.at < 600);
+    if (!coalesce) setUndo((u) => [...u, docs[0]]);
+    if (kind !== 'silent') lastEdit.current = { kind, at: now };
+    setRedo([]);
+    apply(d);
+  };
+  const onUndo = () => {
+    const prev = undo[undo.length - 1];
+    if (!prev) return;
+    lastEdit.current = null;
+    setUndo(undo.slice(0, -1));
+    setRedo([...redo, docs[0]]);
+    apply(prev);
+  };
+  const onRedo = () => {
+    const next = redo[redo.length - 1];
+    if (!next) return;
+    setRedo(redo.slice(0, -1));
+    setUndo([...undo, docs[0]]);
+    apply(next);
+  };
+  const setSelAt = (i: 0 | 1) => (r: RichRange | null) =>
+    setSel((s) => (i === 0 ? [r, s[1]] : [s[0], r]));
+
+  const people = [
+    { id: 'a', name: 'Alice', color: 'var(--color-accent)' },
+    { id: 'b', name: 'Bob', color: 'var(--color-success)' },
+  ];
+  // Unique across reloads and tabs: a client prefix plus a random UUID.
+  const createIdA = () => \`a-\${crypto.randomUUID()}\`;
+  const createIdB = () => \`b-\${crypto.randomUUID()}\`;
+
+  const shared = { history: 'external', onUndo, onRedo, canUndo: undo.length > 0, canRedo: redo.length > 0, syncStatus: status, toolbar: true, blockControls: true } as const;
+  return (
+    <Stack gap="sm">
+      <Cluster gap="sm">
+        {(['synced', 'connecting', 'offline'] as const).map((s) => (
+          <Button key={s} size="sm" variant={status === s ? 'primary' : 'secondary'} onClick={() => setStatus(s)}>
+            {s}
+          </Button>
+        ))}
+      </Cluster>
+      <RichTextEditor
+        {...shared}
+        value={docs[0]}
+        onChange={change}
+        onEdit={onEdit}
+        createBlockId={createIdA}
+        onSelectionChange={setSelAt(0)}
+        presence={[{ ...people[1], selection: sel[1] }]}
+      />
+      <RichTextEditor
+        {...shared}
+        value={docs[1]}
+        onChange={change}
+        onEdit={onEdit}
+        createBlockId={createIdB}
+        onSelectionChange={setSelAt(1)}
+        presence={[{ ...people[0], selection: sel[0] }]}
+      />
+    </Stack>
+  );
+}`}
+      >
+        <SharedEditingExample />
       </Example>
 
       <Example

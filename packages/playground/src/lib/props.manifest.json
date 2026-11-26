@@ -6243,6 +6243,97 @@
           "required": false,
           "default": "",
           "description": "Enable file upload: a toolbar button (when `toolbar`) and clipboard-file paste.\n`onUpload(file)` resolves with where the file landed; images render inline as a\npreview, other files as a download chip. Reject `onUpload` to show a retry/remove\nerror; reject with `new UploadError(message)` to also show that (user-facing,\nlocalized) reason on the block — any other rejection shows only \"Upload\nfailed\". `onUploadingChange` fires while any upload is in flight — wire it to your\nsubmit button's disabled state. Validation (size/type) belongs in `onUpload`\n(`accept` is only a native-picker hint and is bypassed by paste). Omit to\ndisable. Ignored when `readOnly`.\nWhen `blockControls` is also on, a ready image attachment can be configured\n(alt text, alignment, replace, open/download) via the block menu's\n\"Configure\" item. The width slider appears only for an image that renders as\na preview (a safe, fetchable src — an embed); an uploaded image whose\nobject-URL src renders as a download chip isn't resizable here. Alignment +\nwidth round-trip through HTML but not Markdown."
+        },
+        {
+          "name": "history",
+          "type": "\"internal\" | \"external\"",
+          "required": false,
+          "default": "internal",
+          "description": "Who keeps the undo history. `'internal'` (default): the editor's own. `'external'`: a sync\nlayer's (e.g. per-user undo over a shared doc) — the editor keeps none, sends ⌘Z / ⌘⇧Z /\nmenu undo and the toolbar buttons to `onUndo` / `onRedo`, and accepts an outside `value` as-is\n(never a rejected edit or a history reset), keeping the caret where `controller.setSelection`\nputs it (default: the current selection, clamped to the new doc)."
+        },
+        {
+          "name": "onUndo",
+          "type": "(() => void)",
+          "required": false,
+          "default": "",
+          "description": "Undo, with `history=\"external\"` (keyboard, menu and toolbar)."
+        },
+        {
+          "name": "onRedo",
+          "type": "(() => void)",
+          "required": false,
+          "default": "",
+          "description": "Redo, with `history=\"external\"` (keyboard, menu and toolbar)."
+        },
+        {
+          "name": "canUndo",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Whether the toolbar's Undo button is enabled, with `history=\"external\"`."
+        },
+        {
+          "name": "canRedo",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Whether the toolbar's Redo button is enabled, with `history=\"external\"`."
+        },
+        {
+          "name": "onEdit",
+          "type": "((edit: { kind: RichTextEditKind; }) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires once per local edit, right before its `onChange`, with its kind (see\n{@link RichTextEditKind}; `'silent'` edits are not undo steps). Not fired for undo / redo."
+        },
+        {
+          "name": "createBlockId",
+          "type": "(() => string)",
+          "required": false,
+          "default": "",
+          "description": "Id source for every block the editor creates (Enter, paste, insert, duplicate, attachments),\nper editor instance. Use it when ids must be unique across users of a shared doc (e.g. prefix\na client id). Omit for session-unique `rtN` ids."
+        },
+        {
+          "name": "onSelectionChange",
+          "type": "((selection: RichRange | null) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires on every selection change with the model selection, and with `null` when the editor\nloses focus or the selection leaves it. Relay it (throttled) as this user's presence."
+        },
+        {
+          "name": "controller",
+          "type": "Ref<RichTextEditorController>",
+          "required": false,
+          "default": "",
+          "description": "Receives the {@link RichTextEditorController} for a sync layer."
+        },
+        {
+          "name": "onCompositionEnd",
+          "type": "(() => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires after the editor committed an IME composition: apply outside changes held during it."
+        },
+        {
+          "name": "presence",
+          "type": "readonly RichTextPresence[]",
+          "required": false,
+          "default": "",
+          "description": "Other users in a shared doc: drawn as carets with a name flag and selection tints in each\nuser's colour (hidden from assistive tech), and named in the status area's accessible text\n(\"2 others editing: …\", one per `id`). Leave out the local user. Setting it (or `syncStatus`)\nwraps the editable in a root element that holds the overlay and status, so set it from the\nfirst render (`[]` while nobody else is there): switching it between `undefined` and set\nremounts the editable when neither `toolbar` nor `blockControls` already wraps it."
+        },
+        {
+          "name": "syncStatus",
+          "type": "RichTextSyncStatus",
+          "required": false,
+          "default": "",
+          "description": "Connection state of the app's sync transport, shown as a small text + icon indicator in the\ntoolbar row (`toolbar={true}`) or below the editable, and announced politely on change.\nOmit to show none. Set it from the first render (e.g. `'connecting'`): going from `undefined`\nto set announces nothing (the live region mounts with it) and, like `presence`, can remount\nthe editable."
+        },
+        {
+          "name": "uploadOwner",
+          "type": "((blockId: string) => RichTextUploadOwner)",
+          "required": false,
+          "default": "",
+          "description": "Who owns each in-flight or failed upload in a shared doc (see {@link RichTextUploadOwner}):\n`'orphaned'` shows \"Upload interrupted\" with Remove; Retry appears only for `'mine'`. Omit\nand every failed upload offers Retry, and none reads as interrupted. Its identity drives\nre-rendering: pass a new function whenever ownership changes (e.g. `useMemo` on presence)."
         }
       ]
     },
@@ -8328,6 +8419,11 @@
     "LiquidPreviewStatus": "\"error\" | \"loading\" | \"idle\"",
     "LiquidPreviewPlacement": "\"right\" | \"bottom\"",
     "LiquidTag": "\"capture\" | \"if\" | \"unless\" | \"case\" | \"assign\" | \"comment\"",
+    "RichTextEditorController": "{ getSelection: () => RichRange | null; setSelection: (range: RichRange | null) => void; isComposing: () => boolean }",
+    "RichTextEditKind": "EditKind | \"silent\"",
+    "RichTextPresence": "{ id: string; name: string; color: string; selection: RichRange | null }",
+    "RichTextSyncStatus": "\"offline\" | \"synced\" | \"connecting\"",
+    "RichTextUploadOwner": "\"mine\" | \"theirs\" | \"orphaned\"",
     "MentionsConfig": "{ onQuery: (query: string) => MentionItem[] | Promise<MentionItem[]>; trigger?: string }",
     "UploadConfig": "{ onUpload: (file: File) => Promise<UploadResult>; accept?: string; onUploadingChange?: ((uploading: boolean) => void) }",
     "FileEntry": "{ id: string; file: File; status: \"error\" | \"done\" | \"pending\" | \"uploading\"; progress?: number; error?: string }",
@@ -8371,6 +8467,7 @@
     "HighlightRange": "{ start: number; length: number }",
     "RichTextImageActivateHandler": "(image: { src: string; alt?: string; }, trigger: HTMLElement) => void",
     "RichDoc": "{ blocks: Block[] }",
+    "RichRange": "Range",
     "RenderLink": "(link: RichTextLink, defaultNode: ReactNode) => ReactNode",
     "RenderMention": "(mention: RichTextMention, defaultNode: ReactNode) => ReactNode",
     "TextAs": "\"div\" | \"label\" | \"p\" | \"span\"",

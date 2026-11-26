@@ -1,39 +1,19 @@
-// presence.tsx — remote carets and selections over the editable, measured from DOM ranges.
-import {
-  createContext,
-  Fragment,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useReducer,
-  useRef,
-  useState,
-  type CSSProperties,
-} from 'react';
-import type * as Y from 'yjs';
-import type { Range, RichDoc } from '../components/RichText/engine/model';
-import { pointToDom } from '../components/RichTextEditor/selection';
-import { decodeSelection } from './bridge';
-import type { CollabPresence } from './CollaborativeRichTextEditor';
-import styles from './CollaborativeRichTextEditor.module.scss';
-
-/** What the overlay draws from (provided by `CollaborativeRichTextEditor`). @internal */
-export interface PresenceData {
-  doc: Y.Doc;
-  /** The editor's current doc (what the DOM shows). */
-  view: RichDoc;
-  presence: readonly CollabPresence[];
-}
-
-/** @internal */
-export const PresenceDataContext = createContext<PresenceData | null>(null);
+// RichTextPresence.tsx — other users' carets and selections over the editable (RichTextEditor's
+// `presence` prop), measured from DOM ranges. Presence is untrusted app-relayed data: every entry
+// is coerced and measured in its own try/catch, and its colour only reaches a CSS custom property.
+import { Fragment, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
+import type { Range, RichDoc } from '../RichText/engine/model';
+import { pointToDom } from './selection';
+import type { RichTextPresence } from './RichTextEditor';
+import styles from './RichTextPresence.module.scss';
 
 type Box = { top: number; left: number; width: number; height: number };
 interface Mark {
-  clientId: number;
+  id: string;
   name: string;
   color: string;
-  /** Changes whenever the remote selection moves (restarts the flag's idle timer). */
+  /** Changes whenever the selection moves (restarts the flag's idle timer). */
   moved: string;
   caret: Box | null;
   rects: Box[];
@@ -85,25 +65,30 @@ function measure(root: HTMLElement, range: Range, origin: DOMRect) {
 }
 
 /**
- * Remote carets (a bar in the user's colour with a name flag) and selection tints. Positioned from
- * DOM ranges relative to its own box; re-measured on every doc / presence change, editor resize
- * and scroll. The flag shows for ~2s after the caret last moved, then hides (CSS): the layer is
- * `pointer-events: none`, so there is no hover to reveal it.
+ * Carets (a bar in the user's colour with a name flag) and selection tints. Rendered right after
+ * the editable; positioned from DOM ranges relative to its own box and re-measured on every doc /
+ * presence change, editor resize and scroll. The flag shows for ~2s after the caret last moved,
+ * then hides (CSS): the layer is `pointer-events: none`, so there is no hover to reveal it.
  * @internal
  */
-export function PresenceOverlay() {
-  const data = useContext(PresenceDataContext);
+export function RichTextPresenceOverlay({
+  presence,
+  doc,
+}: {
+  presence: readonly RichTextPresence[];
+  /** The doc the editable shows. */
+  doc: RichDoc;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [marks, setMarks] = useState<Mark[]>([]);
   const [tick, remeasure] = useReducer((n: number) => n + 1, 0);
 
-  // Rendered right after the editable (see CollabSeam.overlay).
   const editable = () => ref.current?.previousElementSibling as HTMLElement | null | undefined;
 
-  const remote = !!data?.presence.some((p) => p.clientId !== data.doc.clientID && p.selection);
+  const active = presence.some((p) => p?.selection);
   useEffect(() => {
     const root = editable();
-    if (!remote || !root) return;
+    if (!active || !root) return;
     // One re-measure per frame, however many events arrive.
     let frame = 0;
     const schedule = () => {
@@ -125,62 +110,59 @@ export function PresenceOverlay() {
       window.removeEventListener('scroll', schedule, true);
       window.removeEventListener('resize', schedule);
     };
-  }, [remote]);
+  }, [active]);
 
   useLayoutEffect(() => {
     const root = editable();
-    if (!data || !ref.current || !root) return;
-    const { doc, view, presence } = data;
-    const has = (id: unknown) => view.blocks.some((b) => b.id === id);
+    if (!ref.current || !root) return;
+    const has = (id: unknown) => doc.blocks.some((b) => b.id === id);
     const out: Mark[] = [];
-    if (remote) {
+    if (active) {
       const origin = ref.current.getBoundingClientRect();
       for (const p of presence) {
-        const s = p.selection;
-        // Ours, idle, or pointing at blocks the doc no longer has (no "nearest point" guess here).
-        if (p.clientId === doc.clientID || !s || !has(s.anchor?.blockId) || !has(s.focus?.blockId))
-          continue;
-        let m: ReturnType<typeof measure> = null;
         try {
-          const range = decodeSelection(doc, s, view);
-          m = range && measure(root, range, origin);
+          const s = p.selection;
+          // Idle, or pointing at blocks the doc no longer has (no "nearest point" guess here).
+          if (!s || !has(s.anchor?.blockId) || !has(s.focus?.blockId)) continue;
+          const m = measure(root, s, origin);
+          if (!m || (!m.caret && !m.rects.length)) continue;
+          out.push({
+            id: String(p.id),
+            name: typeof p.name === 'string' ? p.name : '',
+            color: typeof p.color === 'string' ? p.color : '',
+            moved: JSON.stringify(s),
+            ...m,
+          });
         } catch {
-          // Remote data the DOM rejects (e.g. an out-of-range offset): skip this entry, never
-          // take the editor down.
+          // Data the DOM rejects (e.g. an out-of-range offset): skip this entry, never take
+          // the editor down.
         }
-        if (!m || (!m.caret && !m.rects.length)) continue;
-        out.push({
-          clientId: p.clientId,
-          name: String(p.name),
-          color: String(p.color),
-          moved: JSON.stringify(s),
-          ...m,
-        });
       }
     }
     // No re-render when nothing moved (incl. empty → empty).
     setMarks((prev) => (JSON.stringify(prev) === JSON.stringify(out) ? prev : out));
-  }, [data, tick, remote]);
+  }, [doc, presence, tick, active]);
 
   return (
-    <div ref={ref} className={styles.presence} aria-hidden="true" data-collab-presence="">
+    <div ref={ref} className={styles.presence} aria-hidden="true" data-presence="">
       {marks.map((m, i) => {
         // The colour is app data: it only ever reaches *-color properties, so a non-colour
         // value (e.g. `url(…)`) is simply invalid there.
-        const style = (b: Box) => ({ ...b, '--collab-user-color': m.color }) as CSSProperties;
+        const style = (b: Box) =>
+          ({ ...b, '--rich-text-presence-color': m.color }) as CSSProperties;
         return (
-          // Index too: an app may relay duplicate clientIds.
-          <Fragment key={`${m.clientId}-${i}`}>
+          // Index too: an app may relay duplicate ids.
+          <Fragment key={`${m.id}-${i}`}>
             {m.rects.map((r, j) => (
               <span
                 key={j}
                 className={styles.selection}
                 style={style(r)}
-                data-collab-selection=""
+                data-presence-selection=""
               />
             ))}
             {m.caret && (
-              <span className={styles.caret} style={style(m.caret)} data-collab-caret="">
+              <span className={styles.caret} style={style(m.caret)} data-presence-caret="">
                 <span key={m.moved} className={styles.flag}>
                   {m.name}
                 </span>

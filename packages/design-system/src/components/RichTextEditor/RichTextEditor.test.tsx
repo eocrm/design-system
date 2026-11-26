@@ -2230,6 +2230,7 @@ describe('upload', () => {
       } else {
         // DOM caret at 2 while readSelection reports 1: the settle re-pinning the
         // caret it read (and not having it wiped by reconcile) shows as offset 1.
+        act(() => box.focus()); // clicked in: the settle re-pins only into a focused editable
         document.getSelection()!.collapse(box.querySelector('[data-block-id="t"]')!.firstChild!, 2);
         mockReadSelection.mockReturnValue({
           anchor: { blockId: 't', offset: 1 },
