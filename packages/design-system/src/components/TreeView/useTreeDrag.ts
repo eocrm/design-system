@@ -53,12 +53,14 @@ const SILENT: Announcements = {
 };
 
 /** A node's row as the drag source (whole row; the sensors' constraints keep clicks and taps selecting). */
-export function DragRow({
-  dragId,
-  ...props
-}: HTMLAttributes<HTMLDivElement> & { dragId?: string }) {
-  const { setNodeRef, listeners } = useDraggable({ id: dragId! });
-  return createElement('div', { ...props, ...listeners, ref: setNodeRef });
+export function DragRow({ dragId, ...props }: HTMLAttributes<HTMLDivElement> & { dragId: string }) {
+  const { setNodeRef, listeners } = useDraggable({ id: dragId });
+  return createElement('div', {
+    ...props,
+    ...listeners,
+    ref: setNodeRef,
+    'data-draggable': '',
+  });
 }
 
 interface Options {
@@ -89,6 +91,8 @@ export function useTreeDrag({
   );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [target, setTarget] = useState<DropTarget | null>(null);
+  // Node row hovered in its middle zone, valid target or not: drives hover-to-expand.
+  const [insideKey, setInsideKey] = useState<string | null>(null);
   const shown = useRef<DropTarget | null>(null);
   // Last pointer position in viewport px. dnd-kit's `delta` folds in autoscroll, so track the pointer itself.
   const pointer = useRef<Coordinates | null>(null);
@@ -116,11 +120,16 @@ export function useTreeDrag({
     };
   }, [activeId]);
 
-  // Hover-to-expand: over the middle of a collapsed, expandable node.
-  const over =
-    target?.indicator.zone === 'inside' ? flat.find((i) => i.key === target.indicator.key) : null;
+  // Hover-to-expand: over the middle of a collapsed, expandable node, even one `canDrop` refuses (its children
+  // may accept), but never the dragged node or its own subtree.
+  const over = insideKey === null ? undefined : flat.find((i) => i.key === insideKey);
+  let ownSubtree = false;
+  for (let p = over; p?.kind === 'node'; p = p.parentId === null ? undefined : find(p.parentId))
+    if (p.node.id === activeId) ownSubtree = true;
   const expandId =
-    over?.kind === 'node' && over.node.hasChildren && !over.expanded ? over.node.id : null;
+    over?.kind === 'node' && over.node.hasChildren && !over.expanded && !ownSubtree
+      ? over.node.id
+      : null;
   useEffect(() => {
     if (expandId === null) return;
     const timer = setTimeout(() => expandRef.current(expandId, true), HOVER_EXPAND_MS);
@@ -131,7 +140,7 @@ export function useTreeDrag({
     const root = rootEl.current;
     const start = getEventCoordinates(activatorEvent);
     const p = pointer.current ?? (start && add(start, delta));
-    if (!root || !p) return null;
+    if (!root || !p) return { h: null, target: null };
     const box = root.getBoundingClientRect();
     // Rows scrolled out of the tree's scroll container are not under the pointer.
     const s = scroller.current;
@@ -142,12 +151,14 @@ export function useTreeDrag({
       left: Math.max(box.left, clip.left),
       right: Math.min(box.right, clip.right),
     };
+    // ponytail: O(rows) getBoundingClientRect per pointer move; measure once per drag (+ on scroll) and
+    // binary-search if trees reach thousands of rendered rows.
     const rows = flat.flatMap((i) => {
       const r = itemEls.current.get(i.key)?.firstElementChild?.getBoundingClientRect();
       return r ? [{ key: i.key, top: r.top, bottom: r.bottom }] : [];
     });
     const h = hitTest(rows, bounds, p.x, p.y);
-    return h && dropTarget(flat, id, h.key, h.zone, canDrop);
+    return { h, target: h && dropTarget(flat, id, h.key, h.zone, canDrop) };
   };
 
   const overText = (name: string, d: DropTarget) => {
@@ -173,6 +184,7 @@ export function useTreeDrag({
   const finish = () => {
     setActiveId(null);
     setTarget(null);
+    setInsideKey(null);
     shown.current = null;
     pointer.current = null;
   };
@@ -208,20 +220,23 @@ export function useTreeDrag({
     },
     onDragMove: ({ active, activatorEvent, delta }: DragMoveEvent) => {
       const id = String(active.id);
-      const next = hit(id, activatorEvent, delta);
+      const { h, target: next } = hit(id, activatorEvent, delta);
+      setInsideKey(h?.zone === 'inside' ? h.key : null);
       const prev = shown.current;
       const a = next?.indicator;
       const b = prev?.indicator;
       if (a?.key === b?.key && a?.zone === b?.zone && a?.level === b?.level) return;
       shown.current = next;
       setTarget(next);
-      const text = next && overText(find(id)?.node.label || t('drag.unnamed'), next);
+      const text = next
+        ? overText(find(id)?.node.label || t('drag.unnamed'), next)
+        : prev && h && t('treeView.moveRefused'); // valid → refused while still over the tree, once
       if (text) announce(text);
     },
     onDragEnd: ({ active, activatorEvent, delta }: DragEndEvent) => {
       const id = String(active.id);
       // Re-hit on release: a hover-expand may have moved rows since the last pointer move.
-      const final = hit(id, activatorEvent, delta);
+      const final = hit(id, activatorEvent, delta).target;
       const item = find(id);
       finish();
       if (final && item) onDrop(item, final.move);

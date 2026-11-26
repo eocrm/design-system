@@ -1020,6 +1020,61 @@ describe('TreeView keyboard move', () => {
       expect(order).toEqual(['move:FAQ', 'move:B']);
     });
 
+    it('hover-expands a collapsed node that canDrop refuses, without an indicator', () => {
+      vi.useFakeTimers();
+      try {
+        const expand = vi.fn();
+        render(<Move onExpandedSpy={expand} canDrop={(_id, p) => p !== 'Setup'} />);
+        pick('FAQ', 70); // inside Setup: refused as a target
+        expect(dropMark()).toBeNull();
+        act(() => vi.advanceTimersByTime(700));
+        expect(expand).toHaveBeenCalledWith('Setup', true);
+        drop(70);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('never hover-expands the dragged node itself', () => {
+      vi.useFakeTimers();
+      try {
+        const expand = vi.fn();
+        render(<Move onExpandedSpy={expand} />);
+        pick('Setup', 70); // over itself
+        act(() => vi.advanceTimersByTime(700));
+        expect(expand).not.toHaveBeenCalled();
+        drop(70);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('announces a refusal once when the target turns refused', async () => {
+      render(<Move />);
+      pick('FAQ', 21); // before A: valid
+      await said('FAQ: before A');
+      fireEvent.pointerMove(document, { clientX: 50, clientY: 90 }); // over itself
+      await said("Can't move here");
+      const region = screen.getByRole('status');
+      const seen: string[] = [];
+      const mo = new MutationObserver(() => seen.push(region.textContent ?? ''));
+      mo.observe(region, { childList: true, characterData: true, subtree: true });
+      fireEvent.pointerMove(document, { clientX: 50, clientY: 92 });
+      fireEvent.pointerMove(document, { clientX: 50, clientY: 88 });
+      await new Promise((r) => setTimeout(r, 100));
+      mo.disconnect();
+      expect(seen).toEqual([]);
+      drop(88);
+    });
+
+    it('marks only draggable rows unselectable for long press', () => {
+      const { unmount } = render(<Move />);
+      expect(row('FAQ')).toHaveAttribute('data-draggable');
+      unmount();
+      render(<Move noMove />);
+      expect(row('FAQ')).not.toHaveAttribute('data-draggable');
+    });
+
     it('without onMove rows are not draggable', () => {
       render(<Move noMove />);
       pick('FAQ', 21);

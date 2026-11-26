@@ -56,6 +56,12 @@
   opacity: var(--tree-view-drag-source-opacity);
 }
 
+// Draggable rows (onMove only): a touch long press picks the row up instead of selecting text / iOS callout.
+.row[data-draggable] {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
 // Drop line: before = top of the item, after = bottom of its whole subtree, first-child = under its row,
 // one level deeper. Indented to the target depth with logical insets so it mirrors in RTL. A border (not a
 // background) so forced colours keep it.

@@ -142,7 +142,8 @@ export interface RowRect {
 
 /**
  * The row under the pointer and its zone; `key` null = the empty space below the last row (after the last
- * root). `null` outside `bounds` (the tree's visible box) or in a gap above the rows.
+ * root), reachable for at least one row height even when the tree ends at its last row. `null` outside
+ * `bounds` (the tree's visible box) or in a gap above the rows.
  */
 export function hitTest(
   rows: RowRect[],
@@ -150,9 +151,13 @@ export function hitTest(
   x: number,
   y: number,
 ): { key: string | null; zone: DropZone } | null {
-  if (x < bounds.left || x > bounds.right || y < bounds.top || y > bounds.bottom) return null;
-  const row = rows.find((r) => y >= r.top && y < r.bottom);
-  if (row) return { key: row.key, zone: zoneAt(y - row.top, row.bottom - row.top) };
+  if (x < bounds.left || x > bounds.right || y < bounds.top) return null;
   const last = rows[rows.length - 1];
-  return last && y >= last.bottom ? { key: null, zone: 'after' } : null;
+  if (last && y >= last.bottom) {
+    const end = Math.max(bounds.bottom, last.bottom * 2 - last.top);
+    return y <= end ? { key: null, zone: 'after' } : null;
+  }
+  if (y > bounds.bottom) return null;
+  const row = rows.find((r) => y >= r.top && y < r.bottom);
+  return row ? { key: row.key, zone: zoneAt(y - row.top, row.bottom - row.top) } : null;
 }

@@ -508,7 +508,36 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       const { node } = item;
       const highlighted = !!highlightedIds?.has(node.id);
       const ind = drag.target?.indicator.key === item.key ? drag.target.indicator : null;
-      const Row = dnd ? DragRow : 'div';
+      const rowProps = {
+        className: styles.row,
+        'data-row': '',
+        ...rowClick(item),
+        onPointerEnter: () => onHoverChange?.(node.id),
+        onPointerLeave: () => onHoverChange?.(null),
+      };
+      const rowKids = (
+        <>
+          <span
+            className={styles.toggle}
+            aria-hidden="true"
+            data-toggle={node.hasChildren ? '' : undefined}
+            data-expanded={item.expanded || undefined}
+            onClick={node.hasChildren ? (e) => onToggleClick(e, item) : undefined}
+          >
+            {node.hasChildren &&
+              (chart ? (
+                item.expanded ? (
+                  <Minus className={styles.chevron} />
+                ) : (
+                  <ChevronDown className={styles.chevron} />
+                )
+              ) : (
+                <ChevronRight className={styles.chevron} />
+              ))}
+          </span>
+          <span className={styles.content}>{node.content ?? node.label}</span>
+        </>
+      );
       const path =
         chart &&
         highlighted &&
@@ -535,34 +564,13 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
               : undefined
           }
         >
-          <Row
-            {...(dnd && { dragId: node.id })}
-            className={styles.row}
-            data-row=""
-            {...rowClick(item)}
-            onPointerEnter={() => onHoverChange?.(node.id)}
-            onPointerLeave={() => onHoverChange?.(null)}
-          >
-            <span
-              className={styles.toggle}
-              aria-hidden="true"
-              data-toggle={node.hasChildren ? '' : undefined}
-              data-expanded={item.expanded || undefined}
-              onClick={node.hasChildren ? (e) => onToggleClick(e, item) : undefined}
-            >
-              {node.hasChildren &&
-                (chart ? (
-                  item.expanded ? (
-                    <Minus className={styles.chevron} />
-                  ) : (
-                    <ChevronDown className={styles.chevron} />
-                  )
-                ) : (
-                  <ChevronRight className={styles.chevron} />
-                ))}
-            </span>
-            <span className={styles.content}>{node.content ?? node.label}</span>
-          </Row>
+          {dnd ? (
+            <DragRow dragId={node.id} {...rowProps}>
+              {rowKids}
+            </DragRow>
+          ) : (
+            <div {...rowProps}>{rowKids}</div>
+          )}
           {item.expanded && item.children.length > 0 && (
             <div
               role="group"

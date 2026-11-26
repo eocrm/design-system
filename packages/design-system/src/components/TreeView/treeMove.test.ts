@@ -231,6 +231,11 @@ describe('hitTest', () => {
   it('below the last row inside the tree = null key (after the last root)', () => {
     expect(hitTest(rows, tree, 10, 60)).toEqual({ key: null, zone: 'after' });
   });
+  it('keeps about one row below the last row reachable when the tree is exactly as tall as its rows', () => {
+    const tight = { ...tree, bottom: 40 };
+    expect(hitTest(rows, tight, 10, 50)).toEqual({ key: null, zone: 'after' });
+    expect(hitTest(rows, tight, 10, 61)).toBeNull();
+  });
   it('outside the tree is no target', () => {
     expect(hitTest(rows, tree, 150, 10)).toBeNull();
     expect(hitTest(rows, tree, 10, 90)).toBeNull();
