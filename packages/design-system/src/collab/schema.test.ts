@@ -193,7 +193,9 @@ describe('hostile remote data', () => {
     m.set('type', 'attachment');
     m.set('src', 'https://cdn.test/x.png');
     m.set('width', 10);
+    m.set('height', 1e9);
     expect(toRichDoc(doc).blocks[0]).toMatchObject({ src: 'https://cdn.test/x.png', width: 10 });
+    expect(toRichDoc(doc).blocks[0]).not.toHaveProperty('height');
   });
 
   it('sanitises mark attributes', () => {
@@ -268,6 +270,52 @@ describe('deterministic seeding', () => {
     expect(client({ blocks: [p('z', [{ text: 'x', marks: [] }])] })).not.toEqual([c1]);
   });
 
+  it.each([
+    [
+      'mark order',
+      [{ text: 'x', marks: [{ type: 'bold' }, { type: 'italic' }] }],
+      [{ text: 'x', marks: [{ type: 'italic' }, { type: 'bold' }] }],
+      {},
+    ],
+    [
+      'split vs merged runs, empty runs',
+      [{ text: 'ab', marks: [] }],
+      [
+        { text: 'a', marks: [] },
+        { text: '', marks: [{ type: 'code' }] },
+        { text: 'b', marks: [] },
+      ],
+      {},
+    ],
+    [
+      'invalid attrs and marks',
+      [{ text: 'ab', marks: [] }],
+      [
+        {
+          text: 'ab',
+          marks: [
+            { type: 'link', href: 'javascript:x' },
+            { type: 'textColor', color: '#f00' },
+          ],
+        },
+      ],
+      { level: 99, width: NaN },
+    ],
+  ] as [string, Block['inlines'], Block['inlines'], Partial<Block>][])(
+    'seeds byte-identical updates for inputs that normalise equal: %s',
+    (_n, x, y, junk) => {
+      const enc = (inl: Block['inlines'], extra: Partial<Block>) =>
+        Y.encodeStateAsUpdate(fromRichDoc({ blocks: [p('a', inl, extra)] }));
+      expect(enc(y, junk)).toEqual(enc(x, {}));
+    },
+  );
+
+  it('seeds an attachment with stray inline text identically to one without', () => {
+    const a: Block = { id: 'a', type: 'attachment', inlines: [], name: 'f' };
+    const enc = (b: Block) => Y.encodeStateAsUpdate(fromRichDoc({ blocks: [b] }));
+    expect(enc({ ...a, inlines: [{ text: 'junk', marks: [] }] })).toEqual(enc(a));
+  });
+
   it('seeded ids are unique and cannot collide with live `${clientID36}-${n}` ids', () => {
     const out = ids(toRichDoc(fromRichDoc(rich)));
     expect(new Set(out).size).toBe(out.length);
@@ -280,6 +328,14 @@ describe('deterministic seeding', () => {
     expect(fromRichDoc(rich, doc)).toBe(doc);
     expect(doc.clientID).toBe(id);
     expect(strip(toRichDoc(doc))).toEqual(strip(rich));
+  });
+
+  it('re-seeding the same content after its blocks were deleted does nothing', () => {
+    const doc = fromRichDoc(rich);
+    const blocks = doc.getMap(BLOCKS);
+    for (const k of [...blocks.keys()]) blocks.delete(k);
+    fromRichDoc(rich, doc);
+    expect(blocks.size).toBe(0);
   });
 
   it('is a no-op on a non-empty doc', () => {

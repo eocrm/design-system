@@ -39,7 +39,10 @@ const TYPES: readonly BlockType[] = [
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 const isStr = (v: unknown): v is string => typeof v === 'string';
 const isNat = (v: unknown): v is number => Number.isSafeInteger(v) && (v as number) >= 0;
-const isPos = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && v > 0;
+// ponytail: no fixed image-size bound exists in the engine (the editor caps to content width
+// and CSS to max-width: 100%), so this is only a sanity ceiling against absurd remote values.
+const MAX_IMAGE_PX = 100_000;
+const isPos = (v: unknown) => typeof v === 'number' && v > 0 && v <= MAX_IMAGE_PX;
 const VALID: Record<(typeof ATTRS)[number], (v: unknown) => boolean> = {
   level: (v) => v === 1 || v === 2 || v === 3,
   depth: isNat, // the renderer clamps gaps (effectiveDepths); the engine has no max depth
@@ -71,7 +74,9 @@ function fnv1a(s: string): number {
 
 function marksToAttrs(marks: Mark[]): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const m of marks) {
+  // MARK_ORDER, so the Y.Text format items (emitted in key order) don't depend on input order.
+  const sorted = [...marks].sort((a, b) => MARK_ORDER.indexOf(a.type) - MARK_ORDER.indexOf(b.type));
+  for (const m of sorted) {
     if (m.type === 'link') out.link = { href: m.href };
     else if (m.type === 'mention') out.mention = { id: m.id, label: m.label };
     else if (m.type === 'textColor' || m.type === 'bgColor') out[m.type] = m.color;
@@ -98,7 +103,8 @@ function attrsToMarks(attrs: Record<string, unknown> = {}): Mark[] {
 }
 
 /**
- * Read one block `Y.Map` as a `Block`, with normalised inline runs. Attachments carry no runs.
+ * Read one block `Y.Map` as a `Block`, with validated attrs and normalised inline runs. Attachments
+ * carry no runs. Callers must check `isBlockEntry` on the entry first (`id` is not validated here).
  * @internal
  */
 export function blockToRich(m: Y.Map<unknown>): Block {
@@ -193,10 +199,15 @@ function seed(rich: RichDoc, client: number, prefix: string): Y.Doc {
 }
 
 // Hash of the canonical (normalised, id-free) seeded content: the seed's clientID and id prefix.
-const contentHash = (rich: RichDoc) =>
-  fnv1a(JSON.stringify(toRichDoc(seed(rich, 0, 's_')).blocks.map(({ id: _id, ...b }) => b)));
+// Seed the CANONICAL form (validated, normalised, MARK_ORDER — what blockToRich reads back) and
+// hash it: inputs that read back equal then produce byte-identical structs under the same clientID.
+function canonicalSeed(rich: RichDoc): { h: number; scratch: Y.Doc } {
+  const canon = toRichDoc(seed(rich, 0, 's_'));
+  const h = fnv1a(JSON.stringify(canon.blocks.map(({ id: _id, ...b }) => b)));
+  return { h, scratch: seed(canon, h, `s${h.toString(36)}_`) };
+}
 // The id the empty-doc paragraph gets when seeded, so reading then seeding an empty doc agree.
-const EMPTY_ID = `s${contentHash({ blocks: [EMPTY_PARAGRAPH] }).toString(36)}_0`;
+const EMPTY_ID = `s${canonicalSeed({ blocks: [EMPTY_PARAGRAPH] }).h.toString(36)}_0`;
 
 /**
  * Seed a `Y.Doc` (a new one when omitted) from a `RichDoc`; returns the doc. A no-op when the doc
@@ -205,11 +216,11 @@ const EMPTY_ID = `s${contentHash({ blocks: [EMPTY_PARAGRAPH] }).toString(36)}_0`
  * (the RichDoc's own ids are replaced), so clients seeding the SAME RichDoc merge idempotently with
  * no duplicates, and clients seeding DIFFERENT RichDocs become distinct writers whose blocks both
  * survive (visible duplicate content, never corruption). Persist the Y update log as the source of
- * truth and seed only a brand-new document.
+ * truth and seed only a brand-new document. Re-seeding the same content into a doc whose seeded
+ * blocks were all deleted does nothing: the doc already knows those items, so they stay deleted.
  */
 export function fromRichDoc(rich: RichDoc, doc: Y.Doc = new Y.Doc()): Y.Doc {
   if (doc.getMap(BLOCKS).size > 0 || rich.blocks.length === 0) return doc;
-  const h = contentHash(rich);
-  Y.applyUpdate(doc, Y.encodeStateAsUpdate(seed(rich, h, `s${h.toString(36)}_`)));
+  Y.applyUpdate(doc, Y.encodeStateAsUpdate(canonicalSeed(rich).scratch));
   return doc;
 }
