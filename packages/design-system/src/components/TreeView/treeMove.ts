@@ -101,10 +101,11 @@ export function dropTarget(
   if (!active) return null;
   let target: DropTarget;
   if (overKey === null) {
-    // Below the last row: after the last root.
+    // Below the last row: after the last root (indicated after that root's whole subtree).
+    const roots = levelRows(flat, null);
     target = {
-      move: { id: activeId, parentId: null, index: appendAt(levelRows(flat, null), activeId) },
-      indicator: { key: flat[flat.length - 1].key, zone: 'after', level: 1 },
+      move: { id: activeId, parentId: null, index: appendAt(roots, activeId) },
+      indicator: { key: roots[roots.length - 1].key, zone: 'after', level: 1 },
     };
   } else {
     const over = flat.find((i) => i.key === overKey);
@@ -130,4 +131,28 @@ export function dropTarget(
   const { parentId, index } = target.move;
   if (parentId === active.parentId && index === active.posInSet - 1) return null;
   return canDrop && !canDrop(activeId, parentId) ? null : target;
+}
+
+/** A rendered row's vertical extent in viewport px, in tree order. */
+export interface RowRect {
+  key: string;
+  top: number;
+  bottom: number;
+}
+
+/**
+ * The row under the pointer and its zone; `key` null = the empty space below the last row (after the last
+ * root). `null` outside `bounds` (the tree's visible box) or in a gap above the rows.
+ */
+export function hitTest(
+  rows: RowRect[],
+  bounds: { top: number; bottom: number; left: number; right: number },
+  x: number,
+  y: number,
+): { key: string | null; zone: DropZone } | null {
+  if (x < bounds.left || x > bounds.right || y < bounds.top || y > bounds.bottom) return null;
+  const row = rows.find((r) => y >= r.top && y < r.bottom);
+  if (row) return { key: row.key, zone: zoneAt(y - row.top, row.bottom - row.top) };
+  const last = rows[rows.length - 1];
+  return last && y >= last.bottom ? { key: null, zone: 'after' } : null;
 }

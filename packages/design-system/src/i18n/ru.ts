@@ -581,6 +581,9 @@ export const ru: Messages = {
     movedToRoot: ({ name, position, total }) =>
       `${name as string} перемещён на верхний уровень, позиция ${position as number} из ${total as number}`,
     movedToRootNoPosition: ({ name }) => `${name as string} перемещён на верхний уровень`,
+    dragOverBefore: ({ name, target }) => `${name as string}: перед ${target as string}`,
+    dragOverAfter: ({ name, target }) => `${name as string}: после ${target as string}`,
+    dragOverInside: ({ name, target }) => `${name as string}: внутрь ${target as string}`,
   },
   catalogPicker: {
     search: 'Поиск…',

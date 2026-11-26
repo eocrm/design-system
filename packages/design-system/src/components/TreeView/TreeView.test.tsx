@@ -703,6 +703,7 @@ describe('TreeView keyboard move', () => {
     view?: 'list' | 'chart';
     noMove?: boolean;
     onExpandedSpy?: (id: string, open: boolean) => void;
+    onSelectSpy?: (id: string) => void;
     initial?: string[];
   }) {
     const [tree, setTree] = useState(start);
@@ -725,6 +726,7 @@ describe('TreeView keyboard move', () => {
           });
         }}
         canDrop={props.canDrop}
+        onSelect={props.onSelectSpy}
         onMove={
           props.noMove
             ? undefined
@@ -841,5 +843,165 @@ describe('TreeView keyboard move', () => {
     focus('Intro');
     fireEvent.keyDown(document.activeElement!, { key: 'ArrowDown' });
     expect(item('A')).toHaveFocus();
+  });
+
+  describe('pointer drag', () => {
+    // jsdom lays nothing out: stack every row 20px tall from y=0, 200px wide, inside a tree 40px taller than
+    // its rows (empty space below the last row). Rects follow the CURRENT DOM, so a re-render re-measures.
+    // Rows (Intro expanded): Intro 0-20, A 20-40, B 40-60, Setup 60-80 (collapsed, expandable), FAQ 80-100.
+    const ROW_H = 20;
+    let restore: () => void;
+    beforeEach(() => {
+      const orig = Element.prototype.getBoundingClientRect;
+      Element.prototype.getBoundingClientRect = function (this: Element) {
+        const tree = this.closest('[role="tree"]');
+        if (!tree) return orig.call(this);
+        const rows = Array.from(tree.querySelectorAll('[data-row]'));
+        if (this === tree) return new DOMRect(0, 0, 200, rows.length * ROW_H + 40);
+        const i = rows.indexOf(this);
+        return i < 0 ? orig.call(this) : new DOMRect(0, i * ROW_H, 200, ROW_H);
+      };
+      restore = () => {
+        Element.prototype.getBoundingClientRect = orig;
+      };
+    });
+    afterEach(() => restore());
+
+    /** Press a row, trip the 4px activation, then move to (x, y) without releasing. */
+    const pick = (name: string, y: number, x = 50) => {
+      const r = row(name);
+      const top = r.getBoundingClientRect().top + 10;
+      fireEvent.pointerDown(r, { clientX: 50, clientY: top, button: 0, isPrimary: true });
+      fireEvent.pointerMove(document, { clientX: 50, clientY: top + 6 });
+      fireEvent.pointerMove(document, { clientX: x, clientY: y });
+    };
+    const drop = (y: number, x = 50) => fireEvent.pointerUp(document, { clientX: x, clientY: y });
+    const dropMark = () => document.querySelector('[data-drop]');
+
+    it('a click without movement still selects', () => {
+      const select = vi.fn();
+      render(<Move onSelectSpy={select} />);
+      const r = row('Setup');
+      fireEvent.pointerDown(r, { clientX: 50, clientY: 70, button: 0, isPrimary: true });
+      fireEvent.pointerUp(r, { clientX: 50, clientY: 70 });
+      fireEvent.click(r);
+      expect(select).toHaveBeenCalledWith('Setup');
+    });
+
+    it('drops before / after / inside / below the last row with the right onMove', async () => {
+      const spy = vi.fn();
+      render(<Move onMoveSpy={spy} />);
+      pick('FAQ', 21); // top quarter of A
+      expect(item('A')).toHaveAttribute('data-drop', 'before');
+      expect(item('FAQ')).toHaveAttribute('data-dragging');
+      await said('FAQ: before A');
+      drop(21);
+      expect(spy).toHaveBeenLastCalledWith({ id: 'FAQ', parentId: 'Intro', index: 0 });
+      await said('FAQ moved into Intro, position 1 of 3');
+      expect(dropMark()).toBeNull();
+      expect(item('FAQ')).not.toHaveAttribute('data-dragging');
+
+      // Rows now: Intro, FAQ, A, B, Setup (60-80 → 80-100).
+      pick('A', 99); // bottom quarter of Setup
+      expect(item('Setup')).toHaveAttribute('data-drop', 'after');
+      drop(99);
+      expect(spy).toHaveBeenLastCalledWith({ id: 'A', parentId: null, index: 2 });
+
+      pick('B', 70); // middle of Setup (collapsed): position unknown
+      expect(item('Setup')).toHaveAttribute('data-drop', 'inside');
+      await said('B: inside Setup');
+      drop(70);
+      expect(spy).toHaveBeenLastCalledWith({ id: 'B', parentId: 'Setup', index: null });
+
+      // Rows now: Intro, FAQ, Setup, A (0-80) in a 120px tree.
+      pick('FAQ', 110); // empty space below the last row
+      expect(item('A')).toHaveAttribute('data-drop', 'after');
+      drop(110);
+      expect(spy).toHaveBeenLastCalledWith({ id: 'FAQ', parentId: null, index: 3 });
+    });
+
+    it('a refused target shows no indicator, and dropping there or outside cancels', async () => {
+      const spy = vi.fn();
+      render(<Move onMoveSpy={spy} canDrop={(_id, p) => p !== 'Setup'} />);
+      pick('Intro', 30); // its own child A
+      expect(dropMark()).toBeNull();
+      expect(item('Intro')).toHaveAttribute('data-dragging'); // its subtree (A, B) dims with it
+      drop(30);
+      await said(/^Move cancelled\./);
+      pick('FAQ', 70); // inside Setup: vetoed
+      expect(dropMark()).toBeNull();
+      drop(70);
+      pick('FAQ', 30, 400); // outside the tree
+      expect(dropMark()).toBeNull();
+      drop(30, 400);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('Escape cancels and announces it', async () => {
+      const spy = vi.fn();
+      render(<Move onMoveSpy={spy} />);
+      pick('FAQ', 90); // still over itself: no target, so the pick-up stays announced
+      await said('Picked up FAQ.');
+      fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+      await said(/^Move cancelled\./);
+      expect(dropMark()).toBeNull();
+      drop(21);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('hovering inside a collapsed expandable node expands it after a delay; leaving cancels', () => {
+      vi.useFakeTimers();
+      try {
+        const expand = vi.fn();
+        render(<Move onExpandedSpy={expand} />);
+        pick('FAQ', 70); // inside Setup
+        act(() => vi.advanceTimersByTime(500));
+        fireEvent.pointerMove(document, { clientX: 50, clientY: 50 }); // over B
+        act(() => vi.advanceTimersByTime(500));
+        expect(expand).not.toHaveBeenCalled();
+        fireEvent.pointerMove(document, { clientX: 50, clientY: 70 });
+        act(() => vi.advanceTimersByTime(700));
+        expect(expand).toHaveBeenCalledWith('Setup', true);
+        drop(70);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('a touch press does not drag on movement alone; a long press does', () => {
+      vi.useFakeTimers();
+      try {
+        const spy = vi.fn();
+        render(<Move onMoveSpy={spy} />);
+        const r = row('FAQ');
+        fireEvent.pointerDown(r, {
+          clientX: 50,
+          clientY: 90,
+          button: 0,
+          isPrimary: true,
+          pointerType: 'touch',
+        });
+        fireEvent.pointerMove(document, { clientX: 50, clientY: 21, pointerType: 'touch' });
+        fireEvent.pointerUp(document, { clientX: 50, clientY: 21, pointerType: 'touch' });
+        expect(dropMark()).toBeNull();
+        const touch = (y: number) => ({ touches: [{ clientX: 50, clientY: y }] });
+        fireEvent.touchStart(r, touch(90));
+        act(() => vi.advanceTimersByTime(250));
+        // Touch events stay on the element the touch started on.
+        fireEvent.touchMove(r, touch(21));
+        expect(item('A')).toHaveAttribute('data-drop', 'before');
+        fireEvent.touchEnd(r, { changedTouches: [{ clientX: 50, clientY: 21 }] });
+        expect(spy).toHaveBeenLastCalledWith({ id: 'FAQ', parentId: 'Intro', index: 0 });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('without onMove rows are not draggable', () => {
+      render(<Move noMove />);
+      pick('FAQ', 21);
+      expect(dropMark()).toBeNull();
+      expect(item('FAQ')).not.toHaveAttribute('data-dragging');
+    });
   });
 });

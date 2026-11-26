@@ -572,6 +572,9 @@ export const en: Messages = {
     movedToRoot: ({ name, position, total }) =>
       `${name as string} moved to the top level, position ${position as number} of ${total as number}`,
     movedToRootNoPosition: ({ name }) => `${name as string} moved to the top level`,
+    dragOverBefore: ({ name, target }) => `${name as string}: before ${target as string}`,
+    dragOverAfter: ({ name, target }) => `${name as string}: after ${target as string}`,
+    dragOverInside: ({ name, target }) => `${name as string}: inside ${target as string}`,
   },
   catalogPicker: {
     search: 'Search…',

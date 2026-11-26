@@ -5,7 +5,7 @@ import {
   type TreeViewChildren,
   type TreeViewNode,
 } from './treeModel';
-import { dropTarget, keyboardMove, zoneAt } from './treeMove';
+import { dropTarget, hitTest, keyboardMove, zoneAt } from './treeMove';
 
 const n = (id: string, hasChildren = false): TreeViewNode => ({ id, label: id, hasChildren });
 // a ─┬ a1
@@ -192,10 +192,21 @@ describe('dropTarget', () => {
     expect(dropTarget(flat, 'c', null, 'after')).toBeNull();
   });
 
-  it('overKey null = after the last root', () => {
+  it('overKey null = after the last root, indicated on that root (not its last visible descendant)', () => {
     expect(dropTarget(flat, 'a1', null, 'after')).toEqual({
       move: { id: 'a1', parentId: null, index: 3 },
       indicator: { key: 'node:c', zone: 'after', level: 1 },
+    });
+    const onlyA = flatten(
+      buildTree({
+        roots: [n('a', true)],
+        childrenOf: (id) => data[id],
+        expandedIds: new Set(['a']),
+      }),
+    );
+    expect(dropTarget(onlyA, 'a1', null, 'after')).toEqual({
+      move: { id: 'a1', parentId: null, index: 1 },
+      indicator: { key: 'node:a', zone: 'after', level: 1 },
     });
   });
 
@@ -203,5 +214,27 @@ describe('dropTarget', () => {
     const canDrop = vi.fn(() => false);
     expect(dropTarget(flat, 'c', 'node:a2', 'inside', canDrop)).toBeNull();
     expect(canDrop).toHaveBeenCalledWith('c', 'a2');
+  });
+});
+
+describe('hitTest', () => {
+  const rows = [
+    { key: 'r0', top: 0, bottom: 20 },
+    { key: 'r1', top: 20, bottom: 40 },
+  ];
+  const tree = { top: 0, bottom: 80, left: 0, right: 100 };
+  it('maps the pointer to the row under it and its zone', () => {
+    expect(hitTest(rows, tree, 10, 2)).toEqual({ key: 'r0', zone: 'before' });
+    expect(hitTest(rows, tree, 10, 30)).toEqual({ key: 'r1', zone: 'inside' });
+    expect(hitTest(rows, tree, 10, 39)).toEqual({ key: 'r1', zone: 'after' });
+  });
+  it('below the last row inside the tree = null key (after the last root)', () => {
+    expect(hitTest(rows, tree, 10, 60)).toEqual({ key: null, zone: 'after' });
+  });
+  it('outside the tree is no target', () => {
+    expect(hitTest(rows, tree, 150, 10)).toBeNull();
+    expect(hitTest(rows, tree, 10, 90)).toBeNull();
+    expect(hitTest(rows, { ...tree, top: -10 }, 10, -5)).toBeNull();
+    expect(hitTest([], tree, 10, 10)).toBeNull();
   });
 });

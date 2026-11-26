@@ -1075,6 +1075,12 @@ export interface Messages {
     movedToRoot: (params: { name: string; position: number; total: number }) => string;
     /** Announced after a move to the root level at an unknown position. */
     movedToRootNoPosition: (params: { name: string }) => string;
+    /** Announced while a pointer drag hovers the drop slot above `target` ("Setup: before FAQ"). */
+    dragOverBefore: (params: { name: string; target: string }) => string;
+    /** Announced while a pointer drag hovers the drop slot below `target`. */
+    dragOverAfter: (params: { name: string; target: string }) => string;
+    /** Announced while a pointer drag hovers `target` itself, to drop into it. */
+    dragOverInside: (params: { name: string; target: string }) => string;
   };
   catalogPicker: {
     /** Placeholder + aria-label of the catalog search input. */

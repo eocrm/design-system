@@ -56,6 +56,8 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 | `overflowOf` | `((parentId: string \| null) => TreeViewOverflow \| null)` | no | "N more not shown" row at the end of a level (`parentId` `null` = root level), or `null` for none. Pass `onLoadMore` to make it actionable. |
 | `highlightedIds` | `ReadonlySet<string>` | no | Ids to paint as a path, e.g. the selected node's ancestor ids plus its own id (TreeView cannot derive ancestors: `childrenOf` is only called for expanded nodes). Visual only — no ARIA, no effect on selection or focus. Ids not rendered are ignored. List view: accent edge on the rows; chart view: accent boxes and the connector lines between highlighted parents and children. |
 | `onHoverChange` | `((id: string \| null) => void)` | no | Pointer entered/left a node's row (list) or box (chart); `null` on leave. Pointer only — no ARIA, focus or selection effect. Pair with `highlightedIds` to paint a hover chain. |
+| `onMove` | `((move: TreeViewMove) => void)` | no | Opt in to moving nodes (list view only). Fires after a pointer / touch drop (drag a row: top quarter of a row drops before it, bottom quarter after it, the middle inside it; touch drags after a long press) or a keyboard move (Ctrl/Cmd+Shift+↑/↓ reorder, → into the previous sibling, ← out to the grandparent). TreeView stays controlled: update `roots` / `childrenOf`. A no-op never fires. When the node is moved into a collapsed node, `onExpandedChange(id, true)` follows. |
+| `canDrop` | `((id: string, targetParentId: string \| null) => boolean)` | no | App veto for a candidate new parent (`null` = root level), checked for every move. Default: allow. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
