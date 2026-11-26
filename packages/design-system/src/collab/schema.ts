@@ -34,8 +34,12 @@ const TYPES: readonly BlockType[] = [
   'code_block',
   'attachment',
 ];
-// Seeded ids contain '_', so they never match live `${clientID.toString(36)}-${n}` ids.
-const seedId = (i: number) => `s_${i}`;
+// FNV-1a 32-bit, never 0 (clientID 0 stays unused).
+function fnv1a(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
+  return h >>> 0 || 1;
+}
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 const isStr = (v: unknown): v is string => typeof v === 'string';
@@ -137,34 +141,48 @@ export function toRichDoc(doc: Y.Doc): RichDoc {
     .sort(compareOrder)
     .map(({ m }) => blockToRich(m));
   return {
-    blocks: blocks.length
-      ? blocks
-      : [{ id: seedId(0), type: 'paragraph', inlines: [{ text: '', marks: [] }] }],
+    blocks: blocks.length ? blocks : [{ ...EMPTY_PARAGRAPH, id: EMPTY_ID }],
   };
 }
 
-/**
- * Seed a `Y.Doc` (a new one when omitted) from a `RichDoc`; returns the doc. A no-op when the doc
- * already has blocks. Seeding is deterministic — reserved clientID 0, ids and order derived from
- * block positions (the RichDoc's own ids are replaced) — so clients that seed the SAME RichDoc
- * merge without duplicates. Seeding different RichDocs into replicas of one doc corrupts it:
- * persist the Y update log as the source of truth and seed only a brand-new document.
- */
-export function fromRichDoc(rich: RichDoc, doc: Y.Doc = new Y.Doc()): Y.Doc {
-  if (doc.getMap(BLOCKS).size > 0) return doc;
+const EMPTY_PARAGRAPH: Block = { id: 's_0', type: 'paragraph', inlines: [{ text: '', marks: [] }] };
+
+// Build `rich` in a scratch doc under `client` (set before any insert) with ids `${prefix}${i}`.
+function seed(rich: RichDoc, client: number, prefix: string): Y.Doc {
   const scratch = new Y.Doc();
-  scratch.clientID = 0; // before any insert
+  scratch.clientID = client;
   const blocks = scratch.getMap<Y.Map<unknown>>(BLOCKS);
   scratch.transact(() => {
     let order: string | null = null;
     rich.blocks.forEach((b, i) => {
-      const id = seedId(i);
+      const id = prefix + i;
       const m = blocks.set(id, new Y.Map<unknown>());
       order = orderBetween(order, null);
       m.set('order', order);
       writeBlock(m, { ...b, id });
     });
   });
-  Y.applyUpdate(doc, Y.encodeStateAsUpdate(scratch));
+  return scratch;
+}
+
+// Hash of the canonical (normalised, id-free) seeded content: the seed's clientID and id prefix.
+const contentHash = (rich: RichDoc) =>
+  fnv1a(JSON.stringify(toRichDoc(seed(rich, 0, 's_')).blocks.map(({ id: _id, ...b }) => b)));
+// The id the empty-doc paragraph gets when seeded, so reading then seeding an empty doc agree.
+const EMPTY_ID = `s${contentHash({ blocks: [EMPTY_PARAGRAPH] }).toString(36)}_0`;
+
+/**
+ * Seed a `Y.Doc` (a new one when omitted) from a `RichDoc`; returns the doc. A no-op when the doc
+ * already has blocks, or when `rich` has none. Seeding is deterministic: the content is written
+ * under a clientID and id prefix (`s<hash>_<index>`) derived from a hash of the normalised content
+ * (the RichDoc's own ids are replaced), so clients seeding the SAME RichDoc merge idempotently with
+ * no duplicates, and clients seeding DIFFERENT RichDocs become distinct writers whose blocks both
+ * survive (visible duplicate content, never corruption). Persist the Y update log as the source of
+ * truth and seed only a brand-new document.
+ */
+export function fromRichDoc(rich: RichDoc, doc: Y.Doc = new Y.Doc()): Y.Doc {
+  if (doc.getMap(BLOCKS).size > 0 || rich.blocks.length === 0) return doc;
+  const h = contentHash(rich);
+  Y.applyUpdate(doc, Y.encodeStateAsUpdate(seed(rich, h, `s${h.toString(36)}_`)));
   return doc;
 }

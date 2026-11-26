@@ -165,6 +165,29 @@ describe('deterministic seeding', () => {
     expect(toRichDoc(a).blocks.map((x) => x.inlines)).toEqual(rich.blocks.map((x) => x.inlines));
   });
 
+  it('two replicas seeded from DIFFERENT RichDocs keep both sets intact and converge', () => {
+    const other: RichDoc = { blocks: [p('z', [{ text: 'other', marks: [{ type: 'bold' }] }])] };
+    const a = fromRichDoc(rich);
+    const b = fromRichDoc(other);
+    Y.applyUpdate(a, Y.encodeStateAsUpdate(b));
+    Y.applyUpdate(b, Y.encodeStateAsUpdate(a));
+    const out = toRichDoc(a);
+    expect(toRichDoc(b)).toEqual(out);
+    expect(new Set(ids(out)).size).toBe(rich.blocks.length + 1);
+    const texts = (d: RichDoc) => d.blocks.map((x) => JSON.stringify([x.type, x.inlines]));
+    expect(texts(out).sort()).toEqual([...texts(rich), ...texts(other)].sort());
+  });
+
+  it('seeds under a content-derived, non-zero clientID', () => {
+    const client = (d: RichDoc) => [
+      ...Y.decodeStateVector(Y.encodeStateVector(fromRichDoc(d))).keys(),
+    ];
+    const [c1] = client(rich);
+    expect(c1).not.toBe(0);
+    expect(client(rich)).toEqual([c1]);
+    expect(client({ blocks: [p('z', [{ text: 'x', marks: [] }])] })).not.toEqual([c1]);
+  });
+
   it('seeded ids are unique and cannot collide with live `${clientID36}-${n}` ids', () => {
     const out = ids(toRichDoc(fromRichDoc(rich)));
     expect(new Set(out).size).toBe(out.length);
