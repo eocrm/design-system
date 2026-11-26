@@ -9,7 +9,7 @@ import {
   runsLength,
   sliceInlines,
 } from '../components/RichText/engine/inlines';
-import { BLOCKS, fromRichDoc, toRichDoc } from './schema';
+import { BLOCKS, fromRichDoc, isBlockEntry, toRichDoc } from './schema';
 import { applyLocal, decodeSelection, encodeSelection, readChanged } from './bridge';
 
 const LOCAL = Symbol('local');
@@ -52,8 +52,8 @@ function replica(client: number) {
 type Replica = ReturnType<typeof replica>;
 
 /** Apply a local edit and assert the core invariant. */
-function edit(r: Replica, next: RichDoc) {
-  r.view = applyLocal(r.doc, r.view, next, LOCAL);
+function edit(r: Replica, next: RichDoc, prev = r.view) {
+  r.view = applyLocal(r.doc, prev, next, LOCAL);
   expect(toRichDoc(r.doc)).toEqual(norm(r.view));
 }
 
@@ -232,10 +232,102 @@ describe('applyLocal', () => {
     });
   });
 
-  it('a block missing from Y (stale view) is recreated', () => {
-    const r = seeded(base);
-    r.doc.getMap(BLOCKS).delete(r.view.blocks[1].id);
-    edit(r, setBlock(r.view, 1, { inlines: [run('back')] }));
+  describe('a stale prev (remote changes in the doc, not yet in the view)', () => {
+    // Deliver to `r` without its view hearing of it; `r` then edits from its old view.
+    const quiet = (r: Replica, u: () => void) => {
+      const v = r.view;
+      u();
+      r.view = v;
+    };
+
+    it('text: the local splice is shifted past remote text', () => {
+      const a = seeded({ blocks: [blk('x', [run('hello')])] }, 1);
+      const b = seeded({ blocks: [blk('x', [run('hello')])] }, 2);
+      edit(a, setBlock(a.view, 0, { inlines: [run('RRhello')] }));
+      quiet(b, () => sync(a, b));
+      edit(b, setBlock(b.view, 0, { inlines: [run('hello!')] }));
+      expect(b.view.blocks[0].inlines).toEqual([run('RRhello!')]);
+    });
+
+    it('text: remote text inside a locally deleted span survives', () => {
+      const a = seeded({ blocks: [blk('x', [run('abcdef')])] }, 1);
+      const b = seeded({ blocks: [blk('x', [run('abcdef')])] }, 2);
+      edit(a, setBlock(a.view, 0, { inlines: [run('abcXdef')] }));
+      quiet(b, () => sync(a, b));
+      edit(b, setBlock(b.view, 0, { inlines: [run('af')] }));
+      expect(b.view.blocks[0].inlines).toEqual([run('aXf')]);
+    });
+
+    it('text: a local delete overlapping a remote replace keeps the remote text', () => {
+      const a = seeded({ blocks: [blk('x', [run('abcdef')])] }, 1);
+      const b = seeded({ blocks: [blk('x', [run('abcdef')])] }, 2);
+      edit(a, setBlock(a.view, 0, { inlines: [run('abZef')] })); // "cd" → "Z"
+      quiet(b, () => sync(a, b));
+      edit(b, setBlock(b.view, 0, { inlines: [run('aYf')] })); // "bcde" → "Y"
+      expect(b.view.blocks[0].inlines).toEqual([run('aYZf')]);
+    });
+
+    it('marks: a remote mark on other text is kept; a local mark is added per key', () => {
+      const a = seeded({ blocks: [blk('x', [run('hello world')])] }, 1);
+      const b = seeded({ blocks: [blk('x', [run('hello world')])] }, 2);
+      edit(a, setBlock(a.view, 0, { inlines: [run('hello '), run('world', B)] }));
+      quiet(b, () => sync(a, b));
+      edit(b, setBlock(b.view, 0, { inlines: [run('hel', I), run('lo world')] }));
+      expect(b.view.blocks[0].inlines).toEqual([run('hel', I), run('lo '), run('world', B)]);
+    });
+
+    it('attrs: a remote type change is kept while the local text edit applies', () => {
+      const [a, b] = [seeded(base, 1), seeded(base, 2)];
+      edit(a, setBlock(a.view, 1, { type: 'heading', level: 2 }));
+      quiet(b, () => sync(a, b));
+      edit(b, setBlock(b.view, 1, { inlines: [run('second!')] }));
+      expect(b.view.blocks[1]).toMatchObject({
+        type: 'heading',
+        level: 2,
+        inlines: [run('second!')],
+      });
+    });
+
+    it('a block deleted remotely stays deleted, even if edited locally', () => {
+      const [a, b] = [seeded(base, 1), seeded(base, 2)];
+      const gone = a.view.blocks[1].id;
+      edit(a, { blocks: [a.view.blocks[0], a.view.blocks[2]] });
+      quiet(b, () => sync(a, b));
+      edit(b, setBlock(b.view, 1, { inlines: [run('back')] }));
+      expect(b.view.blocks.map((x) => x.id)).not.toContain(gone);
+    });
+
+    it('a remote block the view lacks appears in the returned view', () => {
+      const [a, b] = [seeded(base, 1), seeded(base, 2)];
+      edit(a, { blocks: [...a.view.blocks, blk('n1', [run('new')])] });
+      quiet(b, () => sync(a, b));
+      const before = b.view;
+      edit(b, setBlock(b.view, 0, { inlines: [run('x')] }));
+      expect(b.view.blocks.map((x) => x.id)).toContain('n1');
+      expect(b.view.blocks[1]).toBe(before.blocks[1]); // untouched blocks keep identity
+    });
+  });
+
+  it('when seeding cannot make a block (junk-only or all-deleted doc), concurrent first edits both survive', () => {
+    for (const prep of [
+      (r: Replica) => r.doc.getMap(BLOCKS).set('junk', 'nope'),
+      (r: Replica) => {
+        edit(r, { blocks: [{ ...r.view.blocks[0], inlines: [run('seeded')] }] });
+        r.doc.getMap(BLOCKS).delete(r.view.blocks[0].id);
+      },
+    ]) {
+      const a = replica(1);
+      const b = replica(2);
+      prep(a);
+      sync(a, b);
+      expect(a.view.blocks).toHaveLength(1); // the placeholder
+      edit(a, { blocks: [{ ...a.view.blocks[0], inlines: [run('A')] }] });
+      edit(b, { blocks: [{ ...b.view.blocks[0], inlines: [run('B')] }] });
+      sync(a, b);
+      const texts = toRichDoc(a.doc).blocks.map((x) => x.inlines.map((i) => i.text).join(''));
+      expect(texts.sort()).toEqual(['A', 'B']);
+      expect(toRichDoc(b.doc)).toEqual(toRichDoc(a.doc));
+    }
   });
 });
 
@@ -324,6 +416,17 @@ describe('selection remap', () => {
       a,
     );
     expect(out).toEqual({ anchor: { blockId: id, offset: 2 }, focus: { blockId: id, offset: 5 } });
+  });
+
+  it('a cross-block range whose end block is not in the doc still keeps its live start outside remote text', () => {
+    const { a, b } = setup();
+    const y = b.view.blocks[1];
+    const view = { blocks: [...b.view.blocks, blk('ghost', [run('zz')])] };
+    const sel = { anchor: { blockId: y.id, offset: 1 }, focus: { blockId: 'ghost', offset: 1 } };
+    const enc = encodeSelection(b.doc, sel, view);
+    edit(a, setBlock(a.view, 1, { inlines: [run('sQecond')] })); // at the range start
+    sync(a, b);
+    expect(decodeSelection(b.doc, enc, view)!.anchor).toEqual({ blockId: y.id, offset: 2 });
   });
 
   it("the caret's block deleted → start of the next surviving block, else end of the previous", () => {
@@ -434,6 +537,10 @@ const RANDOM_MARKS: Mark[] = [
   { type: 'bgColor', color: 'yellow' },
 ];
 
+type OpKind = 'edit' | 'move' | 'delete' | 'none';
+/** What the last `randomOp` did, and to which block (for the concurrency counters). */
+let lastOp: { kind: OpKind; id: string } = { kind: 'none', id: '' };
+
 /** One random editor-level edit of `d`: a pure function of (d, rnd, newId). */
 function randomOp(d: RichDoc, rnd: () => number, newId: () => string): RichDoc {
   const int = (n: number) => Math.floor(rnd() * n);
@@ -441,6 +548,7 @@ function randomOp(d: RichDoc, rnd: () => number, newId: () => string): RichDoc {
   const blocks = d.blocks;
   const i = int(blocks.length);
   const b = blocks[i];
+  lastOp = { kind: 'edit', id: b.id };
   const isText = b.type !== 'attachment';
   const len = runsLength(b.inlines);
   const replace = (...bs: Block[]) => ({
@@ -511,6 +619,7 @@ function randomOp(d: RichDoc, rnd: () => number, newId: () => string): RichDoc {
       // merge with next
       const n = blocks[i + 1];
       if (!isText || !n || n.type === 'attachment') break;
+      lastOp = { kind: 'delete', id: n.id };
       return {
         blocks: [
           ...blocks.slice(0, i),
@@ -529,6 +638,7 @@ function randomOp(d: RichDoc, rnd: () => number, newId: () => string): RichDoc {
       // move
       const rest = blocks.filter((_, j) => j !== i);
       const to = int(rest.length + 1);
+      lastOp = { kind: 'move', id: b.id };
       return { blocks: [...rest.slice(0, to), b, ...rest.slice(to)] };
     }
     case 8:
@@ -550,33 +660,46 @@ function randomOp(d: RichDoc, rnd: () => number, newId: () => string): RichDoc {
     case 12: {
       // delete a block (the merge in case 5 deletes too)
       if (blocks.length < 4 || rnd() < 0.5) break;
+      lastOp = { kind: 'delete', id: b.id };
       return { blocks: blocks.filter((_, j) => j !== i) };
     }
   }
+  lastOp = { kind: 'none', id: '' };
   return d; // no-op this round
 }
 
 describe('randomised convergence', () => {
   // Override to sweep seeds locally: SEED=n npx vitest run src/collab/bridge -t randomised
-  const SEED = Number(process.env.SEED ?? 0xd5_92);
+  const DEFAULT_SEED = 0xd5_92;
+  const SEED = Number(process.env.SEED ?? DEFAULT_SEED);
   const OPS_PER_REPLICA = 300;
 
   it(`3 replicas × ${OPS_PER_REPLICA} random edits converge (seed ${SEED})`, () => {
     const rnd = prng(SEED);
     const rs = [1, 2, 3].map(replica);
     const counters = rs.map(() => 0);
-    const inflight: { to: Replica; u: Uint8Array }[] = [];
+    // Each in-flight update carries the op that produced it, to count real concurrent pairs.
+    type Meta = { from: Replica; kind: OpKind; id: string };
+    const inflight: { to: Replica; u: Uint8Array; meta: Meta }[] = [];
+    let meta: Meta | null = null;
     rs.forEach((r) =>
       r.doc.on('update', (u: Uint8Array, origin: unknown) => {
-        if (origin !== REMOTE) for (const to of rs) if (to !== r) inflight.push({ to, u });
+        if (origin !== REMOTE)
+          for (const to of rs)
+            // Yjs re-emits released pending structs with origin null outside any op.
+            if (to !== r) inflight.push({ to, u, meta: meta ?? { from: r, kind: 'none', id: '' } });
       }),
     );
-    const deliver = (n: number) => {
-      for (let k = 0; k < n && inflight.length; k++) {
-        const [{ to, u }] = inflight.splice(Math.floor(rnd() * inflight.length), 1);
-        Y.applyUpdate(to.doc, u, REMOTE);
+    const deliver = (n: number, only?: Replica) => {
+      for (let k = 0; k < n; k++) {
+        const pool = inflight.filter((m) => !only || m.to === only);
+        if (!pool.length) return;
+        const msg = pool[Math.floor(rnd() * pool.length)];
+        inflight.splice(inflight.indexOf(msg), 1);
+        Y.applyUpdate(msg.to.doc, msg.u, REMOTE);
       }
     };
+    const seen = { moveEdit: 0, deleteEdit: 0, sameBlockEdits: 0, moveMove: 0, stalePrev: 0 };
     const done = rs.map(() => 0);
     let step = 0;
     let peak = 0;
@@ -587,12 +710,25 @@ describe('randomised convergence', () => {
         if (done[ri] >= OPS_PER_REPLICA) continue;
         done[ri]++;
         const r = rs[ri];
-        const next = randomOp(
-          r.view,
-          rnd,
-          () => `${r.doc.clientID.toString(36)}-${++counters[ri]}`,
-        );
-        edit(r, next);
+        // Sometimes edit from a stale view: deliver to r while its editor state stays behind.
+        const prev = r.view;
+        if (rnd() < 0.15) {
+          deliver(1 + Math.floor(rnd() * 4), r);
+          if (r.view !== prev) seen.stalePrev++;
+        }
+        const next = randomOp(prev, rnd, () => `${r.doc.clientID.toString(36)}-${++counters[ri]}`);
+        // Concurrent pairs: an op on a block another replica changed in an update r hasn't seen yet.
+        for (const m of inflight) {
+          if (m.to !== r || m.meta.id !== lastOp.id || lastOp.kind === 'none') continue;
+          const pair = [m.meta.kind, lastOp.kind].sort().join('+');
+          if (pair === 'edit+move') seen.moveEdit++;
+          if (pair === 'delete+edit') seen.deleteEdit++;
+          if (pair === 'edit+edit') seen.sameBlockEdits++;
+          if (pair === 'move+move') seen.moveMove++;
+        }
+        meta = { from: r, ...lastOp };
+        edit(r, next, prev);
+        meta = null;
         peak = Math.max(peak, r.view.blocks.length);
         if (rnd() < 0.5) deliver(Math.floor(rnd() * 8)); // random delays: some updates wait
       }
@@ -602,9 +738,19 @@ describe('randomised convergence', () => {
         expect(toRichDoc(r.doc)).toEqual(want);
         expect(norm(r.view)).toEqual(want);
       }
-      const ids = want.blocks.map((b) => b.id);
-      expect(peak).toBeGreaterThanOrEqual(5); // coverage floor: the doc really grew (fixed seed: 59)
-      expect(new Set(ids).size).toBe(ids.length);
+      // Every view block is exactly one live Y entry, and the doc holds no block the view lacks.
+      for (const r of rs) {
+        const ids = r.view.blocks.map((b) => b.id);
+        const blocks = r.doc.getMap(BLOCKS);
+        expect(new Set(ids).size).toBe(ids.length);
+        expect(ids.every((id) => isBlockEntry(id, blocks.get(id)))).toBe(true);
+        expect([...blocks.entries()].filter((e) => isBlockEntry(...e))).toHaveLength(ids.length);
+      }
+      expect(peak).toBeGreaterThanOrEqual(5); // coverage floor: the doc really grew
+      if (SEED === DEFAULT_SEED) {
+        // The fixed run must exercise every concurrency class (counts vary by seed).
+        for (const [k, n] of Object.entries(seen)) expect(n, k).toBeGreaterThan(0);
+      }
     } catch (e) {
       // Keep the assertion (and its diff), prefixed with what replays it.
       if (e instanceof Error) e.message = `seed=${SEED} step=${step}: ${e.message}`;
