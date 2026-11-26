@@ -99,7 +99,7 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`.
 - `Heatmap` — rows × columns grid coloured by value in up to five sequential steps with legend; `null` = no data; tooltip, keyboard, data table, empty state
 - `TreeView` — lazily loaded hierarchy (WAI-ARIA tree) as a file-explorer list or a top-down org chart, with loading / error-retry / load-more rows, opt-in drag/keyboard move
 - `LiquidEditor` — Liquid template editor
-- `RichTextEditor` — controlled rich-text editor (contentEditable)
+- `RichTextEditor` — controlled rich-text editor (contentEditable); sync hooks (`history="external"`, `presence`, `syncStatus`, `createBlockId`) for CRDT-driven shared editing
 - `ImageCrop` — controlled image cropper
 - `Card` — bordered container
 - `DefinitionList` — semantic key/value pairs (dl / dt / dd)

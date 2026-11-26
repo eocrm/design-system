@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   RichTextEditor,
   docFromText,
@@ -10,7 +10,11 @@ import {
   Code,
   Text,
   Stack,
+  Cluster,
+  Button,
   type RichDoc,
+  type RichRange,
+  type RichTextSyncStatus,
   type RichTextEditorProps,
   type RenderLink,
   type RenderMention,
@@ -83,6 +87,93 @@ function ToolbarExample() {
       <Text size="sm" tone="muted">
         Markdown → <Code>{toMarkdown(doc).replace(/\n/g, '⏎')}</Code>
       </Text>
+    </Stack>
+  );
+}
+
+function SharedEditingExample() {
+  const [docs, setDocs] = useState<[RichDoc, RichDoc]>(() => {
+    const d = docFromText('Edit me in either editor.');
+    return [d, d];
+  });
+  const [undo, setUndo] = useState<RichDoc[]>([]);
+  const [redo, setRedo] = useState<RichDoc[]>([]);
+  const [sel, setSel] = useState<[RichRange | null, RichRange | null]>([null, null]);
+  const [status, setStatus] = useState<RichTextSyncStatus>('synced');
+
+  const apply = (d: RichDoc) => setDocs([d, d]);
+  const change = (d: RichDoc) => {
+    setUndo((u) => [...u, docs[0]]);
+    setRedo([]);
+    apply(d);
+  };
+  const onUndo = () => {
+    const prev = undo[undo.length - 1];
+    if (!prev) return;
+    setUndo(undo.slice(0, -1));
+    setRedo([...redo, docs[0]]);
+    apply(prev);
+  };
+  const onRedo = () => {
+    const next = redo[redo.length - 1];
+    if (!next) return;
+    setRedo(redo.slice(0, -1));
+    setUndo([...undo, docs[0]]);
+    apply(next);
+  };
+  const setSelAt = (i: 0 | 1) => (r: RichRange | null) =>
+    setSel((s) => (i === 0 ? [r, s[1]] : [s[0], r]));
+
+  const people = [
+    { id: 'a', name: 'Alice', color: 'var(--color-accent)' },
+    { id: 'b', name: 'Bob', color: 'var(--color-success)' },
+  ];
+  const makeId = (prefix: string) => {
+    let n = 0;
+    return () => `${prefix}-${++n}`;
+  };
+  const createIdA = useMemo(() => makeId('a'), []);
+  const createIdB = useMemo(() => makeId('b'), []);
+
+  const shared = {
+    history: 'external',
+    onUndo,
+    onRedo,
+    canUndo: undo.length > 0,
+    canRedo: redo.length > 0,
+    syncStatus: status,
+    toolbar: true,
+  } as const;
+  return (
+    <Stack gap="sm">
+      <Cluster gap="sm">
+        {(['synced', 'connecting', 'offline'] as const).map((s) => (
+          <Button
+            key={s}
+            size="sm"
+            variant={status === s ? 'primary' : 'secondary'}
+            onClick={() => setStatus(s)}
+          >
+            {s}
+          </Button>
+        ))}
+      </Cluster>
+      <RichTextEditor
+        {...shared}
+        value={docs[0]}
+        onChange={change}
+        createBlockId={createIdA}
+        onSelectionChange={setSelAt(0)}
+        presence={[{ ...people[1], selection: sel[1] }]}
+      />
+      <RichTextEditor
+        {...shared}
+        value={docs[1]}
+        onChange={change}
+        createBlockId={createIdB}
+        onSelectionChange={setSelAt(1)}
+        presence={[{ ...people[0], selection: sel[0] }]}
+      />
     </Stack>
   );
 }
@@ -508,6 +599,98 @@ export function Demo() {
             <Code>https://example.com</Code> (plain link).
           </Text>
         </Stack>
+      </Example>
+
+      <Example
+        title="Shared editing hooks"
+        description="Two editors kept in sync by a naive whole-document relay: each onChange replaces the other's value. It is a toy (last writer wins, not a CRDT) that stands in for a real sync layer. history='external' routes undo/redo to one app-owned stack; presence is relayed both ways from onSelectionChange; the status buttons drive syncStatus; createBlockId gives each editor its own id prefix so block ids never collide."
+        code={`import { useMemo, useState } from 'react';
+import {
+  RichTextEditor,
+  docFromText,
+  Cluster,
+  Button,
+  Stack,
+  type RichDoc,
+  type RichRange,
+  type RichTextSyncStatus,
+} from '@eocrm/design-system';
+
+export function Demo() {
+  const [docs, setDocs] = useState<[RichDoc, RichDoc]>(() => {
+    const d = docFromText('Edit me in either editor.');
+    return [d, d];
+  });
+  const [undo, setUndo] = useState<RichDoc[]>([]);
+  const [redo, setRedo] = useState<RichDoc[]>([]);
+  const [sel, setSel] = useState<[RichRange | null, RichRange | null]>([null, null]);
+  const [status, setStatus] = useState<RichTextSyncStatus>('synced');
+
+  const apply = (d: RichDoc) => setDocs([d, d]);
+  const change = (d: RichDoc) => {
+    setUndo((u) => [...u, docs[0]]);
+    setRedo([]);
+    apply(d);
+  };
+  const onUndo = () => {
+    const prev = undo[undo.length - 1];
+    if (!prev) return;
+    setUndo(undo.slice(0, -1));
+    setRedo([...redo, docs[0]]);
+    apply(prev);
+  };
+  const onRedo = () => {
+    const next = redo[redo.length - 1];
+    if (!next) return;
+    setRedo(redo.slice(0, -1));
+    setUndo([...undo, docs[0]]);
+    apply(next);
+  };
+  const setSelAt = (i: 0 | 1) => (r: RichRange | null) =>
+    setSel((s) => (i === 0 ? [r, s[1]] : [s[0], r]));
+
+  const people = [
+    { id: 'a', name: 'Alice', color: 'var(--color-accent)' },
+    { id: 'b', name: 'Bob', color: 'var(--color-success)' },
+  ];
+  const makeId = (prefix: string) => {
+    let n = 0;
+    return () => \`\${prefix}-\${++n}\`;
+  };
+  const createIdA = useMemo(() => makeId('a'), []);
+  const createIdB = useMemo(() => makeId('b'), []);
+
+  const shared = { history: 'external', onUndo, onRedo, canUndo: undo.length > 0, canRedo: redo.length > 0, syncStatus: status, toolbar: true } as const;
+  return (
+    <Stack gap="sm">
+      <Cluster gap="sm">
+        {(['synced', 'connecting', 'offline'] as const).map((s) => (
+          <Button key={s} size="sm" variant={status === s ? 'primary' : 'secondary'} onClick={() => setStatus(s)}>
+            {s}
+          </Button>
+        ))}
+      </Cluster>
+      <RichTextEditor
+        {...shared}
+        value={docs[0]}
+        onChange={change}
+        createBlockId={createIdA}
+        onSelectionChange={setSelAt(0)}
+        presence={[{ ...people[1], selection: sel[1] }]}
+      />
+      <RichTextEditor
+        {...shared}
+        value={docs[1]}
+        onChange={change}
+        createBlockId={createIdB}
+        onSelectionChange={setSelAt(1)}
+        presence={[{ ...people[0], selection: sel[0] }]}
+      />
+    </Stack>
+  );
+}`}
+      >
+        <SharedEditingExample />
       </Example>
 
       <Example
