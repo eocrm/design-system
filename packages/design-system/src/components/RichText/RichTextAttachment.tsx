@@ -3,7 +3,7 @@
 // carry data-attachment-action + data-block-id hooks the editor delegates (so the
 // pure renderDoc stays callback-free). The read-only viewer renders the same markup
 // minus those buttons — it has no editor delegate, so they would do nothing.
-import { useId } from 'react';
+import { createContext, useContext, useId } from 'react';
 import { RotateCw, X } from 'lucide-react';
 import { Button } from '../Button';
 import { CircularProgress } from '../CircularProgress';
@@ -26,6 +26,16 @@ export type RichTextImageActivateHandler = (
   trigger: HTMLElement,
 ) => void;
 
+/**
+ * Collaborative mode (internal, `/collab`): what the shared doc knows about a block's upload that
+ * the block doesn't. `interrupted`: an `uploading` block whose uploader left; `canRetry`: this
+ * editor started the upload (only it holds the `File`). Without a provider: no change.
+ * @internal
+ */
+export const AttachmentCollabContext = createContext<
+  ((blockId: string) => { interrupted: boolean; canRetry: boolean }) | null
+>(null);
+
 export function RichTextAttachment({
   block,
   editable,
@@ -38,8 +48,10 @@ export function RichTextAttachment({
   const t = useTranslation();
   const name = block.name ?? '';
   const errorId = useId();
+  const collab = useContext(AttachmentCollabContext)?.(block.id);
+  const interrupted = block.status === 'uploading' && !!collab?.interrupted;
 
-  if (block.status === 'uploading') {
+  if (block.status === 'uploading' && !interrupted) {
     return (
       <span className={styles.attachmentLoading}>
         <CircularProgress size="sm" aria-label={t('richTextEditor.uploadingFile')} />
@@ -47,7 +59,7 @@ export function RichTextAttachment({
       </span>
     );
   }
-  if (block.status === 'error') {
+  if (block.status === 'error' || interrupted) {
     const retry = t('richTextEditor.uploadRetry');
     const remove = t('richTextEditor.uploadRemove');
     // The failure (and its reason) is visible text, reachable in browse mode; the
@@ -57,7 +69,9 @@ export function RichTextAttachment({
       <span className={styles.attachmentError}>
         <span className={styles.attachmentName}>{name}</span>
         <span id={errorId}>
-          <span className={styles.attachmentLabel}>{t('richTextEditor.uploadFailed')}</span>
+          <span className={styles.attachmentLabel}>
+            {t(interrupted ? 'collab.uploadInterrupted' : 'richTextEditor.uploadFailed')}
+          </span>
           {block.uploadError && (
             <>
               {' '}
@@ -68,18 +82,20 @@ export function RichTextAttachment({
         {/* Actions only where the editor delegates them; read-only they'd be inert. */}
         {editable && (
           <>
-            <Tooltip content={retry}>
-              <Button
-                size="xs"
-                iconOnly
-                data-attachment-action="retry"
-                data-block-id={block.id}
-                aria-label={name ? `${retry} ${name}` : retry}
-                aria-describedby={errorId}
-              >
-                <RotateCw size={14} aria-hidden="true" />
-              </Button>
-            </Tooltip>
+            {!interrupted && (collab?.canRetry ?? true) && (
+              <Tooltip content={retry}>
+                <Button
+                  size="xs"
+                  iconOnly
+                  data-attachment-action="retry"
+                  data-block-id={block.id}
+                  aria-label={name ? `${retry} ${name}` : retry}
+                  aria-describedby={errorId}
+                >
+                  <RotateCw size={14} aria-hidden="true" />
+                </Button>
+              </Tooltip>
+            )}
             <Tooltip content={remove}>
               <Button
                 size="xs"

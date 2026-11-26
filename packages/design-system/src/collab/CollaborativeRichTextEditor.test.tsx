@@ -1,14 +1,16 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import * as Y from 'yjs';
 import { CollaborativeRichTextEditor } from './CollaborativeRichTextEditor';
-import { fromRichDoc, toRichDoc } from './schema';
-import { BLOCKS } from './schema';
+import { BLOCKS, blockMeta, fromRichDoc, toRichDoc } from './schema';
+import { decodeSelection, encodeSelection } from './bridge';
+import { ru } from '../i18n/ru';
 import { docFromText, type RichDoc } from '../components/RichText/engine/model';
 import { RichTextEditor } from '../components/RichTextEditor/RichTextEditor';
 import { readSelection, writeSelection } from '../components/RichTextEditor/selection';
 import { I18nProvider } from '../i18n';
 
 const REMOTE = 'remote';
+const ME = { name: 'Me', color: '#123456' };
 
 /** Two docs kept in sync in memory (updates relayed both ways). */
 function pair(text: string) {
@@ -35,7 +37,7 @@ const yText = (doc: Y.Doc, id: string) =>
 function renderOn(doc: Y.Doc, label = 'Editor') {
   render(
     <I18nProvider locale="en">
-      <CollaborativeRichTextEditor doc={doc} aria-label={label} />
+      <CollaborativeRichTextEditor doc={doc} user={ME} aria-label={label} />
     </I18nProvider>,
   );
   return screen.getByRole('textbox', { name: label });
@@ -61,7 +63,7 @@ describe('CollaborativeRichTextEditor', () => {
   it('renders the seeded doc and forwards ref + className', () => {
     const { a } = pair('hello');
     const ref = { current: null as HTMLDivElement | null };
-    render(<CollaborativeRichTextEditor ref={ref} doc={a} className="custom" />);
+    render(<CollaborativeRichTextEditor ref={ref} doc={a} user={ME} className="custom" />);
     expect(ref.current).toHaveAttribute('role', 'textbox');
     expect(ref.current).toHaveClass('custom');
     expect(ref.current).toHaveTextContent('hello');
@@ -112,7 +114,7 @@ describe('CollaborativeRichTextEditor', () => {
     const { a } = pair('hello');
     render(
       <I18nProvider locale="en">
-        <CollaborativeRichTextEditor doc={a} toolbar aria-label="Editor" />
+        <CollaborativeRichTextEditor doc={a} user={ME} toolbar aria-label="Editor" />
       </I18nProvider>,
     );
     const editor = screen.getByRole('textbox', { name: 'Editor' });
@@ -131,7 +133,7 @@ describe('CollaborativeRichTextEditor', () => {
     const second = fromRichDoc(docFromText('second'), new Y.Doc());
     const ui = (doc: Y.Doc) => (
       <I18nProvider locale="en">
-        <CollaborativeRichTextEditor doc={doc} toolbar aria-label="Editor" />
+        <CollaborativeRichTextEditor doc={doc} user={ME} toolbar aria-label="Editor" />
       </I18nProvider>
     );
     const { rerender } = render(ui(a));
@@ -209,8 +211,8 @@ describe('CollaborativeRichTextEditor', () => {
   it("new block ids follow each editor's own doc, and plain editors keep rtN ids", () => {
     const one = fromRichDoc(docFromText('one'), new Y.Doc());
     const two = fromRichDoc(docFromText('two'), new Y.Doc());
-    const first = render(<CollaborativeRichTextEditor doc={one} aria-label="One" />);
-    render(<CollaborativeRichTextEditor doc={two} aria-label="Two" />);
+    const first = render(<CollaborativeRichTextEditor doc={one} user={ME} aria-label="One" />);
+    render(<CollaborativeRichTextEditor doc={two} user={ME} aria-label="Two" />);
     const plainChange = vi.fn();
     render(
       <RichTextEditor value={docFromText('plain')} onChange={plainChange} aria-label="Plain" />,
@@ -265,5 +267,272 @@ describe('CollaborativeRichTextEditor', () => {
       'Z',
       'oneaaaa twobbbb',
     ]);
+  });
+});
+
+describe('CollaborativeRichTextEditor presence', () => {
+  const me = { name: 'Me', color: '#123456' };
+  const rect = { top: 10, left: 20, width: 30, height: 16, right: 50, bottom: 26, x: 20, y: 10 };
+  beforeEach(() => {
+    // jsdom has no layout: give ranges a box.
+    Range.prototype.getBoundingClientRect = () => ({ ...rect, toJSON: () => rect }) as DOMRect;
+    Range.prototype.getClientRects = () =>
+      Object.assign([{ ...rect }], { item: () => null }) as unknown as DOMRectList;
+  });
+
+  function remote(doc: Y.Doc, blockId: string, a: number, f: number) {
+    return encodeSelection(doc, {
+      anchor: { blockId, offset: a },
+      focus: { blockId, offset: f },
+    });
+  }
+
+  it('draws remote carets and selections, skipping our own entry and unresolvable ones', () => {
+    const { a, b } = pair('hello world');
+    const id = firstId(a);
+    const { container } = render(
+      <CollaborativeRichTextEditor
+        doc={a}
+        user={me}
+        presence={[
+          { clientId: a.clientID, name: 'Me', color: '#000000', selection: remote(a, id, 0, 1) },
+          { clientId: b.clientID, name: 'Bob', color: '#ff0000', selection: remote(b, id, 0, 5) },
+          {
+            clientId: 77,
+            name: 'Ghost',
+            color: '#00ff00',
+            selection: {
+              anchor: { blockId: 'gone', rel: null },
+              focus: { blockId: 'gone', rel: null },
+            },
+          },
+          { clientId: 78, name: 'Idle', color: '#0000ff', selection: null },
+        ]}
+        aria-label="Editor"
+      />,
+    );
+    const overlay = container.querySelector('[data-collab-presence]')!;
+    expect(overlay).toHaveAttribute('aria-hidden', 'true');
+    const carets = overlay.querySelectorAll('[data-collab-caret]');
+    expect([...carets].map((c) => c.textContent)).toEqual(['Bob']);
+    expect(overlay.querySelectorAll('[data-collab-selection]').length).toBeGreaterThan(0);
+    expect((carets[0] as HTMLElement).style.getPropertyValue('--collab-user-color')).toBe(
+      '#ff0000',
+    );
+  });
+
+  it('reports the local selection throttled, and null on blur', () => {
+    vi.useFakeTimers();
+    try {
+      const { a } = pair('hello');
+      const onPresenceChange = vi.fn();
+      render(
+        <CollaborativeRichTextEditor
+          doc={a}
+          user={me}
+          onPresenceChange={onPresenceChange}
+          aria-label="Editor"
+        />,
+      );
+      const editor = screen.getByRole('textbox', { name: 'Editor' });
+      editor.focus();
+      const id = firstId(a);
+      const move = (o: number) => {
+        caret(editor, id, o);
+        act(() => {
+          document.dispatchEvent(new Event('selectionchange'));
+        });
+      };
+      move(1);
+      expect(onPresenceChange).toHaveBeenCalledTimes(1);
+      const sent = onPresenceChange.mock.calls[0][0];
+      expect(sent).toMatchObject({ clientId: a.clientID, name: 'Me', color: '#123456' });
+      expect(decodeSelection(a, sent.selection, toRichDoc(a))?.focus.offset).toBe(1);
+      move(2);
+      move(3);
+      expect(onPresenceChange).toHaveBeenCalledTimes(1);
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      expect(onPresenceChange).toHaveBeenCalledTimes(2);
+      expect(
+        decodeSelection(a, onPresenceChange.mock.calls[1][0].selection, toRichDoc(a))?.focus.offset,
+      ).toBe(3);
+      move(4);
+      act(() => editor.blur());
+      expect(onPresenceChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({ clientId: a.clientID, selection: null }),
+      );
+      const calls = onPresenceChange.mock.calls.length;
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+      expect(onPresenceChange).toHaveBeenCalledTimes(calls);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('CollaborativeRichTextEditor status', () => {
+  const me = { name: 'Me', color: '#123456' };
+
+  it('shows the status as text + icon in the toolbar row and announces changes politely', async () => {
+    const { a } = pair('hello');
+    const ui = (status?: 'synced' | 'connecting' | 'offline') => (
+      <I18nProvider locale="en">
+        <CollaborativeRichTextEditor doc={a} user={me} status={status} toolbar aria-label="E" />
+      </I18nProvider>
+    );
+    const { rerender } = render(ui());
+    const toolbar = screen.getByRole('toolbar');
+    const region = screen.getByRole('status');
+    expect(toolbar).toHaveTextContent('Synced');
+    expect(toolbar.querySelector('[data-collab-status] svg')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
+    expect(region).toHaveTextContent(/^$/);
+    rerender(ui('offline'));
+    expect(toolbar).toHaveTextContent('Offline');
+    await waitFor(() => expect(region).toHaveTextContent(/Offline/));
+    rerender(ui('connecting'));
+    await waitFor(() => expect(region).toHaveTextContent('Connecting…'));
+  });
+
+  it('without a toolbar the status sits below the editable, and names the others editing', () => {
+    const { a } = pair('hello');
+    const { container } = render(
+      <I18nProvider locale="en">
+        <CollaborativeRichTextEditor
+          doc={a}
+          user={me}
+          presence={[
+            { clientId: a.clientID, name: 'Me', color: '#000000', selection: null },
+            { clientId: 5, name: 'Bob', color: '#ff0000', selection: null },
+            { clientId: 6, name: 'Cy', color: '#00ff00', selection: null },
+          ]}
+          aria-label="E"
+        />
+      </I18nProvider>,
+    );
+    expect(screen.queryByRole('toolbar')).toBeNull();
+    const status = container.querySelector('[data-collab-status]')!;
+    expect(status).toHaveTextContent('Synced');
+    expect(status).toHaveTextContent('2 others editing: Bob, Cy');
+    expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  it('ru names others without inflecting them', () => {
+    const { a } = pair('hello');
+    const { container } = render(
+      <I18nProvider locale="ru" messages={ru}>
+        <CollaborativeRichTextEditor
+          doc={a}
+          user={me}
+          presence={[{ clientId: 5, name: 'Аня', color: '#ff0000', selection: null }]}
+          aria-label="E"
+        />
+      </I18nProvider>,
+    );
+    expect(container.querySelector('[data-collab-status]')).toHaveTextContent(
+      'Также редактирует (1): «Аня»',
+    );
+  });
+});
+
+describe('CollaborativeRichTextEditor uploads', () => {
+  const me = { name: 'Me', color: '#123456' };
+
+  function withAttachment(status: 'uploading' | 'error', uploadedBy?: number) {
+    const doc = fromRichDoc(
+      {
+        blocks: [
+          { id: 'p', type: 'paragraph', inlines: [{ text: 'x', marks: [] }] },
+          { id: 'f', type: 'attachment', inlines: [], name: 'f.pdf', status },
+        ],
+      },
+      new Y.Doc(),
+    );
+    const id = toRichDoc(doc).blocks[1].id;
+    if (uploadedBy !== undefined)
+      doc.getMap<Y.Map<unknown>>(BLOCKS).get(id)!.set('uploadedBy', uploadedBy);
+    return { doc, id };
+  }
+
+  const ui = (doc: Y.Doc, presence: { clientId: number }[] = []) => (
+    <I18nProvider locale="en">
+      <CollaborativeRichTextEditor
+        doc={doc}
+        user={me}
+        presence={presence.map((p) => ({ ...p, name: 'P', color: '#ff0000', selection: null }))}
+        upload={{ onUpload: async () => ({ url: 'https://cdn.test/f' }) }}
+        aria-label="E"
+      />
+    </I18nProvider>
+  );
+
+  it('an upload whose uploader left shows "Upload interrupted" with Remove only', () => {
+    const { doc, id } = withAttachment('uploading', 999);
+    const { rerender } = render(ui(doc, [{ clientId: 999 }]));
+    expect(screen.getByRole('progressbar', { name: 'Uploading…' })).toBeInTheDocument();
+    rerender(ui(doc, []));
+    expect(screen.getByText('Upload interrupted')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Retry/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Remove/ }));
+    expect(toRichDoc(doc).blocks.some((b) => b.id === id)).toBe(false);
+  });
+
+  it('Retry shows only for the uploader', () => {
+    const other = withAttachment('error', 999);
+    const { unmount } = render(ui(other.doc));
+    expect(screen.getByRole('button', { name: /Remove/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Retry/ })).toBeNull();
+    unmount();
+    const mine = withAttachment('error');
+    mine.doc.getMap<Y.Map<unknown>>(BLOCKS).get(mine.id)!.set('uploadedBy', mine.doc.clientID);
+    render(ui(mine.doc));
+    expect(screen.getByRole('button', { name: /Retry/ })).toBeInTheDocument();
+  });
+
+  it('a finished upload settles the renamed block and is not an undo step', async () => {
+    const { a } = pair('hello');
+    let finish!: (url: string) => void;
+    const { container } = render(
+      <I18nProvider locale="en">
+        <CollaborativeRichTextEditor
+          doc={a}
+          user={me}
+          toolbar
+          upload={{
+            onUpload: () =>
+              new Promise((res) => {
+                finish = (url) => res({ url, width: 10, height: 10, mime: 'image/png' });
+              }),
+          }}
+          aria-label="E"
+        />
+      </I18nProvider>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'E' });
+    caret(editor, firstId(a), 5);
+    const file = new File(['x'], 'f.png', { type: 'image/png' });
+    fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [file] } });
+    const att = () => toRichDoc(a).blocks.find((bl) => bl.type === 'attachment');
+    expect(att()).toMatchObject({ status: 'uploading' });
+    expect(att()!.id.startsWith(`${a.clientID.toString(36)}-`)).toBe(true);
+    const ymap = a.getMap<Y.Map<unknown>>(BLOCKS).get(att()!.id)!;
+    expect(blockMeta(ymap).uploadedBy).toBe(a.clientID);
+    // The upload outlasts the undo manager's capture window (600ms).
+    // (Real time: yjs reads the clock through a captured `Date.now`.)
+    await new Promise((r) => setTimeout(r, 650));
+    await act(async () => finish('https://cdn.test/f.png'));
+    expect(att()).toMatchObject({ status: 'ready', src: 'https://cdn.test/f.png' });
+    // One undo removes the whole upload: the settle was not a step of its own.
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(att()).toBeUndefined();
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true });
+    // Redo brings it back settled, not stuck uploading.
+    expect(att()).toMatchObject({ status: 'ready', src: 'https://cdn.test/f.png' });
   });
 });

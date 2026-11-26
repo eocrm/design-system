@@ -597,9 +597,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           ...historyRef.current,
           present: { doc, selection: sel ?? historyRef.current.present.selection },
         };
+        seam?.untracked();
         emit(doc, prevHistory);
       },
-      [emit, reconcile],
+      [emit, reconcile, seam],
     );
 
     const uploadOn = !!upload && !readOnly;
@@ -620,6 +621,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         commit({ doc, selection: sel }, 'other');
       },
       applySettle: commitSilent,
+      resolveId: seam?.resolveId,
       getCaret: () =>
         (rootRef.current ? readSelection(rootRef.current)?.anchor : undefined) ?? {
           blockId: liveDocRef.current.blocks[0].id,
@@ -1066,10 +1068,17 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     }, [seam]);
     const onSeamSelection = seam?.onSelectionChange;
     useEffect(() => {
-      if (!onSeamSelection) return;
-      const f = () => onSeamSelection(rootRef.current ? readSelection(rootRef.current) : null);
+      const root = rootRef.current;
+      if (!onSeamSelection || !root) return;
+      const f = () =>
+        onSeamSelection(root.ownerDocument.activeElement === root ? readSelection(root) : null);
+      const out = () => onSeamSelection(null);
       document.addEventListener('selectionchange', f);
-      return () => document.removeEventListener('selectionchange', f);
+      root.addEventListener('focusout', out);
+      return () => {
+        document.removeEventListener('selectionchange', f);
+        root.removeEventListener('focusout', out);
+      };
     }, [onSeamSelection]);
 
     // ONE selectionchange subscription shared by the toolbar, block-controls caret
@@ -1889,8 +1898,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onPickFiles={uploadOn ? onPickFiles : undefined}
         onOverlayOpenChange={autoToolbar ? setToolbarOverlayOpen : undefined}
         onInsertEmoji={onInsertEmoji}
+        trailing={toolbar === true ? seam?.status : undefined}
       />
     ) : null;
+    // Collaborative status: in the toolbar row when the bar is always shown, else below.
+    const footer = toolbar === true ? null : seam?.status;
 
     // The upload picker's input lives HERE, in the always-rendered shell, not in
     // the toolbar: a native file dialog blurs the editable, and under
@@ -1929,6 +1941,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           {uploadStatus}
           {editable}
           {seam?.overlay}
+          {footer}
           {linkBubble}
           {mentionMenu}
         </>
@@ -1941,6 +1954,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         {uploadStatus}
         {editable}
         {seam?.overlay}
+        {footer}
         {linkBubble}
         {mentionMenu}
         {blockControlsEl}

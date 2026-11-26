@@ -9,7 +9,7 @@ import {
   runsLength,
   sliceInlines,
 } from '../components/RichText/engine/inlines';
-import { BLOCKS, fromRichDoc, isBlockEntry, toRichDoc } from './schema';
+import { BLOCKS, blockMeta, fromRichDoc, isBlockEntry, toRichDoc } from './schema';
 import { applyLocal, decodeSelection, encodeSelection, readChanged } from './bridge';
 
 const LOCAL = Symbol('local');
@@ -213,6 +213,31 @@ describe('applyLocal', () => {
     expect(r.doc.getMap<Y.Map<unknown>>(BLOCKS).get('1-a1')!.has('uploadError')).toBe(false);
     edit(r, setBlock(r.view, 1, { status: 'ready', src: 'https://cdn.test/a.png' }));
     edit(r, { blocks: r.view.blocks.filter((b) => b.id !== '1-a1') });
+  });
+
+  it('records the uploader on the client that (re)starts an upload', () => {
+    const a = seeded(base, 1);
+    const b = replica(2);
+    sync(a, b);
+    const by = (r: Replica) =>
+      blockMeta(r.doc.getMap<Y.Map<unknown>>(BLOCKS).get('1-a1')!).uploadedBy;
+    const att: Block = {
+      id: '1-a1',
+      type: 'attachment',
+      inlines: [],
+      name: 'a',
+      status: 'uploading',
+    };
+    edit(a, { blocks: [a.view.blocks[0], att, ...a.view.blocks.slice(1)] });
+    sync(a, b);
+    expect(by(b)).toBe(1);
+    edit(a, setBlock(a.view, 1, { status: 'error' }));
+    sync(a, b);
+    // Another client re-uploading (replace) becomes the uploader; settling leaves it alone.
+    edit(b, setBlock(b.view, 1, { status: 'uploading' }));
+    edit(b, setBlock(b.view, 1, { status: 'ready', src: 'https://cdn.test/a' }));
+    sync(a, b);
+    expect(by(a)).toBe(2);
   });
 
   it('no-op edits write nothing', () => {

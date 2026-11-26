@@ -610,6 +610,14 @@ export const en: Messages = {
   field: {
     optional: '(optional)',
   },
+  collab: {
+    synced: 'Synced',
+    connecting: 'Connecting…',
+    offline: 'Offline — changes will sync when reconnected',
+    othersEditing: ({ names }) =>
+      `${names.length} ${names.length === 1 ? 'other' : 'others'} editing: ${names.join(', ')}`,
+    uploadInterrupted: 'Upload interrupted',
+  },
   liquidEditor: {
     insertTag: 'Insert tag',
     tagDescription: {

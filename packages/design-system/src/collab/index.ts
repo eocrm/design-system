@@ -2,4 +2,10 @@
 // This module must stay unreachable from the main entry.
 export { toRichDoc, fromRichDoc } from './schema';
 export { CollaborativeRichTextEditor } from './CollaborativeRichTextEditor';
-export type { CollaborativeRichTextEditorProps } from './CollaborativeRichTextEditor';
+export type {
+  CollaborativeRichTextEditorProps,
+  CollabUser,
+  CollabPresence,
+  CollabStatus,
+  CollabSelection,
+} from './CollaborativeRichTextEditor';

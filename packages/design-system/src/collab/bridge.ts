@@ -331,6 +331,7 @@ export interface LocalResult {
  *   whose id lacks this client's `${clientID.toString(36)}-` prefix (an editor `rtN` id, which every
  *   client generates alike) is written as `${clientID.toString(36)}-${n}` (reported in `renamed`).
  * - Never throws on foreign order keys: it re-keys the neighbouring run instead.
+ * - A block this edit puts into `status: 'uploading'` records `uploadedBy: doc.clientID`.
  * @internal
  */
 export function applyLocal(doc: Y.Doc, prev: RichDoc, next: RichDoc, origin: unknown): LocalResult {
@@ -391,12 +392,16 @@ export function applyLocal(doc: Y.Doc, prev: RichDoc, next: RichDoc, origin: unk
         m = blocks.set(b.id, new Y.Map<unknown>());
         m.set('order', keys[j]);
         writeBlock(m, { ...b, inlines: normalizeInlines(b.inlines ?? []) });
+        if (b.status === 'uploading') m.set('uploadedBy', doc.clientID);
         return;
       }
       if (m.get('order') !== keys[j]) m.set('order', keys[j]);
       const old = prevById.get(b.id);
       if (old === b) return;
       writeBlock(m, old ? rebaseAttrs(blockToRich(m), old, b) : b);
+      // This client (re)started the upload (insert, retry, replace): it alone holds the File.
+      if (b.status === 'uploading' && old?.status !== 'uploading')
+        m.set('uploadedBy', doc.clientID);
       const t = m.get('text');
       if (t instanceof Y.Text) syncText(t, old?.inlines, b.inlines ?? []);
     });

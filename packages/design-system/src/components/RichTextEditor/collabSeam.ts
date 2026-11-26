@@ -38,10 +38,19 @@ export interface CollabSeam {
   editKind: (kind: EditKind) => void;
   /** Fires after the editor handled `compositionend` (and committed the composed text). */
   compositionEnd: () => void;
-  /** Fires on every `selectionchange` with the editor's model selection (`null` outside). */
+  /** Fires before a history-less commit (an upload settle or removal) reaches `onChange`. */
+  untracked: () => void;
+  /** The id a block the editor created now has (the owner renames new blocks). */
+  resolveId: (id: string) => string;
+  /**
+   * Fires on every `selectionchange` with the editor's model selection, and on `focusout`;
+   * `null` while the editable is not focused or the selection is outside it.
+   */
   onSelectionChange?: (sel: Range | null) => void;
-  /** Rendered beside the editable (presence carets). */
+  /** Rendered right after the editable element, its previous sibling (presence carets). */
   overlay?: ReactNode;
+  /** Rendered at the end of the toolbar row when `toolbar` is `true`, else after the editable. */
+  status?: ReactNode;
 }
 
 /** @internal */

@@ -620,6 +620,16 @@ export const ru: Messages = {
   field: {
     optional: '(необязательно)',
   },
+  collab: {
+    synced: 'Синхронизировано',
+    connecting: 'Подключение…',
+    offline: 'Нет связи — изменения синхронизируются после подключения',
+    othersEditing: ({ names }) =>
+      `Также ${names.length === 1 ? 'редактирует' : 'редактируют'} (${names.length}): ${names
+        .map((n) => `«${n}»`)
+        .join(', ')}`,
+    uploadInterrupted: 'Загрузка прервана',
+  },
   liquidEditor: {
     insertTag: 'Вставить тег',
     tagDescription: {

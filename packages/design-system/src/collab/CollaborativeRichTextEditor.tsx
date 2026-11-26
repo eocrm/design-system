@@ -1,6 +1,9 @@
 import {
+  createContext,
   forwardRef,
   useCallback,
+  useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useReducer,
@@ -8,6 +11,7 @@ import {
   useState,
 } from 'react';
 import * as Y from 'yjs';
+import { Cloud, CloudOff, RefreshCw } from 'lucide-react';
 import {
   RichTextEditor,
   type RichTextEditorProps,
@@ -28,11 +32,82 @@ import {
   type CollabSelection,
   type LocalResult,
 } from './bridge';
-import { BLOCKS, toRichDoc } from './schema';
+import { AttachmentCollabContext } from '../components/RichText/RichTextAttachment';
+import { LiveRegion } from '../components/LiveRegion';
+import { VisuallyHidden } from '../components/VisuallyHidden';
+import { useTranslation } from '../i18n';
+import { BLOCKS, blockMeta, isBlockEntry, toRichDoc } from './schema';
 import { keptIndices } from './textDiff';
+import { PresenceDataContext, PresenceOverlay, type PresenceData } from './presence';
+import styles from './CollaborativeRichTextEditor.module.scss';
 
 /** Origin of this editor's own transactions: the only one `Y.UndoManager` tracks. */
 const LOCAL_ORIGIN = Symbol('eocrm-collab-local');
+/** Origin of this editor's history-less writes (upload settles and removals): never undo steps. */
+const UNTRACKED_ORIGIN = Symbol('eocrm-collab-untracked');
+const isOwn = (origin: unknown) => origin === LOCAL_ORIGIN || origin === UNTRACKED_ORIGIN;
+/** Minimum gap between two `onPresenceChange` calls for selection moves. */
+const PRESENCE_THROTTLE_MS = 100;
+
+export type { CollabSelection };
+
+/** The local user as others see them. */
+export interface CollabUser {
+  /** Shown on this user's caret flag in other editors. */
+  name: string;
+  /**
+   * Any CSS colour, for this user's caret, flag and selection tint in other editors. App data
+   * (like an avatar colour): the one raw colour the library accepts. Pick colours that keep
+   * white flag text legible.
+   */
+  color: string;
+}
+
+/** One user's presence, as relayed by the app. */
+export interface CollabPresence extends CollabUser {
+  /** The user's `doc.clientID`. */
+  clientId: number;
+  /** Their selection, or `null` when their editor is not focused. */
+  selection: CollabSelection | null;
+}
+
+/**
+ * Connection state of the app's transport, shown in the editor: `'synced'` (quiet), `'connecting'`
+ * (reconnecting; edits are kept) or `'offline'` (no connection; edits sync on reconnect).
+ */
+export type CollabStatus = 'synced' | 'connecting' | 'offline';
+
+const STATUS_ICON = { synced: Cloud, connecting: RefreshCw, offline: CloudOff } as const;
+
+interface StatusData {
+  status: CollabStatus;
+  others: string[];
+}
+const StatusContext = createContext<StatusData>({ status: 'synced', others: [] });
+
+// Status text + icon; its accessible text also names the others editing. Status changes are
+// announced through a region that is always mounted (Rule 10); the initial status is not.
+function StatusArea() {
+  const { status, others } = useContext(StatusContext);
+  const t = useTranslation();
+  const [shown, setShown] = useState(status);
+  const [announced, setAnnounced] = useState('');
+  if (shown !== status) {
+    setShown(status);
+    setAnnounced(t(`collab.${status}`));
+  }
+  const Icon = STATUS_ICON[status];
+  return (
+    <span className={styles.status} data-collab-status="" data-status={status}>
+      <Icon size={14} aria-hidden="true" />
+      <span>{t(`collab.${status}`)}</span>
+      {others.length > 0 && (
+        <VisuallyHidden>. {t('collab.othersEditing', { names: others })}</VisuallyHidden>
+      )}
+      <LiveRegion>{announced}</LiveRegion>
+    </span>
+  );
+}
 
 type StackItem = Y.UndoManager['undoStack'][number];
 
@@ -47,9 +122,31 @@ export interface CollaborativeRichTextEditorProps extends Omit<
    * but starts a fresh undo history.
    */
   doc: Y.Doc;
+  /** The local user (name and colour) as other editors show them. */
+  user: CollabUser;
+  /**
+   * Other users' presence, as relayed by the app: drawn as carets and selection tints, and listed
+   * in the status area's accessible text. The entry for `doc.clientID` and entries whose
+   * selection no longer resolves are skipped. Removing users who left is the app's job; an
+   * `uploading` attachment whose uploader is missing here shows as "Upload interrupted".
+   */
+  presence?: readonly CollabPresence[];
+  /**
+   * Fires with this user's presence (`clientId: doc.clientID`) when the local selection moves
+   * (throttled to one call per ~100ms) and with `selection: null` when the editor loses focus.
+   * Relay it to the other clients.
+   */
+  onPresenceChange?: (presence: CollabPresence) => void;
+  /**
+   * Connection state of the app's transport, shown as a small text + icon indicator in the
+   * toolbar row (`toolbar={true}`) or below the editor, and announced politely on change.
+   * @default 'synced'
+   */
+  status?: CollabStatus;
 }
 
 type Renamed = LocalResult['renamed'];
+const NO_PRESENCE: readonly CollabPresence[] = [];
 
 // `p` (an offset in `next`) moved into `view`, which may hold remote text `next` lacks: through a
 // character diff, sticking to the character before it (remote text at the caret lands after it).
@@ -75,7 +172,10 @@ function mapPoint(p: Point, next: RichDoc, view: RichDoc, renamed: Renamed): Poi
 export const CollaborativeRichTextEditor = forwardRef<
   HTMLDivElement,
   CollaborativeRichTextEditorProps
->(function CollaborativeRichTextEditor({ doc, ...rest }, ref) {
+>(function CollaborativeRichTextEditor(
+  { doc, user, presence = NO_PRESENCE, onPresenceChange, status = 'synced', ...rest },
+  ref,
+) {
   const [state, setState] = useState(() => ({ doc, view: toRichDoc(doc) }));
   let view = state.view;
   if (state.doc !== doc) {
@@ -97,6 +197,11 @@ export const CollaborativeRichTextEditor = forwardRef<
   // The undo item the current transaction added or extended (to store the caret after the edit).
   const touchedRef = useRef<StackItem | null>(null);
   const [, rerender] = useReducer((n: number) => n + 1, 0);
+  // The next onChange is a history-less commit (seam.untracked).
+  const untrackedRef = useRef(false);
+  // Blocks the last local edit wrote under new ids (an upload resolves its block's id right
+  // after inserting it).
+  const renamedRef = useRef<Renamed>(undefined);
 
   useLayoutEffect(() => {
     viewRef.current = renderedRef.current;
@@ -109,7 +214,7 @@ export const CollaborativeRichTextEditor = forwardRef<
     let selBase = viewRef.current;
     const onBefore = (tr: Y.Transaction) => {
       before = encodeSelection(doc, handle.current?.readSelection() ?? null, renderedRef.current);
-      if (tr.origin !== LOCAL_ORIGIN && viewRef.current === renderedRef.current) {
+      if (!isOwn(tr.origin) && viewRef.current === renderedRef.current) {
         sel = before;
         selBase = viewRef.current;
       }
@@ -123,7 +228,7 @@ export const CollaborativeRichTextEditor = forwardRef<
     flushRef.current = flush;
     const onDeep = (events: Y.YEvent<Y.AbstractType<unknown>>[], tr: Y.Transaction) => {
       // Our own edits are adopted by onChange (applyLocal returns the merged view).
-      if (tr.origin === LOCAL_ORIGIN || applyingRef.current) return;
+      if (isOwn(tr.origin) || applyingRef.current) return;
       viewRef.current = readChanged(doc, viewRef.current, events);
       // Mid-composition the DOM belongs to the IME: wait for compositionend.
       if (!handle.current?.isComposing()) flush();
@@ -170,13 +275,16 @@ export const CollaborativeRichTextEditor = forwardRef<
     (next: RichDoc) => {
       applyingRef.current = true;
       touchedRef.current = null;
+      const origin = untrackedRef.current ? UNTRACKED_ORIGIN : LOCAL_ORIGIN;
+      untrackedRef.current = false;
       let r;
       try {
-        r = applyLocal(doc, renderedRef.current, next, LOCAL_ORIGIN);
+        r = applyLocal(doc, renderedRef.current, next, origin);
       } finally {
         applyingRef.current = false;
       }
       viewRef.current = r.view;
+      renamedRef.current = r.renamed;
       // The editor placed its caret in `next`'s terms; the view may hold more (a merged remote edit).
       const p = handle.current?.pendingSelection();
       if (p && (r.view !== next || r.renamed)) {
@@ -215,13 +323,82 @@ export const CollaborativeRichTextEditor = forwardRef<
         lastKindRef.current = kind;
       },
       compositionEnd: () => flushRef.current(),
+      untracked: () => {
+        untrackedRef.current = true;
+      },
+      resolveId: (id) => renamedRef.current?.find((r) => r.from === id)?.to ?? id,
+      onSelectionChange: (sel) => presenceRef.current(sel),
+      overlay: <PresenceOverlay />,
+      status: <StatusArea />,
     }),
     [],
   );
 
+  // Local presence: selection moves throttled (leading + trailing), focus loss at once.
+  const presenceRef = useRef<(sel: Range | null) => void>(() => {});
+  const sendRef = useRef({
+    at: -Infinity,
+    timer: 0 as ReturnType<typeof setTimeout> | 0,
+    nulled: true,
+  });
+  presenceRef.current = (sel) => {
+    if (!onPresenceChange) return;
+    const st = sendRef.current;
+    const send = (selection: CollabSelection | null) =>
+      onPresenceChange({ clientId: doc.clientID, name: user.name, color: user.color, selection });
+    if (!sel) {
+      clearTimeout(st.timer);
+      st.timer = 0;
+      if (!st.nulled) send(null);
+      st.nulled = true;
+      return;
+    }
+    if (st.timer) return; // the trailing call reads the selection then
+    const fire = () => {
+      st.timer = 0;
+      st.at = Date.now();
+      const now = handle.current?.readSelection() ?? null;
+      if (!now) return;
+      st.nulled = false;
+      send(encodeSelection(doc, now, renderedRef.current));
+    };
+    const wait = st.at + PRESENCE_THROTTLE_MS - Date.now();
+    if (wait <= 0) fire();
+    else st.timer = setTimeout(fire, wait);
+  };
+  useEffect(() => () => clearTimeout(sendRef.current.timer), []);
+
+  const presenceData = useMemo<PresenceData>(
+    () => ({ doc, view, presence }),
+    [doc, view, presence],
+  );
+  const statusData = useMemo<StatusData>(
+    () => ({
+      status,
+      others: presence.filter((p) => p.clientId !== doc.clientID).map((p) => p.name),
+    }),
+    [status, presence, doc],
+  );
+  // Upload state only the Y.Doc knows: who started it (and whether they are still here).
+  const attachmentState = useMemo(() => {
+    const here = new Set(presence.map((p) => p.clientId));
+    return (id: string) => {
+      const m = doc.getMap<unknown>(BLOCKS).get(id);
+      const by = isBlockEntry(id, m) ? blockMeta(m).uploadedBy : undefined;
+      const mine = by === doc.clientID;
+      return { canRetry: mine, interrupted: !mine && (by === undefined || !here.has(by)) };
+    };
+  }, [doc, presence]);
+
   return (
     <CollabSeamContext.Provider value={seam}>
-      <RichTextEditor ref={ref} {...rest} value={view} onChange={onChange} />
+      <PresenceDataContext.Provider value={presenceData}>
+        <StatusContext.Provider value={statusData}>
+          <AttachmentCollabContext.Provider value={attachmentState}>
+            <RichTextEditor ref={ref} {...rest} value={view} onChange={onChange} />
+          </AttachmentCollabContext.Provider>
+        </StatusContext.Provider>
+      </PresenceDataContext.Provider>
     </CollabSeamContext.Provider>
   );
 });

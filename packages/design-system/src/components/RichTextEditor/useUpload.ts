@@ -77,6 +77,8 @@ interface UseUploadArgs {
    * file name + optional `UploadError` reason when it fails.
    */
   onFailureChange?: (failure: { name: string; reason?: string } | null) => void;
+  /** The id an inserted block ended up with (collaborative mode renames new blocks). */
+  resolveId?: (id: string) => string;
 }
 
 export function useUpload({
@@ -89,6 +91,7 @@ export function useUpload({
   getContentWidth = () => 0,
   getDevicePixelRatio = () => (typeof window !== 'undefined' && window.devicePixelRatio) || 1,
   onFailureChange,
+  resolveId = (id) => id,
 }: UseUploadArgs) {
   const filesRef = useRef(new Map<string, File>()); // block id → File (for retry)
   const inflightRef = useRef(0);
@@ -194,13 +197,17 @@ export function useUpload({
         doc = r.doc;
         caret = r.selection.anchor; // next insert goes after the trailing paragraph
         pending.push({ id: r.attachmentId, file });
-        filesRef.current.set(r.attachmentId, file);
       }
       if (pending.length === 0) return;
       applyInsert(doc);
-      pending.forEach(({ id, file }) => runUpload(id, file));
+      // Track (and settle) each block under the id the insert gave it.
+      pending.forEach(({ id, file }) => {
+        const real = resolveId(id);
+        filesRef.current.set(real, file);
+        runUpload(real, file);
+      });
     },
-    [getValue, getCaret, applyInsert, runUpload],
+    [getValue, getCaret, applyInsert, runUpload, resolveId],
   );
 
   const retry = useCallback(
