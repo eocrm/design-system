@@ -42,13 +42,6 @@ test('preserves the design-system package and TypeScript export surfaces', async
       import: './dist/i18n/ru.js',
       default: './dist/i18n/ru.js',
     },
-    // DS-92: collaborative editing over the optional `yjs` peer, kept off the main entry.
-    './collab': {
-      '@eocrm/source': './src/collab/index.ts',
-      types: './dist/collab/index.d.ts',
-      import: './dist/collab/index.js',
-      default: './dist/collab/index.js',
-    },
     './styles/tokens.css': './dist/styles/tokens.css',
     './styles.css': './dist/styles.css',
     './package.json': './package.json',

@@ -93,7 +93,6 @@ export type ComponentName =
   | 'Rail'
   | 'RichText'
   | 'RichTextEditor'
-  | 'CollaborativeRichTextEditor'
   | 'Screen'
   | 'Select'
   | 'SettingRow'

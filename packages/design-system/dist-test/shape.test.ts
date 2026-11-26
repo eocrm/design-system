@@ -197,21 +197,11 @@ test('global stylesheets exist and are non-empty', () => {
   expect(bundle).toContain(read(buttonCss!));
 });
 
-test('the collab chunk imports its own css', () => {
-  const js = walk(join(dist, 'collab')).filter((f) => f.endsWith('.js'));
-  expect(js.some((f) => /import\s*["']\.\/[^"']+\.css["']/.test(read(f)))).toBe(true);
-});
-
 test('styles.css holds every component css once, in bundler import order', () => {
   const bundle = read(join(dist, 'styles.css'));
-  // dist/collab/ (the `/collab` subpath) is outside the main-entry bundle by design: its JS
-  // chunk imports its own CSS.
   const componentCss = walk(dist).filter(
     (f) =>
-      f.endsWith('.css') &&
-      !f.startsWith(join(dist, 'styles')) &&
-      !f.startsWith(join(dist, 'collab') + sep) &&
-      f !== join(dist, 'styles.css'),
+      f.endsWith('.css') && !f.startsWith(join(dist, 'styles')) && f !== join(dist, 'styles.css'),
   );
   expect(componentCss.map((f) => relative(dist, f))).toContain('components/Button/Button.css');
   for (const file of componentCss) {
@@ -256,16 +246,11 @@ it('ships every package.json exports target', () => {
   for (const target of targets) expect(existsSync(join(root, target)), target).toBe(true);
 });
 
-// DS-92: `yjs` is an optional peer used only by the `/collab` subpath.
-it('only dist/collab/ imports yjs, and @eocrm/design-system/collab resolves to it', () => {
-  const collab = join(dist, 'collab') + sep;
-  const importsYjs = (f: string) =>
-    specifiers(read(f)).some((s) => s === 'yjs' || s.startsWith('yjs/'));
-  const js = walk(dist).filter((f) => f.endsWith('.js'));
-  expect(js.filter((f) => f.startsWith(collab) && importsYjs(f)).length).toBeGreaterThan(0);
-  expect(
-    js.filter((f) => !f.startsWith(collab) && importsYjs(f)).map((f) => relative(dist, f)),
-  ).toEqual([]);
-  const entry = createRequire(import.meta.url).resolve('@eocrm/design-system/collab');
-  expect(realpathSync(entry)).toBe(realpathSync(join(dist, 'collab/index.js')));
+it('no file under dist mentions yjs, and exports has no ./collab', () => {
+  const offenders = walk(dist)
+    .filter((f) => /\.(js|ts|map|css)$/.test(f) && /yjs/i.test(read(f)))
+    .map((f) => relative(dist, f));
+  expect(offenders).toEqual([]);
+  const pkg = JSON.parse(read(join(root, 'package.json')));
+  expect(Object.keys(pkg.exports)).not.toContain('./collab');
 });

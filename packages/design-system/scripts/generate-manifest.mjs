@@ -16,7 +16,6 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const COMPONENTS_DIR = join(__dirname, '..', 'src', 'components');
-const COLLAB_DIR = join(__dirname, '..', 'src', 'collab');
 const OUTPUT_PATH = join(__dirname, '..', 'src', 'components.manifest.json');
 
 const CLUSTERS = {
@@ -77,7 +76,6 @@ const CLUSTERS = {
   PillMenu: 'Forms',
   Switch: 'Forms',
   RichTextEditor: 'Forms',
-  CollaborativeRichTextEditor: 'Forms', // ships from src/collab (`/collab` subpath)
   Textarea: 'Forms',
   TimeField: 'Forms',
 
@@ -172,8 +170,6 @@ const CLUSTERS = {
 // bug. Once nested files are read, their imports sit one level deeper.
 const FROM_PARENT_PATH = /from\s+['"](?:\.\.\/)+([A-Z][a-zA-Z0-9]+)(?:\/[^'"]*)?['"]/g;
 
-const COLLAB_IMPORT = /from\s+['"]\.\.\/components\/([A-Z][a-zA-Z0-9]+)(?:\/[^'"]*)?['"]/g;
-
 function listComponentDirs() {
   return readdirSync(COMPONENTS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -231,21 +227,6 @@ function buildManifest() {
     };
   }
 
-  // `src/collab` is one component shipped from the `/collab` subpath (it is not
-  // a directory under components/, so the walk above never sees it).
-  const collabImports = [
-    ...new Set(
-      [...collectSourceText(COLLAB_DIR).matchAll(COLLAB_IMPORT)]
-        .map((m) => m[1])
-        .filter((n) => known.has(n)),
-    ),
-  ].sort();
-  manifest.CollaborativeRichTextEditor = {
-    tier: 'composition',
-    cluster: CLUSTERS.CollaborativeRichTextEditor ?? null,
-    composes: collabImports,
-    composedBy: [],
-  };
   for (const [name, entry] of Object.entries(manifest)) {
     for (const dep of entry.composes) {
       const target = manifest[dep];

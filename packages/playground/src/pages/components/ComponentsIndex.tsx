@@ -621,12 +621,6 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['RichTextEditor'],
   },
   {
-    to: '/components/collaborative-rich-text-editor',
-    name: 'CollaborativeRichTextEditor',
-    description: 'RichTextEditor co-edited over a Yjs doc, with live carets (from /collab).',
-    preview: SCHEMATICS['CollaborativeRichTextEditor'],
-  },
-  {
     to: '/components/brand-icon',
     name: 'BrandIcon',
     description: 'Full-color brand marks (Google, Yandex) for SSO buttons.',

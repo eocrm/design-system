@@ -60,8 +60,7 @@ function fail(message) {
 
 const configFile = ts.readConfigFile(join(PKG, 'tsconfig.json'), ts.sys.readFile);
 const { options } = ts.parseJsonConfigFileContent(configFile.config, ts.sys, PKG);
-// The main entry plus the `/collab` subpath entry (its components are documented too).
-const ENTRIES = ['src/index.ts', 'src/collab/index.ts'].map((e) => join(PKG, e));
+const ENTRIES = [join(PKG, 'src/index.ts')];
 const program = ts.createProgram(ENTRIES, options);
 const checker = program.getTypeChecker();
 

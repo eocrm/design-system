@@ -1,5 +1,4 @@
-// Shared-editing API (DS-96): the sync hooks a collaboration layer (Yjs or not) drives the
-// editor through. Ported from the former `/collab` tests, without yjs.
+// Shared-editing API (DS-96): the sync hooks a collaboration layer drives the editor through.
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useState } from 'react';
