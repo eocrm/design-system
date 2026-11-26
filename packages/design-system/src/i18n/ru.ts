@@ -576,9 +576,9 @@ export const ru: Messages = {
     moveBoundaryOut: 'Дальше наружу переместить нельзя',
     moveRefused: 'Сюда переместить нельзя',
     movedInto: ({ name, parent, position, total }) =>
-      `Перемещено: «${name as string}» → «${parent as string}», позиция ${position as number} из ${total as number}`,
+      `Перемещено в «${parent as string}»: «${name as string}», позиция ${position as number} из ${total as number}`,
     movedIntoNoPosition: ({ name, parent }) =>
-      `Перемещено: «${name as string}» → «${parent as string}»`,
+      `Перемещено в «${parent as string}»: «${name as string}»`,
     movedToRoot: ({ name, position, total }) =>
       `Перемещено на верхний уровень: «${name as string}», позиция ${position as number} из ${total as number}`,
     movedToRootNoPosition: ({ name }) => `Перемещено на верхний уровень: «${name as string}»`,

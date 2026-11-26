@@ -226,7 +226,7 @@ export function useTreeDrag({
       const id = String(active.id);
       const { h, result } = hit(id, activatorEvent, delta);
       setInsideKey(h?.zone === 'inside' ? h.key : null);
-      const next = typeof result === 'object' ? result : null;
+      const next = result === 'noop' ? null : result;
       const nowRefused = !!h && result === null;
       const wasRefused = refused.current;
       refused.current = nowRefused;

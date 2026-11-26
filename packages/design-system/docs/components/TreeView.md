@@ -129,6 +129,7 @@ function applyMove(t: Tree, { id, parentId, index }: TreeViewMove): Tree {
   const pages = { ...t.pages, [id]: { ...t.pages[id], parentId } };
   // TreeView calls onExpandedChange(parent, true) next: a collapsed or leaf parent must now be expandable.
   if (parentId !== null) pages[parentId] = { ...pages[parentId], hasChildren: true };
+  // Only when you hold the old parent's FULL child list (not a paginated slice), or let the refetch decide.
   if (from !== 'root' && kids[from]?.length === 0)
     pages[from] = { ...pages[from], hasChildren: false };
   return { pages, kids };
@@ -150,6 +151,7 @@ function applyMove(t: Tree, { id, parentId, index }: TreeViewMove): Tree {
         parent_id: move.parentId,
         ...(move.index === null ? {} : { position: move.index }), // null = append: omit position
       })
+      // refetchChildren(null) = the root list
       .then(() => (!loaded || move.index === null) && refetchChildren(move.parentId))
       .catch(() => setTree(previous)); // rollback / undo is yours
   }}
