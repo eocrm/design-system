@@ -70,7 +70,7 @@ export default defineConfig({
     },
   },
   build: {
-    lib: { entry: [resolve(src, 'index.ts')], formats: ['es'] },
+    lib: { entry: resolve(src, 'index.ts'), formats: ['es'] },
     cssCodeSplit: true,
     minify: false,
     rollupOptions: {

@@ -226,7 +226,6 @@ function buildManifest() {
       composedBy: [],
     };
   }
-
   for (const [name, entry] of Object.entries(manifest)) {
     for (const dep of entry.composes) {
       const target = manifest[dep];

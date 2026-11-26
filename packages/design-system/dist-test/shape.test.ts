@@ -1,6 +1,5 @@
-import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Contract of the compiled package (`npm run build`): checks what consumers
