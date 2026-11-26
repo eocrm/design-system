@@ -44,6 +44,14 @@ describe('orderBetween', () => {
     expect([...keys].sort()).toEqual(keys);
     expect(Math.max(...keys.map((k) => k.length))).toBeLessThan(40);
   });
+
+  it.each([
+    ['1', '10'],
+    [null, '0'],
+    ['A', 'A0'],
+  ])('throws on a non-canonical key (trailing 0) rather than leaving the gap: %s, %s', (a, b) => {
+    expect(() => orderBetween(a, b)).toThrow(RangeError);
+  });
 });
 
 describe('compareOrder', () => {

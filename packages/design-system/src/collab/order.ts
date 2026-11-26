@@ -24,12 +24,18 @@ function between(a: string, b: string | null): string {
 }
 
 /**
- * A key strictly between `a` and `b` (`null` = open end). Throws unless `a < b`.
+ * A key strictly between `a` and `b` (`null` = open end). Inputs must be keys this module
+ * produced; they arrive from other clients' docs, so a non-canonical key (e.g. a trailing
+ * '0') or `a >= b` throws a RangeError instead of returning an out-of-range key — callers
+ * catch it and repair the ordering.
  * @internal
  */
 export function orderBetween(a: string | null, b: string | null): string {
   if (a !== null && b !== null && a >= b) throw new RangeError(`orderBetween: ${a} >= ${b}`);
-  return between(a ?? '', b);
+  const key = between(a ?? '', b);
+  if ((a !== null && key <= a) || (b !== null && key >= b))
+    throw new RangeError(`orderBetween: no key between ${a} and ${b}`);
+  return key;
 }
 
 /**

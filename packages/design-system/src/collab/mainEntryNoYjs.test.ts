@@ -28,6 +28,7 @@ it('the main entry never reaches yjs or src/collab/', () => {
       else if (spec.startsWith('.')) {
         const r = resolveRel(file, spec);
         if (r) stack.push(r);
+        else bad.push(`${file} -> ${spec} (unresolved)`);
       }
     }
   }
