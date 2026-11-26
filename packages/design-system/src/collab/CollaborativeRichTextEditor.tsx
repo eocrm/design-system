@@ -121,8 +121,10 @@ export interface CollaborativeRichTextEditorProps extends Omit<
 > {
   /**
    * The shared document. The app owns it and its transport (`doc.on('update')` → send;
-   * `Y.applyUpdate` on receive). Apply the stored Y update log first; seed with `fromRichDoc` only
-   * a doc still empty after that. Swapping it remounts nothing but starts a fresh undo history.
+   * `Y.applyUpdate` on receive). Apply the stored Y update log if one exists and do not seed; seed
+   * with `fromRichDoc` only when there is no stored log, and persist that seed as the log's first
+   * entry. On a swap, drop the old `clientID`'s `presence` entry. Swapping it remounts nothing but
+   * starts a fresh undo history.
    */
   doc: Y.Doc;
   /** The local user (name and colour) as other editors show them. */

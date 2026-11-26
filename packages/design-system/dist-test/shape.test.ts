@@ -197,6 +197,11 @@ test('global stylesheets exist and are non-empty', () => {
   expect(bundle).toContain(read(buttonCss!));
 });
 
+test('the collab chunk imports its own css', () => {
+  const js = walk(join(dist, 'collab')).filter((f) => f.endsWith('.js'));
+  expect(js.some((f) => /import\s*["']\.\/[^"']+\.css["']/.test(read(f)))).toBe(true);
+});
+
 test('styles.css holds every component css once, in bundler import order', () => {
   const bundle = read(join(dist, 'styles.css'));
   // dist/collab/ (the `/collab` subpath) is outside the main-entry bundle by design: its JS

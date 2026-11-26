@@ -16,18 +16,20 @@ const REMOTE = Symbol('remote');
 
 /** The page as it was stored before co-editing (a plain RichDoc): migrated once, by the first load. */
 const LEGACY_PAGE = fromMarkdown(
-  '# Meeting notes\n\nEdit on both sides: carets, selections and edits cross a 300 ms in-memory relay.\n\n- Each side loads the stored Y update log first; only an empty doc is seeded from the legacy page\n- Toggle Offline on a side, edit, then reconnect to merge',
+  '# Meeting notes\n\nEdit on both sides: carets, selections and edits cross a 300 ms in-memory relay.\n\n- Each side loads the stored Y update log first; the legacy page is seeded only when there is no stored log\n- Toggle Offline on a side, edit, then reconnect to merge',
 );
 
 /** The server's stored Y update log: the source of truth every load starts from. */
 const serverLog: Uint8Array[] = [];
 
-/** Load a page: stored Y state first, then seed the legacy page only if the doc is still empty. */
+/** Load a page: apply the stored log if there is one (never seed); else migrate the legacy page once. */
 const loadDoc = () => {
   const doc = new Y.Doc();
   if (serverLog.length) Y.applyUpdate(doc, Y.mergeUpdates(serverLog), REMOTE);
-  fromRichDoc(LEGACY_PAGE, doc); // no-op once the log has blocks
-  if (!serverLog.length) serverLog.push(Y.encodeStateAsUpdate(doc)); // the one-time migration
+  else {
+    fromRichDoc(LEGACY_PAGE, doc); // no log yet: seed from the legacy page, once
+    serverLog.push(Y.encodeStateAsUpdate(doc)); // persist the migration as the log's first entry
+  }
   return doc;
 };
 
@@ -122,7 +124,7 @@ function useRelay() {
   const [a, b] = sides.current;
   const [statusA, setStatusA] = useState<CollabStatus>('synced');
   const [statusB, setStatusB] = useState<CollabStatus>('synced');
-  // Starts empty: each editor announces itself on mount (selection: null), before any focus.
+  // Starts empty; the demo relay re-sends last-known presence on (re)connect (setOffline).
   const [othersA, setOthersA] = useState<CollabPresence[]>([]);
   const [othersB, setOthersB] = useState<CollabPresence[]>([]);
   a.setStatus = setStatusA;
@@ -142,7 +144,7 @@ function useRelay() {
   return { a, b, statusA, statusB, othersA, othersB };
 }
 
-const CODE = `import { useEffect, useState } from 'react';
+const CODE = `import { useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
 import {
   CollaborativeRichTextEditor,
@@ -153,23 +155,42 @@ import {
 
 const REMOTE = Symbol('remote');
 
-export function Page({ storedState, legacyPage, send, onIncoming, sendPresence, onIncomingPresence }) {
-  const [doc] = useState(() => {
-    const d = new Y.Doc();
-    // 1. The stored Y update log / merged state FIRST.
-    if (storedState) Y.applyUpdate(d, storedState, REMOTE);
-    // 2. Only a still-empty doc (a never-migrated page) is seeded; a no-op once it has blocks.
-    //    Never seed from a toRichDoc snapshot: seed-then-merge duplicates the document.
+// Load order: create; stored log -> apply it, NEVER seed; else legacy page -> seed + persist
+// the state as the log's first entry (relay it too); else a brand-new page starts empty.
+// Seed only when there is NO stored log (a log whose blocks were all deleted is still a log).
+// Never seed from a toRichDoc snapshot; never write snapshots back into the legacy field.
+function loadDoc(storedLog: Uint8Array | null, legacyPage, persist: (u: Uint8Array) => void) {
+  const d = new Y.Doc();
+  if (storedLog) Y.applyUpdate(d, storedLog, REMOTE);
+  else if (legacyPage) {
     fromRichDoc(legacyPage, d);
-    return d;
-  });
-  // Starts empty: every editor announces itself through onPresenceChange on mount.
+    persist(Y.encodeStateAsUpdate(d)); // the migration; the legacy field is never read again
+  }
+  return d;
+}
+
+export function Page({
+  storedLog,
+  legacyPage,
+  persist,
+  send,
+  onIncoming,
+  sendPresence,
+  onIncomingPresence,
+  onPeerJoined,
+}) {
+  const [doc] = useState(() => loadDoc(storedLog, legacyPage, persist));
+  // Starts empty: a peer's mount announcement may predate this subscription, so peers re-send.
   const [others, setOthers] = useState<CollabPresence[]>([]);
   const [status] = useState<CollabStatus>('synced');
+  // On a doc swap, also drop the old doc.clientID's entry from \`others\`.
+  const lastPresence = useRef<CollabPresence | null>(null);
 
   useEffect(() => {
     const onUpdate = (u: Uint8Array, origin: unknown) => origin !== REMOTE && send(u);
     doc.on('update', onUpdate);
+    // A client that joins or reconnects re-receives each peer's last presence.
+    const offJoin = onPeerJoined(() => lastPresence.current && sendPresence(lastPresence.current));
     const offIn = onIncoming((u: Uint8Array) => Y.applyUpdate(doc, u, REMOTE));
     const offPresence = onIncomingPresence((p: CollabPresence) =>
       setOthers((all) => [...all.filter((x) => x.clientId !== p.clientId), p]),
@@ -178,6 +199,7 @@ export function Page({ storedState, legacyPage, send, onIncoming, sendPresence, 
       doc.off('update', onUpdate);
       offIn();
       offPresence();
+      offJoin();
     };
   }, [doc]);
 
@@ -186,7 +208,10 @@ export function Page({ storedState, legacyPage, send, onIncoming, sendPresence, 
       doc={doc}
       user={{ name: 'Ana', color: '#d9480f' }}
       presence={others}
-      onPresenceChange={sendPresence}
+      onPresenceChange={(p) => {
+        lastPresence.current = p;
+        sendPresence(p);
+      }}
       status={status}
       toolbar
     />

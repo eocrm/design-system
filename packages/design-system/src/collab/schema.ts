@@ -230,9 +230,12 @@ const EMPTY_ID = `s${canonicalSeed({ blocks: [EMPTY_PARAGRAPH] }).h.toString(36)
  * (the RichDoc's own ids are replaced), so clients seeding the SAME RichDoc merge idempotently with
  * no duplicates, and clients seeding DIFFERENT RichDocs become distinct writers whose blocks both
  * survive (visible duplicate content, never corruption). Persist the Y update log as the source of
- * truth: apply it to the doc FIRST and seed only a doc still empty after that, from the legacy
- * page, never from a `toRichDoc` snapshot (seed-then-merge duplicates the document). Re-seeding the same content into a doc whose seeded
- * blocks were all deleted does nothing: the doc already knows those items, so they stay deleted.
+ * truth: if a stored log exists, apply it and do NOT seed. Seed only when there is no stored log
+ * (not merely an empty doc), from the legacy page, and immediately persist
+ * `Y.encodeStateAsUpdate(doc)` as the log's first entry (and relay it); an unpersisted seed leaves
+ * later log entries depending on items missing from the log. Never seed from a `toRichDoc`
+ * snapshot (seed-then-merge duplicates the document). Re-seeding the same content into a doc whose
+ * seeded blocks were all deleted does nothing: the doc already knows those items.
  */
 export function fromRichDoc(rich: RichDoc, doc: Y.Doc = new Y.Doc()): Y.Doc {
   if (doc.getMap(BLOCKS).size > 0 || rich.blocks.length === 0) return doc;
