@@ -270,11 +270,12 @@ function applyMove(tree: Record<string, string[]>, { id, parentId, index }: Tree
   return next;
 }
 
-function pageNode(id: string): TreeViewNode {
+function pageNode(tree: Record<string, string[]>, id: string): TreeViewNode {
   return {
     id,
     label: PAGE_LABELS[id],
-    hasChildren: id in PAGE_TREE,
+    // from state: a page that just received a child gains a chevron; an emptied one loses it
+    hasChildren: (tree[id]?.length ?? 0) > 0,
     content: <Text as="span">{PAGE_LABELS[id]}</Text>,
   };
 }
@@ -591,8 +592,8 @@ function pathTo(id: string | null) {
         <Stack gap="md">
           <TreeView
             aria-label="Pages"
-            roots={(pages.root ?? []).map(pageNode)}
-            childrenOf={(id) => (pages[id] ?? []).map(pageNode)}
+            roots={(pages.root ?? []).map((id) => pageNode(pages, id))}
+            childrenOf={(id) => (pages[id] ?? []).map((c) => pageNode(pages, c))}
             expandedIds={pagesExpanded}
             onExpandedChange={(id, open) => setPagesExpanded((s) => toggle(s, id, open))}
             canDrop={(id, targetParentId) => {

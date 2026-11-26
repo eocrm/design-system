@@ -8162,7 +8162,7 @@
           "type": "((move: TreeViewMove) => void)",
           "required": false,
           "default": "",
-          "description": "Opt in to moving nodes (list view only). Fires after a pointer / touch drop (drag a row: top quarter of a row\ndrops before it, bottom quarter after it, the middle inside it; touch drags after a long press) or a keyboard\nmove (Ctrl/Cmd+Shift+↑/↓ reorder, → into the previous sibling, ← out to the grandparent). TreeView stays\ncontrolled: update `roots` / `childrenOf`.\nA no-op never fires. When the node is moved into a collapsed node, `onExpandedChange(id, true)` follows."
+          "description": "Opt in to moving nodes (list view only). Fires after a pointer / touch drop (drag a row: top quarter of a row\ndrops before it, bottom quarter after it, the middle inside it; touch drags after a long press) or a keyboard\nmove (Ctrl/Cmd+Shift+↑/↓ reorder, → into the previous sibling, ← out to the grandparent). TreeView stays\ncontrolled: update `roots` / `childrenOf`.\nA no-op never fires. `index` counts the new parent's loaded children after the node left its old place;\n`null` = append (omit the position in your API call). After a move into a collapsed node or a leaf,\n`onExpandedChange(parent, true)` follows: set `hasChildren: true` on the new parent."
         },
         {
           "name": "canDrop",

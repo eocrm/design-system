@@ -110,6 +110,9 @@
   max-inline-size: 100%;
   padding-block: var(--tree-view-row-padding-block);
   padding-inline: var(--tree-view-row-padding-inline);
+
+  // Transparent: forced-colors mode drops the shadow and paints this border, so the copy keeps an edge.
+  border: var(--tree-view-drop-width) solid transparent;
   border-radius: var(--tree-view-row-radius);
   background: var(--tree-view-drag-overlay-bg);
   box-shadow: var(--tree-view-drag-overlay-shadow);

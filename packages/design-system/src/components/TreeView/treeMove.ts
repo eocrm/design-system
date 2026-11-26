@@ -7,8 +7,9 @@ export interface TreeViewMove {
   /** New parent, or null for the root level. */
   parentId: string | null;
   /**
-   * Final 0-based position among the new parent's loaded children AFTER the move (the node removed from its
-   * old place first). `null` = append at the end; the true end position is not known.
+   * Final 0-based position among the new parent's LOADED children, counted after the node is removed from its
+   * old place. `null` = append at the end (the true end is unknown: collapsed, loading or more not loaded), so
+   * omit the position in the API call.
    */
   index: number | null;
 }
@@ -89,27 +90,34 @@ export function zoneAt(offsetY: number, height: number): DropZone {
   return offsetY >= height * 0.75 ? 'after' : 'inside';
 }
 
-/** Pointer target: the row under the pointer, the zone by y within it (top 25% before, bottom 25% after, else inside). */
+/**
+ * Pointer target: the row under the pointer, the zone by y within it (top 25% before, bottom 25% after, else
+ * inside). `'noop'` = dropping here changes nothing (silent, no indicator); `null` = refused.
+ */
 export function dropTarget(
   flat: TreeItem[],
   activeId: string,
   overKey: string | null,
   zone: DropZone,
   canDrop?: CanDrop,
-): DropTarget | null {
+): DropTarget | 'noop' | null {
   const active = findNode(flat, activeId);
   if (!active) return null;
   let target: DropTarget;
   if (overKey === null) {
-    // Below the last row: after the last root (indicated after that root's whole subtree).
+    // Below the last row: after the last root (indicated after that root's whole subtree, on a node row even
+    // when the level ends with an overflow / loading row).
     const roots = levelRows(flat, null);
+    const last = roots.filter((r) => r.kind === 'node').at(-1);
+    if (!last) return null;
     target = {
       move: { id: activeId, parentId: null, index: appendAt(roots, activeId) },
-      indicator: { key: roots[roots.length - 1].key, zone: 'after', level: 1 },
+      indicator: { key: last.key, zone: 'after', level: 1 },
     };
   } else {
     const over = flat.find((i) => i.key === overKey);
     if (over?.kind !== 'node') return null;
+    if (over.node.id === activeId) return 'noop';
     for (let p: NodeItem | undefined = over; p; p = findNode(flat, p.parentId))
       if (p.node.id === activeId) return null;
     const into = (index: number | null): DropTarget => ({
@@ -117,8 +125,9 @@ export function dropTarget(
       indicator: { key: over.key, zone, level: over.level + 1 },
     });
     if (zone === 'inside') target = into(appendInside(over, activeId));
-    // "After" an expanded node with visible children reads as "before its first child".
-    else if (zone === 'after' && over.expanded && over.children.length > 0) target = into(0);
+    // "After" an expanded node with visible node children reads as "before its first child".
+    else if (zone === 'after' && over.expanded && over.children.some((c) => c.kind === 'node'))
+      target = into(0);
     else {
       let index = zone === 'before' ? over.posInSet - 1 : over.posInSet;
       if (active.parentId === over.parentId && active.posInSet - 1 < index) index -= 1;
@@ -129,7 +138,7 @@ export function dropTarget(
     }
   }
   const { parentId, index } = target.move;
-  if (parentId === active.parentId && index === active.posInSet - 1) return null;
+  if (parentId === active.parentId && index === active.posInSet - 1) return 'noop';
   return canDrop && !canDrop(activeId, parentId) ? null : target;
 }
 
@@ -154,6 +163,9 @@ export function hitTest(
   if (x < bounds.left || x > bounds.right || y < bounds.top) return null;
   const last = rows[rows.length - 1];
   if (last && y >= last.bottom) {
+    // The last row is scrolled out below the visible box: the space under the box is not "after" it. (+1px:
+    // sub-pixel rounding between the row and its container.)
+    if (last.bottom > bounds.bottom + 1) return null;
     const end = Math.max(bounds.bottom, last.bottom * 2 - last.top);
     return y <= end ? { key: null, zone: 'after' } : null;
   }

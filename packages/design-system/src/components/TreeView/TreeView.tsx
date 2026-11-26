@@ -81,7 +81,9 @@ export interface TreeViewProps extends Omit<
    * drops before it, bottom quarter after it, the middle inside it; touch drags after a long press) or a keyboard
    * move (Ctrl/Cmd+Shift+↑/↓ reorder, → into the previous sibling, ← out to the grandparent). TreeView stays
    * controlled: update `roots` / `childrenOf`.
-   * A no-op never fires. When the node is moved into a collapsed node, `onExpandedChange(id, true)` follows.
+   * A no-op never fires. `index` counts the new parent's loaded children after the node left its old place;
+   * `null` = append (omit the position in your API call). After a move into a collapsed node or a leaf,
+   * `onExpandedChange(parent, true)` follows: set `hasChildren: true` on the new parent.
    */
   onMove?: (move: TreeViewMove) => void;
   /** App veto for a candidate new parent (`null` = root level), checked for every move. Default: allow. */
@@ -348,7 +350,11 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   useLayoutEffect(() => {
     const key = pendingFocus.current;
     const el = key ? itemEls.current.get(key) : undefined;
-    if (el && document.activeElement !== el && inTree()) focusKey(key!);
+    if (el && document.activeElement !== el && inTree()) {
+      focusKey(key!);
+      // Re-focused in its new place: done, so a later data refresh can't pull focus back to it.
+      pendingFocus.current = null;
+    }
   }, [flat, focusKey, inTree]);
 
   const announce = (text: string) => {
@@ -450,11 +456,13 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       item.kind === 'node' &&
       (event.ctrlKey || event.metaKey) &&
       event.shiftKey &&
+      !event.altKey &&
       MOVE_KEYS[event.key]
     ) {
       event.preventDefault();
       event.stopPropagation();
-      moveNode(item, MOVE_KEYS[event.key]);
+      // A pointer drag owns the move until it ends.
+      if (!drag.dragging) moveNode(item, MOVE_KEYS[event.key]);
       return;
     }
     const action = keyAction(flat, item.key, event.key, view);

@@ -94,6 +94,8 @@ export function useTreeDrag({
   // Node row hovered in its middle zone, valid target or not: drives hover-to-expand.
   const [insideKey, setInsideKey] = useState<string | null>(null);
   const shown = useRef<DropTarget | null>(null);
+  // Over a refused target (not a no-op, not outside the tree): its refusal is announced once on entry.
+  const refused = useRef(false);
   // Last pointer position in viewport px. dnd-kit's `delta` folds in autoscroll, so track the pointer itself.
   const pointer = useRef<Coordinates | null>(null);
   const scroller = useRef<Element | null>(null);
@@ -140,7 +142,7 @@ export function useTreeDrag({
     const root = rootEl.current;
     const start = getEventCoordinates(activatorEvent);
     const p = pointer.current ?? (start && add(start, delta));
-    if (!root || !p) return { h: null, target: null };
+    if (!root || !p) return { h: null, result: null };
     const box = root.getBoundingClientRect();
     // Rows scrolled out of the tree's scroll container are not under the pointer.
     const s = scroller.current;
@@ -158,7 +160,7 @@ export function useTreeDrag({
       return r ? [{ key: i.key, top: r.top, bottom: r.bottom }] : [];
     });
     const h = hitTest(rows, bounds, p.x, p.y);
-    return { h, target: h && dropTarget(flat, id, h.key, h.zone, canDrop) };
+    return { h, result: h && dropTarget(flat, id, h.key, h.zone, canDrop) };
   };
 
   const overText = (name: string, d: DropTarget) => {
@@ -186,6 +188,7 @@ export function useTreeDrag({
     setTarget(null);
     setInsideKey(null);
     shown.current = null;
+    refused.current = false;
     pointer.current = null;
   };
 
@@ -213,6 +216,7 @@ export function useTreeDrag({
       setActiveId(id);
       setTarget(null);
       shown.current = null;
+      refused.current = false;
       pointer.current = null;
       const row = item && itemEls.current.get(item.key)?.firstElementChild;
       scroller.current = row ? (getScrollableAncestors(row, 1)[0] ?? null) : null;
@@ -220,23 +224,34 @@ export function useTreeDrag({
     },
     onDragMove: ({ active, activatorEvent, delta }: DragMoveEvent) => {
       const id = String(active.id);
-      const { h, target: next } = hit(id, activatorEvent, delta);
+      const { h, result } = hit(id, activatorEvent, delta);
       setInsideKey(h?.zone === 'inside' ? h.key : null);
-      const prev = shown.current;
+      const next = typeof result === 'object' ? result : null;
+      const nowRefused = !!h && result === null;
+      const wasRefused = refused.current;
+      refused.current = nowRefused;
       const a = next?.indicator;
-      const b = prev?.indicator;
-      if (a?.key === b?.key && a?.zone === b?.zone && a?.level === b?.level) return;
+      const b = shown.current?.indicator;
+      if (
+        a?.key === b?.key &&
+        a?.zone === b?.zone &&
+        a?.level === b?.level &&
+        nowRefused === wasRefused
+      )
+        return;
       shown.current = next;
       setTarget(next);
+      // A no-op spot or leaving the tree is silent; entering a refused target announces once.
       const text = next
         ? overText(find(id)?.node.label || t('drag.unnamed'), next)
-        : prev && h && t('treeView.moveRefused'); // valid → refused while still over the tree, once
+        : nowRefused && !wasRefused && t('treeView.moveRefused');
       if (text) announce(text);
     },
     onDragEnd: ({ active, activatorEvent, delta }: DragEndEvent) => {
       const id = String(active.id);
       // Re-hit on release: a hover-expand may have moved rows since the last pointer move.
-      const final = hit(id, activatorEvent, delta).target;
+      const r = hit(id, activatorEvent, delta).result;
+      const final = typeof r === 'object' ? r : null;
       const item = find(id);
       finish();
       if (final && item) onDrop(item, final.move);
@@ -252,6 +267,7 @@ export function useTreeDrag({
     dndProps,
     activeId,
     target,
+    dragging: activeId !== null,
     activeLabel: activeId ? find(activeId)?.node.label : undefined,
   };
 }

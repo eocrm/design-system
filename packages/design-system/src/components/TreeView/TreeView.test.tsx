@@ -838,6 +838,19 @@ describe('TreeView keyboard move', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
+  it('Alt with the move shortcut does not move', () => {
+    const spy = vi.fn();
+    render(<Move onMoveSpy={spy} />);
+    focus('Setup');
+    fireEvent.keyDown(document.activeElement!, {
+      key: 'ArrowUp',
+      ctrlKey: true,
+      shiftKey: true,
+      altKey: true,
+    });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
   it('plain arrows still navigate', () => {
     render(<Move />);
     focus('Intro');
@@ -1050,21 +1063,42 @@ describe('TreeView keyboard move', () => {
     });
 
     it('announces a refusal once when the target turns refused', async () => {
-      render(<Move />);
+      render(<Move canDrop={(_id, p) => p !== 'Setup'} />);
       pick('FAQ', 21); // before A: valid
       await said('FAQ: before A');
-      fireEvent.pointerMove(document, { clientX: 50, clientY: 90 }); // over itself
+      fireEvent.pointerMove(document, { clientX: 50, clientY: 70 }); // inside Setup: vetoed
       await said("Can't move here");
       const region = screen.getByRole('status');
       const seen: string[] = [];
       const mo = new MutationObserver(() => seen.push(region.textContent ?? ''));
       mo.observe(region, { childList: true, characterData: true, subtree: true });
-      fireEvent.pointerMove(document, { clientX: 50, clientY: 92 });
-      fireEvent.pointerMove(document, { clientX: 50, clientY: 88 });
+      fireEvent.pointerMove(document, { clientX: 50, clientY: 72 });
+      fireEvent.pointerMove(document, { clientX: 50, clientY: 68 });
       await new Promise((r) => setTimeout(r, 100));
       mo.disconnect();
       expect(seen).toEqual([]);
-      drop(88);
+      drop(68);
+    });
+
+    it('a no-op spot (over the dragged row) is silent and shows no indicator', async () => {
+      render(<Move />);
+      pick('FAQ', 21); // before A: valid
+      await said('FAQ: before A');
+      fireEvent.pointerMove(document, { clientX: 50, clientY: 90 }); // over itself
+      expect(dropMark()).toBeNull();
+      await new Promise((r) => setTimeout(r, 100));
+      expect(screen.getByRole('status')).toHaveTextContent('FAQ: before A');
+      drop(90);
+    });
+
+    it('ignores the move shortcuts while a pointer drag is active', () => {
+      const spy = vi.fn();
+      render(<Move onMoveSpy={spy} />);
+      focus('FAQ');
+      pick('FAQ', 21);
+      press('ArrowUp');
+      expect(spy).not.toHaveBeenCalled();
+      fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
     });
 
     it('marks only draggable rows unselectable for long press', () => {

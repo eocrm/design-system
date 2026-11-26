@@ -28,6 +28,8 @@ const flatOf = (extra: Partial<TreeModelInput> = {}, expanded = ['a', 'a2']) =>
     }),
   );
 const flat = flatOf();
+/** The move of a resolved target (`'noop'` / null passed through). */
+const mv = (r: ReturnType<typeof dropTarget>) => (r && r !== 'noop' ? r.move : r);
 const moreOf = (parent: string | null) => (p: string | null) =>
   p === parent ? { label: 'more' } : null;
 
@@ -102,12 +104,12 @@ describe('dropTarget', () => {
       move: { id: 'a1', parentId: 'a', index: 1 },
       indicator: { key: 'node:a3', zone: 'before', level: 2 },
     });
-    expect(dropTarget(flat, 'a3', 'node:a1', 'before')?.move).toEqual({
+    expect(mv(dropTarget(flat, 'a3', 'node:a1', 'before'))).toEqual({
       id: 'a3',
       parentId: 'a',
       index: 0,
     });
-    expect(dropTarget(flat, 'a3', 'node:a1', 'after')?.move).toEqual({
+    expect(mv(dropTarget(flat, 'a3', 'node:a1', 'after'))).toEqual({
       id: 'a3',
       parentId: 'a',
       index: 1,
@@ -116,13 +118,13 @@ describe('dropTarget', () => {
       move: { id: 'c', parentId: 'a', index: 1 },
       indicator: { key: 'node:a1', zone: 'after', level: 2 },
     });
-    expect(dropTarget(flat, 'a1', 'node:c', 'after')?.move).toEqual({
+    expect(mv(dropTarget(flat, 'a1', 'node:c', 'after'))).toEqual({
       id: 'a1',
       parentId: null,
       index: 3,
     });
     // after a collapsed node is a plain sibling drop
-    expect(dropTarget(flat, 'a1', 'node:b', 'after')?.move).toEqual({
+    expect(mv(dropTarget(flat, 'a1', 'node:b', 'after'))).toEqual({
       id: 'a1',
       parentId: null,
       index: 2,
@@ -134,7 +136,7 @@ describe('dropTarget', () => {
       move: { id: 'c', parentId: 'a2', index: 0 },
       indicator: { key: 'node:a2', zone: 'after', level: 3 },
     });
-    expect(dropTarget(flat, 'c', 'node:a', 'after')?.move).toEqual({
+    expect(mv(dropTarget(flat, 'c', 'node:a', 'after'))).toEqual({
       id: 'c',
       parentId: 'a',
       index: 0,
@@ -146,18 +148,18 @@ describe('dropTarget', () => {
       move: { id: 'a1', parentId: 'c', index: 0 },
       indicator: { key: 'node:c', zone: 'inside', level: 2 },
     });
-    expect(dropTarget(flat, 'a1', 'node:b', 'inside')?.move).toEqual({
+    expect(mv(dropTarget(flat, 'a1', 'node:b', 'inside'))).toEqual({
       id: 'a1',
       parentId: 'b',
       index: null,
     });
-    expect(dropTarget(flat, 'c', 'node:a2', 'inside')?.move).toEqual({
+    expect(mv(dropTarget(flat, 'c', 'node:a2', 'inside'))).toEqual({
       id: 'c',
       parentId: 'a2',
       index: 1,
     });
     // already a child: counted without itself
-    expect(dropTarget(flat, 'a1', 'node:a', 'inside')?.move).toEqual({
+    expect(mv(dropTarget(flat, 'a1', 'node:a', 'inside'))).toEqual({
       id: 'a1',
       parentId: 'a',
       index: 2,
@@ -166,30 +168,45 @@ describe('dropTarget', () => {
 
   it('appending to a parent with an overflow row gives null', () => {
     const more = flatOf({ overflowOf: moreOf('a') });
-    expect(dropTarget(more, 'c', 'node:a', 'inside')?.move.index).toBeNull();
+    expect(mv(dropTarget(more, 'c', 'node:a', 'inside'))).toMatchObject({ index: null });
     // after the last loaded child is still an explicit position
-    expect(dropTarget(more, 'c', 'node:a3', 'after')?.move.index).toBe(3);
+    expect(mv(dropTarget(more, 'c', 'node:a3', 'after'))).toMatchObject({ index: 3 });
     const rootMore = flatOf({ overflowOf: moreOf(null) });
-    expect(dropTarget(rootMore, 'a1', null, 'after')?.move).toEqual({
-      id: 'a1',
-      parentId: null,
-      index: null,
+    expect(dropTarget(rootMore, 'a1', null, 'after')).toEqual({
+      move: { id: 'a1', parentId: null, index: null },
+      // anchored on the last root NODE, not the trailing overflow row
+      indicator: { key: 'node:c', zone: 'after', level: 1 },
     });
   });
 
-  it('never targets itself, its rendered descendants or pseudo-rows', () => {
-    expect(dropTarget(flat, 'a', 'node:a', 'inside')).toBeNull();
+  it('after an expanded node with only a status row is a plain sibling drop', () => {
+    const failed = flatOf({ childrenOf: (id) => (id === 'b' ? { error: true } : data[id]) }, ['b']);
+    expect(dropTarget(failed, 'a', 'node:b', 'after')).toEqual({
+      move: { id: 'a', parentId: null, index: 1 },
+      indicator: { key: 'node:b', zone: 'after', level: 1 },
+    });
+    const loading = flatOf({ childrenOf: (id) => (id === 'b' ? undefined : data[id]) }, ['b']);
+    expect(dropTarget(loading, 'a', 'node:b', 'after')).toMatchObject({
+      move: { parentId: null, index: 1 },
+    });
+  });
+
+  it('never targets its rendered descendants or pseudo-rows', () => {
     expect(dropTarget(flat, 'a', 'node:a2x', 'before')).toBeNull();
     const more = flatOf({ overflowOf: moreOf('a') });
     expect(dropTarget(more, 'c', 'overflow:a', 'before')).toBeNull();
     expect(dropTarget(flat, 'missing', 'node:c', 'before')).toBeNull();
   });
 
-  it('returns null for a no-op', () => {
-    expect(dropTarget(flat, 'a2', 'node:a3', 'before')).toBeNull();
-    expect(dropTarget(flat, 'a2', 'node:a1', 'after')).toBeNull();
-    expect(dropTarget(flat, 'a3', 'node:a', 'inside')).toBeNull();
-    expect(dropTarget(flat, 'c', null, 'after')).toBeNull();
+  it("returns 'noop' (not a refusal) for a no-op, including over itself", () => {
+    expect(dropTarget(flat, 'a2', 'node:a3', 'before')).toBe('noop');
+    expect(dropTarget(flat, 'a2', 'node:a1', 'after')).toBe('noop');
+    expect(dropTarget(flat, 'a3', 'node:a', 'inside')).toBe('noop');
+    expect(dropTarget(flat, 'c', null, 'after')).toBe('noop');
+    expect(dropTarget(flat, 'a', 'node:a', 'inside')).toBe('noop');
+    expect(dropTarget(flat, 'a', 'node:a', 'after')).toBe('noop');
+    // a no-op canDrop would refuse is still a no-op
+    expect(dropTarget(flat, 'a2', 'node:a3', 'before', () => false)).toBe('noop');
   });
 
   it('overKey null = after the last root, indicated on that root (not its last visible descendant)', () => {
@@ -235,6 +252,12 @@ describe('hitTest', () => {
     const tight = { ...tree, bottom: 40 };
     expect(hitTest(rows, tight, 10, 50)).toEqual({ key: null, zone: 'after' });
     expect(hitTest(rows, tight, 10, 61)).toBeNull();
+  });
+  it('no end zone when the last row is scrolled below the visible box', () => {
+    const clipped = { ...tree, bottom: 30 };
+    expect(hitTest(rows, clipped, 10, 45)).toBeNull();
+    expect(hitTest(rows, clipped, 10, 35)).toBeNull();
+    expect(hitTest(rows, clipped, 10, 22)).toEqual({ key: 'r1', zone: 'before' });
   });
   it('outside the tree is no target', () => {
     expect(hitTest(rows, tree, 150, 10)).toBeNull();
