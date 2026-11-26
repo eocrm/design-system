@@ -12,14 +12,7 @@ import {
 } from 'react';
 import { flushSync } from 'react-dom';
 import clsx from 'clsx';
-import type {
-  RichDoc,
-  Range,
-  Range as RichRange,
-  Mark,
-  MarkType,
-  Point,
-} from '../RichText/engine/model';
+import type { RichDoc, Range as RichRange, Mark, MarkType, Point } from '../RichText/engine/model';
 import { nextId } from '../RichText/engine/model';
 import { UploadOwnerContext } from '../RichText/RichTextAttachment';
 import { RichTextPresenceOverlay } from './RichTextPresence';
@@ -166,13 +159,16 @@ export type RichTextSyncStatus = 'synced' | 'connecting' | 'offline';
  */
 export type RichTextUploadOwner = 'mine' | 'theirs' | 'orphaned' | undefined;
 
-// Clamp `range` into `doc`: a point on a block the doc lost moves to the block now at that
-// block's index in `prev` (offset 0); offsets past a block's end move to its end.
-function clampRange(range: Range, doc: RichDoc, prev: RichDoc): Range {
+// Clamp `range` into `doc`: offsets past a block's end move to its end; a point on a block `doc`
+// lacks moves to the block now at that block's index in the first of `before` that has it (the
+// doc the DOM showed, then the editor's last emitted doc — where a commit's new block lives),
+// offset 0. A block none of them knows has no index to keep: the point goes to the doc start.
+function clampRange(range: RichRange, doc: RichDoc, before: readonly RichDoc[]): RichRange {
   const clamp = (p: Point): Point => {
     const b = doc.blocks.find((x) => x.id === p.blockId);
     if (b) return { blockId: b.id, offset: Math.min(p.offset, blockLength(b)) };
-    const i = prev.blocks.findIndex((x) => x.id === p.blockId);
+    let i = -1;
+    for (const d of before) if (i < 0) i = d.blocks.findIndex((x) => x.id === p.blockId);
     const at = doc.blocks[Math.min(Math.max(i, 0), doc.blocks.length - 1)];
     return { blockId: at.id, offset: 0 };
   };
@@ -181,10 +177,10 @@ function clampRange(range: Range, doc: RichDoc, prev: RichDoc): Range {
 
 // Give blocks new in `result.doc` (not in `known`) ids from `newId`, moving the caret with them.
 function renameNewBlocks(
-  result: { doc: RichDoc; selection: Range },
+  result: { doc: RichDoc; selection: RichRange },
   known: ReadonlySet<string>,
   newId: () => string,
-): { doc: RichDoc; selection: Range; renamed: Map<string, string> | null } {
+): { doc: RichDoc; selection: RichRange; renamed: Map<string, string> | null } {
   const renamed = new Map<string, string>();
   const blocks = result.doc.blocks.map((b) => {
     if (known.has(b.id)) return b;
@@ -360,19 +356,24 @@ export interface RichTextEditorProps extends Omit<
    * Other users in a shared doc: drawn as carets with a name flag and selection tints in each
    * user's colour (hidden from assistive tech), and named in the status area's accessible text
    * ("2 others editing: …", one per `id`). Leave out the local user. Setting it (or `syncStatus`)
-   * wraps the editable in a root element that holds the overlay and status.
+   * wraps the editable in a root element that holds the overlay and status, so set it from the
+   * first render (`[]` while nobody else is there): switching it between `undefined` and set
+   * remounts the editable when neither `toolbar` nor `blockControls` already wraps it.
    */
   presence?: readonly RichTextPresence[];
   /**
    * Connection state of the app's sync transport, shown as a small text + icon indicator in the
    * toolbar row (`toolbar={true}`) or below the editable, and announced politely on change.
-   * Omit to show none.
+   * Omit to show none. Set it from the first render (e.g. `'connecting'`): going from `undefined`
+   * to set announces nothing (the live region mounts with it) and, like `presence`, can remount
+   * the editable.
    */
   syncStatus?: RichTextSyncStatus;
   /**
    * Who owns each in-flight or failed upload in a shared doc (see {@link RichTextUploadOwner}):
    * `'orphaned'` shows "Upload interrupted" with Remove; Retry appears only for `'mine'`. Omit
-   * and every failed upload offers Retry, and none reads as interrupted.
+   * and every failed upload offers Retry, and none reads as interrupted. Its identity drives
+   * re-rendering: pass a new function whenever ownership changes (e.g. `useMemo` on presence).
    */
   uploadOwner?: (blockId: string) => RichTextUploadOwner;
 }
@@ -396,10 +397,10 @@ function insertWithMarks(
   point: Point,
   text: string,
   marks: Mark[],
-): { doc: RichDoc; selection: Range } {
+): { doc: RichDoc; selection: RichRange } {
   const inserted = insertText(doc, point, text);
   const end = inserted.selection.focus;
-  const span: Range = {
+  const span: RichRange = {
     anchor: { blockId: end.blockId, offset: end.offset - text.length },
     focus: end,
   };
@@ -478,7 +479,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // with the selection so every path that places a caret replaces both at once:
     // a stale marker can never fire with someone else's selection. A block id, so
     // it survives a parent that copies the doc in onChange.
-    const pendingSelectionRef = useRef<{ range: Range; afterVoid: string | null } | null>(null);
+    const pendingSelectionRef = useRef<{ range: RichRange; afterVoid: string | null } | null>(null);
     // Which committed docs had their caret after a void — keyed by the exact doc
     // object history keeps, so undo/redo restore the same side.
     const caretAfterVoidDocs = useRef(new WeakMap<RichDoc, string>());
@@ -527,7 +528,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     // Toolbar state: the live selection (tracked via `selectionchange`) and any
     // marks staged at a collapsed caret to apply to the next typed character.
-    const [selection, setSelection] = useState<Range | null>(null);
+    const [selection, setSelection] = useState<RichRange | null>(null);
     const [pendingMarks, setPendingMarks] = useState<Mark[] | null>(null);
     // Mirror pending marks into a ref so the native beforeinput listener reads
     // the current value without re-subscribing.
@@ -539,7 +540,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // The most recent NON-null editor selection. Survives focus moving into a toolbar
     // popover (e.g. the emoji/search box), where the live selection reads null. Used by
     // popover-driven inserts so they target where the caret actually was.
-    const lastSelectionRef = useRef<Range | null>(null);
+    const lastSelectionRef = useRef<RichRange | null>(null);
 
     const setRefs = useCallback(
       (node: HTMLDivElement | null) => {
@@ -676,6 +677,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // entry back). Meanwhile the live doc stays the SHOWN one, so async upload
     // settles never build on an edit the parent may have refused.
     const unconfirmedRef = useRef<{ doc: RichDoc; prevHistory: History } | null>(null);
+    // The last doc this editor handed to onChange: coming back as `value`, it is the editor's own
+    // edit, not an outside one (history="external" keeps the caret only for outside values).
+    const emittedRef = useRef<RichDoc | null>(null);
 
     // Every commit path calls this FIRST — before writing pendingSelectionRef —
     // since a rollback also drops the refused edit's pending caret.
@@ -694,6 +698,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const emit = useCallback((doc: RichDoc, prevHistory: History) => {
       const before = latest.current.value;
       liveDocRef.current = doc;
+      emittedRef.current = doc;
       try {
         flushSync(() => latest.current.onChange(doc));
       } finally {
@@ -707,7 +712,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     const commit = useCallback(
       (
-        edit: { doc: RichDoc; selection: Range },
+        edit: { doc: RichDoc; selection: RichRange },
         kind: EditKind = 'other',
         options?: {
           /**
@@ -750,6 +755,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             Date.now(),
           );
           syncHistoryFlags();
+        } else {
+          // No entry, but keep `present` current so the layout effect never takes this doc for
+          // an outside replacement (it would recompute the mention menu from a stale selection).
+          historyRef.current = {
+            ...historyRef.current,
+            present: { doc: result.doc, selection: result.selection },
+          };
         }
         // Before the caret below is pending: getSelection() there is the pre-edit selection.
         report?.({ kind });
@@ -787,6 +799,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             Date.now(),
           );
           syncHistoryFlags();
+        } else {
+          historyRef.current = {
+            ...historyRef.current,
+            present: { ...historyRef.current.present, doc },
+          };
         }
         emit(doc, prevHistory);
       },
@@ -968,7 +985,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // stage a pending mark for the next typed text (remembering where); with a
     // selection, toggle the mark over it now.
     const stageOrToggleMark = useCallback(
-      (range: Range, mark: Mark) => {
+      (range: RichRange, mark: Mark) => {
         if (isCollapsed(range)) {
           pendingAtRef.current = range.anchor;
           setPendingMarks((prev) =>
@@ -985,7 +1002,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // as a pending mark for the next typed text (replacing any pending color of the
     // same type, or clearing it when `key` is null); with a selection, set it now.
     const stageOrSetColor = useCallback(
-      (range: Range, type: 'textColor' | 'bgColor', key: string | null) => {
+      (range: RichRange, type: 'textColor' | 'bgColor', key: string | null) => {
         if (isCollapsed(range)) {
           pendingAtRef.current = range.anchor;
           setPendingMarks((prev) => {
@@ -1032,12 +1049,18 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // The `value` the layout effect last saw — it also re-runs on mentions/readOnly
     // changes, which must not be mistaken for a new value arriving.
     const seenValueRef = useRef(value);
-    // history="external": the selection before an outside value replaces the DOM, kept through
-    // its render (read here, while the DOM still shows the previous doc).
-    const keptSelectionRef = useRef<Range | null>(null);
+    // history="external": the selection before an OUTSIDE value replaces the DOM, kept through
+    // its render. Read during render because that is the last moment the DOM still shows the
+    // previous doc (the layout effect runs after React rewrote it; hooks have no
+    // getSnapshotBeforeUpdate). The read is idempotent, so a StrictMode double render or a
+    // discarded render only overwrites it with the same value. Never for the editor's own
+    // emitted doc: a commit that places no caret (block-colour submenu, image width drag) must
+    // not get one written back, which would pull focus out of the menu / slider.
+    const keptSelectionRef = useRef<RichRange | null>(null);
     if (
       external &&
       value !== seenValueRef.current &&
+      value !== emittedRef.current &&
       !pendingSelectionRef.current &&
       !isComposingRef.current &&
       rootRef.current
@@ -1082,7 +1105,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       let pending = pendingSelectionRef.current;
       if (!pending && kept && valueChanged) pending = { range: kept, afterVoid: null };
       if (pending && external && valueChanged)
-        pending = { ...pending, range: clampRange(pending.range, value, prevValue) };
+        pending = {
+          ...pending,
+          range: clampRange(pending.range, value, [prevValue, emittedRef.current ?? prevValue]),
+        };
       // Not while an edit is still awaiting acceptance: its caret belongs to a doc
       // the DOM doesn't show yet (written once that value arrives, or dropped).
       if (root && pending && !unconfirmedRef.current) {
@@ -1305,7 +1331,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           pendingSelectionRef.current?.range ??
           (rootRef.current ? readSelection(rootRef.current) : null),
         setSelection: (range) => {
-          const afterVoid = pendingSelectionRef.current?.afterVoid ?? null;
+          // A pending after-void caret only still applies to a range on that same void.
+          const was = pendingSelectionRef.current?.afterVoid ?? null;
+          const afterVoid = range && was === range.anchor.blockId ? was : null;
           pendingSelectionRef.current = range && { range, afterVoid };
         },
         isComposing: () => isComposingRef.current,
@@ -1316,7 +1344,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     useEffect(() => {
       const root = rootRef.current;
       if (!reportsSelection || !root) return;
-      const report = (sel: Range | null) => sync.current.onSelectionChange?.(sel);
+      const report = (sel: RichRange | null) => sync.current.onSelectionChange?.(sel);
       const f = () =>
         report(root.ownerDocument.activeElement === root ? readSelection(root) : null);
       const out = () => report(null);
@@ -1661,7 +1689,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     // Snapshot at compositionstart — the last moment the DOM and the model agree:
     // the selection, and the anchor block's own DOM text (in model offsets).
-    const compositionRef = useRef<{ range: Range; before: string } | null>(null);
+    const compositionRef = useRef<{ range: RichRange; before: string } | null>(null);
     const onCompositionStart = useCallback(() => {
       isComposingRef.current = true;
       const root = rootRef.current;
@@ -1709,7 +1737,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           before[before.length - 1 - suf] === after[after.length - 1 - suf]
         )
           suf += 1;
-        const replaced: Range = {
+        const replaced: RichRange = {
           anchor: { blockId, offset: pre },
           focus: { blockId, offset: before.length - suf },
         };

@@ -23,10 +23,10 @@ onUndo?: () => void; onRedo?: () => void;      // used when history='external' (
 canUndo?: boolean;   canRedo?: boolean;        // toolbar button state when history='external'
 onEdit?: (edit: { kind: 'type' | 'delete' | 'resize' | 'other' | 'silent' }) => void; // before onChange
 createBlockId?: () => string;                  // ids for blocks the editor creates
-onSelectionChange?: (sel: Range | null) => void; // every selectionchange; null when unfocused / outside
-controller?: Ref<RichTextEditorController>;   // { getSelection(); setSelection(r); isComposing() }
+onSelectionChange?: (sel: RichRange | null) => void; // every selectionchange; null when unfocused / outside
+controller?: Ref<RichTextEditorController>;   // { getSelection(); setSelection(r: RichRange | null); isComposing() }
 onCompositionEnd?: () => void;                 // after the editor committed an IME composition
-presence?: readonly RichTextPresence[];        // { id: string; name: string; color: string; selection: Range | null }
+presence?: readonly RichTextPresence[];        // { id: string; name: string; color: string; selection: RichRange | null }
 syncStatus?: 'synced' | 'connecting' | 'offline';
 uploadOwner?: (blockId: string) => 'mine' | 'theirs' | 'orphaned' | undefined;
 ```
@@ -45,8 +45,9 @@ uploadOwner?: (blockId: string) => 'mine' | 'theirs' | 'orphaned' | undefined;
   inside the editor root; polite live region rendered whenever `syncStatus` is set; announces changes only.
 - `uploadOwner`: `'orphaned'` → "Upload interrupted" + Remove; Retry only when `'mine'` (or when the prop is
   absent, as today).
-- `Range` / `Point` model types become public exports (with `RichTextPresence`, `RichTextEditorController`,
-  `RichTextEditKind`, `RichTextSyncStatus`, `RichTextUploadOwner`).
+- Selections use the model types already public as `RichRange` / `RichPoint` (the engine's `Range` / `Point`);
+  new public types: `RichTextPresence`, `RichTextEditorController`, `RichTextEditKind`, `RichTextSyncStatus`,
+  `RichTextUploadOwner`.
 - i18n: move `collab.*` keys to `richTextEditor.*` (en + ru).
 
 ## Removed

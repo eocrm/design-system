@@ -1,6 +1,7 @@
 // Shared-editing API (DS-96): the sync hooks a collaboration layer (Yjs or not) drives the
 // editor through. Ported from the former `/collab` tests, without yjs.
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createRef, useState } from 'react';
 import {
   RichTextEditor,
@@ -176,6 +177,75 @@ describe("RichTextEditor shared editing: history='external'", () => {
   });
 });
 
+describe("RichTextEditor shared editing: history='external' and caret-less commits", () => {
+  const image = {
+    id: 'img',
+    type: 'attachment' as const,
+    status: 'ready' as const,
+    src: 'http://u/p.png',
+    mime: 'image/png',
+    name: 'p.png',
+    alt: 'Chart',
+    width: 500,
+    height: 300,
+    inlines: [],
+  };
+
+  it('a block-colour pick places no caret: its own doc coming back is not an outside value', async () => {
+    const user = userEvent.setup();
+    const { editor } = setup(doc2('hello', 'world'), { history: 'external', blockControls: true });
+    caret(editor, 'p1', 2);
+    await user.hover(editor.querySelector('[data-block-id="p2"]')!);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Text color' }));
+    const green = await screen.findByRole('button', { name: 'Green' });
+    // A real menu keeps the document selection in the editor (mousedown is prevented).
+    act(() => green.focus());
+    caret(editor, 'p1', 2);
+    const addRange = vi.spyOn(Selection.prototype, 'addRange');
+    try {
+      fireEvent.click(green);
+      expect(editor.querySelector('[data-block-id="p2"] [style]')).not.toBeNull();
+      expect(addRange).not.toHaveBeenCalled();
+      expect(document.activeElement).not.toBe(editor);
+    } finally {
+      addRange.mockRestore();
+    }
+  });
+
+  it("an image width step places no caret and keeps focus on the slider; it reports 'resize'", async () => {
+    const user = userEvent.setup();
+    const kinds: string[] = [];
+    const { editor, api } = setup(
+      { blocks: [para('p1', 'hello'), image] },
+      {
+        history: 'external',
+        blockControls: true,
+        upload: { onUpload: async () => ({ url: '' }) },
+        onEdit: ({ kind }) => kinds.push(kind),
+      },
+    );
+    caret(editor, 'p1', 2);
+    await user.hover(editor.querySelector('figure[data-block-id="img"]')!);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Configure' }));
+    const slider = await screen.findByRole('slider', { name: 'Width' });
+    act(() => slider.focus());
+    caret(editor, 'p1', 2);
+    const addRange = vi.spyOn(Selection.prototype, 'addRange');
+    try {
+      await user.keyboard('{ArrowLeft}');
+      await user.keyboard('{ArrowLeft}');
+      await waitFor(() => expect(api.value.blocks[1].width).toBeLessThan(500));
+      expect(addRange).not.toHaveBeenCalled();
+      expect(document.activeElement).toBe(slider);
+      expect(kinds).toContain('resize');
+    } finally {
+      addRange.mockRestore();
+    }
+  });
+});
+
 describe('RichTextEditor shared editing: onEdit', () => {
   it('fires exactly once per commit, with its kind, before onChange', () => {
     const log: string[] = [];
@@ -247,6 +317,25 @@ describe('RichTextEditor shared editing: createBlockId', () => {
       true,
     );
     expect(kinds).toEqual(['other', 'silent']);
+  });
+});
+
+describe('RichTextEditor shared editing: createBlockId on silent commits', () => {
+  it('a removal that empties the doc names its fresh paragraph with the factory', () => {
+    const kinds: string[] = [];
+    const { api } = setup(
+      {
+        blocks: [{ id: 'f', type: 'attachment', inlines: [], name: 'f.pdf', status: 'error' }],
+      },
+      {
+        createBlockId: () => 'mine-1',
+        onEdit: ({ kind }) => kinds.push(kind),
+        upload: { onUpload: async () => ({ url: '' }) },
+      },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Remove/ }));
+    expect(api.value.blocks.map((b) => b.id)).toEqual(['mine-1']);
+    expect(kinds).toEqual(['silent']);
   });
 });
 

@@ -10,6 +10,7 @@ import styles from './RichTextPresence.module.scss';
 
 type Box = { top: number; left: number; width: number; height: number };
 interface Mark {
+  id: string;
   name: string;
   color: string;
   /** Changes whenever the selection moves (restarts the flag's idle timer). */
@@ -126,6 +127,7 @@ export function RichTextPresenceOverlay({
           const m = measure(root, s, origin);
           if (!m || (!m.caret && !m.rects.length)) continue;
           out.push({
+            id: String(p.id),
             name: String(p.name),
             color: String(p.color),
             moved: JSON.stringify(s),
@@ -149,8 +151,8 @@ export function RichTextPresenceOverlay({
         const style = (b: Box) =>
           ({ ...b, '--rich-text-presence-color': m.color }) as CSSProperties;
         return (
-          // By index: an app may relay duplicate ids.
-          <Fragment key={i}>
+          // Index too: an app may relay duplicate ids.
+          <Fragment key={`${m.id}-${i}`}>
             {m.rects.map((r, j) => (
               <span
                 key={j}
