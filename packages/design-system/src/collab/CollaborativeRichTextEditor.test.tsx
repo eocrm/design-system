@@ -105,6 +105,26 @@ describe('CollaborativeRichTextEditor', () => {
     expect(editor).toHaveTextContent('XYhello!');
   });
 
+  it('splits undo steps by edit kind: a format right after typing is its own step', () => {
+    const { a } = pair('');
+    const editor = renderOn(a);
+    const id = firstId(a);
+    caret(editor, id, 0);
+    type(editor, 'abc');
+    const bid = firstId(a);
+    writeSelection(editor, {
+      anchor: { blockId: bid, offset: 0 },
+      focus: { blockId: bid, offset: 3 },
+    });
+    fireEvent.keyDown(editor, { key: 'b', code: 'KeyB', ctrlKey: true });
+    expect(toRichDoc(a).blocks[0].inlines).toEqual([{ text: 'abc', marks: [{ type: 'bold' }] }]);
+    const undo = () => fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    undo();
+    expect(toRichDoc(a).blocks[0].inlines).toEqual([{ text: 'abc', marks: [] }]);
+    undo();
+    expect(textOf(a)).toBe('');
+  });
+
   it('defers a remote update during IME composition until compositionend', async () => {
     const { a, b } = pair('hello');
     const editor = renderOn(a);

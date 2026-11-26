@@ -2,6 +2,7 @@
 // through. Not exported from the main entry. Without a provider the editor behaves exactly as before.
 import { createContext, type MutableRefObject, type ReactNode } from 'react';
 import type { Range } from '../RichText/engine/model';
+import type { EditKind } from './history';
 
 /**
  * What the editor exposes to the seam's owner (filled into `CollabSeam.handle` while mounted).
@@ -33,6 +34,8 @@ export interface CollabSeam {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  /** Fires before each local edit reaches `onChange`, with its kind (undo steps follow kinds). */
+  editKind: (kind: EditKind) => void;
   /** Fires after the editor handled `compositionend` (and committed the composed text). */
   compositionEnd: () => void;
   /** Fires on every `selectionchange` with the editor's model selection (`null` outside). */

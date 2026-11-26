@@ -9,6 +9,7 @@ import {
   type CollabEditorHandle,
   type CollabSeam,
 } from '../components/RichTextEditor/collabSeam';
+import type { EditKind } from '../components/RichTextEditor/history';
 import type { Point, Range, RichDoc } from '../components/RichText/engine/model';
 import { runsText } from '../components/RichText/engine/inlines';
 import {
@@ -82,6 +83,9 @@ export const CollaborativeRichTextEditor = forwardRef<
   const applyingRef = useRef(false);
   const umRef = useRef<Y.UndoManager | null>(null);
   const flushRef = useRef(() => {});
+  // Kind of the last local edit: like the editor's own history, only same-kind edits (never
+  // 'other') share an undo step.
+  const lastKindRef = useRef<EditKind | null>(null);
   const [flags, setFlags] = useState({ canUndo: false, canRedo: false });
 
   useLayoutEffect(() => {
@@ -125,6 +129,7 @@ export const CollaborativeRichTextEditor = forwardRef<
       sync();
     });
     um.on('stack-item-popped', ({ stackItem }) => {
+      lastKindRef.current = null;
       const range = decodeSelection(doc, stackItem.meta.get('sel') ?? null, viewRef.current);
       if (range) handle.current?.setPendingSelection(range);
       sync();
@@ -174,6 +179,10 @@ export const CollaborativeRichTextEditor = forwardRef<
       redo: () => umRef.current?.redo(),
       canUndo: flags.canUndo,
       canRedo: flags.canRedo,
+      editKind: (kind) => {
+        if (kind === 'other' || kind !== lastKindRef.current) umRef.current?.stopCapturing();
+        lastKindRef.current = kind;
+      },
       compositionEnd: () => flushRef.current(),
     }),
     [newId, flags],

@@ -545,9 +545,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         pendingSelectionRef.current = options?.keepSelection
           ? null
           : { range: result.selection, afterVoid: options?.caretAfterVoid ?? null };
+        seam?.editKind(kind);
         emit(result.doc, prevHistory);
       },
-      [syncHistoryFlags, emit, reconcile],
+      [syncHistoryFlags, emit, reconcile, seam],
     );
 
     // Live-resize commit path for attachment width drags (used by
@@ -571,9 +572,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           Date.now(),
         );
         syncHistoryFlags();
+        seam?.editKind('resize');
         emit(doc, prevHistory);
       },
-      [syncHistoryFlags, emit, reconcile],
+      [syncHistoryFlags, emit, reconcile, seam],
     );
 
     // Like commit, but records NO history entry — used for async upload settles so
