@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const COMPONENTS_DIR = join(__dirname, '..', 'components');
+const COLLAB_DIR = join(__dirname, '..', 'collab');
 
 export type ComponentTier = 'primitive' | 'composition';
 
@@ -98,6 +99,7 @@ const CLUSTERS: Record<string, string> = {
   PillMenu: 'Forms',
   Switch: 'Forms',
   RichTextEditor: 'Forms',
+  CollaborativeRichTextEditor: 'Forms', // ships from src/collab (`/collab` subpath)
   Textarea: 'Forms',
   TimeField: 'Forms',
 
@@ -194,6 +196,8 @@ const CLUSTERS: Record<string, string> = {
 // Widening the walk without widening this pattern still sees nothing.
 const FROM_PARENT_PATH = /from\s+['"](?:\.\.\/)+([A-Z][a-zA-Z0-9]+)(?:\/[^'"]*)?['"]/g;
 
+const COLLAB_IMPORT = /from\s+['"]\.\.\/components\/([A-Z][a-zA-Z0-9]+)(?:\/[^'"]*)?['"]/g;
+
 function listComponentDirs(): string[] {
   return readdirSync(COMPONENTS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -277,6 +281,22 @@ export function buildManifest(): ComponentManifest {
       composedBy: [],
     };
   }
+
+  // `src/collab` is one component shipped from the `/collab` subpath (it is not
+  // a directory under components/, so the walk above never sees it).
+  const collabImports = [
+    ...new Set(
+      [...collectSourceText(COLLAB_DIR).matchAll(COLLAB_IMPORT)]
+        .map((m) => m[1])
+        .filter((n) => knownComponents.has(n)),
+    ),
+  ].sort();
+  manifest.CollaborativeRichTextEditor = {
+    tier: 'composition',
+    cluster: CLUSTERS.CollaborativeRichTextEditor ?? null,
+    composes: collabImports,
+    composedBy: [],
+  };
 
   // Second pass: invert the graph for `composedBy`.
   for (const [name, entry] of Object.entries(manifest)) {

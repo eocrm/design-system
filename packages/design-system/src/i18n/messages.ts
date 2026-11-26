@@ -1152,6 +1152,20 @@ export interface Messages {
     /** Marker appended to a Field's label when the field is optional. */
     optional: string;
   };
+  collab: {
+    /** Status indicator text: every change has reached the app's transport. */
+    synced: string;
+    /** Status indicator text: the transport is (re)connecting. */
+    connecting: string;
+    /** Status indicator text (short, visible): no connection. */
+    offline: string;
+    /** Follows `offline` in the announcement and accessible text: edits are kept and sync on reconnect. */
+    offlineHint: string;
+    /** Function leaf — status area's accessible text listing the other people editing (quote names, don't inflect them). */
+    othersEditing: (params: { names: readonly string[] }) => string;
+    /** An `uploading` attachment whose uploader has left the document. */
+    uploadInterrupted: string;
+  };
   liquidEditor: {
     /** Toolbar button label that opens the tag-insert menu. */
     insertTag: string;

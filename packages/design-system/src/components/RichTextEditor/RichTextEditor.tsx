@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -12,6 +13,7 @@ import { flushSync } from 'react-dom';
 import clsx from 'clsx';
 import type { RichDoc, Range, Mark, MarkType, Point } from '../RichText/engine/model';
 import { nextId } from '../RichText/engine/model';
+import { CollabSeamContext } from './collabSeam';
 import { renderDoc } from '../RichText/engine/renderDoc';
 import type { RenderLink } from '../RichText/engine/renderLink';
 import type { RenderMention } from '../RichText/engine/renderMention';
@@ -270,6 +272,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     ref,
   ) {
     const t = useTranslation();
+    // Collaborative mode (internal, `/collab`): see collabSeam.ts. Null = the plain editor.
+    const seam = useContext(CollabSeamContext);
     const rootRef = useRef<HTMLDivElement | null>(null);
     const isComposingRef = useRef(false);
     // Selection to restore after the next model-driven re-render.
@@ -355,7 +359,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // block controls need the anchor). The image resize handle anchors into the
     // shell, so its hover tracking + element are gated on this. Declared up here
     // (vs. near the shell render) so the image-hover effect below can depend on it.
-    const usesShell = toolbar === true || autoToolbar || controlsOn;
+    // Collaborative mode always uses it: the presence overlay and status must stay inside one root.
+    const usesShell = toolbar === true || autoToolbar || controlsOn || !!seam;
     // The same gate the mention menu uses — drives both `useMention`'s `enabled`
     // and the consolidated selectionchange listener's mention fan-out below.
     const mentionsEnabled = !!mentions && !readOnly;
@@ -541,9 +546,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         pendingSelectionRef.current = options?.keepSelection
           ? null
           : { range: result.selection, afterVoid: options?.caretAfterVoid ?? null };
+        seam?.editKind(kind);
         emit(result.doc, prevHistory);
       },
-      [syncHistoryFlags, emit, reconcile],
+      [syncHistoryFlags, emit, reconcile, seam],
     );
 
     // Live-resize commit path for attachment width drags (used by
@@ -567,9 +573,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           Date.now(),
         );
         syncHistoryFlags();
+        seam?.editKind('resize');
         emit(doc, prevHistory);
       },
-      [syncHistoryFlags, emit, reconcile],
+      [syncHistoryFlags, emit, reconcile, seam],
     );
 
     // Like commit, but records NO history entry — used for async upload settles so
@@ -591,9 +598,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           ...historyRef.current,
           present: { doc, selection: sel ?? historyRef.current.present.selection },
         };
+        seam?.untracked();
         emit(doc, prevHistory);
       },
-      [emit, reconcile],
+      [emit, reconcile, seam],
     );
 
     const uploadOn = !!upload && !readOnly;
@@ -614,6 +622,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         commit({ doc, selection: sel }, 'other');
       },
       applySettle: commitSilent,
+      resolveId: seam?.resolveId,
       getCaret: () =>
         (rootRef.current ? readSelection(rootRef.current)?.anchor : undefined) ?? {
           blockId: liveDocRef.current.blocks[0].id,
@@ -671,6 +680,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
 
     const onUndo = useCallback(() => {
+      if (seam) {
+        clearPendingMarks();
+        return seam.undo();
+      }
       reconcile();
       const h = historyRef.current;
       if (!historyCanUndo(h)) return;
@@ -683,9 +696,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
       };
       emit(next.present.doc, h);
-    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile]);
+    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile, seam]);
 
     const onRedo = useCallback(() => {
+      if (seam) {
+        clearPendingMarks();
+        return seam.redo();
+      }
       reconcile();
       const h = historyRef.current;
       if (!historyCanRedo(h)) return;
@@ -698,7 +715,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
       };
       emit(next.present.doc, h);
-    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile]);
+    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile, seam]);
 
     const insertMentionItem = useCallback(
       (
@@ -1033,6 +1050,37 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     useEffect(() => {
       if (autoFocus) rootRef.current?.focus();
     }, [autoFocus]);
+
+    // Collaborative mode: hand the seam its handle and report selection changes.
+    useLayoutEffect(() => {
+      if (!seam) return;
+      seam.handle.current = {
+        readSelection: () => (rootRef.current ? readSelection(rootRef.current) : null),
+        pendingSelection: () => pendingSelectionRef.current?.range ?? null,
+        setPendingSelection: (range) => {
+          const afterVoid = pendingSelectionRef.current?.afterVoid ?? null;
+          pendingSelectionRef.current = range && { range, afterVoid };
+        },
+        isComposing: () => isComposingRef.current,
+      };
+      return () => {
+        seam.handle.current = null;
+      };
+    }, [seam]);
+    const onSeamSelection = seam?.onSelectionChange;
+    useEffect(() => {
+      const root = rootRef.current;
+      if (!onSeamSelection || !root) return;
+      const f = () =>
+        onSeamSelection(root.ownerDocument.activeElement === root ? readSelection(root) : null);
+      const out = () => onSeamSelection(null);
+      document.addEventListener('selectionchange', f);
+      root.addEventListener('focusout', out);
+      return () => {
+        document.removeEventListener('selectionchange', f);
+        root.removeEventListener('focusout', out);
+      };
+    }, [onSeamSelection]);
 
     // ONE selectionchange subscription shared by the toolbar, block-controls caret
     // tracking, and the mention menu. A caret move (incl. every keystroke, which
@@ -1379,6 +1427,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const onCompositionEnd = useCallback(
       (e: React.CompositionEvent<HTMLDivElement>) => {
         isComposingRef.current = false;
+        // After this handler's commit (a microtask runs once the event's handlers are done).
+        if (seam) queueMicrotask(seam.compositionEnd);
         const snap = compositionRef.current;
         compositionRef.current = null;
         const root = rootRef.current;
@@ -1423,7 +1473,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           : applyInput(value, replaced, 'deleteContentBackward', null);
         if (result) commit(result, 'type');
       },
-      [value, readOnly, commit],
+      [value, readOnly, commit, seam],
     );
 
     // Active marks + current block derived from the live selection for the toolbar.
@@ -1842,15 +1892,18 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onToggleList={onToolbarToggleList}
         linkActive={toolbarLinkActive}
         onOpenLink={openLinkEditor}
-        canUndo={canUndo}
-        canRedo={canRedo}
+        canUndo={seam ? seam.canUndo() : canUndo}
+        canRedo={seam ? seam.canRedo() : canRedo}
         onUndo={onUndo}
         onRedo={onRedo}
         onPickFiles={uploadOn ? onPickFiles : undefined}
         onOverlayOpenChange={autoToolbar ? setToolbarOverlayOpen : undefined}
         onInsertEmoji={onInsertEmoji}
+        trailing={toolbar === true ? seam?.status : undefined}
       />
     ) : null;
+    // Collaborative status: in the toolbar row when the bar is always shown, else below.
+    const footer = toolbar === true ? null : seam?.status;
 
     // The upload picker's input lives HERE, in the always-rendered shell, not in
     // the toolbar: a native file dialog blurs the editable, and under
@@ -1894,11 +1947,20 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       );
     }
     return (
-      <div className={styles.shell} ref={shellRef}>
+      <div
+        className={clsx(
+          styles.shell,
+          // A shell only the seam asked for has nothing above the editable to tuck under.
+          toolbar !== true && !autoToolbar && !controlsOn && styles.bare,
+        )}
+        ref={shellRef}
+      >
         {toolbarBar}
         {uploadInput}
         {uploadStatus}
         {editable}
+        {seam?.overlay}
+        {footer}
         {linkBubble}
         {mentionMenu}
         {blockControlsEl}

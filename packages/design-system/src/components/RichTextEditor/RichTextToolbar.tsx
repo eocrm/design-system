@@ -1,4 +1,4 @@
-import { memo, useRef, type ReactElement } from 'react';
+import { memo, useRef, type ReactElement, type ReactNode } from 'react';
 import type { BlockType, MarkType } from '../RichText/engine/model';
 import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
@@ -74,6 +74,8 @@ export interface RichTextToolbarProps {
   onOverlayOpenChange?: (open: boolean) => void;
   /** Insert an emoji at the caret. */
   onInsertEmoji: (emoji: string) => void;
+  /** Rendered last in the row (collaborative mode's status). */
+  trailing?: ReactNode;
 }
 
 const MARKS: {
@@ -121,6 +123,7 @@ function RichTextToolbarImpl({
   onPickFiles,
   onOverlayOpenChange,
   onInsertEmoji,
+  trailing,
 }: RichTextToolbarProps) {
   const t = useTranslation();
 
@@ -355,6 +358,7 @@ function RichTextToolbarImpl({
           </Button>
         </>
       )}
+      {trailing}
     </div>
   );
 }

@@ -70,6 +70,7 @@ import { HighlightedTextDemo } from './pages/components/HighlightedTextDemo';
 import { TextDemo } from './pages/components/TextDemo';
 import { RichTextDemo } from './pages/components/RichTextDemo';
 import { RichTextEditorDemo } from './pages/components/RichTextEditorDemo';
+import { CollaborativeRichTextEditorDemo } from './pages/components/CollaborativeRichTextEditorDemo';
 import { TitleDemo } from './pages/components/TitleDemo';
 import { TimelineDemo } from './pages/components/TimelineDemo';
 import { StagePathDemo } from './pages/components/StagePathDemo';
@@ -233,6 +234,10 @@ export default function App() {
             <Route path="/components/text" element={<TextDemo />} />
             <Route path="/components/rich-text" element={<RichTextDemo />} />
             <Route path="/components/rich-text-editor" element={<RichTextEditorDemo />} />
+            <Route
+              path="/components/collaborative-rich-text-editor"
+              element={<CollaborativeRichTextEditorDemo />}
+            />
             <Route path="/components/title" element={<TitleDemo />} />
             <Route path="/components/timeline" element={<TimelineDemo />} />
             <Route path="/components/stage-path" element={<StagePathDemo />} />

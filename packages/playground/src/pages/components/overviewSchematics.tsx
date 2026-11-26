@@ -1802,6 +1802,23 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Row>
     </Outline>
   ),
+  CollaborativeRichTextEditor: (
+    <Outline w={200} style={{ display: 'flex', flexDirection: 'column', gap: 7, padding: 8 }}>
+      <Row gap={4}>
+        <Box w={14} h={10} />
+        <Box w={14} h={10} />
+        <Box w={2} h={10} />
+        <Solid w={16} h={10} />
+      </Row>
+      <Bar w={150} />
+      <Row gap={4}>
+        <Bar w={70} />
+        <Solid w={2} h={12} />
+        <Bar w={30} />
+        <Box w={2} h={12} />
+      </Row>
+    </Outline>
+  ),
   BrandIcon: (
     <Row gap={10}>
       <Dot size={22} />

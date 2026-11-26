@@ -27,6 +27,12 @@
       "import": "./dist/i18n/ru.js",
       "default": "./dist/i18n/ru.js"
     },
+    "./collab": {
+      "@eocrm/source": "./src/collab/index.ts",
+      "types": "./dist/collab/index.d.ts",
+      "import": "./dist/collab/index.js",
+      "default": "./dist/collab/index.js"
+    },
     "./styles/tokens.css": "./dist/styles/tokens.css",
     "./styles.css": "./dist/styles.css",
     "./package.json": "./package.json"
@@ -42,7 +48,13 @@
   "peerDependencies": {
     "lucide-react": ">=1.16.0 <2.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "yjs": "^13.6.33"
+  },
+  "peerDependenciesMeta": {
+    "yjs": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -72,7 +84,8 @@
     "sass-embedded": "^1.100.0",
     "typescript": "^6.0.3",
     "vite": "^8.3.5",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "yjs": "^13.6.33"
   },
   "scripts": {
     "prepack": "npm run build 1>&2",

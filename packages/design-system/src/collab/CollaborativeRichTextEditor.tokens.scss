@@ -1,0 +1,25 @@
+// CollaborativeRichTextEditor.tokens.scss — tokens for the collaborative editor's chrome. Presence
+// colours are app data (`CollabUser.color`), set inline as `--collab-user-color`; the default
+// below only applies when none is given.
+:root,
+:where(:root [data-theme='light'], :root [data-theme='dark']) {
+  // Presence
+  --collab-user-color: var(--color-accent);
+  --collab-caret-width: var(--border-width-emphasis);
+
+  // No `--opacity-*` primitive fits (the nearest, --opacity-dragging, is 0.4): a full-strength
+  // user colour at that alpha hides the selected text. A tint, not a state opacity.
+  --collab-selection-opacity: 0.25;
+  --collab-flag-fg: var(--color-fg-on-overlay);
+  --collab-flag-font-size: var(--font-size-xs);
+  --collab-flag-padding-x: var(--space-1);
+  --collab-flag-radius: var(--radius-sm);
+
+  // How long a remote caret's name flag stays after the caret last moved.
+  --collab-flag-idle: 2s;
+
+  // Status
+  --collab-status-gap: var(--space-1);
+  --collab-status-fg: var(--color-fg-muted);
+  --collab-status-font-size: var(--font-size-xs);
+}

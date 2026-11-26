@@ -1,0 +1,50 @@
+@use './CollaborativeRichTextEditor.tokens';
+
+// The presence layer. `position: absolute` with no insets keeps it at its static position
+// out of flow (no gap in a consumer's Stack); the overlay measures every box relative to its
+// own, so where that lands does not matter. Its children are positioned from those measurements
+// (inline top/left/size), like the editor's block gutter. Never hit-tested.
+.presence {
+  position: absolute;
+  pointer-events: none;
+}
+
+.selection {
+  position: absolute;
+  background-color: var(--collab-user-color);
+  opacity: var(--collab-selection-opacity);
+}
+
+.caret {
+  position: absolute;
+  border-inline-start: var(--collab-caret-width) solid var(--collab-user-color);
+}
+
+// Shown for --collab-flag-idle after the caret moved (the element remounts on each move).
+.flag {
+  position: absolute;
+  bottom: 100%;
+  inset-inline-start: 0;
+  padding: 0 var(--collab-flag-padding-x);
+  border-radius: var(--collab-flag-radius);
+  background-color: var(--collab-user-color);
+  color: var(--collab-flag-fg);
+  font-size: var(--collab-flag-font-size);
+  line-height: var(--line-height-tight);
+  white-space: nowrap;
+  animation: collab-flag-hide 0s var(--collab-flag-idle) forwards;
+}
+
+@keyframes collab-flag-hide {
+  to {
+    visibility: hidden;
+  }
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--collab-status-gap);
+  color: var(--collab-status-fg);
+  font-size: var(--collab-status-font-size);
+}
