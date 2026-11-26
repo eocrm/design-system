@@ -287,6 +287,14 @@ function viewOf(doc: Y.Doc, base: RichDoc, reread: (id: string) => boolean): Ric
     : { ...base, blocks: out };
 }
 
+// Per-doc counter for fresh block ids: never repeats for a doc instance (remounts included).
+const counters = new WeakMap<Y.Doc, number>();
+const nextCount = (doc: Y.Doc) => {
+  const n = (counters.get(doc) ?? 0) + 1;
+  counters.set(doc, n);
+  return n;
+};
+
 const hasLive = (blocks: Y.Map<unknown>) =>
   [...blocks.entries()].some(([k, v]) => isBlockEntry(k, v));
 
@@ -297,16 +305,16 @@ const hasLive = (blocks: Y.Map<unknown>) =>
 export interface LocalResult {
   /** The `RichDoc` the editor must now show. */
   view: RichDoc;
-  /** A block id of `next` that was written (and appears in `view`) under a new id. */
-  renamed?: { from: string; to: string };
+  /** Block ids of `next` that were written (and appear in `view`) under new ids. */
+  renamed?: ReadonlyArray<{ from: string; to: string }>;
 }
 
 /**
  * Apply a local editor change (`prev` → `next`) to `doc` in one transaction tagged `origin`.
  * Returns `{ view, renamed? }`: `view` is the `RichDoc` the editor must now show (adopt it: it is
- * `next` itself unless the doc holds more than the edit); `renamed` is set when a block of `next`
- * was written under a different id (see the placeholder case below) — move a selection on
- * `renamed.from` to `renamed.to`, same offsets.
+ * `next` itself unless the doc holds more than the edit); `renamed` lists blocks of `next` written
+ * under different ids (new blocks and the placeholder, below) — move a selection on a `from` to its
+ * `to`, same offsets.
  *
  * - Blocks diff by id: delete, insert, and `order`-only moves that keep the `Y.Text`. Attrs are
  *   written only where `prev` → `next` changed them; text is a prefix/suffix splice plus per-key
@@ -319,6 +327,9 @@ export interface LocalResult {
  *   cannot produce a block (the doc holds only junk entries, or its seeded blocks were deleted), the
  *   placeholder gets a fresh client-scoped id instead (reported as `renamed`), so concurrent first
  *   edits cannot collide.
+ * - Block ids are made globally unique here: a block new in `next` (not in `prev`, not a live key)
+ *   whose id lacks this client's `${clientID.toString(36)}-` prefix (an editor `rtN` id, which every
+ *   client generates alike) is written as `${clientID.toString(36)}-${n}` (reported in `renamed`).
  * - Never throws on foreign order keys: it re-keys the neighbouring run instead.
  * @internal
  */
@@ -329,7 +340,7 @@ export function applyLocal(doc: Y.Doc, prev: RichDoc, next: RichDoc, origin: unk
   // ponytail: re-reads every block per call (O(doc)) so a stale `prev` can never leave the editor
   // out of sync; take a "prev is current" hint from the caller if large docs make this measurable.
   if (unchanged) return { view: viewOf(doc, next, () => true) };
-  let renamed: LocalResult['renamed'];
+  const renamed: { from: string; to: string }[] = [];
   const blocks = blocksOf(doc);
   if (!hasLive(blocks)) {
     fromRichDoc(toRichDoc(doc), doc);
@@ -338,7 +349,7 @@ export function applyLocal(doc: Y.Doc, prev: RichDoc, next: RichDoc, origin: unk
       const placeholder = toRichDoc(doc).blocks[0].id;
       const id = `${doc.clientID.toString(36)}-s${Y.getState(doc.store, doc.clientID)}`;
       if (next.blocks.some((b) => b.id === placeholder)) {
-        renamed = { from: placeholder, to: id };
+        renamed.push({ from: placeholder, to: id });
         next = {
           ...next,
           blocks: next.blocks.map((b) => (b.id === placeholder ? { ...b, id } : b)),
@@ -346,6 +357,23 @@ export function applyLocal(doc: Y.Doc, prev: RichDoc, next: RichDoc, origin: unk
       }
     }
   }
+  const prefix = `${doc.clientID.toString(36)}-`;
+  const prevIds = new Set(prev.blocks.map((b) => b.id));
+  const fresh = new Map<string, string>();
+  for (const b of next.blocks) {
+    if (prevIds.has(b.id) || live(blocks, b.id) || b.id.startsWith(prefix) || fresh.has(b.id))
+      continue;
+    let id: string;
+    do id = `${prefix}${nextCount(doc)}`;
+    while (blocks.has(id));
+    fresh.set(b.id, id);
+    renamed.push({ from: b.id, to: id });
+  }
+  if (fresh.size)
+    next = {
+      ...next,
+      blocks: next.blocks.map((b) => (fresh.has(b.id) ? { ...b, id: fresh.get(b.id)! } : b)),
+    };
   doc.transact(() => {
     const prevById = new Map(prev.blocks.map((b) => [b.id, b]));
     const nextIds = new Set(next.blocks.map((b) => b.id));
@@ -374,7 +402,7 @@ export function applyLocal(doc: Y.Doc, prev: RichDoc, next: RichDoc, origin: unk
     });
   }, origin);
   const view = viewOf(doc, next, () => true);
-  return renamed ? { view, renamed } : { view };
+  return renamed.length ? { view, renamed } : { view };
 }
 
 // The `blocks` key of the block map an event happened in (or under).

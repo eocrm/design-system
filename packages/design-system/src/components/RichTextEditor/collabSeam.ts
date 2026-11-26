@@ -21,19 +21,19 @@ export interface CollabEditorHandle {
 
 /**
  * Collaborative mode for `RichTextEditor`: an outside `value` is a remote change (history is the
- * owner's), undo/redo go to the owner, new block ids come from `newId`.
+ * owner's) and undo/redo go to the owner. Block ids are the owner's job (it renames new blocks).
+ * Keep the object stable: the editor's handlers depend on it.
  * @internal
  */
 export interface CollabSeam {
   /** Filled by the editor with its handle while mounted. */
   handle: MutableRefObject<CollabEditorHandle | null>;
-  /** Block-id source while this editor is the active one (mount / focus). */
-  newId: () => string;
   /** Replace the editor's own undo/redo (keyboard, `beforeinput`, toolbar). */
   undo: () => void;
   redo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
+  /** Read while rendering (the owner re-renders the editor when they change). */
+  canUndo: () => boolean;
+  canRedo: () => boolean;
   /** Fires before each local edit reaches `onChange`, with its kind (undo steps follow kinds). */
   editKind: (kind: EditKind) => void;
   /** Fires after the editor handled `compositionend` (and committed the composed text). */

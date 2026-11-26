@@ -111,24 +111,12 @@ export interface Range {
 // Module-local monotonic id source. NOT Math.random/Date.now (unavailable in
 // some contexts + non-deterministic). Unique within a session — enough for keys.
 let idCounter = 0;
-let idSource: (() => string) | null = null;
-/**
- * Route `nextId` through `src` (collaborative mode's globally unique ids), or back to the default
- * with `null`. Returns the source it replaced.
- * @internal
- */
-export function setIdSource(src: (() => string) | null): (() => string) | null {
-  const prev = idSource;
-  idSource = src;
-  return prev;
-}
 /**
  * Generate a session-unique block id. Ids are monotonically incrementing strings
  * (`rt1`, `rt2`, …) — deterministic within a session but NOT across page reloads.
  * Use the `id` field in `CreateBlockAttrs` to pin ids in tests.
  */
 export function nextId(): string {
-  if (idSource) return idSource();
   idCounter += 1;
   return `rt${idCounter}`;
 }

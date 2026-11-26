@@ -1,4 +1,12 @@
-import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import * as Y from 'yjs';
 import {
   RichTextEditor,
@@ -18,6 +26,7 @@ import {
   encodeSelection,
   readChanged,
   type CollabSelection,
+  type LocalResult,
 } from './bridge';
 import { BLOCKS, toRichDoc } from './schema';
 import { keptIndices } from './textDiff';
@@ -25,8 +34,7 @@ import { keptIndices } from './textDiff';
 /** Origin of this editor's own transactions: the only one `Y.UndoManager` tracks. */
 const LOCAL_ORIGIN = Symbol('eocrm-collab-local');
 
-// Page-wide, so an id is never reused, even by a remount on the same doc.
-let idCount = 0;
+type StackItem = Y.UndoManager['undoStack'][number];
 
 /** Props of {@link CollaborativeRichTextEditor}. */
 export interface CollaborativeRichTextEditorProps extends Omit<
@@ -41,12 +49,12 @@ export interface CollaborativeRichTextEditorProps extends Omit<
   doc: Y.Doc;
 }
 
-type Renamed = { from: string; to: string } | undefined;
+type Renamed = LocalResult['renamed'];
 
 // `p` (an offset in `next`) moved into `view`, which may hold remote text `next` lacks: through a
 // character diff, sticking to the character before it (remote text at the caret lands after it).
 function mapPoint(p: Point, next: RichDoc, view: RichDoc, renamed: Renamed): Point {
-  const blockId = p.blockId === renamed?.from ? renamed.to : p.blockId;
+  const blockId = renamed?.find((r) => r.from === p.blockId)?.to ?? p.blockId;
   const to = view.blocks.find((b) => b.id === blockId);
   // ponytail: a block deleted remotely mid-edit sends the caret to the doc start.
   if (!to) return { blockId: view.blocks[0].id, offset: 0 };
@@ -86,7 +94,9 @@ export const CollaborativeRichTextEditor = forwardRef<
   // Kind of the last local edit: like the editor's own history, only same-kind edits (never
   // 'other') share an undo step.
   const lastKindRef = useRef<EditKind | null>(null);
-  const [flags, setFlags] = useState({ canUndo: false, canRedo: false });
+  // The undo item the current transaction added or extended (to store the caret after the edit).
+  const touchedRef = useRef<StackItem | null>(null);
+  const [, rerender] = useReducer((n: number) => n + 1, 0);
 
   useLayoutEffect(() => {
     viewRef.current = renderedRef.current;
@@ -123,19 +133,29 @@ export const CollaborativeRichTextEditor = forwardRef<
       captureTimeout: 600,
     });
     umRef.current = um;
-    const sync = () => setFlags({ canUndo: um.canUndo(), canRedo: um.canRedo() });
+    // Each item carries the caret before its change ('before', restored by undo) and after it
+    // ('after', restored by redo). Undoing / redoing an item adds its counterpart on the other stack,
+    // which inherits both.
     um.on('stack-item-added', ({ stackItem }) => {
-      stackItem.meta.set('sel', before);
-      sync();
+      stackItem.meta.set('before', before);
+      touchedRef.current = stackItem;
+      rerender();
     });
-    um.on('stack-item-popped', ({ stackItem }) => {
+    um.on('stack-item-updated', ({ stackItem }) => {
+      touchedRef.current = stackItem;
+    });
+    um.on('stack-item-popped', ({ stackItem, type }) => {
       lastKindRef.current = null;
-      const range = decodeSelection(doc, stackItem.meta.get('sel') ?? null, viewRef.current);
+      const counter = touchedRef.current;
+      if (counter && counter !== stackItem)
+        for (const k of ['before', 'after']) counter.meta.set(k, stackItem.meta.get(k));
+      const saved = stackItem.meta.get(type === 'undo' ? 'before' : 'after') ?? null;
+      const range = decodeSelection(doc, saved, viewRef.current);
       if (range) handle.current?.setPendingSelection(range);
-      sync();
+      rerender();
     });
-    um.on('stack-cleared', sync);
-    sync();
+    um.on('stack-cleared', rerender);
+    rerender();
     doc.on('beforeTransaction', onBefore);
     blocks.observeDeep(onDeep);
     return () => {
@@ -149,6 +169,7 @@ export const CollaborativeRichTextEditor = forwardRef<
   const onChange = useCallback(
     (next: RichDoc) => {
       applyingRef.current = true;
+      touchedRef.current = null;
       let r;
       try {
         r = applyLocal(doc, renderedRef.current, next, LOCAL_ORIGIN);
@@ -165,27 +186,37 @@ export const CollaborativeRichTextEditor = forwardRef<
           focus: mapPoint(p.focus, next, v, renamed),
         } satisfies Range);
       }
+      // Set by the undo manager's events during applyLocal (TS can't see that).
+      (touchedRef.current as StackItem | null)?.meta.set(
+        'after',
+        encodeSelection(doc, handle.current?.pendingSelection() ?? null, r.view),
+      );
       setState((s) => (s.doc === doc ? { doc, view: r.view } : s));
     },
     [doc],
   );
 
-  const newId = useMemo(() => () => `${doc.clientID.toString(36)}-${++idCount}`, [doc]);
+  // Stable (everything goes through refs), so the editor's handlers never re-subscribe.
   const seam = useMemo<CollabSeam>(
     () => ({
       handle,
-      newId,
-      undo: () => umRef.current?.undo(),
-      redo: () => umRef.current?.redo(),
-      canUndo: flags.canUndo,
-      canRedo: flags.canRedo,
+      undo: () => {
+        touchedRef.current = null;
+        umRef.current?.undo();
+      },
+      redo: () => {
+        touchedRef.current = null;
+        umRef.current?.redo();
+      },
+      canUndo: () => umRef.current?.canUndo() ?? false,
+      canRedo: () => umRef.current?.canRedo() ?? false,
       editKind: (kind) => {
         if (kind === 'other' || kind !== lastKindRef.current) umRef.current?.stopCapturing();
         lastKindRef.current = kind;
       },
       compositionEnd: () => flushRef.current(),
     }),
-    [newId, flags],
+    [],
   );
 
   return (

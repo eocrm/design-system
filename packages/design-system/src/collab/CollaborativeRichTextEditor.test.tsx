@@ -3,7 +3,8 @@ import * as Y from 'yjs';
 import { CollaborativeRichTextEditor } from './CollaborativeRichTextEditor';
 import { fromRichDoc, toRichDoc } from './schema';
 import { BLOCKS } from './schema';
-import { docFromText } from '../components/RichText/engine/model';
+import { docFromText, type RichDoc } from '../components/RichText/engine/model';
+import { RichTextEditor } from '../components/RichTextEditor/RichTextEditor';
 import { readSelection, writeSelection } from '../components/RichTextEditor/selection';
 import { I18nProvider } from '../i18n';
 
@@ -99,10 +100,54 @@ describe('CollaborativeRichTextEditor', () => {
     expect(editor).toHaveTextContent(/^XYhello$/);
     expect(textOf(b)).toBe('XYhello');
     expect(readSelection(editor)?.focus).toEqual({ blockId: id, offset: 7 });
-    // Redo brings it back.
+    // Redo brings it back, with the caret after the redone edit.
+    caret(editor, id, 0);
     fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true });
     expect(textOf(b)).toBe('XYhello!');
     expect(editor).toHaveTextContent('XYhello!');
+    expect(readSelection(editor)?.focus).toEqual({ blockId: id, offset: 8 });
+  });
+
+  it('the toolbar undo button goes through the shared undo', async () => {
+    const { a } = pair('hello');
+    render(
+      <I18nProvider locale="en">
+        <CollaborativeRichTextEditor doc={a} toolbar aria-label="Editor" />
+      </I18nProvider>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Editor' });
+    const undoBtn = screen.getByRole('button', { name: 'Undo' });
+    expect(undoBtn).toBeDisabled();
+    caret(editor, firstId(a), 5);
+    type(editor, '!');
+    expect(undoBtn).toBeEnabled();
+    fireEvent.click(undoBtn);
+    expect(textOf(a)).toBe('hello');
+    expect(screen.getByRole('button', { name: 'Redo' })).toBeEnabled();
+  });
+
+  it('a doc swap starts a fresh history and detaches the old doc', () => {
+    const { a, b } = pair('first');
+    const second = fromRichDoc(docFromText('second'), new Y.Doc());
+    const ui = (doc: Y.Doc) => (
+      <I18nProvider locale="en">
+        <CollaborativeRichTextEditor doc={doc} toolbar aria-label="Editor" />
+      </I18nProvider>
+    );
+    const { rerender } = render(ui(a));
+    const editor = screen.getByRole('textbox', { name: 'Editor' });
+    caret(editor, firstId(a), 5);
+    type(editor, '!');
+    rerender(ui(second));
+    expect(editor).toHaveTextContent(/^second$/);
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+    // Edits to the old doc no longer reach the editor.
+    b.transact(() => yText(b, firstId(b)).insert(0, 'old '));
+    expect(editor).toHaveTextContent(/^second$/);
+    caret(editor, firstId(second), 6);
+    type(editor, '?');
+    expect(textOf(second)).toBe('second?');
+    expect(textOf(a)).toBe('old first!');
   });
 
   it('splits undo steps by edit kind: a format right after typing is its own step', () => {
@@ -159,6 +204,33 @@ describe('CollaborativeRichTextEditor', () => {
     });
     expect(editor).toHaveTextContent(/^Xhello$/);
     expect(readSelection(editor)?.focus).toEqual({ blockId: id, offset: 6 });
+  });
+
+  it("new block ids follow each editor's own doc, and plain editors keep rtN ids", () => {
+    const one = fromRichDoc(docFromText('one'), new Y.Doc());
+    const two = fromRichDoc(docFromText('two'), new Y.Doc());
+    const first = render(<CollaborativeRichTextEditor doc={one} aria-label="One" />);
+    render(<CollaborativeRichTextEditor doc={two} aria-label="Two" />);
+    const plainChange = vi.fn();
+    render(
+      <RichTextEditor value={docFromText('plain')} onChange={plainChange} aria-label="Plain" />,
+    );
+    const eb = screen.getByRole('textbox', { name: 'Two' });
+    eb.focus();
+    first.unmount();
+    caret(eb, firstId(two), 3);
+    input(eb, 'insertParagraph');
+    const ids = toRichDoc(two).blocks.map((b) => b.id);
+    expect(ids).toHaveLength(2);
+    expect(
+      ids.every((id) => id.startsWith(`${two.clientID.toString(36)}-`) || id.startsWith('s')),
+    ).toBe(true);
+    expect(ids.filter((id) => id.startsWith(`${two.clientID.toString(36)}-`))).toHaveLength(1);
+    const plain = screen.getByRole('textbox', { name: 'Plain' });
+    caret(plain, plain.querySelector('[data-block-id]')!.getAttribute('data-block-id')!, 5);
+    input(plain, 'insertParagraph');
+    const plainIds = (plainChange.mock.calls.at(-1)![0] as RichDoc).blocks.map((b) => b.id);
+    expect(plainIds.every((id) => /^rt\d+$/.test(id))).toBe(true);
   });
 
   it('gives new blocks clientID-prefixed ids', () => {

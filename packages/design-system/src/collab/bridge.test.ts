@@ -92,6 +92,39 @@ describe('applyLocal', () => {
     expect(x.id).toBe(r.view.blocks[0].id);
   });
 
+  it('writes a new block with an editor id (rtN) under a fresh clientID-prefixed id', () => {
+    const r = seeded(base, 7);
+    const next = { blocks: [...r.view.blocks, blk('rt1', [run('new')])] };
+    const res = applyLocal(r.doc, r.view, next, LOCAL);
+    expect(res.renamed).toHaveLength(1);
+    const { from, to } = res.renamed![0];
+    expect(from).toBe('rt1');
+    expect(to).toMatch(/^7-\d+$/);
+    expect(res.view.blocks.at(-1)!.id).toBe(to);
+    expect(toRichDoc(r.doc)).toEqual(norm(res.view));
+    // Already prefixed (or already live) ids are kept.
+    const again = applyLocal(
+      r.doc,
+      res.view,
+      { blocks: [...res.view.blocks, blk('7-x', [])] },
+      LOCAL,
+    );
+    expect(again.renamed).toBeUndefined();
+  });
+
+  it('two replicas each creating `rt1` concurrently keep both blocks', () => {
+    const a = seeded(base, 1);
+    const b = replica(2);
+    sync(a, b);
+    edit(a, { blocks: [...a.view.blocks, blk('rt1', [run('from A')])] });
+    edit(b, { blocks: [...b.view.blocks, blk('rt1', [run('from B')])] });
+    sync(a, b);
+    expect(toRichDoc(a.doc)).toEqual(toRichDoc(b.doc));
+    const texts = toRichDoc(a.doc).blocks.map((bl) => bl.inlines!.map((x) => x.text).join(''));
+    expect(texts).toEqual(expect.arrayContaining(['from A', 'from B']));
+    expect(texts).toHaveLength(base.blocks.length + 2);
+  });
+
   it('deleting across runs', () => {
     const r = seeded(base);
     edit(r, setBlock(r.view, 0, { inlines: [run('hel'), run('ld')] }));
@@ -168,7 +201,7 @@ describe('applyLocal', () => {
   it('inserting, updating and deleting an attachment (uploadError stays local)', () => {
     const r = seeded(base);
     const att: Block = {
-      id: 'a1',
+      id: '1-a1', // this client's prefix: kept as is
       type: 'attachment',
       inlines: [],
       name: 'a.png',
@@ -177,9 +210,9 @@ describe('applyLocal', () => {
     };
     edit(r, { blocks: [r.view.blocks[0], att, ...r.view.blocks.slice(1)] });
     edit(r, setBlock(r.view, 1, { status: 'error', uploadError: 'Too big' }));
-    expect(r.doc.getMap<Y.Map<unknown>>(BLOCKS).get('a1')!.has('uploadError')).toBe(false);
+    expect(r.doc.getMap<Y.Map<unknown>>(BLOCKS).get('1-a1')!.has('uploadError')).toBe(false);
     edit(r, setBlock(r.view, 1, { status: 'ready', src: 'https://cdn.test/a.png' }));
-    edit(r, { blocks: r.view.blocks.filter((b) => b.id !== 'a1') });
+    edit(r, { blocks: r.view.blocks.filter((b) => b.id !== '1-a1') });
   });
 
   it('no-op edits write nothing', () => {
@@ -364,11 +397,11 @@ describe('applyLocal', () => {
 
     it('a remote block the view lacks appears in the returned view', () => {
       const [a, b] = [seeded(base, 1), seeded(base, 2)];
-      edit(a, { blocks: [...a.view.blocks, blk('n1', [run('new')])] });
+      edit(a, { blocks: [...a.view.blocks, blk('1-n1', [run('new')])] });
       quiet(b, () => sync(a, b));
       const before = b.view;
       edit(b, setBlock(b.view, 0, { inlines: [run('x')] }));
-      expect(b.view.blocks.map((x) => x.id)).toContain('n1');
+      expect(b.view.blocks.map((x) => x.id)).toContain('1-n1');
       expect(b.view.blocks[1]).toBe(before.blocks[1]); // untouched blocks keep identity
     });
   });
@@ -393,8 +426,8 @@ describe('applyLocal', () => {
         { blocks: [{ ...a.view.blocks[0], inlines: [run('A')] }] },
         LOCAL,
       );
-      expect(res.renamed).toEqual({ from, to: res.view.blocks[0].id });
-      expect(res.renamed!.to).not.toBe(from);
+      expect(res.renamed).toEqual([{ from, to: res.view.blocks[0].id }]);
+      expect(res.renamed![0].to).not.toBe(from);
       a.view = res.view;
       edit(b, { blocks: [{ ...b.view.blocks[0], inlines: [run('B')] }] });
       sync(a, b);

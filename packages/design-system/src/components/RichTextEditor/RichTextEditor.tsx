@@ -12,7 +12,7 @@ import {
 import { flushSync } from 'react-dom';
 import clsx from 'clsx';
 import type { RichDoc, Range, Mark, MarkType, Point } from '../RichText/engine/model';
-import { nextId, setIdSource } from '../RichText/engine/model';
+import { nextId } from '../RichText/engine/model';
 import { CollabSeamContext } from './collabSeam';
 import { renderDoc } from '../RichText/engine/renderDoc';
 import type { RenderLink } from '../RichText/engine/renderLink';
@@ -1048,8 +1048,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (autoFocus) rootRef.current?.focus();
     }, [autoFocus]);
 
-    // Collaborative mode: hand the seam its handle, its id source (while this editor is the one
-    // being used) and selection reports.
+    // Collaborative mode: hand the seam its handle and report selection changes.
     useLayoutEffect(() => {
       if (!seam) return;
       seam.handle.current = {
@@ -1065,24 +1064,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         seam.handle.current = null;
       };
     }, [seam]);
-    const newId = seam?.newId;
     const onSeamSelection = seam?.onSelectionChange;
-    useEffect(() => {
-      const target = shellRef.current ?? rootRef.current;
-      if (!newId || !target) return;
-      // ponytail: the last-used editor's source wins page-wide; ids stay unique either way (each
-      // source is its own clientID prefix + counter).
-      const use = () => setIdSource(newId);
-      use();
-      target.addEventListener('focusin', use);
-      target.addEventListener('pointerdown', use);
-      return () => {
-        target.removeEventListener('focusin', use);
-        target.removeEventListener('pointerdown', use);
-        const prev = setIdSource(null);
-        if (prev !== newId) setIdSource(prev);
-      };
-    }, [newId]);
     useEffect(() => {
       if (!onSeamSelection) return;
       const f = () => onSeamSelection(rootRef.current ? readSelection(rootRef.current) : null);
@@ -1900,8 +1882,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onToggleList={onToolbarToggleList}
         linkActive={toolbarLinkActive}
         onOpenLink={openLinkEditor}
-        canUndo={seam ? seam.canUndo : canUndo}
-        canRedo={seam ? seam.canRedo : canRedo}
+        canUndo={seam ? seam.canUndo() : canUndo}
+        canRedo={seam ? seam.canRedo() : canRedo}
         onUndo={onUndo}
         onRedo={onRedo}
         onPickFiles={uploadOn ? onPickFiles : undefined}
