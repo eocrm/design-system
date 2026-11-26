@@ -93,14 +93,14 @@ onPresenceLeft((clientId) => setOthers((all) => all.filter((x) => x.clientId !==
 
 Remove an entry only when that client disconnects, and keep it through brief transport blips (a short grace period, e.g. a few seconds) before removing it: removal makes that client's in-flight uploads read as "Upload interrupted" for everyone else.
 
-**Subscribe before you load.** Open the SSE subscription (or whatever delivers remote updates) before fetching the stored log, buffer what arrives, apply the log, then apply the buffer. An update published between the fetch and the subscription is otherwise lost, and Yjs then holds every later update that depends on it as pending: the doc silently stops syncing. **Catch up the same way after every reconnect:** re-fetch the log (the safe default) and apply it before relying on live updates. Resuming with Mercure's `Last-Event-ID` instead is an optimisation that only works when the server publishes each update with `id` = its log entry id (the hub generates its own ids otherwise) and the hub's bounded history still holds that id; if it may not, or you cannot tell, re-fetch the log.
+**Subscribe before you load.** Open the SSE subscription (or whatever delivers remote updates) before fetching the stored log, buffer what arrives, apply the log, then apply the buffer. An update published between the fetch and the subscription is otherwise lost, and Yjs then holds every later update that depends on it as pending: the doc silently stops syncing. **Catch up the same way after every reconnect** (for an `EventSource`, when `open` fires again): re-fetch the log and apply it before relying on live updates, then flush local edits buffered while offline. Re-applying updates the doc already has is harmless.
 
 Give a client that connects the other side's state (`Y.encodeStateAsUpdate(doc)` from a peer or the stored log); Yjs updates are idempotent, so duplicates and reordering are safe.
 
 ## Persistence
 
 - Store the **Y update log** as the source of truth. Do not rebuild the doc from a `RichDoc` on every load.
-- Give every log entry a **stable, increasing id** (never a list position, never reused), and publish each update to Mercure with that id, so a `Last-Event-ID` resume refers to it.
+- Give every log entry a **stable, increasing id** (never a list position, never reused); compaction below relies on it.
 - To compact the log (your server need not understand Yjs): a client that has applied every entry up to id `N` sends `Y.encodeStateAsUpdate(doc)` together with `N`; the server, **atomically with appends**, replaces the entries with id ≤ `N` by that one state entry, which **keeps id `N`**, and keeps every entry after `N`. The state may also contain later edits; re-applying them is idempotent. Never replace the whole log with one client's state: updates appended meanwhile would be lost.
 - Store `toRichDoc(doc)` snapshots next to it for search, version history and read-only display with `<RichText>`. They are derived data: **never seed a doc from a snapshot taken from a Y doc.**
 - Load in this order, every time:

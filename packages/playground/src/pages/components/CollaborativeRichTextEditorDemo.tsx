@@ -161,7 +161,7 @@ const REMOTE = Symbol('remote');
 // Seed only when there is NO stored log (a log whose blocks were all deleted is still a log).
 // Never seed from a toRichDoc snapshot; never write snapshots back into the legacy field.
 // Assumes \`onIncoming\` buffers updates that arrive before it is attached: subscribe to SSE
-// BEFORE fetching the stored log (or resume with Mercure's Last-Event-ID), never after.
+// BEFORE fetching the stored log, never after; after a reconnect, re-fetch the log the same way.
 function loadDoc(
   storedUpdates: Uint8Array[],
   legacyPage: RichDoc | null,
