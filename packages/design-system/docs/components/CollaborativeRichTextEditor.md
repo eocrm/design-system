@@ -22,7 +22,7 @@ if (storedUpdates.length > 0) {
   fromRichDoc(legacyPage, doc); // never-migrated page: seed once...
   persist(Y.encodeStateAsUpdate(doc)); // ...and store (and relay) it as the log's first entry
 } // else: a brand-new page starts empty
-// then attach doc.on('update') / the transport (see Transport wiring)
+// then drain the buffered remote updates and start sending local ones (see Transport wiring)
 
 <CollaborativeRichTextEditor
   doc={doc}
@@ -88,24 +88,26 @@ Presence rides the same channel: `onPresenceChange` fires with this user's prese
 ```tsx
 const [others, setOthers] = useState<CollabPresence[]>([]);
 onIncomingPresence((p) => setOthers((all) => [...all.filter((x) => x.clientId !== p.clientId), p]));
+onPresenceLeft((clientId) => setOthers((all) => all.filter((x) => x.clientId !== clientId)));
 ```
 
 Remove an entry only when that client disconnects, and keep it through brief transport blips (a short grace period, e.g. a few seconds) before removing it: removal makes that client's in-flight uploads read as "Upload interrupted" for everyone else.
 
-**Subscribe before you load.** Open the SSE subscription (or whatever delivers remote updates) before fetching the stored log, buffer what arrives, apply the log, then apply the buffer — or resume with Mercure's `Last-Event-ID` / re-fetch the log after subscribing. An update published between the fetch and the subscription is otherwise lost, and Yjs then holds every later update that depends on it as pending: the doc silently stops syncing.
+**Subscribe before you load.** Open the SSE subscription (or whatever delivers remote updates) before fetching the stored log, buffer what arrives, apply the log, then apply the buffer — or resume with Mercure's `Last-Event-ID` (the log endpoint must then return the Mercure event id of its last entry, so the subscription can resume from it) / re-fetch the log after subscribing. An update published between the fetch and the subscription is otherwise lost, and Yjs then holds every later update that depends on it as pending: the doc silently stops syncing.
 
 Give a client that connects the other side's state (`Y.encodeStateAsUpdate(doc)` from a peer or the stored log); Yjs updates are idempotent, so duplicates and reordering are safe.
 
 ## Persistence
 
-- Store the **Y update log** (or a periodically merged `Y.encodeStateAsUpdate(doc)`) as the source of truth. Do not rebuild the doc from a `RichDoc` on every load.
+- Store the **Y update log** as the source of truth. Do not rebuild the doc from a `RichDoc` on every load.
+- To compact it (your server need not understand Yjs): a client that has applied the log up to entry `N` sends `Y.encodeStateAsUpdate(doc)` together with `N`, and the server replaces **only entries 1..N** with that state, keeping everything appended after `N`. Never replace the whole log with one client's state: updates appended meanwhile would be lost.
 - Store `toRichDoc(doc)` snapshots next to it for search, version history and read-only display with `<RichText>`. They are derived data: **never seed a doc from a snapshot taken from a Y doc.**
 - Load in this order, every time:
   1. subscribe to remote updates and buffer them (see "Subscribe before you load"), then create the doc: `const doc = new Y.Doc()`;
   2. if a stored Y update log (or merged state) exists: `Y.applyUpdate(doc, Y.mergeUpdates(storedUpdates))` and **do not seed**;
   3. else if a legacy page exists: `fromRichDoc(legacyPage, doc)`, then immediately persist `Y.encodeStateAsUpdate(doc)` as the log's first entry (and relay it). From then on the legacy field is never read again;
   4. else (a brand-new page): start empty, no seed;
-  5. apply the buffered remote updates, then attach the `doc.on('update')` listener / transport.
+  5. drain the buffered remote updates, then start applying live ones and attach the `doc.on('update')` listener that sends local edits.
 
   Seed only when there is **no stored log**, not "when the doc is empty": a log whose blocks were all deleted is still a log. Never seed from a `toRichDoc` snapshot and never write snapshots back into the legacy content field. A seed that is not persisted makes later log entries depend on items missing from the log.
 

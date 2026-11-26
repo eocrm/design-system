@@ -185,6 +185,8 @@ interface PageProps {
   sendPresence: (p: CollabPresence) => void;
   onIncomingPresence: (cb: (p: CollabPresence) => void) => () => void;
   onPeerJoined: (cb: () => void) => () => void;
+  onReconnected: (cb: () => void) => () => void;
+  onPresenceLeft: (cb: (clientId: number) => void) => () => void;
 }
 
 export function Page({
@@ -196,6 +198,8 @@ export function Page({
   sendPresence,
   onIncomingPresence,
   onPeerJoined,
+  onReconnected,
+  onPresenceLeft,
 }: PageProps) {
   const [doc] = useState(() => loadDoc(storedUpdates, legacyPage, persist));
   // Starts empty: a peer's mount announcement may predate this subscription, so peers re-send.
@@ -207,9 +211,14 @@ export function Page({
   useEffect(() => {
     const onUpdate = (u: Uint8Array, origin: unknown) => origin !== REMOTE && send(u);
     doc.on('update', onUpdate);
-    // When a peer joins or reconnects, re-send our last presence to it (it missed the mount
-    // announcement). After our own reconnect, re-send it too (peers may have dropped us).
-    const offJoin = onPeerJoined(() => lastPresence.current && sendPresence(lastPresence.current));
+    // Re-broadcast our last presence when a peer joins or reconnects (it missed our mount
+    // announcement) and after our own reconnect (peers may have dropped us meanwhile).
+    const resend = () => lastPresence.current && sendPresence(lastPresence.current);
+    const offJoin = onPeerJoined(resend);
+    const offReconnect = onReconnected(resend);
+    const offLeft = onPresenceLeft((id: number) =>
+      setOthers((all) => all.filter((x) => x.clientId !== id)),
+    );
     const offIn = onIncoming((u: Uint8Array) => Y.applyUpdate(doc, u, REMOTE));
     const offPresence = onIncomingPresence((p: CollabPresence) =>
       setOthers((all) => [...all.filter((x) => x.clientId !== p.clientId), p]),
@@ -219,6 +228,8 @@ export function Page({
       offIn();
       offPresence();
       offJoin();
+      offReconnect();
+      offLeft();
     };
   }, [doc]);
 
