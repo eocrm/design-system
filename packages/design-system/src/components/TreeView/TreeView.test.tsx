@@ -997,6 +997,29 @@ describe('TreeView keyboard move', () => {
       }
     });
 
+    it('a drop inside a collapsed node fires onMove, then expands it; other drops do not expand', () => {
+      const order: string[] = [];
+      render(
+        <Move
+          onMoveSpy={(m) => order.push(`move:${(m as { id: string }).id}`)}
+          onExpandedSpy={(id, open) => order.push(`expand:${id}:${open}`)}
+        />,
+      );
+      focus('FAQ'); // a real mousedown focuses the pressed treeitem; jsdom's pointerdown does not
+      pick('FAQ', 70); // inside Setup (collapsed)
+      drop(70);
+      expect(order).toEqual(['move:FAQ', 'expand:Setup:true']);
+      expect(item('FAQ')).toHaveFocus();
+      expect(item('FAQ')).toHaveAttribute('aria-level', '2');
+      order.length = 0;
+      // Rows: Intro, A, B, Setup, FAQ. Inside Intro (expanded), then before A.
+      pick('FAQ', 10);
+      drop(10);
+      pick('B', 21);
+      drop(21);
+      expect(order).toEqual(['move:FAQ', 'move:B']);
+    });
+
     it('without onMove rows are not draggable', () => {
       render(<Move noMove />);
       pick('FAQ', 21);

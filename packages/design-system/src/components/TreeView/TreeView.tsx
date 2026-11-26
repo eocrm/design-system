@@ -402,7 +402,13 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     canDrop,
     onExpandedChange,
     announce,
-    onDrop: commitMove,
+    // Like the keyboard indent: a drop into a collapsed node (or leaf) expands it after onMove, so the moved
+    // node stays visible and keeps focus.
+    onDrop: (item, move) => {
+      commitMove(item, move);
+      const parent = flat.find((i) => i.kind === 'node' && i.node.id === move.parentId);
+      if (parent?.kind === 'node' && !parent.expanded) onExpandedChange(parent.node.id, true);
+    },
   });
 
   const run = (action: TreeAction) => {
