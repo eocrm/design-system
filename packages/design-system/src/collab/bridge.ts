@@ -295,6 +295,19 @@ const nextCount = (doc: Y.Doc) => {
   return n;
 };
 
+/**
+ * A fresh client-scoped block id for `doc` (`${clientID.toString(36)}-${n}`): what `applyLocal`
+ * would rename a new block to, so blocks created under it are written as-is.
+ * @internal
+ */
+export function newBlockId(doc: Y.Doc): string {
+  const blocks = blocksOf(doc);
+  let id: string;
+  do id = `${doc.clientID.toString(36)}-${nextCount(doc)}`;
+  while (blocks.has(id));
+  return id;
+}
+
 const hasLive = (blocks: Y.Map<unknown>) =>
   [...blocks.entries()].some(([k, v]) => isBlockEntry(k, v));
 

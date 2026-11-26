@@ -1,8 +1,6 @@
 import {
-  createContext,
   forwardRef,
   useCallback,
-  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -11,36 +9,28 @@ import {
   useState,
 } from 'react';
 import * as Y from 'yjs';
-import { Cloud, CloudOff, RefreshCw } from 'lucide-react';
 import {
   RichTextEditor,
+  type RichTextEditKind,
+  type RichTextEditorController,
   type RichTextEditorProps,
+  type RichTextPresence,
+  type RichTextUploadOwner,
 } from '../components/RichTextEditor/RichTextEditor';
-import {
-  CollabSeamContext,
-  type CollabEditorHandle,
-  type CollabSeam,
-} from '../components/RichTextEditor/collabSeam';
-import type { EditKind } from '../components/RichTextEditor/history';
 import type { Point, Range, RichDoc } from '../components/RichText/engine/model';
 import { runsText } from '../components/RichText/engine/inlines';
 import {
   applyLocal,
   decodeSelection,
   encodeSelection,
+  newBlockId,
   readChanged,
   type CollabPoint,
   type CollabSelection,
   type LocalResult,
 } from './bridge';
-import { AttachmentCollabContext } from '../components/RichText/RichTextAttachment';
-import { LiveRegion } from '../components/LiveRegion';
-import { VisuallyHidden } from '../components/VisuallyHidden';
-import { useTranslation } from '../i18n';
 import { BLOCKS, blockMeta, isBlockEntry, toRichDoc } from './schema';
 import { keptIndices } from './textDiff';
-import { PresenceDataContext, PresenceOverlay, type PresenceData } from './presence';
-import styles from './CollaborativeRichTextEditor.module.scss';
 
 /** Origin of this editor's own transactions: the only one `Y.UndoManager` tracks. */
 const LOCAL_ORIGIN = Symbol('eocrm-collab-local');
@@ -78,46 +68,26 @@ export interface CollabPresence extends CollabUser {
  */
 export type CollabStatus = 'synced' | 'connecting' | 'offline';
 
-const STATUS_ICON = { synced: Cloud, connecting: RefreshCw, offline: CloudOff } as const;
-
-interface StatusData {
-  status: CollabStatus;
-  others: string[];
-}
-const StatusContext = createContext<StatusData>({ status: 'synced', others: [] });
-
-// Status text + icon; its accessible text also names the others editing. Status changes are
-// announced through a region that is always mounted (Rule 10); the initial status is not.
-function StatusArea() {
-  const { status, others } = useContext(StatusContext);
-  const t = useTranslation();
-  const [shown, setShown] = useState(status);
-  const [announced, setAnnounced] = useState('');
-  const hint = status === 'offline' ? ` — ${t('collab.offlineHint')}` : '';
-  if (shown !== status) {
-    setShown(status);
-    setAnnounced(t(`collab.${status}`) + hint);
-  }
-  const Icon = STATUS_ICON[status];
-  return (
-    <span className={styles.status} data-collab-status="" data-status={status}>
-      <Icon size={14} aria-hidden="true" />
-      <span>{t(`collab.${status}`)}</span>
-      {hint && <VisuallyHidden>{hint}</VisuallyHidden>}
-      {others.length > 0 && (
-        <VisuallyHidden>. {t('collab.othersEditing', { names: others })}</VisuallyHidden>
-      )}
-      <LiveRegion>{announced}</LiveRegion>
-    </span>
-  );
-}
-
 type StackItem = Y.UndoManager['undoStack'][number];
 
 /** Props of {@link CollaborativeRichTextEditor}. */
 export interface CollaborativeRichTextEditorProps extends Omit<
   RichTextEditorProps,
-  'value' | 'onChange'
+  | 'value'
+  | 'onChange'
+  | 'history'
+  | 'onUndo'
+  | 'onRedo'
+  | 'canUndo'
+  | 'canRedo'
+  | 'onEdit'
+  | 'createBlockId'
+  | 'onSelectionChange'
+  | 'controller'
+  | 'onCompositionEnd'
+  | 'presence'
+  | 'syncStatus'
+  | 'uploadOwner'
 > {
   /**
    * The shared document. The app owns it and its transport (`doc.on('update')` → send;
@@ -197,17 +167,20 @@ export const CollaborativeRichTextEditor = forwardRef<
   const renderedRef = useRef(view);
   renderedRef.current = view;
   const viewRef = useRef(view);
-  const handle = useRef<CollabEditorHandle | null>(null);
+  const controller = useRef<RichTextEditorController | null>(null);
+  const getSel = () => controller.current?.getSelection() ?? null;
+  // The selection before the current local edit (captured in onEdit, before its caret is pending).
+  const localBeforeRef = useRef<Range | null>(null);
   const applyingRef = useRef(false);
   const umRef = useRef<Y.UndoManager | null>(null);
   const flushRef = useRef(() => {});
   // Kind of the last local edit: like the editor's own history, only same-kind edits (never
   // 'other') share an undo step.
-  const lastKindRef = useRef<EditKind | null>(null);
+  const lastKindRef = useRef<RichTextEditKind | null>(null);
   // The undo item the current transaction added or extended (to store the caret after the edit).
   const touchedRef = useRef<StackItem | null>(null);
   const [, rerender] = useReducer((n: number) => n + 1, 0);
-  // The next onChange is a history-less commit (seam.untracked).
+  // The next onChange is a history-less commit (onEdit 'silent').
   const untrackedRef = useRef(false);
   // Blocks the last local edit wrote under new ids (an upload resolves its block's id right
   // after inserting it).
@@ -223,7 +196,8 @@ export const CollaborativeRichTextEditor = forwardRef<
     let sel: CollabSelection | null = null;
     let selBase = viewRef.current;
     const onBefore = (tr: Y.Transaction) => {
-      before = encodeSelection(doc, handle.current?.readSelection() ?? null, renderedRef.current);
+      const now = isOwn(tr.origin) ? localBeforeRef.current : getSel();
+      before = encodeSelection(doc, now, renderedRef.current);
       if (!isOwn(tr.origin) && viewRef.current === renderedRef.current) {
         sel = before;
         selBase = viewRef.current;
@@ -232,7 +206,7 @@ export const CollaborativeRichTextEditor = forwardRef<
     const flush = () => {
       if (viewRef.current === renderedRef.current) return;
       const range = sel && decodeSelection(doc, sel, selBase);
-      if (range) handle.current?.setPendingSelection(range);
+      if (range) controller.current?.setSelection(range);
       show(viewRef.current);
     };
     flushRef.current = flush;
@@ -241,7 +215,7 @@ export const CollaborativeRichTextEditor = forwardRef<
       if (isOwn(tr.origin) || applyingRef.current) return;
       viewRef.current = readChanged(doc, viewRef.current, events);
       // Mid-composition the DOM belongs to the IME: wait for compositionend.
-      if (!handle.current?.isComposing()) flush();
+      if (!controller.current?.isComposing()) flush();
     };
     const um = new Y.UndoManager(blocks, {
       trackedOrigins: new Set([LOCAL_ORIGIN]),
@@ -266,7 +240,7 @@ export const CollaborativeRichTextEditor = forwardRef<
         for (const k of ['before', 'after']) counter.meta.set(k, stackItem.meta.get(k));
       const saved = stackItem.meta.get(type === 'undo' ? 'before' : 'after') ?? null;
       const range = decodeSelection(doc, saved, viewRef.current);
-      if (range) handle.current?.setPendingSelection(range);
+      if (range) controller.current?.setSelection(range);
       rerender();
     });
     um.on('stack-cleared', rerender);
@@ -296,10 +270,10 @@ export const CollaborativeRichTextEditor = forwardRef<
       viewRef.current = r.view;
       renamedRef.current = r.renamed;
       // The editor placed its caret in `next`'s terms; the view may hold more (a merged remote edit).
-      const p = handle.current?.pendingSelection();
+      const p = getSel();
       if (p && (r.view !== next || r.renamed)) {
         const { view: v, renamed } = r;
-        handle.current!.setPendingSelection({
+        controller.current!.setSelection({
           anchor: mapPoint(p.anchor, next, v, renamed),
           focus: mapPoint(p.focus, next, v, renamed),
         } satisfies Range);
@@ -307,42 +281,31 @@ export const CollaborativeRichTextEditor = forwardRef<
       // Set by the undo manager's events during applyLocal (TS can't see that).
       (touchedRef.current as StackItem | null)?.meta.set(
         'after',
-        encodeSelection(doc, handle.current?.pendingSelection() ?? null, r.view),
+        encodeSelection(doc, getSel(), r.view),
       );
       setState((s) => (s.doc === doc ? { doc, view: r.view } : s));
     },
     [doc],
   );
 
-  // Stable (everything goes through refs), so the editor's handlers never re-subscribe.
-  const seam = useMemo<CollabSeam>(
-    () => ({
-      handle,
-      undo: () => {
-        touchedRef.current = null;
-        umRef.current?.undo();
-      },
-      redo: () => {
-        touchedRef.current = null;
-        umRef.current?.redo();
-      },
-      canUndo: () => umRef.current?.canUndo() ?? false,
-      canRedo: () => umRef.current?.canRedo() ?? false,
-      editKind: (kind) => {
-        if (kind === 'other' || kind !== lastKindRef.current) umRef.current?.stopCapturing();
-        lastKindRef.current = kind;
-      },
-      compositionEnd: () => flushRef.current(),
-      untracked: () => {
-        untrackedRef.current = true;
-      },
-      resolveId: (id) => renamedRef.current?.find((r) => r.from === id)?.to ?? id,
-      onSelectionChange: (sel) => presenceRef.current(sel),
-      overlay: <PresenceOverlay />,
-      status: <StatusArea />,
-    }),
-    [],
-  );
+  const onUndo = useCallback(() => {
+    touchedRef.current = null;
+    umRef.current?.undo();
+  }, []);
+  const onRedo = useCallback(() => {
+    touchedRef.current = null;
+    umRef.current?.redo();
+  }, []);
+  const onEdit = useCallback(({ kind }: { kind: RichTextEditKind }) => {
+    localBeforeRef.current = controller.current?.getSelection() ?? null;
+    if (kind === 'silent') {
+      untrackedRef.current = true;
+      return;
+    }
+    if (kind === 'other' || kind !== lastKindRef.current) umRef.current?.stopCapturing();
+    lastKindRef.current = kind;
+  }, []);
+  const createBlockId = useCallback(() => newBlockId(latestRef.current.doc), []);
 
   // Local presence: selection moves throttled (leading + trailing), focus loss at once.
   const presenceRef = useRef<(sel: Range | null) => void>(() => {});
@@ -372,7 +335,7 @@ export const CollaborativeRichTextEditor = forwardRef<
     const fire = () => {
       st.timer = 0;
       st.at = Date.now();
-      const now = handle.current?.readSelection() ?? null;
+      const now = getSel();
       if (!now) return;
       st.nulled = false;
       send(encodeSelection(latestRef.current.doc, now, renderedRef.current));
@@ -388,7 +351,7 @@ export const CollaborativeRichTextEditor = forwardRef<
   useEffect(() => {
     const cb = latestRef.current.onPresenceChange;
     if (!cb) return;
-    const now = handle.current?.readSelection() ?? null;
+    const now = controller.current?.getSelection() ?? null;
     sendRef.current.nulled = !now;
     cb({
       clientId: doc.clientID,
@@ -398,49 +361,58 @@ export const CollaborativeRichTextEditor = forwardRef<
     });
   }, [announce, doc, user.name, user.color]);
 
-  const presenceData = useMemo<PresenceData>(
-    () => ({ doc, view, presence }),
-    [doc, view, presence],
-  );
-  const statusData = useMemo<StatusData>(
-    () => ({
-      status,
-      // One name per client (the first; an app may relay duplicates).
-      others: presence
-        .filter(
-          (p, i) =>
-            p.clientId !== doc.clientID &&
-            presence.findIndex((q) => q.clientId === p.clientId) === i,
-        )
-        .map((p) => String(p.name)),
-    }),
-    [status, presence, doc],
+  // Others' presence in editor terms: our own entry and undecodable selections dropped.
+  const editorPresence = useMemo<RichTextPresence[]>(
+    () =>
+      presence
+        .filter((p) => p.clientId !== doc.clientID)
+        .map((p) => {
+          let selection: Range | null = null;
+          const s = p.selection;
+          const has = (id: unknown) => view.blocks.some((b) => b.id === id);
+          try {
+            // Pointing at blocks the doc no longer has: no "nearest point" guess.
+            if (s && has(s.anchor?.blockId) && has(s.focus?.blockId))
+              selection = decodeSelection(doc, s, view);
+          } catch {
+            // Untrusted relayed data: draw no caret for it.
+          }
+          return { id: String(p.clientId), name: p.name, color: p.color, selection };
+        }),
+    [presence, doc, view],
   );
   // Upload state only the Y.Doc knows: who started it (and whether they are still here).
   // Without a `presence` prop nobody can be known absent, so nothing reads as interrupted (else
   // everyone would be offered Remove on a live upload).
-  const attachmentState = useMemo(() => {
+  const uploadOwner = useMemo(() => {
     const here = presenceProp && new Set(presenceProp.map((p) => p.clientId));
-    return (id: string) => {
+    return (id: string): RichTextUploadOwner => {
       const m = doc.getMap<unknown>(BLOCKS).get(id);
       const by = isBlockEntry(id, m) ? blockMeta(m).uploadedBy : undefined;
-      const mine = by === doc.clientID;
-      return {
-        canRetry: mine,
-        interrupted: !!here && !mine && (by === undefined || !here.has(by)),
-      };
+      if (by === doc.clientID) return 'mine';
+      return here && (by === undefined || !here.has(by)) ? 'orphaned' : 'theirs';
     };
   }, [doc, presenceProp]);
 
   return (
-    <CollabSeamContext.Provider value={seam}>
-      <PresenceDataContext.Provider value={presenceData}>
-        <StatusContext.Provider value={statusData}>
-          <AttachmentCollabContext.Provider value={attachmentState}>
-            <RichTextEditor ref={ref} {...rest} value={view} onChange={onChange} />
-          </AttachmentCollabContext.Provider>
-        </StatusContext.Provider>
-      </PresenceDataContext.Provider>
-    </CollabSeamContext.Provider>
+    <RichTextEditor
+      ref={ref}
+      {...rest}
+      value={view}
+      onChange={onChange}
+      history="external"
+      onUndo={onUndo}
+      onRedo={onRedo}
+      canUndo={umRef.current?.canUndo() ?? false}
+      canRedo={umRef.current?.canRedo() ?? false}
+      onEdit={onEdit}
+      createBlockId={createBlockId}
+      onSelectionChange={(sel) => presenceRef.current(sel)}
+      controller={controller}
+      onCompositionEnd={() => flushRef.current()}
+      presence={editorPresence}
+      syncStatus={status}
+      uploadOwner={uploadOwner}
+    />
   );
 });

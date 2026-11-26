@@ -79,7 +79,7 @@ describe('CollaborativeRichTextEditor', () => {
     expect(container.childElementCount).toBe(1);
     const root = container.firstElementChild!;
     expect(root).toContainElement(ref.current);
-    expect(root).toContainElement(container.querySelector('[data-collab-status]') as HTMLElement);
+    expect(root).toContainElement(container.querySelector('[data-sync-status]') as HTMLElement);
     expect(root.querySelectorAll(':scope > *').length).toBeGreaterThan(1);
     expect(ref.current).toHaveClass('custom');
     // Plain mode is unchanged: the editable is the only root.
@@ -347,7 +347,7 @@ describe('CollaborativeRichTextEditor presence', () => {
         />,
       );
       expect(screen.getByRole('textbox', { name: 'Editor' })).toHaveTextContent('hello');
-      expect(container.querySelectorAll('[data-collab-caret]')).toHaveLength(0);
+      expect(container.querySelectorAll('[data-presence-caret]')).toHaveLength(0);
     } finally {
       comparePoint.mockRestore();
     }
@@ -368,12 +368,10 @@ describe('CollaborativeRichTextEditor presence', () => {
         aria-label="Editor"
       />,
     );
-    const carets = [...container.querySelectorAll('[data-collab-caret]')];
+    const carets = [...container.querySelectorAll('[data-presence-caret]')];
     expect(carets.map((c) => c.textContent)).toEqual(['Bob', '42']);
     // The status area names each client once.
-    expect(container.querySelector('[data-collab-status]')).toHaveTextContent(
-      '1 other editing: Bob',
-    );
+    expect(container.querySelector('[data-sync-status]')).toHaveTextContent('1 other editing: Bob');
   });
 
   function remote(doc: Y.Doc, blockId: string, a: number, f: number) {
@@ -407,12 +405,12 @@ describe('CollaborativeRichTextEditor presence', () => {
         aria-label="Editor"
       />,
     );
-    const overlay = container.querySelector('[data-collab-presence]')!;
+    const overlay = container.querySelector('[data-presence]')!;
     expect(overlay).toHaveAttribute('aria-hidden', 'true');
-    const carets = overlay.querySelectorAll('[data-collab-caret]');
+    const carets = overlay.querySelectorAll('[data-presence-caret]');
     expect([...carets].map((c) => c.textContent)).toEqual(['Bob']);
-    expect(overlay.querySelectorAll('[data-collab-selection]').length).toBeGreaterThan(0);
-    expect((carets[0] as HTMLElement).style.getPropertyValue('--collab-user-color')).toBe(
+    expect(overlay.querySelectorAll('[data-presence-selection]').length).toBeGreaterThan(0);
+    expect((carets[0] as HTMLElement).style.getPropertyValue('--rich-text-presence-color')).toBe(
       '#ff0000',
     );
   });
@@ -539,10 +537,7 @@ describe('CollaborativeRichTextEditor status', () => {
     const toolbar = screen.getByRole('toolbar');
     const region = screen.getByRole('status');
     expect(toolbar).toHaveTextContent('Synced');
-    expect(toolbar.querySelector('[data-collab-status] svg')).toHaveAttribute(
-      'aria-hidden',
-      'true',
-    );
+    expect(toolbar.querySelector('[data-sync-status] svg')).toHaveAttribute('aria-hidden', 'true');
     expect(region).toHaveTextContent(/^$/);
     rerender(ui('offline'));
     expect(toolbar).toHaveTextContent('Offline');
@@ -550,7 +545,7 @@ describe('CollaborativeRichTextEditor status', () => {
       expect(region).toHaveTextContent('Offline — changes will sync when reconnected'),
     );
     // Short visible label; the explanation is in the accessible text.
-    expect(toolbar.querySelector('[data-collab-status] > span:not([class])')).toHaveTextContent(
+    expect(toolbar.querySelector('[data-sync-status] > span:not([class])')).toHaveTextContent(
       /^Offline$/,
     );
     rerender(ui('connecting'));
@@ -574,7 +569,7 @@ describe('CollaborativeRichTextEditor status', () => {
       </I18nProvider>,
     );
     expect(screen.queryByRole('toolbar')).toBeNull();
-    const status = container.querySelector('[data-collab-status]')!;
+    const status = container.querySelector('[data-sync-status]')!;
     expect(status).toHaveTextContent('Synced');
     expect(status).toHaveTextContent('2 others editing: Bob, Cy');
     expect(screen.getByRole('status')).toBeInTheDocument();
@@ -592,7 +587,7 @@ describe('CollaborativeRichTextEditor status', () => {
         />
       </I18nProvider>,
     );
-    expect(container.querySelector('[data-collab-status]')).toHaveTextContent(
+    expect(container.querySelector('[data-sync-status]')).toHaveTextContent(
       'Также редактирует (1): «Аня»',
     );
   });

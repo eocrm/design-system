@@ -245,10 +245,8 @@
     "tier": "composition",
     "cluster": "Forms",
     "composes": [
-      "LiveRegion",
       "RichText",
-      "RichTextEditor",
-      "VisuallyHidden"
+      "RichTextEditor"
     ],
     "composedBy": []
   },
@@ -710,7 +708,6 @@
     "composedBy": [
       "Chart",
       "CodeBlock",
-      "CollaborativeRichTextEditor",
       "DateStrip",
       "DonutChart",
       "FunnelChart",
@@ -940,7 +937,8 @@
       "RichText",
       "Slider",
       "Stack",
-      "Text"
+      "Text",
+      "VisuallyHidden"
     ],
     "composedBy": [
       "CollaborativeRichTextEditor"
@@ -1255,7 +1253,6 @@
       "Banner",
       "Chart",
       "ChatBubble",
-      "CollaborativeRichTextEditor",
       "DashboardWidget",
       "DateStrip",
       "DateTile",
@@ -1265,6 +1262,7 @@
       "Heatmap",
       "LaneChart",
       "LiveRegion",
+      "RichTextEditor",
       "ScatterChart",
       "StagePath",
       "StatGroup",

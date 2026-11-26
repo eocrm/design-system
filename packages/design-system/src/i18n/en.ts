@@ -610,15 +610,6 @@ export const en: Messages = {
   field: {
     optional: '(optional)',
   },
-  collab: {
-    synced: 'Synced',
-    connecting: 'Connecting…',
-    offline: 'Offline',
-    offlineHint: 'changes will sync when reconnected',
-    othersEditing: ({ names }) =>
-      `${names.length} ${names.length === 1 ? 'other' : 'others'} editing: ${names.join(', ')}`,
-    uploadInterrupted: 'Upload interrupted',
-  },
   liquidEditor: {
     insertTag: 'Insert tag',
     tagDescription: {
@@ -645,6 +636,13 @@ export const en: Messages = {
     openImage: ({ name }) => (name ? `Open image: ${name}` : 'Open image'),
   },
   richTextEditor: {
+    synced: 'Synced',
+    connecting: 'Connecting…',
+    offline: 'Offline',
+    offlineHint: 'changes will sync when reconnected',
+    othersEditing: ({ names }) =>
+      `${names.length} ${names.length === 1 ? 'other' : 'others'} editing: ${names.join(', ')}`,
+    uploadInterrupted: 'Upload interrupted',
     editorLabel: 'Rich text editor',
     toolbar: 'Formatting',
     blockType: 'Text style',

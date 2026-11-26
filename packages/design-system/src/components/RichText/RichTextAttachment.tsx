@@ -27,13 +27,13 @@ export type RichTextImageActivateHandler = (
 ) => void;
 
 /**
- * Collaborative mode (internal, `/collab`): what the shared doc knows about a block's upload that
- * the block doesn't. `interrupted`: an `uploading` block whose uploader left; `canRetry`: this
- * editor started the upload (only it holds the `File`). Without a provider: no change.
+ * Who owns an `uploading` / `error` block's upload, from `RichTextEditor`'s `uploadOwner` prop.
+ * `'orphaned'` shows "Upload interrupted" with Remove; Retry only for `'mine'`. Without a
+ * provider (the prop is absent): today's behaviour, Retry always offered.
  * @internal
  */
-export const AttachmentCollabContext = createContext<
-  ((blockId: string) => { interrupted: boolean; canRetry: boolean }) | null
+export const UploadOwnerContext = createContext<
+  ((blockId: string) => 'mine' | 'theirs' | 'orphaned' | undefined) | null
 >(null);
 
 export function RichTextAttachment({
@@ -48,8 +48,9 @@ export function RichTextAttachment({
   const t = useTranslation();
   const name = block.name ?? '';
   const errorId = useId();
-  const collab = useContext(AttachmentCollabContext)?.(block.id);
-  const interrupted = block.status === 'uploading' && !!collab?.interrupted;
+  const ownerOf = useContext(UploadOwnerContext);
+  const owner = ownerOf?.(block.id);
+  const interrupted = block.status === 'uploading' && owner === 'orphaned';
 
   if (block.status === 'uploading' && !interrupted) {
     return (
@@ -70,7 +71,7 @@ export function RichTextAttachment({
         <span className={styles.attachmentName}>{name}</span>
         <span id={errorId}>
           <span className={styles.attachmentLabel}>
-            {t(interrupted ? 'collab.uploadInterrupted' : 'richTextEditor.uploadFailed')}
+            {t(interrupted ? 'richTextEditor.uploadInterrupted' : 'richTextEditor.uploadFailed')}
           </span>
           {block.uploadError && (
             <>
@@ -82,7 +83,7 @@ export function RichTextAttachment({
         {/* Actions only where the editor delegates them; read-only they'd be inert. */}
         {editable && (
           <>
-            {!interrupted && (collab?.canRetry ?? true) && (
+            {!interrupted && (!ownerOf || owner === 'mine') && (
               <Tooltip content={retry}>
                 <Button
                   size="xs"

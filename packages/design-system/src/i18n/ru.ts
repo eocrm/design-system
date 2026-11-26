@@ -620,17 +620,6 @@ export const ru: Messages = {
   field: {
     optional: '(необязательно)',
   },
-  collab: {
-    synced: 'Синхронизировано',
-    connecting: 'Подключение…',
-    offline: 'Офлайн',
-    offlineHint: 'изменения синхронизируются после подключения',
-    othersEditing: ({ names }) =>
-      `Также ${names.length === 1 ? 'редактирует' : 'редактируют'} (${names.length}): ${names
-        .map((n) => `«${n}»`)
-        .join(', ')}`,
-    uploadInterrupted: 'Загрузка прервана',
-  },
   liquidEditor: {
     insertTag: 'Вставить тег',
     tagDescription: {
@@ -657,6 +646,15 @@ export const ru: Messages = {
     openImage: ({ name }) => (name ? `Открыть изображение: ${name}` : 'Открыть изображение'),
   },
   richTextEditor: {
+    synced: 'Синхронизировано',
+    connecting: 'Подключение…',
+    offline: 'Офлайн',
+    offlineHint: 'изменения синхронизируются после подключения',
+    othersEditing: ({ names }) =>
+      `Также ${names.length === 1 ? 'редактирует' : 'редактируют'} (${names.length}): ${names
+        .map((n) => `«${n}»`)
+        .join(', ')}`,
+    uploadInterrupted: 'Загрузка прервана',
     editorLabel: 'Редактор форматированного текста',
     toolbar: 'Форматирование',
     blockType: 'Стиль текста',

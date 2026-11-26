@@ -1,19 +1,29 @@
 import {
   forwardRef,
   useCallback,
-  useContext,
   useEffect,
+  useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type HTMLAttributes,
+  type Ref,
 } from 'react';
 import { flushSync } from 'react-dom';
 import clsx from 'clsx';
-import type { RichDoc, Range, Mark, MarkType, Point } from '../RichText/engine/model';
+import type {
+  RichDoc,
+  Range,
+  Range as RichRange,
+  Mark,
+  MarkType,
+  Point,
+} from '../RichText/engine/model';
 import { nextId } from '../RichText/engine/model';
-import { CollabSeamContext } from './collabSeam';
+import { UploadOwnerContext } from '../RichText/RichTextAttachment';
+import { RichTextPresenceOverlay } from './RichTextPresence';
+import { RichTextSyncStatus as SyncStatusArea } from './RichTextSyncStatus';
 import { renderDoc } from '../RichText/engine/renderDoc';
 import type { RenderLink } from '../RichText/engine/renderLink';
 import type { RenderMention } from '../RichText/engine/renderMention';
@@ -93,6 +103,103 @@ import styles from './RichTextEditor.module.scss';
 // declining returns the exact sentinel back. A frozen one-off element keeps a
 // stable reference across calls.
 const FALLBACK_SENTINEL: React.ReactNode = Object.freeze(<span key="rt-fallback-sentinel" />);
+
+/**
+ * What a local edit was, reported by `onEdit` before its `onChange`: `'type'` (typing),
+ * `'delete'`, `'resize'` (an image width drag), `'other'` (formatting, Enter, paste, block
+ * actions, insert) or `'silent'` (an upload settling or a failed upload's removal — not an undo
+ * step). With `history="external"`, group same-kind edits into one undo step (never `'other'`).
+ */
+export type RichTextEditKind = EditKind | 'silent';
+
+/**
+ * Another user in a shared document, as the app relays it (untrusted data: names and colours are
+ * coerced to strings, and an entry the editor cannot place is skipped).
+ */
+export interface RichTextPresence {
+  /** Stable per user / connection. Used to de-duplicate the "N others editing" text. */
+  id: string;
+  /** Shown on the user's caret flag and in the status area's accessible text. */
+  name: string;
+  /**
+   * Any CSS colour for the user's caret, flag and selection tint. App data (like an avatar
+   * colour): the one raw colour the library accepts. Pick colours that keep white flag text legible.
+   */
+  color: string;
+  /** Their selection in this editor's model, or `null` when their editor is not focused. */
+  selection: RichRange | null;
+}
+
+/**
+ * Imperative handle for a sync layer (the `controller` prop).
+ */
+export interface RichTextEditorController {
+  /**
+   * The editor's model selection: the caret the next render places when there is one (inside
+   * `onChange`, the edit's own caret), else the selection in the DOM; `null` when it is outside
+   * the editor. Inside `onEdit` it is the selection before the edit.
+   */
+  getSelection(): RichRange | null;
+  /**
+   * The caret the editor's next render places (`null`: none). Call it right before passing an
+   * outside `value` whose change moved text under the caret; without it the editor keeps its
+   * current selection, clamped to the new doc.
+   */
+  setSelection(range: RichRange | null): void;
+  /**
+   * True during an IME composition. Hold outside `value` changes until `onCompositionEnd`: the
+   * DOM belongs to the IME until then.
+   */
+  isComposing(): boolean;
+}
+
+/**
+ * Connection state of the app's sync transport: `'synced'` (quiet), `'connecting'`
+ * (reconnecting; edits are kept) or `'offline'` (no connection; edits sync on reconnect).
+ */
+export type RichTextSyncStatus = 'synced' | 'connecting' | 'offline';
+
+/**
+ * Who owns an `uploading` / `error` attachment's upload: `'mine'` (this editor started it and
+ * holds the file: Retry offered), `'theirs'` (another present user's), `'orphaned'` (its uploader
+ * left: "Upload interrupted" with Remove), or `undefined` (unknown: no Retry).
+ */
+export type RichTextUploadOwner = 'mine' | 'theirs' | 'orphaned' | undefined;
+
+// Clamp `range` into `doc`: a point on a block the doc lost moves to the block now at that
+// block's index in `prev` (offset 0); offsets past a block's end move to its end.
+function clampRange(range: Range, doc: RichDoc, prev: RichDoc): Range {
+  const clamp = (p: Point): Point => {
+    const b = doc.blocks.find((x) => x.id === p.blockId);
+    if (b) return { blockId: b.id, offset: Math.min(p.offset, blockLength(b)) };
+    const i = prev.blocks.findIndex((x) => x.id === p.blockId);
+    const at = doc.blocks[Math.min(Math.max(i, 0), doc.blocks.length - 1)];
+    return { blockId: at.id, offset: 0 };
+  };
+  return { anchor: clamp(range.anchor), focus: clamp(range.focus) };
+}
+
+// Give blocks new in `result.doc` (not in `known`) ids from `newId`, moving the caret with them.
+function renameNewBlocks(
+  result: { doc: RichDoc; selection: Range },
+  known: ReadonlySet<string>,
+  newId: () => string,
+): { doc: RichDoc; selection: Range; renamed: Map<string, string> | null } {
+  const renamed = new Map<string, string>();
+  const blocks = result.doc.blocks.map((b) => {
+    if (known.has(b.id)) return b;
+    const id = newId();
+    renamed.set(b.id, id);
+    return { ...b, id };
+  });
+  if (!renamed.size) return { ...result, renamed: null };
+  const move = (p: Point): Point => ({ ...p, blockId: renamed.get(p.blockId) ?? p.blockId });
+  return {
+    doc: { blocks },
+    selection: { anchor: move(result.selection.anchor), focus: move(result.selection.focus) },
+    renamed,
+  };
+}
 
 export interface RichTextEditorProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
@@ -212,6 +319,62 @@ export interface RichTextEditorProps extends Omit<
    * width round-trip through HTML but not Markdown.
    */
   upload?: UploadConfig;
+  /**
+   * Who keeps the undo history. `'internal'` (default): the editor's own. `'external'`: a sync
+   * layer's (e.g. per-user undo over a shared doc) — the editor keeps none, sends ⌘Z / ⌘⇧Z /
+   * menu undo and the toolbar buttons to `onUndo` / `onRedo`, and accepts an outside `value` as-is
+   * (never a rejected edit or a history reset), keeping the caret where `controller.setSelection`
+   * puts it (default: the current selection, clamped to the new doc).
+   * @default 'internal'
+   */
+  history?: 'internal' | 'external';
+  /** Undo, with `history="external"` (keyboard, menu and toolbar). */
+  onUndo?: () => void;
+  /** Redo, with `history="external"` (keyboard, menu and toolbar). */
+  onRedo?: () => void;
+  /** Whether the toolbar's Undo button is enabled, with `history="external"`. @default false */
+  canUndo?: boolean;
+  /** Whether the toolbar's Redo button is enabled, with `history="external"`. @default false */
+  canRedo?: boolean;
+  /**
+   * Fires once per local edit, right before its `onChange`, with its kind (see
+   * {@link RichTextEditKind}; `'silent'` edits are not undo steps). Not fired for undo / redo.
+   */
+  onEdit?: (edit: { kind: RichTextEditKind }) => void;
+  /**
+   * Id source for every block the editor creates (Enter, paste, insert, duplicate, attachments),
+   * per editor instance. Use it when ids must be unique across users of a shared doc (e.g. prefix
+   * a client id). Omit for session-unique `rtN` ids.
+   */
+  createBlockId?: () => string;
+  /**
+   * Fires on every selection change with the model selection, and with `null` when the editor
+   * loses focus or the selection leaves it. Relay it (throttled) as this user's presence.
+   */
+  onSelectionChange?: (selection: RichRange | null) => void;
+  /** Receives the {@link RichTextEditorController} for a sync layer. */
+  controller?: Ref<RichTextEditorController>;
+  /** Fires after the editor committed an IME composition: apply outside changes held during it. */
+  onCompositionEnd?: () => void;
+  /**
+   * Other users in a shared doc: drawn as carets with a name flag and selection tints in each
+   * user's colour (hidden from assistive tech), and named in the status area's accessible text
+   * ("2 others editing: …", one per `id`). Leave out the local user. Setting it (or `syncStatus`)
+   * wraps the editable in a root element that holds the overlay and status.
+   */
+  presence?: readonly RichTextPresence[];
+  /**
+   * Connection state of the app's sync transport, shown as a small text + icon indicator in the
+   * toolbar row (`toolbar={true}`) or below the editable, and announced politely on change.
+   * Omit to show none.
+   */
+  syncStatus?: RichTextSyncStatus;
+  /**
+   * Who owns each in-flight or failed upload in a shared doc (see {@link RichTextUploadOwner}):
+   * `'orphaned'` shows "Upload interrupted" with Remove; Retry appears only for `'mine'`. Omit
+   * and every failed upload offers Retry, and none reads as interrupted.
+   */
+  uploadOwner?: (blockId: string) => RichTextUploadOwner;
 }
 
 function isEmptyDoc(doc: RichDoc): boolean {
@@ -265,6 +428,19 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       upload,
       invalid = false,
       required = false,
+      history = 'internal',
+      onUndo: onUndoProp,
+      onRedo: onRedoProp,
+      canUndo: canUndoProp = false,
+      canRedo: canRedoProp = false,
+      onEdit,
+      createBlockId,
+      onSelectionChange,
+      controller,
+      onCompositionEnd: onCompositionEndProp,
+      presence,
+      syncStatus,
+      uploadOwner,
       className,
       style,
       ...rest
@@ -272,8 +448,28 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     ref,
   ) {
     const t = useTranslation();
-    // Collaborative mode (internal, `/collab`): see collabSeam.ts. Null = the plain editor.
-    const seam = useContext(CollabSeamContext);
+    // Shared-editing hooks, read through a ref so handlers keep a stable identity.
+    const external = history === 'external';
+    const sync = useRef({
+      external,
+      onUndo: onUndoProp,
+      onRedo: onRedoProp,
+      onEdit,
+      createBlockId,
+      onSelectionChange,
+      onCompositionEnd: onCompositionEndProp,
+    });
+    sync.current = {
+      external,
+      onUndo: onUndoProp,
+      onRedo: onRedoProp,
+      onEdit,
+      createBlockId,
+      onSelectionChange,
+      onCompositionEnd: onCompositionEndProp,
+    };
+    // Ids the last commit renamed (createBlockId): an upload tracks its block by the new one.
+    const renamedRef = useRef<Map<string, string> | null>(null);
     const rootRef = useRef<HTMLDivElement | null>(null);
     const isComposingRef = useRef(false);
     // Selection to restore after the next model-driven re-render.
@@ -359,8 +555,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // block controls need the anchor). The image resize handle anchors into the
     // shell, so its hover tracking + element are gated on this. Declared up here
     // (vs. near the shell render) so the image-hover effect below can depend on it.
-    // Collaborative mode always uses it: the presence overlay and status must stay inside one root.
-    const usesShell = toolbar === true || autoToolbar || controlsOn || !!seam;
+    // Shared editing always uses it: the presence overlay and status must stay inside one root.
+    const sharedChrome = presence !== undefined || syncStatus !== undefined;
+    const usesShell = toolbar === true || autoToolbar || controlsOn || sharedChrome;
     // The same gate the mention menu uses — drives both `useMention`'s `enabled`
     // and the consolidated selectionchange listener's mention fan-out below.
     const mentionsEnabled = !!mentions && !readOnly;
@@ -510,7 +707,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     const commit = useCallback(
       (
-        result: { doc: RichDoc; selection: Range },
+        edit: { doc: RichDoc; selection: Range },
         kind: EditKind = 'other',
         options?: {
           /**
@@ -528,28 +725,43 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // No-op transforms (e.g. Backspace at the very start of the document)
         // return the SAME doc reference — skip so we don't fire onChange or leave a
         // stale pending selection that React would never consume (no re-render).
-        if (result.doc === latest.current.value) return;
-        if (options?.caretAfterVoid)
-          caretAfterVoidDocs.current.set(result.doc, options.caretAfterVoid);
+        if (edit.doc === latest.current.value) return;
+        const { createBlockId: newId, external: ext, onEdit: report } = sync.current;
+        let result = edit;
+        let afterVoid = options?.caretAfterVoid ?? null;
+        renamedRef.current = null;
+        if (newId) {
+          const known = new Set(
+            [...latest.current.value.blocks, ...liveDocRef.current.blocks].map((b) => b.id),
+          );
+          const r = renameNewBlocks(edit, known, newId);
+          result = r;
+          renamedRef.current = r.renamed;
+          if (afterVoid) afterVoid = r.renamed?.get(afterVoid) ?? afterVoid;
+        }
+        if (afterVoid) caretAfterVoidDocs.current.set(result.doc, afterVoid);
         reconcile();
         const prevHistory = historyRef.current;
-        historyRef.current = historyRecord(
-          historyRef.current,
-          { doc: result.doc, selection: result.selection },
-          kind,
-          Date.now(),
-        );
-        syncHistoryFlags();
+        if (!ext) {
+          historyRef.current = historyRecord(
+            historyRef.current,
+            { doc: result.doc, selection: result.selection },
+            kind,
+            Date.now(),
+          );
+          syncHistoryFlags();
+        }
+        // Before the caret below is pending: getSelection() there is the pre-edit selection.
+        report?.({ kind });
         // Every commit path writes pendingSelectionRef (null = "place no caret on
         // this render"), so a pending selection left by a commit the parent
         // rejected can never fire on a later, unrelated render.
         pendingSelectionRef.current = options?.keepSelection
           ? null
-          : { range: result.selection, afterVoid: options?.caretAfterVoid ?? null };
-        seam?.editKind(kind);
+          : { range: result.selection, afterVoid };
         emit(result.doc, prevHistory);
       },
-      [syncHistoryFlags, emit, reconcile, seam],
+      [syncHistoryFlags, emit, reconcile],
     );
 
     // Live-resize commit path for attachment width drags (used by
@@ -564,19 +776,21 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       (doc: RichDoc) => {
         if (doc === liveDocRef.current) return;
         reconcile();
+        sync.current.onEdit?.({ kind: 'resize' });
         pendingSelectionRef.current = null; // the slider/handle keeps focus
         const prevHistory = historyRef.current;
-        historyRef.current = historyRecord(
-          historyRef.current,
-          { doc, selection: historyRef.current.present.selection },
-          'resize',
-          Date.now(),
-        );
-        syncHistoryFlags();
-        seam?.editKind('resize');
+        if (!sync.current.external) {
+          historyRef.current = historyRecord(
+            historyRef.current,
+            { doc, selection: historyRef.current.present.selection },
+            'resize',
+            Date.now(),
+          );
+          syncHistoryFlags();
+        }
         emit(doc, prevHistory);
       },
-      [syncHistoryFlags, emit, reconcile, seam],
+      [syncHistoryFlags, emit, reconcile],
     );
 
     // Like commit, but records NO history entry — used for async upload settles so
@@ -587,9 +801,20 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // past/future entry) so the layout effect's `value !== present.doc` external-
     // replacement heuristic doesn't mistake a settle for a doc swap and reset undo.
     const commitSilent = useCallback(
-      (doc: RichDoc) => {
-        if (doc === latest.current.value) return;
+      (settled: RichDoc) => {
+        if (settled === latest.current.value) return;
+        let doc = settled;
+        // A removal that empties the doc creates its fresh paragraph here.
+        const newId = sync.current.createBlockId;
+        if (newId) {
+          const known = new Set(
+            [...latest.current.value.blocks, ...liveDocRef.current.blocks].map((b) => b.id),
+          );
+          const p = { blockId: doc.blocks[0].id, offset: 0 };
+          doc = renameNewBlocks({ doc, selection: { anchor: p, focus: p } }, known, newId).doc;
+        }
         reconcile();
+        sync.current.onEdit?.({ kind: 'silent' });
         const root = rootRef.current;
         const sel = root ? readSelection(root) : null;
         pendingSelectionRef.current = sel ? { range: sel, afterVoid: null } : null;
@@ -598,10 +823,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           ...historyRef.current,
           present: { doc, selection: sel ?? historyRef.current.present.selection },
         };
-        seam?.untracked();
         emit(doc, prevHistory);
       },
-      [emit, reconcile, seam],
+      [emit, reconcile],
     );
 
     const uploadOn = !!upload && !readOnly;
@@ -622,7 +846,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         commit({ doc, selection: sel }, 'other');
       },
       applySettle: commitSilent,
-      resolveId: seam?.resolveId,
+      resolveId: (id) => renamedRef.current?.get(id) ?? id,
       getCaret: () =>
         (rootRef.current ? readSelection(rootRef.current)?.anchor : undefined) ?? {
           blockId: liveDocRef.current.blocks[0].id,
@@ -680,9 +904,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
 
     const onUndo = useCallback(() => {
-      if (seam) {
+      if (sync.current.external) {
         clearPendingMarks();
-        return seam.undo();
+        return sync.current.onUndo?.();
       }
       reconcile();
       const h = historyRef.current;
@@ -696,12 +920,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
       };
       emit(next.present.doc, h);
-    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile, seam]);
+    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile]);
 
     const onRedo = useCallback(() => {
-      if (seam) {
+      if (sync.current.external) {
         clearPendingMarks();
-        return seam.redo();
+        return sync.current.onRedo?.();
       }
       reconcile();
       const h = historyRef.current;
@@ -715,7 +939,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
       };
       emit(next.present.doc, h);
-    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile, seam]);
+    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile]);
 
     const insertMentionItem = useCallback(
       (
@@ -808,16 +1032,34 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // The `value` the layout effect last saw — it also re-runs on mentions/readOnly
     // changes, which must not be mistaken for a new value arriving.
     const seenValueRef = useRef(value);
+    // history="external": the selection before an outside value replaces the DOM, kept through
+    // its render (read here, while the DOM still shows the previous doc).
+    const keptSelectionRef = useRef<Range | null>(null);
+    if (
+      external &&
+      value !== seenValueRef.current &&
+      !pendingSelectionRef.current &&
+      !isComposingRef.current &&
+      rootRef.current
+    ) {
+      keptSelectionRef.current = readSelection(rootRef.current);
+    }
     useLayoutEffect(() => {
-      const valueChanged = value !== seenValueRef.current;
+      const prevValue = seenValueRef.current;
+      const valueChanged = value !== prevValue;
       seenValueRef.current = value;
+      const kept = keptSelectionRef.current;
+      keptSelectionRef.current = null;
       // External value replacement (parent sets a wholly different doc) — reset
       // history so Undo can't travel back into the old document's timeline. Only
       // when `value` actually changed: during a pending (unconfirmed) edit,
-      // present.doc runs ahead of an unchanged value.
+      // present.doc runs ahead of an unchanged value. With history="external" an
+      // outside value is the sync layer's: no history to reset.
       if (valueChanged && value !== historyRef.current.present.doc) {
-        historyRef.current = historyReset({ doc: value, selection: null });
-        syncHistoryFlags();
+        if (!external) {
+          historyRef.current = historyReset({ doc: value, selection: null });
+          syncHistoryFlags();
+        }
         // A programmatic value swap fires no user `selectionchange`, so the
         // consolidated listener below never re-runs the mention menu for it.
         // Recompute here so an external swap updates/closes the menu. Internal
@@ -833,10 +1075,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       // value arriving first = it was rejected, so its caret must not fire here.
       const unconfirmed = unconfirmedRef.current;
       if (unconfirmed && valueChanged) {
-        if (value !== unconfirmed.doc) pendingSelectionRef.current = null;
+        // history="external": not a rejection — the edit's caret is clamped below.
+        if (value !== unconfirmed.doc && !external) pendingSelectionRef.current = null;
         unconfirmedRef.current = null;
       }
-      const pending = pendingSelectionRef.current;
+      let pending = pendingSelectionRef.current;
+      if (!pending && kept && valueChanged) pending = { range: kept, afterVoid: null };
+      if (pending && external && valueChanged)
+        pending = { ...pending, range: clampRange(pending.range, value, prevValue) };
       // Not while an edit is still awaiting acceptance: its caret belongs to a doc
       // the DOM doesn't show yet (written once that value arrives, or dropped).
       if (root && pending && !unconfirmedRef.current) {
@@ -860,7 +1106,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           sel?.addRange(r);
         }
       }
-    }, [value, syncHistoryFlags, mentionsEnabled, recomputeMention]);
+    }, [value, syncHistoryFlags, mentionsEnabled, recomputeMention, external]);
 
     // Native beforeinput (React's onBeforeInput is NOT the modern beforeinput —
     // it's a legacy textInput polyfill that carries no `inputType`).
@@ -1051,36 +1297,36 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (autoFocus) rootRef.current?.focus();
     }, [autoFocus]);
 
-    // Collaborative mode: hand the seam its handle and report selection changes.
-    useLayoutEffect(() => {
-      if (!seam) return;
-      seam.handle.current = {
-        readSelection: () => (rootRef.current ? readSelection(rootRef.current) : null),
-        pendingSelection: () => pendingSelectionRef.current?.range ?? null,
-        setPendingSelection: (range) => {
+    // Shared editing: the sync layer's handle, and selection reports.
+    useImperativeHandle(
+      controller,
+      () => ({
+        getSelection: () =>
+          pendingSelectionRef.current?.range ??
+          (rootRef.current ? readSelection(rootRef.current) : null),
+        setSelection: (range) => {
           const afterVoid = pendingSelectionRef.current?.afterVoid ?? null;
           pendingSelectionRef.current = range && { range, afterVoid };
         },
         isComposing: () => isComposingRef.current,
-      };
-      return () => {
-        seam.handle.current = null;
-      };
-    }, [seam]);
-    const onSeamSelection = seam?.onSelectionChange;
+      }),
+      [],
+    );
+    const reportsSelection = !!onSelectionChange;
     useEffect(() => {
       const root = rootRef.current;
-      if (!onSeamSelection || !root) return;
+      if (!reportsSelection || !root) return;
+      const report = (sel: Range | null) => sync.current.onSelectionChange?.(sel);
       const f = () =>
-        onSeamSelection(root.ownerDocument.activeElement === root ? readSelection(root) : null);
-      const out = () => onSeamSelection(null);
+        report(root.ownerDocument.activeElement === root ? readSelection(root) : null);
+      const out = () => report(null);
       document.addEventListener('selectionchange', f);
       root.addEventListener('focusout', out);
       return () => {
         document.removeEventListener('selectionchange', f);
         root.removeEventListener('focusout', out);
       };
-    }, [onSeamSelection]);
+    }, [reportsSelection]);
 
     // ONE selectionchange subscription shared by the toolbar, block-controls caret
     // tracking, and the mention menu. A caret move (incl. every keystroke, which
@@ -1428,7 +1674,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       (e: React.CompositionEvent<HTMLDivElement>) => {
         isComposingRef.current = false;
         // After this handler's commit (a microtask runs once the event's handlers are done).
-        if (seam) queueMicrotask(seam.compositionEnd);
+        if (sync.current.onCompositionEnd) queueMicrotask(() => sync.current.onCompositionEnd?.());
         const snap = compositionRef.current;
         compositionRef.current = null;
         const root = rootRef.current;
@@ -1473,7 +1719,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           : applyInput(value, replaced, 'deleteContentBackward', null);
         if (result) commit(result, 'type');
       },
-      [value, readOnly, commit, seam],
+      [value, readOnly, commit],
     );
 
     // Active marks + current block derived from the live selection for the toolbar.
@@ -1880,6 +2126,17 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // `usesShell` (the stable `.shell` gate) is declared near the top so the
     // image-hover effect can depend on it; it's reused here for the shell render.
 
+    // One name per id (the first: an app may relay duplicates). Untrusted: tolerate junk entries.
+    const othersEditing = (presence ?? [])
+      .filter((p, i, all) => p && all.findIndex((q) => q?.id === p.id) === i)
+      .map((p) => String(p.name));
+    // Always rendered (null without the prop) so setting uploadOwner never remounts the editable.
+    const withUploadOwner = (node: React.ReactNode) => (
+      <UploadOwnerContext.Provider value={uploadOwner ?? null}>{node}</UploadOwnerContext.Provider>
+    );
+    const statusArea = sharedChrome ? (
+      <SyncStatusArea status={syncStatus} others={othersEditing} />
+    ) : null;
     const toolbarBar = showToolbar ? (
       <RichTextToolbar
         activeMarks={toolbarMarks}
@@ -1892,18 +2149,18 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onToggleList={onToolbarToggleList}
         linkActive={toolbarLinkActive}
         onOpenLink={openLinkEditor}
-        canUndo={seam ? seam.canUndo() : canUndo}
-        canRedo={seam ? seam.canRedo() : canRedo}
+        canUndo={external ? canUndoProp : canUndo}
+        canRedo={external ? canRedoProp : canRedo}
         onUndo={onUndo}
         onRedo={onRedo}
         onPickFiles={uploadOn ? onPickFiles : undefined}
         onOverlayOpenChange={autoToolbar ? setToolbarOverlayOpen : undefined}
         onInsertEmoji={onInsertEmoji}
-        trailing={toolbar === true ? seam?.status : undefined}
+        trailing={toolbar === true ? statusArea : undefined}
       />
     ) : null;
-    // Collaborative status: in the toolbar row when the bar is always shown, else below.
-    const footer = toolbar === true ? null : seam?.status;
+    // Sync status: in the toolbar row when the bar is always shown, else below.
+    const footer = toolbar === true ? null : statusArea;
 
     // The upload picker's input lives HERE, in the always-rendered shell, not in
     // the toolbar: a native file dialog blurs the editable, and under
@@ -1937,20 +2194,20 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     ) : null;
 
     if (!usesShell) {
-      return (
+      return withUploadOwner(
         <>
           {uploadStatus}
           {editable}
           {linkBubble}
           {mentionMenu}
-        </>
+        </>,
       );
     }
-    return (
+    return withUploadOwner(
       <div
         className={clsx(
           styles.shell,
-          // A shell only the seam asked for has nothing above the editable to tuck under.
+          // A shell only shared editing asked for has nothing above the editable to tuck under.
           toolbar !== true && !autoToolbar && !controlsOn && styles.bare,
         )}
         ref={shellRef}
@@ -1959,14 +2216,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         {uploadInput}
         {uploadStatus}
         {editable}
-        {seam?.overlay}
+        {presence && <RichTextPresenceOverlay presence={presence} doc={value} />}
         {footer}
         {linkBubble}
         {mentionMenu}
         {blockControlsEl}
         {imageResizerEl}
         {configEl}
-      </div>
+      </div>,
     );
   },
 );

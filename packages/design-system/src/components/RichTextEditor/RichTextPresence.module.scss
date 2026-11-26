@@ -1,0 +1,50 @@
+@use './RichTextEditor.tokens';
+
+// The presence layer. `position: absolute` with no insets keeps it at its static position
+// out of flow (no gap in a consumer's Stack); the overlay measures every box relative to its
+// own, so where that lands does not matter. Its children are positioned from those measurements
+// (inline top/left/size), like the editor's block gutter. Never hit-tested.
+.presence {
+  position: absolute;
+  pointer-events: none;
+}
+
+.selection {
+  position: absolute;
+  background-color: var(--rich-text-presence-color);
+  opacity: var(--rich-text-presence-selection-opacity);
+}
+
+.caret {
+  position: absolute;
+  border-inline-start: var(--rich-text-presence-caret-width) solid var(--rich-text-presence-color);
+}
+
+// Shown for --rich-text-presence-flag-idle after the caret moved (the element remounts on each move).
+.flag {
+  position: absolute;
+  bottom: 100%;
+  inset-inline-start: 0;
+  padding: 0 var(--rich-text-presence-flag-padding-x);
+  border-radius: var(--rich-text-presence-flag-radius);
+  background-color: var(--rich-text-presence-color);
+  color: var(--rich-text-presence-flag-fg);
+  font-size: var(--rich-text-presence-flag-font-size);
+  line-height: var(--line-height-tight);
+  white-space: nowrap;
+  animation: rich-text-presence-flag-hide 0s var(--rich-text-presence-flag-idle) forwards;
+}
+
+@keyframes rich-text-presence-flag-hide {
+  to {
+    visibility: hidden;
+  }
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rich-text-sync-status-gap);
+  color: var(--rich-text-sync-status-fg);
+  font-size: var(--rich-text-sync-status-font-size);
+}
