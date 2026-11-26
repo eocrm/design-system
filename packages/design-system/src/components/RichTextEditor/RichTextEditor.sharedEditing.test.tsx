@@ -1,7 +1,7 @@
 // Shared-editing API (DS-96): the sync hooks a collaboration layer drives the editor through.
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef, useState } from 'react';
+import { createRef, startTransition, Suspense, useState } from 'react';
 import {
   RichTextEditor,
   type RichTextEditorController,
@@ -120,6 +120,7 @@ describe("RichTextEditor shared editing: history='external'", () => {
 
   it('accepts an outside value as-is and keeps the caret where it was (clamped)', () => {
     const { editor, api, outside } = setup(doc2('hello', 'world'), { history: 'external' });
+    act(() => editor.focus());
     caret(editor, 'p1', 5);
     // Another user appends to this very block (replacing the text node under the caret)
     // and edits the next one.
@@ -152,6 +153,7 @@ describe("RichTextEditor shared editing: history='external'", () => {
   it('places the caret from controller.setSelection when the app sets one with an outside value', () => {
     const controller = createRef<RichTextEditorController>();
     const { editor, outside } = setup(doc2('hello', 'world'), { history: 'external', controller });
+    act(() => editor.focus());
     caret(editor, 'p1', 2);
     expect(controller.current!.getSelection()).toEqual(at('p1', 2));
     // Remote text before the caret: the app maps the caret itself.
@@ -241,6 +243,112 @@ describe("RichTextEditor shared editing: history='external' and caret-less commi
       expect(kinds).toContain('resize');
     } finally {
       addRange.mockRestore();
+    }
+  });
+});
+
+describe("RichTextEditor shared editing: history='external' never steals focus", () => {
+  // Opens the block menu on p2 with the document selection still in the editor at p1:2.
+  async function openBlockMenu(props: Partial<RichTextEditorProps> = {}) {
+    const user = userEvent.setup();
+    const s = setup(doc2('hello', 'world'), { history: 'external', blockControls: true, ...props });
+    act(() => s.editor.focus());
+    caret(s.editor, 'p1', 2);
+    await user.hover(s.editor.querySelector('[data-block-id="p2"]')!);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    const item = await screen.findByRole('menuitem', { name: 'Text color' });
+    act(() => item.focus());
+    caret(s.editor, 'p1', 2);
+    return { ...s, user, item };
+  }
+  const rebuilt = (d: RichDoc): RichDoc => structuredClone(d);
+
+  it('a remote value while the block menu has focus writes no selection', async () => {
+    const { editor, item, outside } = await openBlockMenu();
+    const addRange = vi.spyOn(Selection.prototype, 'addRange');
+    try {
+      outside(doc2('hello', 'world!'));
+      expect(editor).toHaveTextContent('helloworld!');
+      expect(addRange).not.toHaveBeenCalled();
+      expect(document.activeElement).toBe(item);
+    } finally {
+      addRange.mockRestore();
+    }
+    // The kept caret lands once focus returns to the editable. (focusIn, not focus(): jsdom's
+    // focus() collapses the selection to the element's start after the event, unlike browsers.)
+    fireEvent.focusIn(editor);
+    expect(readSelection(editor)).toEqual(at('p1', 2));
+  });
+
+  it('a colour pick echoed back as a rebuilt doc writes no selection', async () => {
+    const { editor, user, api, outside } = await openBlockMenu();
+    await user.click(screen.getByRole('menuitem', { name: 'Text color' }));
+    const green = await screen.findByRole('button', { name: 'Green' });
+    act(() => green.focus());
+    caret(editor, 'p1', 2);
+    const addRange = vi.spyOn(Selection.prototype, 'addRange');
+    try {
+      fireEvent.click(green);
+      // The binding rebuilds the doc from its shared state instead of passing the object back.
+      outside(rebuilt(api.value));
+      expect(addRange).not.toHaveBeenCalled();
+      expect(document.activeElement).not.toBe(editor);
+    } finally {
+      addRange.mockRestore();
+    }
+  });
+
+  it('controller.setSelection while the menu has focus is held, not written', async () => {
+    const controller = createRef<RichTextEditorController>();
+    const { editor, item, outside } = await openBlockMenu({ controller });
+    const addRange = vi.spyOn(Selection.prototype, 'addRange');
+    try {
+      act(() => controller.current!.setSelection(at('p1', 5)));
+      outside(doc2('XXXhello', 'world'));
+      expect(addRange).not.toHaveBeenCalled();
+      expect(document.activeElement).toBe(item);
+      expect(controller.current!.getSelection()).toEqual(at('p1', 5));
+    } finally {
+      addRange.mockRestore();
+    }
+    fireEvent.focusIn(editor);
+    expect(readSelection(editor)).toEqual(at('p1', 5));
+  });
+
+  it('a selection kept by a render React discarded is never applied to a later value', async () => {
+    // A transition render reads the caret for its value, then suspends (never commits).
+    let release = () => {};
+    const gate = new Promise<void>((r) => (release = r));
+    const blocked = doc2('hello', 'blocked');
+    function Gate({ value }: { value: RichDoc }) {
+      if (value === blocked) throw gate;
+      return null;
+    }
+    const api = { set: (_d: RichDoc) => {} };
+    function Harness() {
+      const [value, setValue] = useState(doc2('hello', 'world'));
+      api.set = setValue;
+      return (
+        <Suspense fallback={null}>
+          <RichTextEditor aria-label="E" history="external" value={value} onChange={setValue} />
+          <Gate value={value} />
+        </Suspense>
+      );
+    }
+    render(<Harness />);
+    const editor = screen.getByRole('textbox', { name: 'E' });
+    act(() => editor.focus());
+    caret(editor, 'p1', 1);
+    await act(async () => startTransition(() => api.set(blocked)));
+    // Composing: no fresh read for the next value — the discarded one must not stand in.
+    fireEvent.compositionStart(editor, { data: '' });
+    const addRange = vi.spyOn(Selection.prototype, 'addRange');
+    try {
+      act(() => api.set(doc2('hello', 'now')));
+      expect(addRange).not.toHaveBeenCalled();
+    } finally {
+      addRange.mockRestore();
+      release();
     }
   });
 });
@@ -490,14 +598,16 @@ describe('RichTextEditor shared editing: presence', () => {
             peer('b', 'Bob', '#ff0000', at('p1', 1)),
             peer('b', 42 as unknown as string, '#ff0000', at('p1', 1)),
             peer('c', 'Cy', '#00ff00', null),
+            // A null-prototype object has no toString: String() would throw.
+            peer('d', Object.create(null) as string, Object.create(null) as string, at('p1', 2)),
           ]}
         />
       </I18nProvider>,
     );
     const carets = [...container.querySelectorAll('[data-presence-caret]')];
-    expect(carets.map((c) => c.textContent)).toEqual(['Bob', '42']);
+    expect(carets.map((c) => c.textContent)).toEqual(['Bob', '', '']);
     expect(container.querySelector('[data-sync-status]')).toHaveTextContent(
-      '2 others editing: Bob, Cy',
+      '3 others editing: Bob, Cy,',
     );
   });
 

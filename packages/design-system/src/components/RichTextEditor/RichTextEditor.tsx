@@ -136,7 +136,8 @@ export interface RichTextEditorController {
   /**
    * The caret the editor's next render places (`null`: none). Call it right before passing an
    * outside `value` whose change moved text under the caret; without it the editor keeps its
-   * current selection, clamped to the new doc.
+   * current selection, clamped to the new doc. Never moves focus: while focus is outside the
+   * editable (e.g. in its block menu), the caret is held and placed once the editable is focused.
    */
   setSelection(range: RichRange | null): void;
   /**
@@ -478,8 +479,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // caretAfterVoid — a spot the model's single void point can't name). Bundled
     // with the selection so every path that places a caret replaces both at once:
     // a stale marker can never fire with someone else's selection. A block id, so
-    // it survives a parent that copies the doc in onChange.
-    const pendingSelectionRef = useRef<{ range: RichRange; afterVoid: string | null } | null>(null);
+    // it survives a parent that copies the doc in onChange. `held`: a selection from outside the
+    // editor (an outside value's kept caret, controller.setSelection) — written only while the
+    // editable has focus, else held until it gets focus back (a menu / slider keeps its focus).
+    const pendingSelectionRef = useRef<{
+      range: RichRange;
+      afterVoid: string | null;
+      held?: boolean;
+    } | null>(null);
     // Which committed docs had their caret after a void — keyed by the exact doc
     // object history keeps, so undo/redo restore the same side.
     const caretAfterVoidDocs = useRef(new WeakMap<RichDoc, string>());
@@ -1052,11 +1059,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // history="external": the selection before an OUTSIDE value replaces the DOM, kept through
     // its render. Read during render because that is the last moment the DOM still shows the
     // previous doc (the layout effect runs after React rewrote it; hooks have no
-    // getSnapshotBeforeUpdate). The read is idempotent, so a StrictMode double render or a
-    // discarded render only overwrites it with the same value. Never for the editor's own
-    // emitted doc: a commit that places no caret (block-colour submenu, image width drag) must
-    // not get one written back, which would pull focus out of the menu / slider.
-    const keptSelectionRef = useRef<RichRange | null>(null);
+    // getSnapshotBeforeUpdate). Tagged with the value it was read for, so a read from a render
+    // React discarded never stands in for a later value. Never for the editor's own emitted doc:
+    // a commit that places no caret (block-colour submenu, image width drag) must not get one
+    // written back, which would pull focus out of the menu / slider.
+    const keptSelectionRef = useRef<{ value: RichDoc; range: RichRange } | null>(null);
     if (
       external &&
       value !== seenValueRef.current &&
@@ -1065,13 +1072,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       !isComposingRef.current &&
       rootRef.current
     ) {
-      keptSelectionRef.current = readSelection(rootRef.current);
+      const range = readSelection(rootRef.current);
+      keptSelectionRef.current = range && { value, range };
     }
     useLayoutEffect(() => {
       const prevValue = seenValueRef.current;
       const valueChanged = value !== prevValue;
       seenValueRef.current = value;
-      const kept = keptSelectionRef.current;
+      const kept =
+        keptSelectionRef.current?.value === value ? keptSelectionRef.current.range : null;
       keptSelectionRef.current = null;
       // External value replacement (parent sets a wholly different doc) — reset
       // history so Undo can't travel back into the old document's timeline. Only
@@ -1103,7 +1112,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         unconfirmedRef.current = null;
       }
       let pending = pendingSelectionRef.current;
-      if (!pending && kept && valueChanged) pending = { range: kept, afterVoid: null };
+      if (!pending && kept && valueChanged) pending = { range: kept, afterVoid: null, held: true };
       if (pending && external && valueChanged)
         pending = {
           ...pending,
@@ -1112,6 +1121,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       // Not while an edit is still awaiting acceptance: its caret belongs to a doc
       // the DOM doesn't show yet (written once that value arrives, or dropped).
       if (root && pending && !unconfirmedRef.current) {
+        // Focus is in a menu / slider (the DOM selection still sits in the editable): writing
+        // the selection would pull focus out of it. Hold it until the editable is focused.
+        if (pending.held && !root.contains(root.ownerDocument.activeElement)) {
+          pendingSelectionRef.current = pending;
+          return;
+        }
         writeSelection(root, pending.range);
         pendingSelectionRef.current = null;
         // Only with the selection it was bundled with (a commit / undo / redo) —
@@ -1334,12 +1349,26 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           // A pending after-void caret only still applies to a range on that same void.
           const was = pendingSelectionRef.current?.afterVoid ?? null;
           const afterVoid = range && was === range.anchor.blockId ? was : null;
-          pendingSelectionRef.current = range && { range, afterVoid };
+          pendingSelectionRef.current = range && { range, afterVoid, held: true };
         },
         isComposing: () => isComposingRef.current,
       }),
       [],
     );
+    // A held selection lands when the editable itself gets focus back (a click then moves the
+    // caret on as usual).
+    useEffect(() => {
+      const root = rootRef.current;
+      if (!root) return;
+      const land = (e: FocusEvent) => {
+        const p = pendingSelectionRef.current;
+        if (e.target !== root || !p?.held || unconfirmedRef.current) return;
+        pendingSelectionRef.current = null;
+        writeSelection(root, p.range);
+      };
+      root.addEventListener('focusin', land);
+      return () => root.removeEventListener('focusin', land);
+    }, []);
     const reportsSelection = !!onSelectionChange;
     useEffect(() => {
       const root = rootRef.current;
@@ -2157,7 +2186,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // One name per id (the first: an app may relay duplicates). Untrusted: tolerate junk entries.
     const othersEditing = (presence ?? [])
       .filter((p, i, all) => p && all.findIndex((q) => q?.id === p.id) === i)
-      .map((p) => String(p.name));
+      .map((p) => (typeof p.name === 'string' ? p.name : ''));
     // Always rendered (null without the prop) so setting uploadOwner never remounts the editable.
     const withUploadOwner = (node: React.ReactNode) => (
       <UploadOwnerContext.Provider value={uploadOwner ?? null}>{node}</UploadOwnerContext.Provider>

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   RichTextEditor,
   docFromText,
@@ -144,12 +144,9 @@ function SharedEditingExample() {
     { id: 'a', name: 'Alice', color: 'var(--color-accent)' },
     { id: 'b', name: 'Bob', color: 'var(--color-success)' },
   ];
-  const makeId = (prefix: string) => {
-    let n = 0;
-    return () => `${prefix}-${++n}`;
-  };
-  const createIdA = useMemo(() => makeId('a'), []);
-  const createIdB = useMemo(() => makeId('b'), []);
+  // Unique across reloads and tabs: a client prefix plus a random UUID.
+  const createIdA = () => `a-${crypto.randomUUID()}`;
+  const createIdB = () => `b-${crypto.randomUUID()}`;
 
   const shared = {
     history: 'external',
@@ -623,7 +620,7 @@ export function Demo() {
       <Example
         title="Shared editing hooks"
         description="Two editors kept in sync by a naive whole-document relay: each onChange replaces the other's value. It is a toy (last writer wins, not a CRDT) that stands in for a real sync layer. history='external' routes undo/redo to one app-owned stack, grouped by onEdit's kind (a typing burst is one undo step); presence is relayed both ways from onSelectionChange; the status buttons drive syncStatus; createBlockId gives each editor its own id prefix so block ids never collide — including blocks made by the block controls (＋ insert, Duplicate, drag/move; hover a block's left gutter or press Shift+F10)."
-        code={`import { useMemo, useRef, useState } from 'react';
+        code={`import { useRef, useState } from 'react';
 import {
   RichTextEditor,
   docFromText,
@@ -688,12 +685,9 @@ export function Demo() {
     { id: 'a', name: 'Alice', color: 'var(--color-accent)' },
     { id: 'b', name: 'Bob', color: 'var(--color-success)' },
   ];
-  const makeId = (prefix: string) => {
-    let n = 0;
-    return () => \`\${prefix}-\${++n}\`;
-  };
-  const createIdA = useMemo(() => makeId('a'), []);
-  const createIdB = useMemo(() => makeId('b'), []);
+  // Unique across reloads and tabs: a client prefix plus a random UUID.
+  const createIdA = () => \`a-\${crypto.randomUUID()}\`;
+  const createIdB = () => \`b-\${crypto.randomUUID()}\`;
 
   const shared = { history: 'external', onUndo, onRedo, canUndo: undo.length > 0, canRedo: redo.length > 0, syncStatus: status, toolbar: true, blockControls: true } as const;
   return (

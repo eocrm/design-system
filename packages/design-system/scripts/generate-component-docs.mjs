@@ -112,10 +112,25 @@ const cell = (s) => s.replace(/\s+/g, ' ').trim().replace(/\|/g, '\\|');
 const stripIssueRefs = (s) =>
   s.replace(/\s*\(#\d+(?:,\s*#\d+)*\)/g, '').replace(/,\s*#\d+(?=\))/g, '');
 
-const typeText = (t) =>
-  checker
-    .typeToString(t, undefined, ts.TypeFormatFlags.NoTruncation)
-    .replace(/(?<![\w."'])[A-Z]\w*\b/g, (n) => publicNames.get(n) ?? n);
+// Rename an internal type to its public alias (e.g. `Range` → `RichRange`) only where the type
+// really refers to this package's declaration: the fully qualified form names its module, so a
+// DOM `Range` (a global) is never rewritten.
+const typeText = (t) => {
+  const flags = ts.TypeFormatFlags.NoTruncation;
+  const qualified = checker.typeToString(
+    t,
+    undefined,
+    flags | ts.TypeFormatFlags.UseFullyQualifiedType,
+  );
+  const own = new Set(
+    [...qualified.matchAll(/import\("([^"]+)"\)\.(\w+)/g)]
+      .filter(([, file]) => !file.includes('/node_modules/'))
+      .map(([, , name]) => name),
+  );
+  return checker
+    .typeToString(t, undefined, flags)
+    .replace(/(?<![\w."'])[A-Z]\w*\b/g, (n) => (own.has(n) && publicNames.get(n)) || n);
+};
 const LITERAL =
   ts.TypeFlags.StringLiteral | ts.TypeFlags.NumberLiteral | ts.TypeFlags.BooleanLiteral;
 

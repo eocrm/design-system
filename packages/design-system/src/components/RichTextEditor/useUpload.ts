@@ -77,7 +77,7 @@ interface UseUploadArgs {
    * file name + optional `UploadError` reason when it fails.
    */
   onFailureChange?: (failure: { name: string; reason?: string } | null) => void;
-  /** The id an inserted block ended up with (collaborative mode renames new blocks). */
+  /** The id an inserted block ended up with (shared editing with `createBlockId` renames new blocks). */
   resolveId?: (id: string) => string;
 }
 

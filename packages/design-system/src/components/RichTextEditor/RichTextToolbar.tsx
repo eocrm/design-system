@@ -74,7 +74,7 @@ export interface RichTextToolbarProps {
   onOverlayOpenChange?: (open: boolean) => void;
   /** Insert an emoji at the caret. */
   onInsertEmoji: (emoji: string) => void;
-  /** Rendered last in the row (collaborative mode's status). */
+  /** Rendered last in the row (the shared-editing sync status). */
   trailing?: ReactNode;
 }
 

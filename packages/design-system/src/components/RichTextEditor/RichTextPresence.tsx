@@ -128,8 +128,8 @@ export function RichTextPresenceOverlay({
           if (!m || (!m.caret && !m.rects.length)) continue;
           out.push({
             id: String(p.id),
-            name: String(p.name),
-            color: String(p.color),
+            name: typeof p.name === 'string' ? p.name : '',
+            color: typeof p.color === 'string' ? p.color : '',
             moved: JSON.stringify(s),
             ...m,
           });
