@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -11,7 +12,8 @@ import {
 import { flushSync } from 'react-dom';
 import clsx from 'clsx';
 import type { RichDoc, Range, Mark, MarkType, Point } from '../RichText/engine/model';
-import { nextId } from '../RichText/engine/model';
+import { nextId, setIdSource } from '../RichText/engine/model';
+import { CollabSeamContext } from './collabSeam';
 import { renderDoc } from '../RichText/engine/renderDoc';
 import type { RenderLink } from '../RichText/engine/renderLink';
 import type { RenderMention } from '../RichText/engine/renderMention';
@@ -270,6 +272,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     ref,
   ) {
     const t = useTranslation();
+    // Collaborative mode (internal, `/collab`): see collabSeam.ts. Null = the plain editor.
+    const seam = useContext(CollabSeamContext);
     const rootRef = useRef<HTMLDivElement | null>(null);
     const isComposingRef = useRef(false);
     // Selection to restore after the next model-driven re-render.
@@ -671,6 +675,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
 
     const onUndo = useCallback(() => {
+      if (seam) {
+        clearPendingMarks();
+        return seam.undo();
+      }
       reconcile();
       const h = historyRef.current;
       if (!historyCanUndo(h)) return;
@@ -683,9 +691,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
       };
       emit(next.present.doc, h);
-    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile]);
+    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile, seam]);
 
     const onRedo = useCallback(() => {
+      if (seam) {
+        clearPendingMarks();
+        return seam.redo();
+      }
       reconcile();
       const h = historyRef.current;
       if (!historyCanRedo(h)) return;
@@ -698,7 +710,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
       };
       emit(next.present.doc, h);
-    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile]);
+    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile, seam]);
 
     const insertMentionItem = useCallback(
       (
@@ -1033,6 +1045,48 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     useEffect(() => {
       if (autoFocus) rootRef.current?.focus();
     }, [autoFocus]);
+
+    // Collaborative mode: hand the seam its handle, its id source (while this editor is the one
+    // being used) and selection reports.
+    useLayoutEffect(() => {
+      if (!seam) return;
+      seam.handle.current = {
+        readSelection: () => (rootRef.current ? readSelection(rootRef.current) : null),
+        pendingSelection: () => pendingSelectionRef.current?.range ?? null,
+        setPendingSelection: (range) => {
+          const afterVoid = pendingSelectionRef.current?.afterVoid ?? null;
+          pendingSelectionRef.current = range && { range, afterVoid };
+        },
+        isComposing: () => isComposingRef.current,
+      };
+      return () => {
+        seam.handle.current = null;
+      };
+    }, [seam]);
+    const newId = seam?.newId;
+    const onSeamSelection = seam?.onSelectionChange;
+    useEffect(() => {
+      const target = shellRef.current ?? rootRef.current;
+      if (!newId || !target) return;
+      // ponytail: the last-used editor's source wins page-wide; ids stay unique either way (each
+      // source is its own clientID prefix + counter).
+      const use = () => setIdSource(newId);
+      use();
+      target.addEventListener('focusin', use);
+      target.addEventListener('pointerdown', use);
+      return () => {
+        target.removeEventListener('focusin', use);
+        target.removeEventListener('pointerdown', use);
+        const prev = setIdSource(null);
+        if (prev !== newId) setIdSource(prev);
+      };
+    }, [newId]);
+    useEffect(() => {
+      if (!onSeamSelection) return;
+      const f = () => onSeamSelection(rootRef.current ? readSelection(rootRef.current) : null);
+      document.addEventListener('selectionchange', f);
+      return () => document.removeEventListener('selectionchange', f);
+    }, [onSeamSelection]);
 
     // ONE selectionchange subscription shared by the toolbar, block-controls caret
     // tracking, and the mention menu. A caret move (incl. every keystroke, which
@@ -1379,6 +1433,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const onCompositionEnd = useCallback(
       (e: React.CompositionEvent<HTMLDivElement>) => {
         isComposingRef.current = false;
+        // After this handler's commit (a microtask runs once the event's handlers are done).
+        if (seam) queueMicrotask(seam.compositionEnd);
         const snap = compositionRef.current;
         compositionRef.current = null;
         const root = rootRef.current;
@@ -1423,7 +1479,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           : applyInput(value, replaced, 'deleteContentBackward', null);
         if (result) commit(result, 'type');
       },
-      [value, readOnly, commit],
+      [value, readOnly, commit, seam],
     );
 
     // Active marks + current block derived from the live selection for the toolbar.
@@ -1842,8 +1898,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onToggleList={onToolbarToggleList}
         linkActive={toolbarLinkActive}
         onOpenLink={openLinkEditor}
-        canUndo={canUndo}
-        canRedo={canRedo}
+        canUndo={seam ? seam.canUndo : canUndo}
+        canRedo={seam ? seam.canRedo : canRedo}
         onUndo={onUndo}
         onRedo={onRedo}
         onPickFiles={uploadOn ? onPickFiles : undefined}
@@ -1888,6 +1944,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         <>
           {uploadStatus}
           {editable}
+          {seam?.overlay}
           {linkBubble}
           {mentionMenu}
         </>
@@ -1899,6 +1956,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         {uploadInput}
         {uploadStatus}
         {editable}
+        {seam?.overlay}
         {linkBubble}
         {mentionMenu}
         {blockControlsEl}
