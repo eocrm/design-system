@@ -568,6 +568,23 @@ export const ru: Messages = {
     retry: 'Повторить',
     chartHint:
       'Стрелки вверх и вниз — переход между уровнями, влево и вправо — между соседними элементами.',
+    moveHint:
+      'Ctrl или Command с Shift и стрелками перемещает элемент: вверх и вниз меняют порядок, вправо делает его дочерним предыдущего, влево выносит на уровень родителя.',
+    moveBoundaryUp: 'Выше переместить нельзя',
+    moveBoundaryDown: 'Ниже переместить нельзя',
+    moveBoundaryIn: 'Глубже переместить нельзя',
+    moveBoundaryOut: 'Дальше наружу переместить нельзя',
+    moveRefused: 'Сюда переместить нельзя',
+    movedInto: ({ name, parent, position, total }) =>
+      `Перемещено в «${parent as string}»: «${name as string}», позиция ${position as number} из ${total as number}`,
+    movedIntoNoPosition: ({ name, parent }) =>
+      `Перемещено в «${parent as string}»: «${name as string}»`,
+    movedToRoot: ({ name, position, total }) =>
+      `Перемещено на верхний уровень: «${name as string}», позиция ${position as number} из ${total as number}`,
+    movedToRootNoPosition: ({ name }) => `Перемещено на верхний уровень: «${name as string}»`,
+    dragOverBefore: ({ name, target }) => `«${name as string}»: перед «${target as string}»`,
+    dragOverAfter: ({ name, target }) => `«${name as string}»: после «${target as string}»`,
+    dragOverInside: ({ name, target }) => `«${name as string}»: в «${target as string}»`,
   },
   catalogPicker: {
     search: 'Поиск…',

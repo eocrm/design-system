@@ -1,5 +1,5 @@
 import { createRef, useRef, useState, type Ref } from 'react';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TreeView, type TreeViewChildren, type TreeViewNode, type TreeViewProps } from '.';
 
@@ -680,5 +680,440 @@ describe('onHoverChange', () => {
     fireEvent.pointerEnter(row('Loading…'));
     fireEvent.pointerLeave(row('Loading…'));
     expect(onHoverChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('TreeView keyboard move', () => {
+  type Tree = Record<string, string[]>; // parent ('' = root) -> child ids
+  const start = (): Tree => ({ '': ['Intro', 'Setup', 'FAQ'], Intro: ['A', 'B'], Setup: [] });
+  const apply = (tree: Tree, m: { id: string; parentId: string | null; index: number | null }) => {
+    const next: Tree = Object.fromEntries(
+      Object.entries(tree).map(([k, v]) => [k, v.filter((c) => c !== m.id)]),
+    );
+    const key = m.parentId ?? '';
+    const list = next[key] ?? [];
+    list.splice(m.index ?? list.length, 0, m.id);
+    next[key] = list;
+    return next;
+  };
+
+  function Move(props: {
+    onMoveSpy?: (m: unknown) => void;
+    canDrop?: (id: string, p: string | null) => boolean;
+    view?: 'list' | 'chart';
+    noMove?: boolean;
+    onExpandedSpy?: (id: string, open: boolean) => void;
+    onSelectSpy?: (id: string) => void;
+    initial?: string[];
+  }) {
+    const [tree, setTree] = useState(start);
+    const [expanded, setExpanded] = useState(() => new Set(props.initial ?? ['Intro']));
+    const node = (id: string) => n(id, id in tree);
+    return (
+      <TreeView
+        aria-label="Wiki"
+        view={props.view}
+        roots={tree[''].map(node)}
+        childrenOf={(id) => (tree[id] ?? []).map(node)}
+        expandedIds={expanded}
+        onExpandedChange={(id, open) => {
+          props.onExpandedSpy?.(id, open);
+          setExpanded((p) => {
+            const next = new Set(p);
+            if (open) next.add(id);
+            else next.delete(id);
+            return next;
+          });
+        }}
+        canDrop={props.canDrop}
+        onSelect={props.onSelectSpy}
+        onMove={
+          props.noMove
+            ? undefined
+            : (m) => {
+                props.onMoveSpy?.(m);
+                setTree((t0) => apply(t0, m));
+              }
+        }
+      />
+    );
+  }
+  const press = (key: string) =>
+    fireEvent.keyDown(document.activeElement!, { key, ctrlKey: true, shiftKey: true });
+  const focus = (name: string) => act(() => item(name).focus());
+  const said = (text: string | RegExp) =>
+    waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(text));
+
+  it('moves with the four shortcuts, announces, and keeps focus on the node', async () => {
+    const spy = vi.fn();
+    render(<Move onMoveSpy={spy} />);
+    focus('Setup');
+    press('ArrowUp');
+    expect(spy).toHaveBeenLastCalledWith({ id: 'Setup', parentId: null, index: 0 });
+    expect(item('Setup')).toHaveFocus();
+    press('ArrowDown');
+    expect(spy).toHaveBeenLastCalledWith({ id: 'Setup', parentId: null, index: 1 });
+    press('ArrowRight'); // into Intro (expanded): after its 2 children
+    expect(spy).toHaveBeenLastCalledWith({ id: 'Setup', parentId: 'Intro', index: 2 });
+    await said('Setup moved into Intro, position 3 of 3');
+    expect(item('Setup')).toHaveFocus();
+    expect(item('Setup')).toHaveAttribute('aria-level', '2');
+    press('ArrowLeft');
+    expect(spy).toHaveBeenLastCalledWith({ id: 'Setup', parentId: null, index: 1 });
+    await said('Setup moved to the top level, position 2 of 3');
+    expect(item('Setup')).toHaveFocus();
+  });
+
+  it('indent into a collapsed sibling announces without position, then expands after onMove', async () => {
+    const order: string[] = [];
+    render(
+      <Move
+        initial={[]}
+        onMoveSpy={() => order.push('move')}
+        onExpandedSpy={(id, open) => order.push(`expand:${id}:${open}`)}
+      />,
+    );
+    focus('Setup');
+    press('ArrowRight');
+    expect(order).toEqual(['move', 'expand:Intro:true']);
+    await said(/^Setup moved into Intro$/);
+  });
+
+  it('announces boundaries and refusals without calling onMove', async () => {
+    const spy = vi.fn();
+    render(<Move onMoveSpy={spy} canDrop={(_id, p) => p !== 'FAQ'} />);
+    focus('Intro');
+    press('ArrowUp');
+    await said("Can't move further up");
+    press('ArrowRight');
+    await said("Can't move further in");
+    press('ArrowLeft');
+    await said("Can't move further out");
+    focus('FAQ');
+    press('ArrowDown');
+    await said("Can't move further down");
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('re-announces an identical boundary refusal on a repeated attempt', async () => {
+    render(<Move />);
+    focus('Intro');
+    press('ArrowUp');
+    await said("Can't move further up");
+    const region = screen.getByRole('status');
+    // Clear-then-write: the region goes empty before the identical text returns.
+    const seen: string[] = [];
+    const mo = new MutationObserver(() => seen.push(region.textContent ?? ''));
+    mo.observe(region, { childList: true, characterData: true, subtree: true });
+    press('ArrowUp');
+    await waitFor(() => expect(seen).toContain(''));
+    await said("Can't move further up");
+    mo.disconnect();
+  });
+
+  it('refused by canDrop announces "Can\'t move here"', async () => {
+    const spy = vi.fn();
+    render(<Move onMoveSpy={spy} canDrop={(_id, p) => p === null} />);
+    focus('Setup');
+    press('ArrowRight');
+    await said("Can't move here");
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('has aria-description only with onMove; shortcuts do nothing without it or in chart view', () => {
+    const spy = vi.fn();
+    const { unmount } = render(<Move />);
+    expect(screen.getByRole('tree')).toHaveAttribute('aria-description');
+    unmount();
+    const r = render(<Move noMove onMoveSpy={spy} />);
+    expect(screen.getByRole('tree')).not.toHaveAttribute('aria-description');
+    focus('Setup');
+    press('ArrowUp');
+    expect(spy).not.toHaveBeenCalled();
+    r.unmount();
+    render(<Move view="chart" onMoveSpy={spy} />);
+    expect(screen.getByRole('tree')).not.toHaveAttribute('aria-description');
+    focus('Setup');
+    press('ArrowUp');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('Alt with the move shortcut does not move', () => {
+    const spy = vi.fn();
+    render(<Move onMoveSpy={spy} />);
+    focus('Setup');
+    fireEvent.keyDown(document.activeElement!, {
+      key: 'ArrowUp',
+      ctrlKey: true,
+      shiftKey: true,
+      altKey: true,
+    });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('plain arrows still navigate', () => {
+    render(<Move />);
+    focus('Intro');
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowDown' });
+    expect(item('A')).toHaveFocus();
+  });
+
+  describe('pointer drag', () => {
+    // jsdom lays nothing out: stack every row 20px tall from y=0, 200px wide, inside a tree 40px taller than
+    // its rows (empty space below the last row). Rects follow the CURRENT DOM, so a re-render re-measures.
+    // Rows (Intro expanded): Intro 0-20, A 20-40, B 40-60, Setup 60-80 (collapsed, expandable), FAQ 80-100.
+    const ROW_H = 20;
+    let restore: () => void;
+    beforeEach(() => {
+      const orig = Element.prototype.getBoundingClientRect;
+      Element.prototype.getBoundingClientRect = function (this: Element) {
+        const tree = this.closest('[role="tree"]');
+        if (!tree) return orig.call(this);
+        const rows = Array.from(tree.querySelectorAll('[data-row]'));
+        if (this === tree) return new DOMRect(0, 0, 200, rows.length * ROW_H + 40);
+        const i = rows.indexOf(this);
+        return i < 0 ? orig.call(this) : new DOMRect(0, i * ROW_H, 200, ROW_H);
+      };
+      restore = () => {
+        Element.prototype.getBoundingClientRect = orig;
+      };
+    });
+    afterEach(() => restore());
+
+    /** Press a row, trip the 4px activation, then move to (x, y) without releasing. */
+    const pick = (name: string, y: number, x = 50) => {
+      const r = row(name);
+      const top = r.getBoundingClientRect().top + 10;
+      fireEvent.pointerDown(r, { clientX: 50, clientY: top, button: 0, isPrimary: true });
+      fireEvent.pointerMove(document, { clientX: 50, clientY: top + 6 });
+      fireEvent.pointerMove(document, { clientX: x, clientY: y });
+    };
+    const drop = (y: number, x = 50) => fireEvent.pointerUp(document, { clientX: x, clientY: y });
+    const dropMark = () => document.querySelector('[data-drop]');
+
+    it('a click without movement still selects', () => {
+      const select = vi.fn();
+      render(<Move onSelectSpy={select} />);
+      const r = row('Setup');
+      fireEvent.pointerDown(r, { clientX: 50, clientY: 70, button: 0, isPrimary: true });
+      fireEvent.pointerUp(r, { clientX: 50, clientY: 70 });
+      fireEvent.click(r);
+      expect(select).toHaveBeenCalledWith('Setup');
+    });
+
+    it('drops before / after / inside / below the last row with the right onMove', async () => {
+      const spy = vi.fn();
+      render(<Move onMoveSpy={spy} />);
+      pick('FAQ', 21); // top quarter of A
+      expect(item('A')).toHaveAttribute('data-drop', 'before');
+      expect(item('FAQ')).toHaveAttribute('data-dragging');
+      await said('FAQ: before A');
+      drop(21);
+      expect(spy).toHaveBeenLastCalledWith({ id: 'FAQ', parentId: 'Intro', index: 0 });
+      await said('FAQ moved into Intro, position 1 of 3');
+      expect(dropMark()).toBeNull();
+      expect(item('FAQ')).not.toHaveAttribute('data-dragging');
+
+      // Rows now: Intro, FAQ, A, B, Setup (60-80 → 80-100).
+      pick('A', 99); // bottom quarter of Setup
+      expect(item('Setup')).toHaveAttribute('data-drop', 'after');
+      drop(99);
+      expect(spy).toHaveBeenLastCalledWith({ id: 'A', parentId: null, index: 2 });
+
+      pick('B', 70); // middle of Setup (collapsed): position unknown
+      expect(item('Setup')).toHaveAttribute('data-drop', 'inside');
+      await said('B: inside Setup');
+      drop(70);
+      expect(spy).toHaveBeenLastCalledWith({ id: 'B', parentId: 'Setup', index: null });
+
+      // Rows now: Intro, FAQ, Setup, A (0-80) in a 120px tree.
+      pick('FAQ', 110); // empty space below the last row
+      expect(item('A')).toHaveAttribute('data-drop', 'after');
+      drop(110);
+      expect(spy).toHaveBeenLastCalledWith({ id: 'FAQ', parentId: null, index: 3 });
+    });
+
+    it('a refused target shows no indicator, and dropping there or outside cancels', async () => {
+      const spy = vi.fn();
+      render(<Move onMoveSpy={spy} canDrop={(_id, p) => p !== 'Setup'} />);
+      pick('Intro', 30); // its own child A
+      expect(dropMark()).toBeNull();
+      expect(item('Intro')).toHaveAttribute('data-dragging'); // its subtree (A, B) dims with it
+      drop(30);
+      await said(/^Move cancelled\./);
+      pick('FAQ', 70); // inside Setup: vetoed
+      expect(dropMark()).toBeNull();
+      drop(70);
+      pick('FAQ', 30, 400); // outside the tree
+      expect(dropMark()).toBeNull();
+      drop(30, 400);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('Escape cancels and announces it', async () => {
+      const spy = vi.fn();
+      render(<Move onMoveSpy={spy} />);
+      pick('FAQ', 90); // still over itself: no target, so the pick-up stays announced
+      await said('Picked up FAQ.');
+      fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+      await said(/^Move cancelled\./);
+      expect(dropMark()).toBeNull();
+      drop(21);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('hovering inside a collapsed expandable node expands it after a delay; leaving cancels', () => {
+      vi.useFakeTimers();
+      try {
+        const expand = vi.fn();
+        render(<Move onExpandedSpy={expand} />);
+        pick('FAQ', 70); // inside Setup
+        act(() => vi.advanceTimersByTime(500));
+        fireEvent.pointerMove(document, { clientX: 50, clientY: 50 }); // over B
+        act(() => vi.advanceTimersByTime(500));
+        expect(expand).not.toHaveBeenCalled();
+        fireEvent.pointerMove(document, { clientX: 50, clientY: 70 });
+        act(() => vi.advanceTimersByTime(700));
+        expect(expand).toHaveBeenCalledWith('Setup', true);
+        drop(70);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('a touch press does not drag on movement alone; a long press does', () => {
+      vi.useFakeTimers();
+      try {
+        const spy = vi.fn();
+        render(<Move onMoveSpy={spy} />);
+        const r = row('FAQ');
+        fireEvent.pointerDown(r, {
+          clientX: 50,
+          clientY: 90,
+          button: 0,
+          isPrimary: true,
+          pointerType: 'touch',
+        });
+        fireEvent.pointerMove(document, { clientX: 50, clientY: 21, pointerType: 'touch' });
+        fireEvent.pointerUp(document, { clientX: 50, clientY: 21, pointerType: 'touch' });
+        expect(dropMark()).toBeNull();
+        const touch = (y: number) => ({ touches: [{ clientX: 50, clientY: y }] });
+        fireEvent.touchStart(r, touch(90));
+        act(() => vi.advanceTimersByTime(250));
+        // Touch events stay on the element the touch started on.
+        fireEvent.touchMove(r, touch(21));
+        expect(item('A')).toHaveAttribute('data-drop', 'before');
+        fireEvent.touchEnd(r, { changedTouches: [{ clientX: 50, clientY: 21 }] });
+        expect(spy).toHaveBeenLastCalledWith({ id: 'FAQ', parentId: 'Intro', index: 0 });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('a drop inside a collapsed node fires onMove, then expands it; other drops do not expand', () => {
+      const order: string[] = [];
+      render(
+        <Move
+          onMoveSpy={(m) => order.push(`move:${(m as { id: string }).id}`)}
+          onExpandedSpy={(id, open) => order.push(`expand:${id}:${open}`)}
+        />,
+      );
+      focus('FAQ'); // a real mousedown focuses the pressed treeitem; jsdom's pointerdown does not
+      pick('FAQ', 70); // inside Setup (collapsed)
+      drop(70);
+      expect(order).toEqual(['move:FAQ', 'expand:Setup:true']);
+      expect(item('FAQ')).toHaveFocus();
+      expect(item('FAQ')).toHaveAttribute('aria-level', '2');
+      order.length = 0;
+      // Rows: Intro, A, B, Setup, FAQ. Inside Intro (expanded), then before A.
+      pick('FAQ', 10);
+      drop(10);
+      pick('B', 21);
+      drop(21);
+      expect(order).toEqual(['move:FAQ', 'move:B']);
+    });
+
+    it('hover-expands a collapsed node that canDrop refuses, without an indicator', () => {
+      vi.useFakeTimers();
+      try {
+        const expand = vi.fn();
+        render(<Move onExpandedSpy={expand} canDrop={(_id, p) => p !== 'Setup'} />);
+        pick('FAQ', 70); // inside Setup: refused as a target
+        expect(dropMark()).toBeNull();
+        act(() => vi.advanceTimersByTime(700));
+        expect(expand).toHaveBeenCalledWith('Setup', true);
+        drop(70);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('never hover-expands the dragged node itself', () => {
+      vi.useFakeTimers();
+      try {
+        const expand = vi.fn();
+        render(<Move onExpandedSpy={expand} />);
+        pick('Setup', 70); // over itself
+        act(() => vi.advanceTimersByTime(700));
+        expect(expand).not.toHaveBeenCalled();
+        drop(70);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('announces a refusal once when the target turns refused', async () => {
+      render(<Move canDrop={(_id, p) => p !== 'Setup'} />);
+      pick('FAQ', 21); // before A: valid
+      await said('FAQ: before A');
+      fireEvent.pointerMove(document, { clientX: 50, clientY: 70 }); // inside Setup: vetoed
+      await said("Can't move here");
+      const region = screen.getByRole('status');
+      const seen: string[] = [];
+      const mo = new MutationObserver(() => seen.push(region.textContent ?? ''));
+      mo.observe(region, { childList: true, characterData: true, subtree: true });
+      fireEvent.pointerMove(document, { clientX: 50, clientY: 72 });
+      fireEvent.pointerMove(document, { clientX: 50, clientY: 68 });
+      await new Promise((r) => setTimeout(r, 100));
+      mo.disconnect();
+      expect(seen).toEqual([]);
+      drop(68);
+    });
+
+    it('a no-op spot (over the dragged row) is silent and shows no indicator', async () => {
+      render(<Move />);
+      pick('FAQ', 21); // before A: valid
+      await said('FAQ: before A');
+      fireEvent.pointerMove(document, { clientX: 50, clientY: 90 }); // over itself
+      expect(dropMark()).toBeNull();
+      await new Promise((r) => setTimeout(r, 100));
+      expect(screen.getByRole('status')).toHaveTextContent('FAQ: before A');
+      drop(90);
+    });
+
+    it('ignores the move shortcuts while a pointer drag is active', () => {
+      const spy = vi.fn();
+      render(<Move onMoveSpy={spy} />);
+      focus('FAQ');
+      pick('FAQ', 21);
+      press('ArrowUp');
+      expect(spy).not.toHaveBeenCalled();
+      fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+    });
+
+    it('marks only draggable rows unselectable for long press', () => {
+      const { unmount } = render(<Move />);
+      expect(row('FAQ')).toHaveAttribute('data-draggable');
+      unmount();
+      render(<Move noMove />);
+      expect(row('FAQ')).not.toHaveAttribute('data-draggable');
+    });
+
+    it('without onMove rows are not draggable', () => {
+      render(<Move noMove />);
+      pick('FAQ', 21);
+      expect(dropMark()).toBeNull();
+      expect(item('FAQ')).not.toHaveAttribute('data-dragging');
+    });
   });
 });

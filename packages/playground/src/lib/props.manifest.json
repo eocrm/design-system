@@ -2548,7 +2548,7 @@
           "type": "string",
           "required": true,
           "default": "",
-          "description": "Unified text diff (with hunk headers), e.g. from `git diff` or PHP `sebastian/diff`."
+          "description": "Single-file unified text diff (with hunk headers), e.g. PHP `sebastian/diff`. Ranges and gutters need numbered hunks: with sebastian/diff use `new UnifiedDiffOutputBuilder($header, true)`; hunks without ranges render as \"Change 1, 2…\" with no gutters."
         },
         {
           "name": "fromLabel",
@@ -2569,7 +2569,7 @@
           "type": "boolean",
           "required": false,
           "default": "true",
-          "description": "Show old/new line-number gutters, computed from the `@@` ranges."
+          "description": "Show old/new line-number gutters, computed from the `@@` ranges (only when every hunk is numbered)."
         },
         {
           "name": "wrap",
@@ -8156,6 +8156,20 @@
           "required": false,
           "default": "",
           "description": "Pointer entered/left a node's row (list) or box (chart); `null` on leave. Pointer only — no ARIA, focus or selection effect. Pair with `highlightedIds` to paint a hover chain."
+        },
+        {
+          "name": "onMove",
+          "type": "((move: TreeViewMove) => void)",
+          "required": false,
+          "default": "",
+          "description": "Opt in to moving nodes (list view only). Fires after a pointer / touch drop (drag a row: top quarter of a row\ndrops before it, bottom quarter after it, the middle inside it; touch drags after a long press) or a keyboard\nmove (Ctrl/Cmd+Shift+↑/↓ reorder, → into the previous sibling, ← out to the grandparent). TreeView stays\ncontrolled: update `roots` / `childrenOf`.\nA no-op never fires. `index` counts the new parent's loaded children after the node left its old place;\n`null` = append (omit the position in your API call). After a move into a collapsed node or a leaf,\n`onExpandedChange(parent, true)` follows: set `hasChildren: true` on the new parent."
+        },
+        {
+          "name": "canDrop",
+          "type": "((id: string, targetParentId: string | null) => boolean)",
+          "required": false,
+          "default": "",
+          "description": "App veto for a candidate new parent (`null` = root level), checked for every move. Default: allow."
         }
       ]
     },
@@ -8404,6 +8418,7 @@
     "ScatterXScale": "\"number\" | \"time\"",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",
+    "TreeViewMove": "{ id: string; parentId: string | null; index: number | null }",
     "TreeViewOverflow": "{ label: string; onLoadMore?: (() => void); loading?: boolean }",
     "TreeViewView": "\"list\" | \"chart\"",
     "ChartAnnotation": "{ key?: string; at: string; glyph: \"up\" | \"down\" | \"dot\"; tone: \"success\" | \"warning\" | \"neutral\" | \"danger\"; label: string }",

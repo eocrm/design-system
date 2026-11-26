@@ -56,6 +56,8 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 | `overflowOf` | `((parentId: string \| null) => TreeViewOverflow \| null)` | no | "N more not shown" row at the end of a level (`parentId` `null` = root level), or `null` for none. Pass `onLoadMore` to make it actionable. |
 | `highlightedIds` | `ReadonlySet<string>` | no | Ids to paint as a path, e.g. the selected node's ancestor ids plus its own id (TreeView cannot derive ancestors: `childrenOf` is only called for expanded nodes). Visual only — no ARIA, no effect on selection or focus. Ids not rendered are ignored. List view: accent edge on the rows; chart view: accent boxes and the connector lines between highlighted parents and children. |
 | `onHoverChange` | `((id: string \| null) => void)` | no | Pointer entered/left a node's row (list) or box (chart); `null` on leave. Pointer only — no ARIA, focus or selection effect. Pair with `highlightedIds` to paint a hover chain. |
+| `onMove` | `((move: TreeViewMove) => void)` | no | Opt in to moving nodes (list view only). Fires after a pointer / touch drop (drag a row: top quarter of a row drops before it, bottom quarter after it, the middle inside it; touch drags after a long press) or a keyboard move (Ctrl/Cmd+Shift+↑/↓ reorder, → into the previous sibling, ← out to the grandparent). TreeView stays controlled: update `roots` / `childrenOf`. A no-op never fires. `index` counts the new parent's loaded children after the node left its old place; `null` = append (omit the position in your API call). After a move into a collapsed node or a leaf, `onExpandedChange(parent, true)` follows: set `hasChildren: true` on the new parent. |
+| `canDrop` | `((id: string, targetParentId: string \| null) => boolean)` | no | App veto for a candidate new parent (`null` = root level), checked for every move. Default: allow. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
@@ -98,11 +100,84 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 
 - **Sizing.** `list` grows with its content — put it in a scrolling parent for long trees. `chart` fills its parent's width and scrolls horizontally inside itself when the chart is wider; it opens centred on the selected (or first) item (when the view is chosen or the first items appear), and the focused box scrolls into view.
 
+## Moving nodes (`onMove`)
+
+Opt in with `onMove` (list view only). TreeView stays controlled: it never reorders itself, it reports the move and you update `roots` / `childrenOf`. A no-op never fires.
+
+```tsx
+// One state: tree.pages (id -> { id, label, parentId, hasChildren }) and tree.kids (parent id or 'root' ->
+// LOADED child ids; absent = not loaded, so childrenOf returns undefined and you fetch it).
+const kidsOf = (id: string) => tree.kids[id]?.map((k) => tree.pages[k]);
+
+// Cycle check against YOUR data (parentId from the server), so unloaded branches count too.
+const isAncestorOrSelf = (id: string, targetParentId: string | null) => {
+  for (let p = targetParentId; p !== null; p = tree.pages[p].parentId) if (p === id) return true;
+  return false; // null = root level: never a cycle
+};
+
+function applyMove(t: Tree, { id, parentId, index }: TreeViewMove): Tree {
+  const from = t.pages[id].parentId ?? 'root';
+  const to = parentId ?? 'root';
+  const kids = { ...t.kids, [from]: t.kids[from]?.filter((k) => k !== id) };
+  // Splice only into a LOADED list. An unloaded one stays absent (refetched after the API call): creating it
+  // here would make the parent look loaded and its other children would never be fetched.
+  const list = kids[to];
+  if (list) {
+    const at = index ?? list.length;
+    kids[to] = [...list.slice(0, at), id, ...list.slice(at)];
+  }
+  const pages = { ...t.pages, [id]: { ...t.pages[id], parentId } };
+  // TreeView calls onExpandedChange(parent, true) next: a collapsed or leaf parent must now be expandable.
+  if (parentId !== null) pages[parentId] = { ...pages[parentId], hasChildren: true };
+  // Only when you hold the old parent's FULL child list (not a paginated slice), or let the refetch decide.
+  if (from !== 'root' && kids[from]?.length === 0)
+    pages[from] = { ...pages[from], hasChildren: false };
+  return { pages, kids };
+}
+
+<TreeView
+  aria-label="Wiki"
+  roots={kidsOf('root') ?? []}
+  childrenOf={kidsOf}
+  expandedIds={expanded}
+  onExpandedChange={onExpandedChange}
+  canDrop={(id, targetParentId) => canEdit(id) && !isAncestorOrSelf(id, targetParentId)}
+  onMove={(move) => {
+    const previous = tree;
+    setTree(applyMove(tree, move)); // optimistic
+    const loaded = !!tree.kids[move.parentId ?? 'root'];
+    api
+      .movePage(move.id, {
+        parent_id: move.parentId,
+        ...(move.index === null ? {} : { position: move.index }), // null = append: omit position
+      })
+      // refetchChildren(null) = the root list
+      .then(() => (!loaded || move.index === null) && refetchChildren(move.parentId))
+      .catch(() => setTree(previous)); // rollback / undo is yours
+  }}
+/>;
+```
+
+`TreeViewMove` is `{ id, parentId: string | null, index: number | null }`. `parentId` `null` is the root level. `index` counts the new parent's **loaded** children, taken **after** the node is removed from its old place (moving the 1st of 3 siblings to the end gives `2`). `index` `null` means append at the end, because the true end is unknown (the target is collapsed, loading, failed or has an overflow row): omit `position` in your API call. After a move into a collapsed node **or a leaf**, `onExpandedChange(parent, true)` fires after `onMove`, so set `hasChildren: true` on the new parent or it cannot show the moved node.
+
+TreeView refuses moves onto itself, onto its rendered descendants and onto loading / error / overflow rows. Everything else (cycles through branches that are not loaded, permissions) is yours via `canDrop(id, targetParentId)`.
+
+Keyboard shortcuts (the tree's `aria-description` is not announced by every screen reader, notably VoiceOver, so list them in your UI too). Refusals and list boundaries are announced.
+
+| Keys                   | Action                                                  |
+| ---------------------- | ------------------------------------------------------- |
+| Ctrl/⌘ + Shift + ↑ / ↓ | Reorder among siblings                                  |
+| Ctrl/⌘ + Shift + →     | Move into the previous sibling (as its last child)      |
+| Ctrl/⌘ + Shift + ←     | Move out to the grandparent, right after the old parent |
+
+Pointer and touch: drag a row (mouse / pen after 4 px; touch after a 250 ms long press). A line before / after a row marks a sibling drop (top / bottom quarter), highlighting the row marks "inside" (middle). Hovering a collapsed node for ~700 ms expands it, even if `canDrop` refuses dropping into it. About one row below the last row drops at the end of the root level. Escape cancels.
+
 #### When NOT to use
 
 - ❌ App navigation → `Rail` (with `Rail.Group`).
 - ❌ A flat or two-level list → `Card.List`, `Table`, `Accordion`.
-- ❌ Multi-select / checkbox trees, drag-and-drop reordering — not supported.
+- ❌ Multi-select / checkbox trees — not supported.
+- ❌ Moving nodes in the `chart` view (`onMove` is ignored there), moving several nodes at once, or moving between two trees. Undo is the app's job.
 
 #### Anti-patterns
 

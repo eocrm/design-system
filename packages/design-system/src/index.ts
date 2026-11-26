@@ -950,6 +950,7 @@ export type { SparklineProps, SparklineType } from './components/Sparkline';
 export { TreeView } from './components/TreeView';
 export type {
   TreeViewChildren,
+  TreeViewMove,
   TreeViewNode,
   TreeViewOverflow,
   TreeViewProps,

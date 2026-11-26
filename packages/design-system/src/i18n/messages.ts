@@ -1050,6 +1050,37 @@ export interface Messages {
     retry: string;
     /** Description of a `view="chart"` tree: how the arrow keys move. */
     chartHint: string;
+    /** `aria-description` of a tree with `onMove`: the keyboard move shortcuts. */
+    moveHint: string;
+    /** Announced when Ctrl/Cmd+Shift+Up is at the first sibling. */
+    moveBoundaryUp: string;
+    /** Announced when Ctrl/Cmd+Shift+Down is at the last sibling. */
+    moveBoundaryDown: string;
+    /** Announced when Ctrl/Cmd+Shift+Right has no previous sibling to move into. */
+    moveBoundaryIn: string;
+    /** Announced when Ctrl/Cmd+Shift+Left is already at the root level. */
+    moveBoundaryOut: string;
+    /** Announced when `canDrop` vetoes a keyboard move. */
+    moveRefused: string;
+    /** Announced after a move into a parent at a known position. */
+    movedInto: (params: {
+      name: string;
+      parent: string;
+      position: number;
+      total: number;
+    }) => string;
+    /** Announced after a move into a parent at an unknown position. */
+    movedIntoNoPosition: (params: { name: string; parent: string }) => string;
+    /** Announced after a move to the root level at a known position. */
+    movedToRoot: (params: { name: string; position: number; total: number }) => string;
+    /** Announced after a move to the root level at an unknown position. */
+    movedToRootNoPosition: (params: { name: string }) => string;
+    /** Announced while a pointer drag hovers the drop slot above `target` ("Setup: before FAQ"). */
+    dragOverBefore: (params: { name: string; target: string }) => string;
+    /** Announced while a pointer drag hovers the drop slot below `target`. */
+    dragOverAfter: (params: { name: string; target: string }) => string;
+    /** Announced while a pointer drag hovers `target` itself, to drop into it. */
+    dragOverInside: (params: { name: string; target: string }) => string;
   };
   catalogPicker: {
     /** Placeholder + aria-label of the catalog search input. */

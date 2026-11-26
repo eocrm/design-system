@@ -20,6 +20,14 @@
   --tree-view-highlight-color: var(--color-accent);
   --tree-view-highlight-width: var(--border-width-emphasis);
 
+  // onMove: pointer drag
+  --tree-view-drop-color: var(--color-accent);
+  --tree-view-drop-width: var(--border-width-emphasis);
+  --tree-view-drop-inside-bg: var(--color-accent-subtle-bg);
+  --tree-view-drag-source-opacity: var(--opacity-disabled);
+  --tree-view-drag-overlay-bg: var(--color-bg);
+  --tree-view-drag-overlay-shadow: var(--shadow-lg);
+
   // view="chart"
   --tree-view-box-bg: var(--color-bg);
   --tree-view-box-border: var(--color-border);

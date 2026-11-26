@@ -50,6 +50,77 @@
   box-shadow: inset calc(-1 * var(--tree-view-highlight-width)) 0 0 var(--tree-view-highlight-color);
 }
 
+// ---- onMove: pointer drag (list view) ----------------------------------------
+// The dragged node's subtree dims in place; it is never a target.
+.root[data-view='list'] .item[data-dragging] .row {
+  opacity: var(--tree-view-drag-source-opacity);
+}
+
+// Draggable rows (onMove only): a touch long press picks the row up instead of selecting text / iOS callout.
+.row[data-draggable] {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+// Drop line: before = top of the item, after = bottom of its whole subtree, first-child = under its row,
+// one level deeper. Indented to the target depth with logical insets so it mirrors in RTL. A border (not a
+// background) so forced colours keep it.
+.root[data-view='list'] .item[data-drop],
+.root[data-view='list'] .item[data-drop='first-child'] > .row {
+  position: relative;
+}
+
+.root[data-view='list'] .item[data-drop='before']::before,
+.root[data-view='list'] .item[data-drop='after']::after,
+.root[data-view='list'] .item[data-drop='first-child'] > .row::after {
+  content: '';
+  position: absolute;
+  inset-inline: calc(
+      var(--tree-view-level, 0) * var(--tree-view-indent) + var(--tree-view-row-padding-inline)
+    )
+    0;
+  border-block-start: var(--tree-view-drop-width) solid var(--tree-view-drop-color);
+  pointer-events: none;
+}
+
+.root[data-view='list'] .item[data-drop='before']::before {
+  inset-block-start: 0;
+}
+
+.root[data-view='list'] .item[data-drop='after']::after {
+  inset-block-end: 0;
+}
+
+.root[data-view='list'] .item[data-drop='first-child'] > .row::after {
+  inset-block-end: 0;
+  inset-inline-start: calc(
+    (var(--tree-view-level, 0) + 1) * var(--tree-view-indent) + var(--tree-view-row-padding-inline)
+  );
+}
+
+.root[data-view='list'] .item[data-drop='inside'] > .row {
+  background: var(--tree-view-drop-inside-bg);
+  outline: var(--tree-view-drop-width) solid var(--tree-view-drop-color);
+  outline-offset: calc(-1 * var(--tree-view-drop-width));
+}
+
+// Compact copy of the row label under the pointer (inside dnd-kit's fixed overlay wrapper).
+.dragOverlay {
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  padding-block: var(--tree-view-row-padding-block);
+  padding-inline: var(--tree-view-row-padding-inline);
+
+  // Transparent: forced-colors mode drops the shadow and paints this border, so the copy keeps an edge.
+  border: var(--tree-view-drop-width) solid transparent;
+  border-radius: var(--tree-view-row-radius);
+  background: var(--tree-view-drag-overlay-bg);
+  box-shadow: var(--tree-view-drag-overlay-shadow);
+  color: var(--tree-view-fg);
+  font-size: var(--tree-view-size);
+  cursor: grabbing;
+}
+
 .toggle {
   display: inline-flex;
   flex: none;

@@ -14,6 +14,7 @@ import {
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
+import { DndContext, DragOverlay } from '@dnd-kit/core';
 import { ChevronDown, ChevronRight, Minus } from 'lucide-react';
 import { CircularProgress } from '../CircularProgress';
 import { LiveRegion } from '../LiveRegion';
@@ -33,6 +34,8 @@ import {
   type TreeViewOverflow,
   type TreeViewView,
 } from './treeModel';
+import { keyboardMove, type MoveDirection, type TreeViewMove } from './treeMove';
+import { DragRow, useTreeDrag } from './useTreeDrag';
 import styles from './TreeView.module.scss';
 
 export interface TreeViewProps extends Omit<
@@ -73,7 +76,32 @@ export interface TreeViewProps extends Omit<
   highlightedIds?: ReadonlySet<string>;
   /** Pointer entered/left a node's row (list) or box (chart); `null` on leave. Pointer only — no ARIA, focus or selection effect. Pair with `highlightedIds` to paint a hover chain. */
   onHoverChange?: (id: string | null) => void;
+  /**
+   * Opt in to moving nodes (list view only). Fires after a pointer / touch drop (drag a row: top quarter of a row
+   * drops before it, bottom quarter after it, the middle inside it; touch drags after a long press) or a keyboard
+   * move (Ctrl/Cmd+Shift+↑/↓ reorder, → into the previous sibling, ← out to the grandparent). TreeView stays
+   * controlled: update `roots` / `childrenOf`.
+   * A no-op never fires. `index` counts the new parent's loaded children after the node left its old place;
+   * `null` = append (omit the position in your API call). After a move into a collapsed node or a leaf,
+   * `onExpandedChange(parent, true)` follows: set `hasChildren: true` on the new parent.
+   */
+  onMove?: (move: TreeViewMove) => void;
+  /** App veto for a candidate new parent (`null` = root level), checked for every move. Default: allow. */
+  canDrop?: (id: string, targetParentId: string | null) => boolean;
 }
+
+const MOVE_KEYS: Record<string, MoveDirection> = {
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+  ArrowRight: 'indent',
+  ArrowLeft: 'outdent',
+};
+const BOUNDARY = {
+  up: 'treeView.moveBoundaryUp',
+  down: 'treeView.moveBoundaryDown',
+  indent: 'treeView.moveBoundaryIn',
+  outdent: 'treeView.moveBoundaryOut',
+} as const;
 
 const has = (flat: TreeItem[], key: string | null) =>
   key !== null && flat.some((i) => i.key === key);
@@ -121,6 +149,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     overflowOf,
     highlightedIds,
     onHoverChange,
+    onMove,
+    canDrop,
     className,
     onFocus,
     onBlur,
@@ -151,6 +181,10 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   } | null>(null);
   const announceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [message, setMessage] = useState('');
+  // Bumped per move attempt so an identical message (same refusal twice) is announced again.
+  const [announceKey, setAnnounceKey] = useState(0);
+  // The node a keyboard move is carrying: re-focused once the app renders it in its new place.
+  const pendingFocus = useRef<string | null>(null);
   useEffect(() => {
     const ta = typeahead.current;
     return () => {
@@ -313,6 +347,76 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     announceTimer.current = null;
   }, [flat, focusedKey, focusKey, inTree, t]);
 
+  useLayoutEffect(() => {
+    const key = pendingFocus.current;
+    const el = key ? itemEls.current.get(key) : undefined;
+    if (el && document.activeElement !== el && inTree()) {
+      focusKey(key!);
+      // Re-focused in its new place: done, so a later data refresh can't pull focus back to it.
+      pendingFocus.current = null;
+    }
+  }, [flat, focusKey, inTree]);
+
+  const announce = (text: string) => {
+    setAnnounceKey((k) => k + 1);
+    setMessage(text);
+  };
+
+  /** Announce, keep focus on the node, fire `onMove`: shared by keyboard moves and pointer drops. */
+  const commitMove = (item: TreeItem & { kind: 'node' }, move: TreeViewMove) => {
+    const parent = flat.find((i) => i.kind === 'node' && i.node.id === move.parentId);
+    const name = item.node.label;
+    const total =
+      (parent?.kind === 'node' ? parent.children : flat.filter((i) => i.parentId === null)).filter(
+        (i) => i.kind === 'node',
+      ).length + (move.parentId === item.parentId ? 0 : 1);
+    const at = move.index === null ? null : { position: move.index + 1, total };
+    if (parent?.kind === 'node') {
+      const p = parent.node.label;
+      announce(
+        at
+          ? t('treeView.movedInto', { name, parent: p, ...at })
+          : t('treeView.movedIntoNoPosition', { name, parent: p }),
+      );
+    } else {
+      announce(
+        at
+          ? t('treeView.movedToRoot', { name, ...at })
+          : t('treeView.movedToRootNoPosition', { name }),
+      );
+    }
+    pendingFocus.current = item.key;
+    setFocusedKey(item.key);
+    onMove!(move);
+  };
+
+  const moveNode = (item: TreeItem & { kind: 'node' }, dir: MoveDirection) => {
+    const r = keyboardMove(flat, item.node.id, dir, canDrop);
+    if ('refusal' in r) {
+      announce(t(r.refusal === 'boundary' ? BOUNDARY[dir] : 'treeView.moveRefused'));
+      return;
+    }
+    commitMove(item, r.move);
+    if (r.expand) onExpandedChange(r.expand, true);
+  };
+
+  const dnd = !!onMove && !chart;
+  const drag = useTreeDrag({
+    flat,
+    rootEl,
+    itemEls,
+    canDrop,
+    onExpandedChange,
+    announce,
+    // Like the keyboard indent: a drop into a collapsed node (or leaf) expands it after onMove, so the moved
+    // node stays visible and keeps focus.
+    onDrop: (item, move) => {
+      commitMove(item, move);
+      const parent = flat.find((i) => i.kind === 'node' && i.node.id === move.parentId);
+      if (parent?.kind === 'node' && !parent.expanded) onExpandedChange(parent.node.id, true);
+    },
+  });
+
   const run = (action: TreeAction) => {
     if (action.type === 'focus') focusKey(action.key);
     else if (action.type === 'expand') expand(action.id);
@@ -344,6 +448,21 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       if (match) focusKey(match);
       event.preventDefault();
       event.stopPropagation();
+      return;
+    }
+    if (
+      onMove &&
+      !chart &&
+      item.kind === 'node' &&
+      (event.ctrlKey || event.metaKey) &&
+      event.shiftKey &&
+      !event.altKey &&
+      MOVE_KEYS[event.key]
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      // A pointer drag owns the move until it ends.
+      if (!drag.dragging) moveNode(item, MOVE_KEYS[event.key]);
       return;
     }
     const action = keyAction(flat, item.key, event.key, view);
@@ -385,7 +504,9 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       if (e.button === 0 && !(e.target as Element).closest('[data-row]')) e.preventDefault();
     },
     onFocus: (e: FocusEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) setFocusedKey(item.key);
+      if (e.target !== e.currentTarget) return;
+      if (pendingFocus.current !== item.key) pendingFocus.current = null;
+      setFocusedKey(item.key);
     },
     style: { '--tree-view-level': item.level - 1 } as CSSProperties,
   });
@@ -394,6 +515,37 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     if (item.kind === 'node') {
       const { node } = item;
       const highlighted = !!highlightedIds?.has(node.id);
+      const ind = drag.target?.indicator.key === item.key ? drag.target.indicator : null;
+      const rowProps = {
+        className: styles.row,
+        'data-row': '',
+        ...rowClick(item),
+        onPointerEnter: () => onHoverChange?.(node.id),
+        onPointerLeave: () => onHoverChange?.(null),
+      };
+      const rowKids = (
+        <>
+          <span
+            className={styles.toggle}
+            aria-hidden="true"
+            data-toggle={node.hasChildren ? '' : undefined}
+            data-expanded={item.expanded || undefined}
+            onClick={node.hasChildren ? (e) => onToggleClick(e, item) : undefined}
+          >
+            {node.hasChildren &&
+              (chart ? (
+                item.expanded ? (
+                  <Minus className={styles.chevron} />
+                ) : (
+                  <ChevronDown className={styles.chevron} />
+                )
+              ) : (
+                <ChevronRight className={styles.chevron} />
+              ))}
+          </span>
+          <span className={styles.content}>{node.content ?? node.label}</span>
+        </>
+      );
       const path =
         chart &&
         highlighted &&
@@ -410,34 +562,23 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
           aria-selected={onSelect ? selectedId === node.id : undefined}
           data-kind="node"
           data-highlighted={highlighted ? '' : undefined}
+          data-dragging={drag.activeId === node.id ? '' : undefined}
+          // "After" an expanded node lands as its first child: draw that line under the row, not the subtree.
+          data-drop={
+            ind
+              ? ind.zone === 'after' && ind.level > item.level
+                ? 'first-child'
+                : ind.zone
+              : undefined
+          }
         >
-          <div
-            className={styles.row}
-            data-row=""
-            {...rowClick(item)}
-            onPointerEnter={() => onHoverChange?.(node.id)}
-            onPointerLeave={() => onHoverChange?.(null)}
-          >
-            <span
-              className={styles.toggle}
-              aria-hidden="true"
-              data-toggle={node.hasChildren ? '' : undefined}
-              data-expanded={item.expanded || undefined}
-              onClick={node.hasChildren ? (e) => onToggleClick(e, item) : undefined}
-            >
-              {node.hasChildren &&
-                (chart ? (
-                  item.expanded ? (
-                    <Minus className={styles.chevron} />
-                  ) : (
-                    <ChevronDown className={styles.chevron} />
-                  )
-                ) : (
-                  <ChevronRight className={styles.chevron} />
-                ))}
-            </span>
-            <span className={styles.content}>{node.content ?? node.label}</span>
-          </div>
+          {dnd ? (
+            <DragRow dragId={node.id} {...rowProps}>
+              {rowKids}
+            </DragRow>
+          ) : (
+            <div {...rowProps}>{rowKids}</div>
+          )}
           {item.expanded && item.children.length > 0 && (
             <div
               role="group"
@@ -496,41 +637,56 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     );
   };
 
+  const tree = (
+    // {...rest} first (Pattern B): role, aria-label, data-view and the key handling must win.
+    <div
+      {...rest}
+      ref={mergeRefs(ref, rootEl)}
+      role="tree"
+      aria-describedby={
+        chart
+          ? [rest['aria-describedby'], hintId].filter(Boolean).join(' ')
+          : rest['aria-describedby']
+      }
+      aria-description={onMove && !chart ? t('treeView.moveHint') : undefined}
+      data-view={view}
+      className={clsx(styles.root, className)}
+      onFocus={chain(() => {
+        hadFocus.current = true;
+      }, onFocus)}
+      onBlur={chain((e: FocusEvent<HTMLDivElement>) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+        // Some browsers blur a focused row as it unmounts; that is not focus leaving the tree.
+        const left = e.target;
+        queueMicrotask(() => {
+          if (left.isConnected) hadFocus.current = false;
+        });
+      }, onBlur)}
+    >
+      {chart ? <div className={styles.level}>{items.map(renderItem)}</div> : items.map(renderItem)}
+    </div>
+  );
+
   return (
     <>
-      {/* {...rest} first (Pattern B): role, aria-label, data-view and the key handling must win. */}
-      <div
-        {...rest}
-        ref={mergeRefs(ref, rootEl)}
-        role="tree"
-        aria-describedby={
-          chart
-            ? [rest['aria-describedby'], hintId].filter(Boolean).join(' ')
-            : rest['aria-describedby']
-        }
-        data-view={view}
-        className={clsx(styles.root, className)}
-        onFocus={chain(() => {
-          hadFocus.current = true;
-        }, onFocus)}
-        onBlur={chain((e: FocusEvent<HTMLDivElement>) => {
-          if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
-          // Some browsers blur a focused row as it unmounts; that is not focus leaving the tree.
-          const left = e.target;
-          queueMicrotask(() => {
-            if (left.isConnected) hadFocus.current = false;
-          });
-        }, onBlur)}
-      >
-        {chart ? (
-          <div className={styles.level}>{items.map(renderItem)}</div>
-        ) : (
-          items.map(renderItem)
-        )}
-      </div>
+      {dnd ? (
+        <DndContext {...drag.dndProps}>
+          {tree}
+          {/* Outside the tree (a tree may own only groups and treeitems); a visual copy of the row's label. */}
+          <DragOverlay dropAnimation={null}>
+            {drag.activeLabel !== undefined && (
+              <div className={styles.dragOverlay} aria-hidden="true">
+                {drag.activeLabel}
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
+      ) : (
+        tree
+      )}
       {/* Outside the tree: a tree may own only groups and treeitems. */}
       {chart && <VisuallyHidden id={hintId}>{t('treeView.chartHint')}</VisuallyHidden>}
-      <LiveRegion>{message}</LiveRegion>
+      <LiveRegion announceKey={announceKey}>{message}</LiveRegion>
     </>
   );
 });
