@@ -8,6 +8,7 @@ import {
   Text,
   TreeView,
   type TreeViewChildren,
+  type TreeViewMove,
   type TreeViewNode,
   type TreeViewOverflow,
   type TreeViewView,
@@ -229,6 +230,55 @@ const views: { value: TreeViewView; label: string }[] = [
   { value: 'chart', label: 'Org chart' },
 ];
 
+// "Move pages" demo: an in-memory editable tree (parent -> ordered child ids; null = root level).
+const PAGE_LABELS: Record<string, string> = {
+  docs: 'Documentation',
+  guides: 'Guides',
+  start: 'Getting started',
+  deploy: 'Deployment',
+  api: 'API reference',
+  auth: 'Authentication',
+  hooks: 'Webhooks',
+  notes: 'Meeting notes',
+  q1: 'Q1 planning',
+  q2: 'Q2 planning',
+  archive: 'Archive (read-only)',
+  old: 'Old roadmap',
+};
+const PAGE_TREE: Record<string, string[]> = {
+  root: ['docs', 'notes', 'archive'],
+  docs: ['guides', 'api'],
+  guides: ['start', 'deploy'],
+  api: ['auth', 'hooks'],
+  notes: ['q1', 'q2'],
+  archive: ['old'],
+};
+const READ_ONLY = 'archive';
+
+function pageParent(tree: Record<string, string[]>, id: string) {
+  return Object.keys(tree).find((k) => tree[k].includes(id)) ?? 'root';
+}
+
+function applyMove(tree: Record<string, string[]>, { id, parentId, index }: TreeViewMove) {
+  const from = pageParent(tree, id);
+  const to = parentId ?? 'root';
+  const next = { ...tree, [from]: tree[from].filter((c) => c !== id) };
+  const siblings = [...(next[to] ?? [])];
+  // index is among the new siblings (the moved node already excluded); null = append
+  siblings.splice(index ?? siblings.length, 0, id);
+  next[to] = siblings;
+  return next;
+}
+
+function pageNode(id: string): TreeViewNode {
+  return {
+    id,
+    label: PAGE_LABELS[id],
+    hasChildren: id in PAGE_TREE,
+    content: <Text as="span">{PAGE_LABELS[id]}</Text>,
+  };
+}
+
 export function TreeViewDemo() {
   const [listExpanded, setListExpanded] = useState<ReadonlySet<string>>(() => new Set(['company']));
   const [listSelected, setListSelected] = useState<string | null>('sales');
@@ -257,6 +307,11 @@ export function TreeViewDemo() {
   );
   const [hovered, setHovered] = useState<string | null>(null);
 
+  const [pages, setPages] = useState(PAGE_TREE);
+  const [pagesExpanded, setPagesExpanded] = useState<ReadonlySet<string>>(
+    () => new Set(['docs', 'guides']),
+  );
+  const [lastMove, setLastMove] = useState<TreeViewMove | null>(null);
   const [refExpanded, setRefExpanded] = useState<ReadonlySet<string>>(
     () => new Set(['company', 'r-d']),
   );
@@ -514,6 +569,50 @@ function pathTo(id: string | null) {
           expandedIds={refExpanded}
           onExpandedChange={(id, open) => setRefExpanded((s) => toggle(s, id, open))}
         />
+      </Example>
+      <Example
+        title="Move pages"
+        description="Opt in with onMove: drag a row (touch: long-press), or Ctrl/Cmd+Shift+arrows (↑↓ reorder, → into previous sibling, ← out). canDrop here refuses the read-only Archive and cycles. TreeView only reports the move; this demo applies it to in-memory state."
+        code={`<TreeView
+  aria-label="Pages"
+  roots={children('root')}
+  childrenOf={children}
+  expandedIds={expanded}
+  onExpandedChange={(id, open) => setExpanded((s) => toggle(s, id, open))}
+  canDrop={(id, targetParentId) =>
+    targetParentId !== 'archive' && !isAncestorOrSelf(id, targetParentId)
+  }
+  onMove={(move) => {
+    // move.index === null: append (omit "position" in your API call)
+    setPages((tree) => applyMove(tree, move)); // { parent_id: move.parentId, position: move.index }
+  }}
+/>`}
+      >
+        <Stack gap="md">
+          <TreeView
+            aria-label="Pages"
+            roots={(pages.root ?? []).map(pageNode)}
+            childrenOf={(id) => (pages[id] ?? []).map(pageNode)}
+            expandedIds={pagesExpanded}
+            onExpandedChange={(id, open) => setPagesExpanded((s) => toggle(s, id, open))}
+            canDrop={(id, targetParentId) => {
+              if (targetParentId === READ_ONLY || id === READ_ONLY) return false;
+              // cycle: the target must not be the node itself or one of its descendants
+              for (let p = targetParentId; p !== null; p = pageParent(pages, p)) {
+                if (p === id) return false;
+                if (p === 'root') break;
+              }
+              return true;
+            }}
+            onMove={(move) => {
+              setLastMove(move);
+              setPages((tree) => applyMove(tree, move));
+            }}
+          />
+          <Text size="sm" tone="muted">
+            {lastMove ? `Last move: ${JSON.stringify(lastMove)}` : 'No move yet.'}
+          </Text>
+        </Stack>
       </Example>
     </DemoLayout>
   );

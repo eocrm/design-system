@@ -97,7 +97,7 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`.
 - `LaneChart` — several measures with different units stacked in lanes (bar / line / presence dots) on one shared time axis: one tooltip, selection, zoom and markers across all lanes, per-lane reference lines, data table, empty state
 - `ScatterChart` — scatter plot of two measures or events on a time axis: series colours + marker shapes, dot size, optional trend line and reference line, legend, tooltip, keyboard, data table, empty state
 - `Heatmap` — rows × columns grid coloured by value in up to five sequential steps with legend; `null` = no data; tooltip, keyboard, data table, empty state
-- `TreeView` — lazily loaded hierarchy (WAI-ARIA tree) as a file-explorer list or a top-down org chart, with loading / error-retry / load-more rows
+- `TreeView` — lazily loaded hierarchy (WAI-ARIA tree) as a file-explorer list or a top-down org chart, with loading / error-retry / load-more rows, opt-in drag/keyboard move
 - `LiquidEditor` — Liquid template editor
 - `RichTextEditor` — controlled rich-text editor (contentEditable)
 - `ImageCrop` — controlled image cropper

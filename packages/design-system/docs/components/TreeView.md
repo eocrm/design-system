@@ -100,11 +100,51 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 
 - **Sizing.** `list` grows with its content — put it in a scrolling parent for long trees. `chart` fills its parent's width and scrolls horizontally inside itself when the chart is wider; it opens centred on the selected (or first) item (when the view is chosen or the first items appear), and the focused box scrolls into view.
 
+## Moving nodes (`onMove`)
+
+Opt in with `onMove` (list view only). TreeView stays controlled: it never reorders itself, it reports the move and you update `roots` / `childrenOf`. A no-op never fires.
+
+```tsx
+<TreeView
+  aria-label="Wiki"
+  roots={rootNodes}
+  childrenOf={childrenOf}
+  expandedIds={expanded}
+  onExpandedChange={onExpandedChange}
+  canDrop={
+    (id, targetParentId) => canEdit(id) && !isAncestorOrSelf(id, targetParentId) // cycle check against YOUR data, incl. unloaded branches
+  }
+  onMove={({ id, parentId, index }) => {
+    // index === null: append (target collapsed, loading, or has an overflow row) -> omit position
+    const previous = tree;
+    setTree(applyMove(tree, id, parentId, index)); // optimistic
+    api
+      .movePage(id, { parent_id: parentId, ...(index === null ? {} : { position: index }) })
+      .catch(() => setTree(previous)); // rollback / undo is yours
+  }}
+/>
+```
+
+`TreeViewMove` is `{ id, parentId: string | null, index: number | null }`: `parentId` `null` is the root level, `index` is the position among the new siblings. When a node is moved into a collapsed node, `onExpandedChange(parent, true)` fires after `onMove`.
+
+TreeView refuses moves onto itself, onto its rendered descendants and onto loading / error / overflow rows. Everything else (cycles through branches that are not loaded, permissions) is yours via `canDrop(id, targetParentId)`.
+
+Keyboard shortcuts (the tree's `aria-description` is not announced by every screen reader, notably VoiceOver, so list them in your UI too). Refusals and list boundaries are announced.
+
+| Keys                   | Action                                                  |
+| ---------------------- | ------------------------------------------------------- |
+| Ctrl/⌘ + Shift + ↑ / ↓ | Reorder among siblings                                  |
+| Ctrl/⌘ + Shift + →     | Move into the previous sibling (as its last child)      |
+| Ctrl/⌘ + Shift + ←     | Move out to the grandparent, right after the old parent |
+
+Pointer and touch: drag a row (mouse / pen after 4 px; touch after a 250 ms long press). A line before / after a row marks a sibling drop (top / bottom quarter), highlighting the row marks "inside" (middle). Hovering a collapsed node for ~700 ms expands it, even if `canDrop` refuses dropping into it. About one row below the last row drops at the end of the root level. Escape cancels.
+
 #### When NOT to use
 
 - ❌ App navigation → `Rail` (with `Rail.Group`).
 - ❌ A flat or two-level list → `Card.List`, `Table`, `Accordion`.
-- ❌ Multi-select / checkbox trees, drag-and-drop reordering — not supported.
+- ❌ Multi-select / checkbox trees — not supported.
+- ❌ Moving nodes in the `chart` view (`onMove` is ignored there), moving several nodes at once, or moving between two trees. Undo is the app's job.
 
 #### Anti-patterns
 

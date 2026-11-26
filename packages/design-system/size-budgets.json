@@ -21,14 +21,14 @@
   },
   "i18n-en": {
     "code": "import { I18nProvider, Button } from '@eocrm/design-system'; console.log(I18nProvider, Button);",
-    "jsGzip": 8330,
+    "jsGzip": 8820,
     "cssGzip": 1920,
     "mustNotContain": ["Закрыть"]
   },
   "all": {
     "code": "import * as DS from '@eocrm/design-system'; console.log(DS);",
     "jsGzip": 364200,
-    "cssGzip": 84150
+    "cssGzip": 84490
   },
   "global-css": {
     "code": "import '@eocrm/design-system/styles/global.css';",
