@@ -706,9 +706,9 @@ describe('RichTextEditor shared editing: presence', () => {
     );
     const carets = [...container.querySelectorAll('[data-presence-caret]')];
     expect(carets.map((c) => c.textContent)).toEqual(['Bob', '', '']);
-    // A nameless peer is counted but not listed (no dangling separator).
+    // A nameless peer is drawn but neither counted nor listed (no dangling separator).
     expect(container.querySelector('[data-sync-status]')).toHaveTextContent(
-      /^3 others editing: Bob, Cy$/,
+      /^2 others editing: Bob, Cy$/,
     );
   });
 

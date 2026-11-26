@@ -650,10 +650,10 @@ export const ru: Messages = {
     connecting: 'Подключение…',
     offline: 'Офлайн',
     offlineHint: 'изменения синхронизируются после подключения',
-    othersEditing: ({ names, count = names.length }) =>
-      `Также ${count === 1 ? 'редактирует' : 'редактируют'} (${count})${
-        names.length ? `: ${names.map((n) => `«${n}»`).join(', ')}` : ''
-      }`,
+    othersEditing: ({ names }) =>
+      `Также ${names.length === 1 ? 'редактирует' : 'редактируют'} (${names.length}): ${names
+        .map((n) => `«${n}»`)
+        .join(', ')}`,
     uploadInterrupted: 'Загрузка прервана',
     editorLabel: 'Редактор форматированного текста',
     toolbar: 'Форматирование',

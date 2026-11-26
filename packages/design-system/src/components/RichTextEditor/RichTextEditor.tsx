@@ -141,8 +141,8 @@ export interface RichTextEditorController {
    */
   setSelection(range: RichRange | null): void;
   /**
-   * True during an IME composition. Hold outside `value` changes until `onCompositionEnd`: the
-   * DOM belongs to the IME until then.
+   * True during an IME composition. Don't pass outside `value` changes until `onCompositionEnd`
+   * (the DOM belongs to the IME): skip them, then rebuild once from your shared state.
    */
   isComposing(): boolean;
 }
@@ -369,12 +369,16 @@ export interface RichTextEditorProps extends Omit<
   onSelectionChange?: (selection: RichRange | null) => void;
   /** Receives the {@link RichTextEditorController} for a sync layer. */
   controller?: Ref<RichTextEditorController>;
-  /** Fires after the editor committed an IME composition: apply outside changes held during it. */
+  /**
+   * Fires after the editor committed an IME composition (and its `onChange`): if remote changes
+   * arrived during it, rebuild the doc once from your shared state now and pass it as `value`.
+   */
   onCompositionEnd?: () => void;
   /**
    * Other users in a shared doc: drawn as carets with a name flag and selection tints in each
    * user's colour (hidden from assistive tech), and named in the status area's accessible text
-   * ("2 others editing: …", one per `id`). Leave out the local user. Setting it (or `syncStatus`)
+   * ("2 others editing: …", one per `id` with a non-empty name; nameless peers are drawn but
+   * not counted). Leave out the local user. Setting it (or `syncStatus`)
    * wraps the editable in a root element that holds the overlay and status, so set it from the
    * first render (`[]` while nobody else is there): switching it between `undefined` and set
    * remounts the editable when neither `toolbar` nor `blockControls` already wraps it.
@@ -2195,11 +2199,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // `usesShell` (the stable `.shell` gate) is declared near the top so the
     // image-hover effect can depend on it; it's reused here for the shell render.
 
-    // One entry per id (the first: an app may relay duplicates); '' for a nameless one, counted
-    // but not listed. Untrusted: tolerate junk entries.
+    // One name per id (the first: an app may relay duplicates); peers without a usable name are
+    // drawn but not counted or listed. Untrusted: tolerate junk entries.
     const othersEditing = (presence ?? [])
       .filter((p, i, all) => p && all.findIndex((q) => q?.id === p.id) === i)
-      .map((p) => (typeof p.name === 'string' ? p.name : ''));
+      .map((p) => (typeof p.name === 'string' ? p.name : ''))
+      .filter(Boolean);
     // Always rendered (null without the prop) so setting uploadOwner never remounts the editable.
     const withUploadOwner = (node: React.ReactNode) => (
       <UploadOwnerContext.Provider value={uploadOwner ?? null}>{node}</UploadOwnerContext.Provider>

@@ -40,10 +40,7 @@ export function RichTextSyncStatus({
       {others.length > 0 && (
         <VisuallyHidden>
           {status ? '. ' : ''}
-          {t('richTextEditor.othersEditing', {
-            names: others.filter(Boolean),
-            count: others.length,
-          })}
+          {t('richTextEditor.othersEditing', { names: others })}
         </VisuallyHidden>
       )}
       {status && <LiveRegion>{announced}</LiveRegion>}
