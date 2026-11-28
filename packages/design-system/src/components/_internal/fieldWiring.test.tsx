@@ -1,5 +1,8 @@
-import { Fragment } from 'react';
-import { hasContent } from './fieldWiring';
+import { Fragment, type ReactElement } from 'react';
+import { renderHook } from '@testing-library/react';
+import { hasContent, useFieldWiring } from './fieldWiring';
+import { Stack } from '../Stack';
+import { Cluster } from '../Cluster';
 
 // hasContent has no test file of its own even though it drives hasLabel /
 // hasDescription / hasError across two components and three slots — its
@@ -148,5 +151,46 @@ describe('hasContent — Fragment recursion (Important 2: the Fragment-type chec
     // children, so a childless <span /> would go from true to false. This
     // is the documented `<span />` limit — pinned here, not just in prose.
     expect(hasContent(<span />)).toBe(true);
+  });
+});
+
+// DS-95: `invalid` is a DS control prop. Asserted on the cloned element's props
+// rather than via React's DOM warning, which React dedupes per session.
+describe('useFieldWiring — wire() keeps DS props off DOM nodes (DS-95)', () => {
+  function wired(child: ReactElement, asGroup: boolean) {
+    const { result } = renderHook(() =>
+      useFieldWiring({
+        hasLabel: true,
+        hasDescription: false,
+        hasError: true,
+        required: true,
+        asGroup,
+      }),
+    );
+    return (result.current.wire(child) as ReactElement<Record<string, unknown>>).props;
+  }
+
+  it.each([true, false])(
+    'a layout primitive gets neither invalid nor required (asGroup=%s)',
+    (asGroup) => {
+      for (const el of [<Stack key="s" />, <Cluster key="c" />]) {
+        const props = wired(el, asGroup);
+        expect(props).not.toHaveProperty('invalid');
+        expect(props).not.toHaveProperty('required');
+      }
+    },
+  );
+
+  it('a host element gets required but not invalid', () => {
+    const props = wired(<input />, false);
+    expect(props).not.toHaveProperty('invalid');
+    expect(props.required).toBe(true);
+  });
+
+  it('a DS control still gets invalid', () => {
+    function Control(_: { invalid?: boolean }) {
+      return null;
+    }
+    expect(wired(<Control />, true).invalid).toBe(true);
   });
 });

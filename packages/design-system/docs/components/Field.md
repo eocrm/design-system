@@ -85,7 +85,8 @@
 
 #### Anti-patterns
 
-- ❌ Auto-wiring a raw native `<input>` and expecting `aria-invalid`: auto-clone injects the DS `invalid` prop. For a native element use the render-prop and spread `field` (it includes `aria-invalid`).
+- ❌ Auto-wiring a raw native `<input>` and expecting `aria-invalid`: auto-clone injects the DS `invalid` prop only into components, never into a host element (it would leak to the DOM). For a native element use the render-prop and spread `field` (it includes `aria-invalid`).
+- ⚠️ `<Field asGroup>` around a layout primitive (`Stack`, `Cluster`, `Grid`, `Split`, `Constrain`, `Indent`) — e.g. a stack of `Checkbox`es — injects neither `invalid` nor `required` into it. The group's `aria-invalid` is still set on Field's own `role="group"` wrapper; pass `invalid` to each checkbox yourself if they should show the error style.
 - ❌ Passing both `required` and `optional`.
 - ⚠️ `label` / `description` / `error` treat `0`, `NaN`, `false`, `''`, an empty array and an empty fragment (`<></>`) as ABSENT. `error={errors.map(...)}` with no errors, `label={<></>}` or `description={[]}` render nothing — no `<label>`, no description, no error text, no `invalid` flip — so the control falls back to its own `aria-label` or ends up unnamed. A real but visually empty node (`label={<span />}`, `label="   "`) or an empty one-shot iterator (`Map.prototype.values()`, a generator) still counts as present. Pass `undefined` explicitly for "none" rather than a container that might be empty.
 - ⚠️ An absent `label` also removes the `required` / `optional` marker, since both live inside the `<label>`: `<Field label={0} required>` shows no `*`.
