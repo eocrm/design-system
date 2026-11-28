@@ -12,6 +12,8 @@ import { Masonry } from '../Masonry';
 import { Card } from '../Card';
 import { Sticky } from '../Sticky';
 import { List } from '../List';
+import { ScrollArea } from '../ScrollArea';
+import { Sortable } from '../Sortable';
 
 // hasContent has no test file of its own even though it drives hasLabel /
 // hasDescription / hasError across two components and three slots — its
@@ -180,7 +182,7 @@ describe('useFieldWiring — wire() keeps DS props off DOM nodes (DS-95)', () =>
   }
 
   it.each([true, false])(
-    'a DS container or Fragment gets neither invalid nor required (asGroup=%s)',
+    'a DS container gets neither invalid nor required (asGroup=%s)',
     (asGroup) => {
       const containers = [
         Stack,
@@ -195,10 +197,11 @@ describe('useFieldWiring — wire() keeps DS props off DOM nodes (DS-95)', () =>
         Card,
         Sticky,
         List,
+        ScrollArea,
+        Sortable,
       ];
       for (const el of [
         ...containers.map((C, i) => createElement(C as ComponentType, { key: i })),
-        <Fragment key="f" />,
       ]) {
         const props = wired(el, asGroup);
         expect(props).not.toHaveProperty('invalid');
@@ -219,4 +222,11 @@ describe('useFieldWiring — wire() keeps DS props off DOM nodes (DS-95)', () =>
     }
     expect(wired(<Control />, true).invalid).toBe(true);
   });
+
+  it.each([true, false])(
+    'a Fragment passes through with no injected props (asGroup=%s)',
+    (asGroup) => {
+      expect(Object.keys(wired(<Fragment>x</Fragment>, asGroup))).toEqual(['children']);
+    },
+  );
 });

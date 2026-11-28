@@ -149,6 +149,9 @@ export function useFieldWiring({
   const wire = (children: ReactNode | ((f: FieldRenderProps) => ReactNode)): ReactNode => {
     if (typeof children === 'function') return children(field);
     if (!isValidElement(children)) return children;
+    // A Fragment accepts only `key`/`children`; cloning ARIA ids or control
+    // props onto it makes React warn (DS-95). Pass it through untouched.
+    if (children.type === Fragment) return children;
 
     const child = children as ReactElement<Record<string, unknown>>;
     const childProps = child.props;
@@ -211,14 +214,14 @@ export function useFieldWiring({
       injected['aria-labelledby'] = childProps['aria-labelledby'] || labelledBy;
     }
     // DS-95: `invalid` is a DS control prop, not a DOM attribute. A host
-    // element, a Fragment, or a DS container tagged with `fieldContainer`
+    // element or a DS container tagged with `fieldContainer`
     // (`<Field asGroup><Stack>{checkboxes}</Stack></Field>`) would put it on
-    // the DOM and React warns about a non-boolean attribute. Containers and
-    // Fragments get neither prop (`required` means nothing on them); a host
+    // the DOM and React warns about a non-boolean attribute. Containers get
+    // neither prop (`required` means nothing on them); a host
     // element keeps `required`, a real attribute on native inputs. A
     // consumer's own wrapper component can't be detected; it uses the
     // render-prop form instead (documented in Field.md).
-    if (child.type === Fragment || isFieldContainer(child.type)) {
+    if (isFieldContainer(child.type)) {
       delete injected.invalid;
       delete injected.required;
     } else if (typeof child.type === 'string') {

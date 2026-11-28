@@ -5,7 +5,13 @@
 
 const FIELD_CONTAINER = Symbol.for('eocrm.ds.fieldContainer');
 
-/** Tag a container component. Call as `/* @__PURE__ *\/ fieldContainer(forwardRef(…))` so it stays tree-shakable. */
+/**
+ * Tag a container component with a statement right after its declaration:
+ * `fieldContainer(Stack);`. Tree-shaking still drops an unused container,
+ * because the package marks only stylesheets as side-effectful. Every DS
+ * component that spreads unknown props onto a DOM node and has no `invalid`
+ * prop of its own should be tagged, and listed in fieldWiring.test.tsx.
+ */
 export function fieldContainer<T extends object>(component: T): T {
   (component as Record<symbol, unknown>)[FIELD_CONTAINER] = true;
   return component;
