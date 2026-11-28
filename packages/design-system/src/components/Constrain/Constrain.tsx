@@ -1,6 +1,7 @@
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import styles from './Constrain.module.scss';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /** Named width step → a `--measure-*` token; `'full'` = 100%. */
 export type ConstrainWidth = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -77,3 +78,4 @@ export const Constrain = forwardRef<HTMLDivElement, ConstrainProps>(function Con
     </div>
   );
 });
+fieldContainer(Constrain);

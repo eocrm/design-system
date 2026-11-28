@@ -12,6 +12,7 @@ import { CardBody } from './CardBody';
 import { CardHeader } from './CardHeader';
 import { CardList } from './CardList';
 import { CardListRow } from './CardListRow';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /** Inner padding. See CardProps#padding for guidance on each. */
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
@@ -161,6 +162,7 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
     </div>
   );
 });
+fieldContainer(CardRoot);
 
 export const Card = Object.assign(CardRoot, {
   Body: CardBody,

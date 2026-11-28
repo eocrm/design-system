@@ -1,8 +1,17 @@
-import { Fragment, type ReactElement } from 'react';
+import { createElement, Fragment, type ComponentType, type ReactElement } from 'react';
 import { renderHook } from '@testing-library/react';
 import { hasContent, useFieldWiring } from './fieldWiring';
 import { Stack } from '../Stack';
 import { Cluster } from '../Cluster';
+import { Constrain } from '../Constrain';
+import { Indent } from '../Indent';
+import { Grid } from '../Grid';
+import { Split } from '../Split';
+import { FormRow } from '../FormRow';
+import { Masonry } from '../Masonry';
+import { Card } from '../Card';
+import { Sticky } from '../Sticky';
+import { List } from '../List';
 
 // hasContent has no test file of its own even though it drives hasLabel /
 // hasDescription / hasError across two components and three slots — its
@@ -171,9 +180,26 @@ describe('useFieldWiring — wire() keeps DS props off DOM nodes (DS-95)', () =>
   }
 
   it.each([true, false])(
-    'a layout primitive gets neither invalid nor required (asGroup=%s)',
+    'a DS container or Fragment gets neither invalid nor required (asGroup=%s)',
     (asGroup) => {
-      for (const el of [<Stack key="s" />, <Cluster key="c" />]) {
+      const containers = [
+        Stack,
+        Cluster,
+        Constrain,
+        Indent,
+        Grid,
+        Grid.Item,
+        Split,
+        FormRow,
+        Masonry,
+        Card,
+        Sticky,
+        List,
+      ];
+      for (const el of [
+        ...containers.map((C, i) => createElement(C as ComponentType, { key: i })),
+        <Fragment key="f" />,
+      ]) {
         const props = wired(el, asGroup);
         expect(props).not.toHaveProperty('invalid');
         expect(props).not.toHaveProperty('required');

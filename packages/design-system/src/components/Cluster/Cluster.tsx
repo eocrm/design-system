@@ -1,6 +1,7 @@
 import { forwardRef, type HTMLAttributes, type Ref } from 'react';
 import clsx from 'clsx';
 import styles from './Cluster.module.scss';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /** Horizontal gap between children. Values in pixels: 4 / 8 / 12 / 16 / 24 / 32. */
 export type ClusterGap = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -213,3 +214,4 @@ export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(
     />
   );
 });
+fieldContainer(Cluster);

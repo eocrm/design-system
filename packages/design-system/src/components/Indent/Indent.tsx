@@ -1,6 +1,7 @@
 import { forwardRef, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import styles from './Indent.module.scss';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /** Per-level indent size — a spacing step. */
 export type IndentGutter = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -44,3 +45,4 @@ export const Indent = forwardRef<HTMLDivElement, IndentProps>(function Indent(
     </div>
   );
 });
+fieldContainer(Indent);

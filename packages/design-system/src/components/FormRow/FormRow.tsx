@@ -1,5 +1,6 @@
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { Grid, type GridGap } from '../Grid';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 // Extends HTMLAttributes<HTMLElement> (not HTMLDivElement) to match Grid's prop
 // surface, so {...rest} spreads cleanly onto Grid.
@@ -35,3 +36,4 @@ export const FormRow = forwardRef<HTMLDivElement, FormRowProps>(function FormRow
     </Grid>
   );
 });
+fieldContainer(FormRow);

@@ -6,15 +6,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
-import { Stack } from '../Stack';
-import { Cluster } from '../Cluster';
-import { Constrain } from '../Constrain';
-import { Indent } from '../Indent';
-import { Grid } from '../Grid';
-import { Split } from '../Split';
-
-/** Layout containers that spread unknown props onto a DOM node: Field never injects control props into them. */
-const LAYOUT_PRIMITIVES = new Set<unknown>([Stack, Cluster, Constrain, Indent, Grid, Split]);
+import { isFieldContainer } from './fieldContainer';
 
 /**
  * `Boolean(n)`, plus: an empty RE-ITERABLE container (array, `Set`, or `Map`
@@ -218,17 +210,19 @@ export function useFieldWiring({
       // gate; there's no gate left to be wrong about.
       injected['aria-labelledby'] = childProps['aria-labelledby'] || labelledBy;
     }
-    // DS-95: `invalid` is a DS control prop, not a DOM attribute. A layout
-    // primitive (`<Field asGroup><Stack>{checkboxes}</Stack></Field>`) or a
-    // host element spreads it onto its DOM node and React warns about a
-    // non-boolean attribute. Layout primitives get neither prop (`required`
-    // is meaningless on a container); a host element keeps `required`, which
-    // is a real attribute on native inputs.
-    if (typeof child.type === 'string') {
-      delete injected.invalid;
-    } else if (LAYOUT_PRIMITIVES.has(child.type)) {
+    // DS-95: `invalid` is a DS control prop, not a DOM attribute. A host
+    // element, a Fragment, or a DS container tagged with `fieldContainer`
+    // (`<Field asGroup><Stack>{checkboxes}</Stack></Field>`) would put it on
+    // the DOM and React warns about a non-boolean attribute. Containers and
+    // Fragments get neither prop (`required` means nothing on them); a host
+    // element keeps `required`, a real attribute on native inputs. A
+    // consumer's own wrapper component can't be detected; it uses the
+    // render-prop form instead (documented in Field.md).
+    if (child.type === Fragment || isFieldContainer(child.type)) {
       delete injected.invalid;
       delete injected.required;
+    } else if (typeof child.type === 'string') {
+      delete injected.invalid;
     }
     return cloneElement(child, injected);
   };

@@ -7,6 +7,7 @@ import {
 } from '../_internal/gridSpan';
 import { CollapseColumnsContext } from '../_internal/collapse';
 import styles from './Grid.module.scss';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 // The span vocabulary (type + fraction→track resolver) is shared with
 // Sortable.Item's grid arrangement; it lives in _internal/gridSpan so neither
@@ -75,3 +76,4 @@ export const GridItem = forwardRef<HTMLElement, GridItemProps>(function GridItem
     />
   );
 });
+fieldContainer(GridItem);
