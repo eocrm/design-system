@@ -9,13 +9,22 @@ import type {
   Point,
   Range,
 } from '../RichText/engine/model';
-import { toggleMark, setBlockType, applyMark, removeMark } from '../RichText/engine/transforms';
+import { createBlock } from '../RichText/engine/model';
+import {
+  toggleMark,
+  setBlockType,
+  applyMark,
+  removeMark,
+  deleteRange,
+} from '../RichText/engine/transforms';
+import { insertVoidBlock, isVoidBlock } from '../RichText/engine/attachment';
 import {
   orderedRange,
   findBlockIndex,
   blockLength,
   isCollapsed,
   marksBeforeCaret,
+  collapsedRange,
 } from '../RichText/engine/position';
 import { hasMark } from '../RichText/engine/marks';
 
@@ -297,4 +306,35 @@ export function applyExactMarks(doc: RichDoc, range: Range, marks: Mark[]): Rich
     d = mark ? applyMark(d, range, mark).doc : removeMark(d, range, type).doc;
   }
   return d;
+}
+
+/**
+ * Insert a divider at the selection (a non-collapsed range is deleted first) and
+ * put the caret in the block after it. At a text block's start — incl. an empty
+ * paragraph, which it thereby replaces — the divider goes BEFORE the block, so no
+ * empty block is left above it; at a block's end the trailing block is a fresh
+ * paragraph; otherwise the block splits around it (the `insertAttachmentBlock`
+ * shape). Same-ref no-op if the caret's block isn't found.
+ */
+export function runInsertDivider(doc: RichDoc, range: Range): CommandResult {
+  const cleared = isCollapsed(range) ? { doc, selection: range } : deleteRange(doc, range);
+  const point = cleared.selection.anchor;
+  const d = cleared.doc;
+  const idx = findBlockIndex(d, point.blockId);
+  if (idx === -1) return { doc, selection: range };
+  const block = d.blocks[idx];
+  const divider = createBlock('divider');
+  const at = (i: number, ...ins: Block[]) => [
+    ...d.blocks.slice(0, i),
+    ...ins,
+    ...d.blocks.slice(i),
+  ];
+  if (!isVoidBlock(block) && point.offset === 0) {
+    return { doc: { blocks: at(idx, divider) }, selection: collapsedRange(block.id) };
+  }
+  if (!isVoidBlock(block) && point.offset >= blockLength(block)) {
+    const next = createBlock('paragraph');
+    return { doc: { blocks: at(idx + 1, divider, next) }, selection: collapsedRange(next.id) };
+  }
+  return insertVoidBlock(d, point, divider) ?? { doc, selection: range };
 }

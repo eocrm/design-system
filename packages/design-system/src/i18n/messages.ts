@@ -1214,6 +1214,8 @@ export interface Messages {
     blockquote: string;
     /** Block-type menu item + trigger label for a code block. */
     codeBlock: string;
+    /** Block-type menu item that inserts a divider (horizontal rule) at the caret. */
+    divider: string;
     /** Block-type trigger label when the selection spans mixed block types. */
     mixed: string;
     /** aria-label on the bold mark toggle button. */
@@ -1252,6 +1254,8 @@ export interface Messages {
     mentionsEmpty: string;
     /** aria-label on the block "insert below" (＋) gutter button. */
     blockInsert: string;
+    /** ⠿ block-menu item that inserts a divider below the block. */
+    blockInsertDivider: string;
     /** aria-label on the block actions (⠿) gutter handle. */
     blockActions: string;
     /** "Turn into" submenu label in the block menu. */

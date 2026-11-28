@@ -7,6 +7,7 @@ import {
   runToggleList,
   runIndent,
   applyExactMarks,
+  runInsertDivider,
 } from './commands';
 import { createBlock } from '../RichText/engine/model';
 import type { RichDoc, Range, Inline } from '../RichText/engine/model';
@@ -253,5 +254,38 @@ describe('applyExactMarks', () => {
     };
     const next = applyExactMarks(doc, span(at('a', 0), at('a', 2)), []);
     expect(next.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);
+  });
+});
+
+describe('runInsertDivider', () => {
+  const text = (b: RichDoc['blocks'][number]) => b.inlines.map((i) => i.text).join('');
+  const caret = (blockId: string, offset: number) => span(at(blockId, offset), at(blockId, offset));
+
+  it('splits "ab|cd" into [p "ab", divider, p "cd"], caret at the start of "cd"', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'abcd', { id: 'a' })] };
+    const r = runInsertDivider(doc, caret('a', 2));
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['paragraph', 'divider', 'paragraph']);
+    expect(r.doc.blocks.map(text)).toEqual(['ab', '', 'cd']);
+    expect(r.selection).toEqual(caret(r.doc.blocks[2].id, 0));
+  });
+
+  it('replaces an empty paragraph: [divider, p], caret in the p', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', '', { id: 'a' })] };
+    const r = runInsertDivider(doc, caret('a', 0));
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['divider', 'paragraph']);
+    expect(r.selection).toEqual(caret(r.doc.blocks[1].id, 0));
+  });
+
+  it('at the end of a heading, the trailing block is an empty paragraph', () => {
+    const doc: RichDoc = { blocks: [createBlock('heading', 'Title', { id: 'h', level: 1 })] };
+    const r = runInsertDivider(doc, caret('h', 5));
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['heading', 'divider', 'paragraph']);
+    expect(r.selection).toEqual(caret(r.doc.blocks[2].id, 0));
+  });
+
+  it('deletes a non-collapsed selection first', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'abcd', { id: 'a' })] };
+    const r = runInsertDivider(doc, span(at('a', 1), at('a', 3)));
+    expect(r.doc.blocks.map(text)).toEqual(['a', '', 'd']);
   });
 });

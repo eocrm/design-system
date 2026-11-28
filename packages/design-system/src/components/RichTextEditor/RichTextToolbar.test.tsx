@@ -12,6 +12,7 @@ function renderTb(props: Partial<React.ComponentProps<typeof RichTextToolbar>> =
   const onRedo = vi.fn();
   const onInsertEmoji = vi.fn();
   const onSetColor = vi.fn();
+  const onInsertDivider = vi.fn();
   render(
     <I18nProvider locale="en">
       <RichTextToolbar
@@ -21,6 +22,7 @@ function renderTb(props: Partial<React.ComponentProps<typeof RichTextToolbar>> =
         block={{ type: 'paragraph' }}
         onToggleMark={onToggleMark}
         onSetBlock={onSetBlock}
+        onInsertDivider={onInsertDivider}
         onToggleList={onToggleList}
         onOpenLink={onOpenLink}
         onUndo={onUndo}
@@ -39,6 +41,7 @@ function renderTb(props: Partial<React.ComponentProps<typeof RichTextToolbar>> =
     onRedo,
     onInsertEmoji,
     onSetColor,
+    onInsertDivider,
   };
 }
 
@@ -113,6 +116,15 @@ describe('RichTextToolbar', () => {
     await user.click(screen.getByRole('button', { name: 'Text style' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Heading 2' }));
     expect(onSetBlock).toHaveBeenCalledWith({ type: 'heading', level: 2 });
+  });
+
+  it('fires onInsertDivider from the block-type menu "Divider" item', async () => {
+    const user = userEvent.setup();
+    const { onInsertDivider, onSetBlock } = renderTb();
+    await user.click(screen.getByRole('button', { name: 'Text style' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Divider' }));
+    expect(onInsertDivider).toHaveBeenCalled();
+    expect(onSetBlock).not.toHaveBeenCalled();
   });
 
   it('disables every control when disabled', () => {

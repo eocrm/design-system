@@ -2748,3 +2748,122 @@ describe('RichTextEditor in Field (#568)', () => {
     expect(container.querySelectorAll('[invalid], div[required]')).toHaveLength(0);
   });
 });
+
+describe('RichTextEditor divider', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+  const caret = (blockId: string, offset: number) => ({
+    anchor: { blockId, offset },
+    focus: { blockId, offset },
+  });
+  function beforeInput(editor: HTMLElement, inputType: string, data: string | null = null) {
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: inputType });
+    Object.defineProperty(evt, 'data', { value: data });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    return evt;
+  }
+  function renderDoc(initial: RichDoc, props: Record<string, unknown> = {}) {
+    const docs: RichDoc[] = [];
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(initial);
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={(d) => {
+            docs.push(d);
+            setDoc(d);
+          }}
+          {...props}
+        />
+      );
+    }
+    renderEditor(<Harness />);
+    return { editor: screen.getByRole('textbox', { name: 'Rich text editor' }), docs };
+  }
+  const types = (d: RichDoc) => d.blocks.map((b) => b.type);
+  const para = (id: string, text: string) => ({
+    id,
+    type: 'paragraph' as const,
+    inlines: [{ text, marks: [] }],
+  });
+
+  it('"---" + Enter inserts a divider, caret in the following paragraph; Backspace removes it; undo restores', () => {
+    mockReadSelection.mockReturnValue(caret('k', 3));
+    const { editor, docs } = renderDoc({ blocks: [para('k', '---')] });
+    const evt = beforeInput(editor, 'insertParagraph');
+    expect(evt.defaultPrevented).toBe(true);
+    expect(types(docs.at(-1)!)).toEqual(['divider', 'paragraph']);
+    expect(editor.querySelector('figure hr')).not.toBeNull();
+    const after = docs.at(-1)!.blocks[1];
+    // Backspace at the start of the following paragraph deletes the divider.
+    mockReadSelection.mockReturnValue(caret(after.id, 0));
+    beforeInput(editor, 'deleteContentBackward');
+    expect(types(docs.at(-1)!)).toEqual(['paragraph']);
+    expect(editor.querySelector('hr')).toBeNull();
+    // One undo restores it.
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(types(docs.at(-1)!)).toEqual(['divider', 'paragraph']);
+  });
+
+  it('"---" + space also inserts a divider', () => {
+    mockReadSelection.mockReturnValue(caret('k', 3));
+    const { editor, docs } = renderDoc({ blocks: [para('k', '---')] });
+    beforeInput(editor, 'insertText', ' ');
+    expect(types(docs.at(-1)!)).toEqual(['divider', 'paragraph']);
+  });
+
+  it('Enter after "---" with text following the caret splits normally (no divider)', () => {
+    mockReadSelection.mockReturnValue(caret('k', 3));
+    const { editor, docs } = renderDoc({ blocks: [para('k', '---x')] });
+    beforeInput(editor, 'insertParagraph');
+    expect(types(docs.at(-1)!)).toEqual(['paragraph', 'paragraph']);
+  });
+
+  it('the toolbar block dropdown inserts a divider at the caret', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(caret('k', 2));
+    const { docs } = renderDoc({ blocks: [para('k', 'abcd')] }, { toolbar: true });
+    await user.click(screen.getByRole('button', { name: 'Text style' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Divider' }));
+    expect(types(docs.at(-1)!)).toEqual(['paragraph', 'divider', 'paragraph']);
+  });
+
+  it('the block menu inserts a divider below the block', async () => {
+    const user = userEvent.setup();
+    const { editor, docs } = renderDoc(
+      { blocks: [para('a', 'one'), para('b', 'two')] },
+      { blockControls: true },
+    );
+    await user.hover(editor.querySelector('[data-block-id="a"]') as HTMLElement);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Insert divider below' }));
+    // [one, divider, empty p (the caret's home), two]
+    expect(types(docs.at(-1)!)).toEqual(['paragraph', 'divider', 'paragraph', 'paragraph']);
+    expect(docs.at(-1)!.blocks[3].id).toBe('b');
+  });
+
+  it('a divider never shows attachment UI (resize handle, Configure) or Turn into', async () => {
+    const user = userEvent.setup();
+    const { editor } = renderDoc(
+      {
+        blocks: [{ id: 'd', type: 'divider', inlines: [{ text: '', marks: [] }] }, para('p', 'x')],
+      },
+      {
+        blockControls: true,
+        upload: { onUpload: vi.fn().mockResolvedValue({ url: 'http://u/p.png' }) },
+      },
+    );
+    const fig = editor.querySelector('figure[data-block-id="d"]') as HTMLElement;
+    expect(fig).not.toBeNull();
+    await user.hover(fig);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await screen.findByRole('menuitem', { name: 'Insert divider below' });
+    expect(screen.queryByRole('menuitem', { name: 'Configure' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: /turn into/i })).toBeNull();
+    expect(document.querySelector('[data-rte-resize-handle]')).toBeNull();
+  });
+});

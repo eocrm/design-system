@@ -23,6 +23,7 @@ function Harness({
           onInsertBelow={() => {}}
           onAction={() => {}}
           onTurnInto={() => {}}
+          onInsertDivider={() => {}}
           onReorder={() => {}}
           {...props}
         />
@@ -87,6 +88,7 @@ it('renders nothing when activeBlockId is null', () => {
             onInsertBelow={() => {}}
             onAction={() => {}}
             onTurnInto={() => {}}
+            onInsertDivider={() => {}}
             onReorder={() => {}}
           />
         </div>
@@ -159,6 +161,7 @@ it('re-measures the gutter position when blockOrderKey changes (post-drop / inse
             onInsertBelow={() => {}}
             onAction={() => {}}
             onTurnInto={() => {}}
+            onInsertDivider={() => {}}
             onReorder={() => {}}
           />
         </div>

@@ -43,6 +43,8 @@ export interface RichTextToolbarProps {
   onToggleMark: (type: MarkType) => void;
   /** Set the block type of every block in the selection. */
   onSetBlock: (choice: BlockChoice) => void;
+  /** Insert a divider at the selection (the block dropdown's "Divider" item). */
+  onInsertDivider: () => void;
   /** Toggle the selected blocks into/out of a bullet or numbered list. */
   onToggleList: (listType: 'bullet_item' | 'ordered_item') => void;
   /** Whether the current selection sits inside a link (drives the Link button's pressed state). */
@@ -113,6 +115,7 @@ function RichTextToolbarImpl({
   disabled,
   onToggleMark,
   onSetBlock,
+  onInsertDivider,
   onToggleList,
   linkActive = false,
   onOpenLink,
@@ -216,6 +219,10 @@ function RichTextToolbarImpl({
           </DropdownMenu.Item>
           <DropdownMenu.Item onSelect={() => onSetBlock({ type: 'code_block' })}>
             {t('richTextEditor.codeBlock')}
+          </DropdownMenu.Item>
+          <DropdownMenu.Separator />
+          <DropdownMenu.Item onSelect={onInsertDivider}>
+            {t('richTextEditor.divider')}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu>

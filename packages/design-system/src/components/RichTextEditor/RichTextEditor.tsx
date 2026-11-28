@@ -56,6 +56,7 @@ import {
   currentBlock as deriveCurrentBlock,
   runToggleMark,
   runSetBlock,
+  runInsertDivider,
   runToggleList,
   runIndent,
   applyExactMarks,
@@ -1198,13 +1199,22 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           return;
         }
         // Markdown block input rules: a marker + space at the start of a paragraph
-        // converts the block (e.g. "# " → heading, "- " → bullet). The space is
-        // consumed; one commit → one undo step (⌘Z reverts the conversion).
-        if (e.inputType === 'insertText' && e.data === ' ' && isCollapsed(range)) {
+        // converts the block (e.g. "# " → heading, "- " → bullet); Enter in a
+        // paragraph holding only "---" inserts a divider. The trigger is consumed;
+        // one commit → one undo step (⌘Z reverts the conversion).
+        const ruleTrigger =
+          e.inputType === 'insertText' && e.data === ' '
+            ? ' '
+            : e.inputType === 'insertParagraph'
+              ? 'Enter'
+              : null;
+        if (ruleTrigger && isCollapsed(range)) {
           const block = doc.blocks.find((b) => b.id === range.anchor.blockId);
-          if (block) {
-            const before = runsText(block.inlines).slice(0, range.anchor.offset);
-            const match = matchBlockRule(block.type, before, ' ');
+          const text = block ? runsText(block.inlines) : '';
+          // Enter fires only with nothing after the caret ("---" alone in the block).
+          if (block && (ruleTrigger === ' ' || range.anchor.offset === text.length)) {
+            const before = text.slice(0, range.anchor.offset);
+            const match = matchBlockRule(block.type, before, ruleTrigger);
             if (match) {
               e.preventDefault();
               clearPendingMarks();
@@ -1851,6 +1861,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       },
       [commit],
     );
+    const onToolbarInsertDivider = useCallback(() => {
+      const root = rootRef.current;
+      const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
+      if (range) commit(runInsertDivider(latest.current.value, range), 'other');
+    }, [commit]);
     const onToolbarToggleList = useCallback(
       (listType: 'bullet_item' | 'ordered_item') => {
         const root = rootRef.current;
@@ -1864,6 +1879,16 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     const onBlockInsertBelow = useCallback(
       (id: string) => commit(insertEmptyBlockBelow(latest.current.value, id), 'other'),
+      [commit],
+    );
+    // "Insert divider below": an empty paragraph after the block's unit (a list
+    // item keeps its nested children), then a divider at its start → [divider, p].
+    const onBlockInsertDivider = useCallback(
+      (id: string) => {
+        const below = insertEmptyBlockBelow(latest.current.value, id);
+        commit(runInsertDivider(below.doc, below.selection), 'other');
+        setBlockMenuOpen(false);
+      },
       [commit],
     );
     const onBlockAction = useCallback(
@@ -2092,6 +2117,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onInsertBelow={onBlockInsertBelow}
         onAction={onBlockAction}
         onTurnInto={onBlockTurnInto}
+        onInsertDivider={onBlockInsertDivider}
         onReorder={onBlockReorder}
         onConfigure={canConfigure ? onConfigOpen : undefined}
         onColor={onBlockColor}
@@ -2221,6 +2247,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         disabled={readOnly}
         onToggleMark={onToolbarMark}
         onSetBlock={onToolbarSetBlock}
+        onInsertDivider={onToolbarInsertDivider}
         onToggleList={onToolbarToggleList}
         linkActive={toolbarLinkActive}
         onOpenLink={openLinkEditor}
