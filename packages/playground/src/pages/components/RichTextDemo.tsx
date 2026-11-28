@@ -146,6 +146,46 @@ const LINK_DOC: RichDoc = {
   ],
 };
 
+const HANDOVER_DOC: RichDoc = {
+  blocks: [
+    createBlock('heading', 'Northwind onboarding checklist', { level: 3, id: 'ck-h' }),
+    createBlock('checklist_item', 'Kick-off call booked with the ops lead', {
+      id: 'ck1',
+      checked: true,
+    }),
+    createBlock('checklist_item', 'Import 2,400 contacts from the legacy CRM', {
+      id: 'ck2',
+      checked: true,
+    }),
+    createBlock('checklist_item', 'Map custom fields: region, account tier', {
+      id: 'ck2a',
+      depth: 1,
+    }),
+    createBlock('checklist_item', 'Invite the six-person sales team', { id: 'ck3' }),
+    createBlock('paragraph', 'Daily sync query for the import job:', { id: 'ck-p' }),
+    createBlock(
+      'code_block',
+      "SELECT id, email, updated_at\nFROM contacts\nWHERE tenant_id = 'northwind'\n  AND updated_at > now() - interval '1 day'\nORDER BY updated_at DESC;",
+      { id: 'ck-code', language: 'sql' },
+    ),
+  ],
+};
+
+// Owns its doc so ticking a box re-renders only this example.
+function ChecklistExample() {
+  const [doc, setDoc] = useState<RichDoc>(HANDOVER_DOC);
+  const onToggleCheck = useCallback(
+    (blockId: string, checked: boolean) => setDoc((d) => setBlockType(d, blockId, { checked }).doc),
+    [],
+  );
+  return (
+    <Stack gap="md">
+      <RichText value={doc} onToggleCheck={onToggleCheck} />
+      <RichText value={HANDOVER_DOC} />
+    </Stack>
+  );
+}
+
 const SAMPLE: RichDoc = {
   blocks: [
     createBlock('heading', 'Release notes', { level: 1, id: 'h' }),
@@ -188,7 +228,7 @@ export function RichTextDemo() {
     <DemoLayout
       name="RichText"
       componentName="RichText"
-      description="Read-only renderer for the in-house rich-text model (paragraphs, headings, lists, quotes, code, and inline marks). The editable RichTextEditor is a later slice."
+      description="Read-only renderer for the in-house rich-text model (paragraphs, headings, lists, checklists, quotes, highlighted code, dividers, and inline marks). For editing, use RichTextEditor."
       files={getComponentFiles('RichText')}
     >
       <Example
@@ -423,6 +463,37 @@ export function Demo() {
 }`}
       >
         <RichText value={MENTION_DOC} renderMention={renderMention} />
+      </Example>
+
+      <Example
+        title="Checklist (onToggleCheck) + highlighted code"
+        description="With onToggleCheck set, checklist checkboxes are operable: the handler gets the block id and the NEW checked state, and you update value (RichText stays controlled, so a box snaps back if you don't). Without it (bottom copy) the boxes are disabled — state visible, not operable. A code block with a known language is highlighted once the lazy highlighter loads (the first paint is plain text) and gets a Copy button."
+        code={`import { useCallback, useState } from 'react';
+import { RichText, createBlock, setBlockType, type RichDoc } from '@eocrm/design-system';
+
+const initial: RichDoc = {
+  blocks: [
+    createBlock('heading', 'Northwind onboarding checklist', { level: 3 }),
+    createBlock('checklist_item', 'Kick-off call booked with the ops lead', { checked: true }),
+    createBlock('checklist_item', 'Import 2,400 contacts from the legacy CRM', { checked: true }),
+    createBlock('checklist_item', 'Map custom fields: region, account tier', { depth: 1 }),
+    createBlock('checklist_item', 'Invite the six-person sales team'),
+    createBlock('paragraph', 'Daily sync query for the import job:'),
+    createBlock('code_block', "SELECT id, email, updated_at\\nFROM contacts\\n…", { language: 'sql' }),
+  ],
+};
+
+export function Demo() {
+  const [doc, setDoc] = useState(initial);
+  const onToggleCheck = useCallback(
+    (blockId: string, checked: boolean) =>
+      setDoc((d) => setBlockType(d, blockId, { checked }).doc),
+    [],
+  );
+  return <RichText value={doc} onToggleCheck={onToggleCheck} />;
+}`}
+      >
+        <ChecklistExample />
       </Example>
 
       <Example
