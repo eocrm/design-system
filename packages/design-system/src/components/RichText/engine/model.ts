@@ -158,6 +158,22 @@ export function createBlock(type: BlockType, text = '', attrs: CreateBlockAttrs 
   return block;
 }
 
+/**
+ * INTERNAL. The right half of a split `block`: same type and attrs (level, depth,
+ * language), a fresh id, unchecked; holds `inlines`.
+ */
+export function rightHalf(block: Block, inlines: Inline[]): Block {
+  return {
+    ...createBlock(block.type, '', {
+      level: block.level,
+      depth: block.depth,
+      language: block.language,
+      ...(block.type === 'checklist_item' ? { checked: false } : {}),
+    }),
+    inlines,
+  };
+}
+
 /** A document with one empty paragraph. */
 export function emptyDoc(): RichDoc {
   return { blocks: [createBlock('paragraph')] };

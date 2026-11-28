@@ -228,7 +228,11 @@ export function applySlashItem(
     blockId,
     turnInto({ type, level }) {
       if (isVoidBlock({ type } as Block)) return;
-      const patch = isListItem({ type }) ? { type, depth: 0 } : level ? { type, level } : { type };
+      const patch = isListItem({ type })
+        ? { type, depth: 0 }
+        : type === 'heading'
+          ? { type, level: level ?? 1 }
+          : { type };
       state = { doc: setBlockType(state.doc, blockId, patch).doc, selection: state.selection };
     },
     insertBlocks(blocks) {

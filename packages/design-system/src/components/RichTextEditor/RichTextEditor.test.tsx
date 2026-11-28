@@ -3285,6 +3285,24 @@ describe('RichTextEditor code (DS-104)', () => {
     expect(document.activeElement).not.toBe(editor);
   });
 
+  it('a Tab indent is its own undo step, not merged with the typing after it', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 1));
+    const { editor, docs } = renderDoc(code('ab'));
+    act(() => editor.focus());
+    await user.keyboard('{Tab}');
+    mockReadSelection.mockReturnValue(sel('c', 3));
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: 'x' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    expect(text(docs.at(-1)!)).toBe('a  xb');
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(text(docs.at(-1)!)).toBe('a  b');
+  });
+
   it('a closing backtick converts `text` to inline code in one undo step', () => {
     mockReadSelection.mockReturnValue(sel('p', 4));
     const { editor, docs } = renderDoc({
@@ -3562,6 +3580,13 @@ describe('RichTextEditor slash menu (DS-103)', () => {
     const empty = within(listbox).getByRole('option', { name: 'No matches' });
     expect(empty).toHaveAttribute('aria-disabled', 'true');
     expect(editor).toHaveAttribute('aria-activedescendant', empty.id);
+  });
+
+  it('"No matches" leaves ArrowUp/ArrowDown to the caret (not prevented)', async () => {
+    const { editor } = renderSlash('/zzz');
+    await screen.findByRole('listbox');
+    expect(fireEvent.keyDown(editor, { key: 'ArrowDown' })).toBe(true);
+    expect(fireEvent.keyDown(editor, { key: 'ArrowUp' })).toBe(true);
   });
 
   it.each([

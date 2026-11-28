@@ -101,6 +101,9 @@ function parseList(lines: string[], start: number, indent: number): [string, num
     const m = LIST_RE.exec(lines[i]);
     if (!m || m[1].length < indent) break;
     if (m[1].length > indent) break; // deeper line handled as nested below
+    // A bullet↔ordered marker change starts a new list (CommonMark); the caller
+    // opens it at this same indent.
+    if (/\d/.test(m[2]) !== ordered) break;
     const text = m[3].trim();
     const task = TASK_RE.exec(text);
     let item = task

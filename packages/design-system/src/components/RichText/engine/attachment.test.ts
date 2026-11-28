@@ -2,6 +2,7 @@ import { createBlock } from './model';
 import type { Block, RichDoc } from './model';
 import {
   insertAttachmentBlock,
+  insertVoidBlock,
   updateAttachmentBlock,
   isVoidBlock,
   clearAttachmentFields,
@@ -159,5 +160,23 @@ describe('isAttachmentSettled', () => {
   it('is false while uploading or after an error', () => {
     expect(isAttachmentSettled({ status: 'uploading' })).toBe(false);
     expect(isAttachmentSettled({ status: 'error' })).toBe(false);
+  });
+});
+
+describe('insertVoidBlock in a code block', () => {
+  it('keeps the language on both halves of the split', () => {
+    const d: RichDoc = {
+      blocks: [createBlock('code_block', 'ab', { id: 'k', language: 'typescript' })],
+    };
+    const r = insertVoidBlock(
+      d,
+      { blockId: 'k', offset: 1 },
+      { id: 'dv', type: 'divider', inlines: [] },
+    )!;
+    expect(r.doc.blocks.map((b) => [b.type, b.language])).toEqual([
+      ['code_block', 'typescript'],
+      ['divider', undefined],
+      ['code_block', 'typescript'],
+    ]);
   });
 });

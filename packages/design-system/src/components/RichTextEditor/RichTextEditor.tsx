@@ -1807,9 +1807,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             return;
           }
         }
-        // Slash menu navigation (Enter only picks a real item; with "No matches" it types).
+        // Slash menu navigation (only with real items; with "No matches" Enter types
+        // and the arrows move the caret, like the mention menu).
         if (slash.open) {
-          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && slash.items.length > 0) {
             e.preventDefault();
             slash.move(e.key === 'ArrowDown' ? 1 : -1);
             return;
@@ -1902,8 +1903,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // lines; Shift+Tab outdents. Escape → Tab (above) is the way out.
         if (e.key === 'Tab' && current?.type === 'code_block') {
           e.preventDefault();
+          // 'other': an indent is its own undo step, never merged with typing.
           if (!e.shiftKey && isCollapsed(range))
-            commit(insertText(value, range.anchor, '  '), 'type');
+            commit(insertText(value, range.anchor, '  '), 'other');
           else commit(runCodeIndent(value, range, e.shiftKey ? 'out' : 'in'));
           return;
         }
@@ -2224,6 +2226,17 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       },
       [commit],
     );
+    // Lazy highlight tokens replaced a code block's text node without a commit: the
+    // DOM caret fell to the block start. Put back the last model caret seen in it.
+    const onCodeHighlight = useCallback((id: string) => {
+      const root = rootRef.current;
+      const at = codeSelRef.current;
+      if (!root || at?.focus.blockId !== id || pendingSelectionRef.current) return;
+      if (!root.contains(root.ownerDocument.activeElement)) return;
+      const node = root.ownerDocument.getSelection()?.anchorNode;
+      const pre = root.querySelector(`[data-block-id="${CSS.escape(id)}"]`);
+      if (node && pre?.contains(node)) writeSelection(root, at);
+    }, []);
     // Code-language picker: one 'other' edit, caret back where it was in the block.
     const onCodeLanguage = useCallback(
       (language: string | undefined) => {
@@ -2269,8 +2282,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           renderMention,
           // readOnly: no handler → the checkbox renders disabled (state visible, not operable).
           onToggleCheck: readOnly ? undefined : onToggleCheck,
+          onCodeHighlight,
         }),
-      [value, renderLink, renderMention, onToggleCheck, readOnly, idPrefix],
+      [value, renderLink, renderMention, onToggleCheck, readOnly, idPrefix, onCodeHighlight],
     );
     // Signature of block order. `value.blocks` is a new array on every edit, so this
     // recomputes per keystroke (a cheap join) — but the STRING is unchanged while

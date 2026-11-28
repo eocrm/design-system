@@ -478,3 +478,54 @@ describe('wave-2 block types', () => {
     expect(setBlockType(d, 'd', { type: 'paragraph' }).doc).toBe(d);
   });
 });
+
+describe('insertFragment around void blocks', () => {
+  const hw = (): RichDoc => ({ blocks: [createBlock('paragraph', 'helloworld', { id: 'h' })] });
+  const caret = { anchor: { blockId: 'h', offset: 5 }, focus: { blockId: 'h', offset: 5 } };
+  const divider = (): Block => ({ id: 'dv', type: 'divider', inlines: [] });
+  const attachment = (): Block => ({
+    id: 'av',
+    type: 'attachment',
+    inlines: [],
+    src: '/f.png',
+    name: 'f.png',
+  });
+  const shape = (d: RichDoc) => d.blocks.map((b) => [b.type, runsText(b.inlines)]);
+  const voids = [
+    ['divider', divider],
+    ['attachment', attachment],
+  ] as const;
+
+  it.each(voids)('a fragment ending with a %s keeps the trailing text after it', (type, v) => {
+    const frag: RichDoc = { blocks: [createBlock('paragraph', 'A'), v()] };
+    const r = insertFragment(hw(), caret, frag);
+    expect(shape(r.doc)).toEqual([
+      ['paragraph', 'helloA'],
+      [type, ''],
+      ['paragraph', 'world'],
+    ]);
+    expect(r.selection.anchor).toEqual({ blockId: r.doc.blocks[2].id, offset: 0 });
+  });
+
+  it.each(voids)('a fragment starting with a %s splits at the caret', (type, v) => {
+    const frag: RichDoc = { blocks: [v(), createBlock('paragraph', 'B')] };
+    const r = insertFragment(hw(), caret, frag);
+    expect(shape(r.doc)).toEqual([
+      ['paragraph', 'hello'],
+      [type, ''],
+      ['paragraph', 'Bworld'],
+    ]);
+    expect(r.selection.anchor).toEqual({ blockId: r.doc.blocks[2].id, offset: 1 });
+  });
+
+  it.each(voids)('a fragment that is a single %s is inserted as its own block', (type, v) => {
+    const r = insertFragment(hw(), caret, { blocks: [v()] });
+    expect(shape(r.doc)).toEqual([
+      ['paragraph', 'hello'],
+      [type, ''],
+      ['paragraph', 'world'],
+    ]);
+    expect(r.selection.anchor).toEqual({ blockId: r.doc.blocks[2].id, offset: 0 });
+    expect(new Set(r.doc.blocks.map((b) => b.id)).size).toBe(3);
+  });
+});

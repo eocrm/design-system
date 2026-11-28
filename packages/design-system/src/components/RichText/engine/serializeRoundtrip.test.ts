@@ -14,6 +14,7 @@ const shape = (d: RichDoc) =>
     type: b.type,
     ...(b.level !== undefined ? { level: b.level } : {}),
     ...(b.depth !== undefined ? { depth: b.depth } : {}),
+    ...(b.checked !== undefined ? { checked: b.checked } : {}),
     inlines: b.inlines.map((r) => ({ text: r.text, marks: sortMarks(r.marks) })),
   }));
 
@@ -78,6 +79,42 @@ describe('serialize round-trip', () => {
       blocks: [
         createBlock('bullet_item', 'a', { id: 'a', depth: 0 }),
         createBlock('ordered_item', 'b', { id: 'b', depth: 0 }),
+      ],
+    };
+    expect(shape(fromMarkdown(toMarkdown(d)))).toEqual(shape(d));
+    expect(toMarkdown(d)).toBe('- a\n\n1. b');
+  });
+
+  it.each([
+    ['checklist under bullet', 'bullet_item', 'checklist_item'],
+    ['bullet under checklist', 'checklist_item', 'bullet_item'],
+    ['ordered under checklist', 'checklist_item', 'ordered_item'],
+    ['ordered under bullet', 'bullet_item', 'ordered_item'],
+  ] as const)('Markdown keeps nesting for %s', (_name, outer, inner) => {
+    const d: RichDoc = {
+      blocks: [
+        createBlock(outer, 'a', {
+          id: 'a',
+          depth: 0,
+          checked: outer === 'checklist_item' ? false : undefined,
+        }),
+        createBlock(inner, 'b', {
+          id: 'b',
+          depth: 1,
+          checked: inner === 'checklist_item' ? true : undefined,
+        }),
+      ],
+    };
+    expect(shape(fromMarkdown(toMarkdown(d)))).toEqual(shape(d));
+  });
+
+  it('Markdown keeps a type switch between siblings at depth 1', () => {
+    const d: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'a', { id: 'a', depth: 0 }),
+        createBlock('bullet_item', 'b', { id: 'b', depth: 1 }),
+        createBlock('ordered_item', 'c', { id: 'c', depth: 1 }),
+        createBlock('ordered_item', 'd', { id: 'd', depth: 0 }),
       ],
     };
     expect(shape(fromMarkdown(toMarkdown(d)))).toEqual(shape(d));

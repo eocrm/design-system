@@ -68,6 +68,17 @@ describe('applySlashItem', () => {
     expect(result.doc.blocks[0].inlines[0].text).toBe('ab ');
   });
 
+  it('turnInto a heading without a level makes a level-1 heading', () => {
+    const item: SlashItem = {
+      id: 'h',
+      group: 'text',
+      label: 'h',
+      run: (api) => api.turnInto({ type: 'heading' }),
+    };
+    const { result } = applySlashItem(doc('/h'), { blockId: 'k', from: 0, to: 2 }, item);
+    expect(result.doc.blocks[0]).toMatchObject({ type: 'heading', level: 1 });
+  });
+
   it('turnInto refuses void targets', () => {
     const item: SlashItem = {
       id: 'v',

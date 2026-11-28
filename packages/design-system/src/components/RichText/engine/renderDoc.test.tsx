@@ -739,6 +739,16 @@ describe('renderDoc — wave 2 blocks (DS-99/101/104)', () => {
     expect(getByRole('checkbox', { name: 'Walk dog' })).not.toBeChecked();
   });
 
+  it.each([false, true])(
+    'checklist <ul> keeps list semantics (role="list", editable=%s)',
+    (editable) => {
+      const doc: RichDoc = { blocks: [createBlock('checklist_item', 'a', { id: 'c1' })] };
+      const { getByRole } = render(<>{renderDoc(doc, { editable })}</>);
+      expect(getByRole('list')).toHaveAttribute('data-type', 'checklist');
+      expect(getByRole('list').getAttribute('role')).toBe('list');
+    },
+  );
+
   it('empty checklist item falls back to the i18n label', () => {
     const doc: RichDoc = { blocks: [createBlock('checklist_item', '', { id: 'c1' })] };
     const { getByRole } = render(<I18nProvider locale="en">{renderDoc(doc)}</I18nProvider>);

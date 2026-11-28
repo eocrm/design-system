@@ -51,6 +51,12 @@ export interface RenderDocOptions {
    * Unset: `${blockId}-label`.
    */
   idPrefix?: string;
+  /**
+   * Editable only: called (in a layout effect) when a code block's lazy highlight
+   * tokens first replace its plain text — a DOM swap without a commit, so the
+   * editor re-applies its caret.
+   */
+  onCodeHighlight?: (blockId: string) => void;
 }
 
 // Resolved options threaded through the render call chain (never module state).
@@ -61,6 +67,7 @@ interface ResolvedOptions {
   onImageActivate?: RichTextImageActivateHandler;
   onToggleCheck?: (blockId: string, checked: boolean) => void;
   idPrefix?: string;
+  onCodeHighlight?: (blockId: string) => void;
 }
 
 const labelId = (block: Block, opts: ResolvedOptions) =>
@@ -86,6 +93,7 @@ type BlockCacheEntry = {
   renderLink?: RenderLink;
   renderMention?: RenderMention;
   onImageActivate?: RichTextImageActivateHandler;
+  onCodeHighlight?: (blockId: string) => void;
   el: ReactElement;
 };
 const blockCache = new WeakMap<Block, BlockCacheEntry>();
@@ -101,7 +109,8 @@ function cachedBlockEl(
     hit.editable === opts.editable &&
     hit.renderLink === opts.renderLink &&
     hit.renderMention === opts.renderMention &&
-    hit.onImageActivate === opts.onImageActivate
+    hit.onImageActivate === opts.onImageActivate &&
+    hit.onCodeHighlight === opts.onCodeHighlight
   ) {
     return hit.el;
   }
@@ -289,7 +298,14 @@ function buildBlock(block: Block, opts: ResolvedOptions): ReactElement {
         </blockquote>
       );
     case 'code_block':
-      return <RichTextCodeBlock key={block.id} block={block} editable={opts.editable} />;
+      return (
+        <RichTextCodeBlock
+          key={block.id}
+          block={block}
+          editable={opts.editable}
+          onHighlight={opts.onCodeHighlight}
+        />
+      );
     case 'divider':
       return opts.editable ? (
         <figure key={block.id} {...anchor} contentEditable={false}>
@@ -426,8 +442,9 @@ function renderListTree(tag: ListTag, items: ListItemNode[], opts: ResolvedOptio
     );
   }
   // Label ids are unique per document; `idPrefix` keeps them unique across surfaces.
+  // role="list": Safari/VoiceOver drop list semantics from a `list-style: none` <ul>.
   return (
-    <ul data-type="checklist">
+    <ul data-type="checklist" role="list">
       {items.map((it) => {
         const box = (
           <ChecklistBox block={it.block} labelled={runsLength(it.block.inlines) > 0} opts={opts} />
@@ -477,6 +494,7 @@ export function renderDoc(doc: RichDoc, options: RenderDocOptions = {}): ReactNo
     onImageActivate: options.onImageActivate,
     onToggleCheck: options.onToggleCheck,
     idPrefix: options.idPrefix,
+    onCodeHighlight: options.onCodeHighlight,
   };
   const eff = effectiveDepths(doc.blocks);
   const out: ReactNode[] = [];

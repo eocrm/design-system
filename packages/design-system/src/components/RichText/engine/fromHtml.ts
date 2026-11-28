@@ -221,11 +221,26 @@ function pushInlineBlocks(
 function emitListItem(li: HTMLElement, itemType: BlockType, out: Block[], depth: number): void {
   const segments: Inline[][] = [[]];
   const nested: HTMLElement[] = [];
-  // A leading checkbox <input> (ours or GitHub's) makes this a checklist item; the
-  // input itself is in DROP_TAGS so it contributes no text.
-  const box = Array.from(li.children).find(
-    (c) => c.tagName === 'INPUT' && c.getAttribute('type') === 'checkbox',
-  );
+  // Checklist item when: `data-checked` on the <li> (ours, TipTap's taskItem), a
+  // checkbox <input> child (ours, GitHub's) or opening its first <p> (GitHub loose
+  // task list), or a `data-type="taskList"|"checklist"` parent. The input itself is
+  // in DROP_TAGS so it contributes no text.
+  const isBox = (c: Element | null | undefined) =>
+    c?.tagName === 'INPUT' && c.getAttribute('type') === 'checkbox';
+  const first = li.firstElementChild;
+  const box =
+    Array.from(li.children).find(isBox) ??
+    (first?.tagName === 'P' && isBox(first.firstElementChild) ? first.firstElementChild : null);
+  const flag = li.getAttribute('data-checked');
+  const listType = li.parentElement?.getAttribute('data-type');
+  const checklist =
+    flag === 'true' ||
+    flag === 'false' ||
+    !!box ||
+    listType === 'taskList' ||
+    listType === 'checklist';
+  const checked =
+    flag === 'true' || flag === 'false' ? flag === 'true' : !!box?.hasAttribute('checked');
   for (const child of Array.from(li.childNodes)) {
     if (isElement(child) && (child.tagName === 'UL' || child.tagName === 'OL')) nested.push(child);
     else walkInline(child, [], segments);
@@ -233,14 +248,8 @@ function emitListItem(li: HTMLElement, itemType: BlockType, out: Block[], depth:
   for (const seg of segments) {
     const inlines = normalizeInlines(trimSegment(seg));
     if (segments.length > 1 && isEmptySeg(inlines)) continue;
-    if (box) {
-      out.push({
-        id: nextId(),
-        type: 'checklist_item',
-        depth,
-        checked: box.hasAttribute('checked'),
-        inlines,
-      });
+    if (checklist) {
+      out.push({ id: nextId(), type: 'checklist_item', depth, checked, inlines });
     } else out.push({ id: nextId(), type: itemType, depth, inlines });
   }
   for (const sub of nested) emitBlock(sub, out, depth + 1);

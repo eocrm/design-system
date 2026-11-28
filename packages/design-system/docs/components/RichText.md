@@ -50,7 +50,7 @@ const onImageActivate = useCallback<RichTextImageActivateHandler>((img) => setIm
 <Lightbox open={image !== null} onOpenChange={(o) => !o && setImage(null)} items={image ? [{ src: image.src, alt: image.alt || 'Attached image' }] : []} />;
 ```
 
-**Checklists** (`checklist_item` blocks) render as `<ul data-type="checklist">` with a native checkbox per item, named by its text. Without `onToggleCheck` the boxes are `disabled` (state visible, not operable). With it, ticking calls `onToggleCheck(blockId, checked)` with the NEW state and you update `value` — e.g. with `setBlockType(doc, blockId, { checked }).doc`:
+**Checklists** (`checklist_item` blocks) render as `<ul data-type="checklist" role="list">` (the role keeps list semantics in Safari/VoiceOver, which drop them for `list-style: none`) with a native checkbox per item, named by its text. Without `onToggleCheck` the boxes are `disabled` (state visible, not operable). With it, ticking calls `onToggleCheck(blockId, checked)` with the NEW state and you update `value` — e.g. with `setBlockType(doc, blockId, { checked }).doc`:
 
 ```tsx
 const [doc, setDoc] = useState(initial);

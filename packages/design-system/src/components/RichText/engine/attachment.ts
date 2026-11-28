@@ -1,6 +1,6 @@
 // attachment.ts — attachment (void) block helpers + transforms. Pure + immutable.
 import type { RichDoc, Block, Point, Range } from './model';
-import { createBlock, nextId } from './model';
+import { createBlock, nextId, rightHalf } from './model';
 import { findBlockIndex, blockLength, collapsedRange } from './position';
 import { sliceInlines, normalizeInlines } from './inlines';
 
@@ -110,10 +110,7 @@ export function insertVoidBlock(
   const rightInlines = normalizeInlines(
     sliceInlines(block.inlines, point.offset, blockLength(block)),
   );
-  const right: Block = {
-    ...createBlock(block.type, '', { level: block.level, depth: block.depth }),
-    inlines: rightInlines,
-  };
+  const right = rightHalf(block, rightInlines);
   const blocks = [
     ...doc.blocks.slice(0, idx),
     left,
