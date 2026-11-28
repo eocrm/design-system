@@ -1884,7 +1884,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             .slice(Math.min(a, f), Math.max(a, f) + 1)
             .filter((b) => b.type === 'checklist_item');
           if (a !== -1 && f !== -1 && items.length > 0) {
+            // The editor owns Mod+Enter here: a host "Ctrl+Enter to send" must not
+            // also fire. Elsewhere Mod+Enter passes through untouched.
             e.preventDefault();
+            e.stopPropagation();
             const target = items[0].checked !== true;
             const doc = items.reduce(
               (d, b) => ((b.checked === true) === target ? d : runToggleCheck(d, b.id)),

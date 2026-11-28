@@ -5,6 +5,7 @@
 // the toolbar) rather than Select keeps the bundle lean; radio items give
 // menuitemradio/aria-checked. Presentational; internal, not exported from the package.
 import { useLayoutEffect, useMemo } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
 import { useTranslation } from '../../i18n';
@@ -82,8 +83,14 @@ export function RichTextCodeLanguagePicker({
     >
       <DropdownMenu>
         <DropdownMenu.Trigger>
-          <Button size="sm" variant="secondary" aria-label={t('richTextEditor.codeLanguage')}>
+          {/* Name keeps the visible value (WCAG 2.5.3 Label in Name): "Code language: Python". */}
+          <Button
+            size="sm"
+            variant="secondary"
+            aria-label={`${t('richTextEditor.codeLanguage')}: ${current.label}`}
+          >
             {current.label}
+            <ChevronDown size={14} aria-hidden="true" />
           </Button>
         </DropdownMenu.Trigger>
         {/* Portaled: the marker keeps focus inside the open menu "in the picker"

@@ -3063,11 +3063,55 @@ describe('RichTextEditor checklist', () => {
     expect(docs[0].blocks.map((b) => b.checked)).toEqual([true, undefined, true, true]);
   });
 
-  it('Ctrl+Enter outside a checklist item, or in a readOnly editor, changes nothing', () => {
+  it('Ctrl+Enter in a checklist item is not propagated to ancestor handlers', () => {
+    mockReadSelection.mockReturnValue(caret('a', 1));
+    const outer = vi.fn();
+    document.addEventListener('keydown', outer);
+    try {
+      const { editor, docs } = renderDoc({ blocks: [item('a', 'one')] });
+      fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+      expect(docs).toHaveLength(1);
+      expect(outer).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', outer);
+    }
+  });
+
+  it('Ctrl+Enter outside a checklist item passes through untouched and commits nothing', () => {
+    mockReadSelection.mockReturnValue(caret('p', 1));
+    const outer = vi.fn();
+    document.addEventListener('keydown', outer);
+    try {
+      const { editor, docs } = renderDoc({
+        blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: 'one', marks: [] }] }],
+      });
+      const notCancelled = fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+      expect(notCancelled).toBe(true);
+      expect(outer).toHaveBeenCalledTimes(1);
+      expect(docs).toEqual([]);
+    } finally {
+      document.removeEventListener('keydown', outer);
+    }
+  });
+
+  it('Ctrl+Enter in a readOnly editor changes nothing', () => {
     mockReadSelection.mockReturnValue(caret('a', 1));
     const ro = renderDoc({ blocks: [item('a', 'one')] }, { readOnly: true });
     fireEvent.keyDown(ro.editor, { key: 'Enter', ctrlKey: true });
     expect(ro.docs).toEqual([]);
+  });
+
+  it('Shift+Tab with the mention menu open does not pick an item', async () => {
+    mockReadSelection.mockReturnValue(caret('p', 2));
+    const onQuery = () => Promise.resolve([{ id: 'u1', label: 'Alice' }]);
+    const { editor, docs } = renderDoc(
+      { blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: '@a', marks: [] }] }] },
+      { mentions: { onQuery } },
+    );
+    await screen.findByRole('option', { name: /Alice/ });
+    fireEvent.keyDown(editor, { key: 'Tab', shiftKey: true });
+    expect(docs).toEqual([]);
+    expect(editor.querySelector('[data-mention-id]')).toBeNull();
   });
 
   it('Ctrl+Enter / Shift+Enter with the mention menu open neither toggle nor pick', async () => {
@@ -3163,7 +3207,7 @@ describe('RichTextEditor code (DS-104)', () => {
     const { editor, docs } = renderDoc(code('x = 1'));
     act(() => editor.focus());
     selectionChange();
-    const picker = screen.getByRole('button', { name: 'Code language' });
+    const picker = screen.getByRole('button', { name: 'Code language: Plain text' });
     expect(picker).toHaveTextContent('Plain text');
     expect(picker).toHaveAttribute('aria-haspopup', 'menu');
     await user.click(picker);
@@ -3187,7 +3231,7 @@ describe('RichTextEditor code (DS-104)', () => {
     const { editor, docs } = renderDoc(code('x = 1', 'python'));
     act(() => editor.focus());
     selectionChange();
-    const picker = screen.getByRole('button', { name: 'Code language' });
+    const picker = screen.getByRole('button', { name: 'Code language: Python' });
     expect(picker).toHaveTextContent('Python');
     await user.keyboard('{Escape}{Tab}');
     expect(document.activeElement).toBe(picker);
@@ -3212,14 +3256,14 @@ describe('RichTextEditor code (DS-104)', () => {
     const { editor } = renderDoc(code('x'));
     act(() => editor.focus());
     selectionChange();
-    expect(screen.queryByRole('button', { name: 'Code language' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Code language/ })).toBeNull();
   });
 
   it('readOnly: no picker even with the caret in a code block', () => {
     mockReadSelection.mockReturnValue(sel('c', 0));
     renderDoc(code('x'), { readOnly: true });
     selectionChange();
-    expect(screen.queryByRole('button', { name: 'Code language' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Code language/ })).toBeNull();
   });
 
   it('Tab inserts two spaces, Shift+Tab outdents; Escape then Tab leaves the editor', async () => {
@@ -3331,7 +3375,9 @@ describe('RichTextEditor code block inside a Modal (DS-104)', () => {
     await user.keyboard('{Escape}');
     expect(onOpenChange).not.toHaveBeenCalled();
     await user.keyboard('{Tab}');
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Code language' }));
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: 'Code language: Plain text' }),
+    );
     // Back in the editor: blur cleared the arm, so Escape is the editor's again.
     act(() => editor.focus());
     await user.keyboard('{Escape}');
@@ -3363,7 +3409,9 @@ describe('RichTextEditor code block inside a Modal (DS-104)', () => {
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('menu')).toBeNull();
     expect(onOpenChange).not.toHaveBeenCalled();
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Code language' }));
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: 'Code language: Plain text' }),
+    );
   });
 
   it('in a list item too, the first Escape stays with the editor; the next closes the Modal', async () => {
