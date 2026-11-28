@@ -1,6 +1,7 @@
 import { createContext, forwardRef, useContext, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import styles from './List.module.scss';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /**
  * Marker style.
@@ -97,6 +98,7 @@ const ListRoot = forwardRef<HTMLElement, ListProps>(function ListRoot(
     </DepthCtx.Provider>
   );
 });
+fieldContainer(ListRoot);
 
 /** One list entry; the marker is drawn here and hidden from assistive tech. */
 export const ListItem = forwardRef<HTMLLIElement, ListItemProps>(function ListItem(

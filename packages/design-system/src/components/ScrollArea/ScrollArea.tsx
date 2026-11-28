@@ -11,6 +11,7 @@ import clsx from 'clsx';
 import { chain, mergeRefs } from '../_internal/refs';
 import { FOCUSABLE_SELECTOR } from '../_internal/overlay/useFocusTrap';
 import styles from './ScrollArea.module.scss';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /**
  * Height cap for `<ScrollArea>`. A scale value (`'sm' | 'md' | 'lg'`) or an
@@ -151,4 +152,5 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
     </div>
   );
 });
+fieldContainer(ScrollArea);
 ScrollArea.displayName = 'ScrollArea';

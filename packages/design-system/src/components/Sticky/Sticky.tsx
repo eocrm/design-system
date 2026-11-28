@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useRef, type HTMLAttributes, type ReactNode } fr
 import clsx from 'clsx';
 import { mergeRefs } from '../_internal/refs';
 import styles from './Sticky.module.scss';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /**
  * Offset from the top of the scroll container at which the content pins. Maps to
@@ -101,3 +102,4 @@ export const Sticky = forwardRef<HTMLDivElement, StickyProps>(function Sticky(
     </div>
   );
 });
+fieldContainer(Sticky);

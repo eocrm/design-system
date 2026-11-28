@@ -11,6 +11,7 @@ import clsx from 'clsx';
 import styles from './Split.module.scss';
 import { COLLAPSE_BREAKPOINT_PX, type CollapseBreakpoint } from '../_internal/collapse';
 import { mergeRefs } from '../_internal/refs';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /** Which side the `aside` pane sits on. RTL-aware (DOM + column order flip together). */
 export type SplitSide = 'start' | 'end';
@@ -229,3 +230,4 @@ export const Split = forwardRef<HTMLDivElement, SplitProps>(function Split(
     </div>
   );
 });
+fieldContainer(Split);

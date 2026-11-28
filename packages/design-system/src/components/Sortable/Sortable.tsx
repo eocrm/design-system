@@ -49,6 +49,7 @@ import {
 } from '../_internal/collapse';
 import { sortableTarget, useDragAccessibility } from '../_internal/dragAnnouncements';
 import styles from './Sortable.module.scss';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /**
  * Layout arrangement of the sortable items.
@@ -429,6 +430,7 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
     tree
   );
 });
+fieldContainer(SortableRoot);
 SortableRoot.displayName = 'Sortable';
 
 /**

@@ -9,6 +9,7 @@ import {
   type CollapseBreakpoint,
   type CollapseColumnsMap,
 } from '../_internal/collapse';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /** Gap between cells. Same scale as Stack/Cluster: pixels 4/8/12/16/24/32. */
 export type GridGap = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -219,6 +220,7 @@ const GridBase = forwardRef<HTMLElement, GridProps>(function Grid(
     grid
   );
 }) as <T extends GridProps>(props: T & { ref?: React.Ref<HTMLElement> }) => ReactElement;
+fieldContainer(GridBase);
 
 /**
  * 2D layout primitive: a CSS Grid wrapper with token-driven gap.

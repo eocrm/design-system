@@ -19,6 +19,7 @@ import {
   roundRobinColumns,
 } from './masonryUtils';
 import styles from './Masonry.module.scss';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /** Gap between columns and between items. Same token scale as Grid/Stack. */
 export type MasonryGap = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -134,3 +135,4 @@ export const Masonry = forwardRef<HTMLDivElement, MasonryProps>(function Masonry
     </div>
   );
 });
+fieldContainer(Masonry);

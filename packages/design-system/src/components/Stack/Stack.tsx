@@ -1,6 +1,7 @@
 import { forwardRef, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import styles from './Stack.module.scss';
+import { fieldContainer } from '../_internal/fieldContainer';
 
 /** Vertical gap between children. Values in pixels: 4 / 8 / 12 / 16 / 24 / 32. */
 export type StackGap = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -98,3 +99,4 @@ export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
     />
   );
 });
+fieldContainer(Stack);
