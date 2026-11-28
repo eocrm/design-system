@@ -1,6 +1,6 @@
 # `<RichText>` — read-only rich-text renderer
 
-Renders a `RichDoc` (the in-house rich-text model) read-only: paragraphs, H1–H3, bullet/ordered lists, blockquotes, code blocks, and inline marks (bold/italic/underline/strike/code/link). No editor libraries. Build docs with the exported engine constructors/transforms.
+Renders a `RichDoc` (the in-house rich-text model) read-only: paragraphs, H1–H3, bullet/ordered lists, checklists, blockquotes, code blocks (syntax-highlighted, with a Copy button), dividers, image/file attachments, and inline marks (bold/italic/underline/strike/code/link/mention/colour). No editor libraries. Build docs with the exported engine constructors/transforms.
 
 ```tsx
 const doc = {
@@ -50,7 +50,24 @@ const onImageActivate = useCallback<RichTextImageActivateHandler>((img) => setIm
 <Lightbox open={image !== null} onOpenChange={(o) => !o && setImage(null)} items={image ? [{ src: image.src, alt: image.alt || 'Attached image' }] : []} />;
 ```
 
+**Checklists** (`checklist_item` blocks) render as `<ul data-type="checklist">` with a native checkbox per item, named by its text. Without `onToggleCheck` the boxes are `disabled` (state visible, not operable). With it, ticking calls `onToggleCheck(blockId, checked)` with the NEW state and you update `value` — e.g. with `setBlockType(doc, blockId, { checked }).doc`:
+
+```tsx
+const [doc, setDoc] = useState(initial);
+const onToggleCheck = useCallback(
+  (blockId: string, checked: boolean) => setDoc((d) => setBlockType(d, blockId, { checked }).doc),
+  [],
+);
+<RichText value={doc} onToggleCheck={onToggleCheck} />;
+```
+
+**Code blocks** render as `<pre><code class="language-x">` with a Copy button (CodeBlock's). A known `language` (see the Stored format section in `RichTextEditor.md`) is syntax-highlighted with CodeBlock's token colours; the highlighter loads lazily via a dynamic import on first use, so the **first paint is plain text** (same characters) and the colours arrive a moment later. Unknown or absent languages stay plain.
+
+**Dividers** render as `<hr>` (implicit `role="separator"`).
+
 When NOT to use: plain text → `Text`. For editing → `<RichTextEditor>`. The model is immutable; render the doc returned by a transform, never mutate in place.
 
 - ❌ Hand-writing HTML to display rich content — feed a `RichDoc` to `<RichText>`.
+- ❌ Expecting `onToggleCheck` to tick the box by itself — RichText is controlled by `value`; update the doc or the box snaps back.
+- ❌ Asserting highlighted token markup right after the first render (tests, SSR snapshots) — highlighting is lazy; wait for it, or assert on text.
 - ❌ A delegated `onClick` on the `<RichText>` root to open images — mouse/touch only: the `<img>` isn't focusable, has no button role and leaves nothing to return focus to. Use `onImageActivate`.

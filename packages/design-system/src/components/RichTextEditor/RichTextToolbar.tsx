@@ -27,9 +27,10 @@ import {
 } from './icons';
 import styles from './RichTextEditor.module.scss';
 
-/** The block type (+ optional heading level) the toolbar reflects/selects. */
+/** The list block types the toolbar's list toggles switch between. */
 type ListType = 'bullet_item' | 'ordered_item' | 'checklist_item';
 
+/** The block type (+ optional heading level) the toolbar reflects/selects. */
 export type BlockChoice = { type: BlockType; level?: 1 | 2 | 3 };
 
 export interface RichTextToolbarProps {
@@ -49,7 +50,7 @@ export interface RichTextToolbarProps {
   onSetBlock: (choice: BlockChoice) => void;
   /** Insert a divider at the selection (the block dropdown's "Divider" item). */
   onInsertDivider: () => void;
-  /** Toggle the selected blocks into/out of a bullet or numbered list. */
+  /** Toggle the selected blocks into/out of a bullet, numbered or checklist list. */
   onToggleList: (listType: ListType) => void;
   /** Whether the current selection sits inside a link (drives the Link button's pressed state). */
   linkActive?: boolean;

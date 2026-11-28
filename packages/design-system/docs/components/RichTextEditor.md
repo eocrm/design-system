@@ -1,6 +1,6 @@
 # `<RichTextEditor>` — controlled rich-text editor (contentEditable)
 
-Controlled WYSIWYG over the in-house engine. `value: RichDoc` + `onChange: (doc) => void` (feed it back into `value`). Type to edit; ⌘/Ctrl+B/I/U and ⌘/Ctrl+⇧X toggle marks over a selection; Enter splits, Backspace/Delete merge.
+Controlled WYSIWYG over the in-house engine. `value: RichDoc` + `onChange: (doc) => void` (feed it back into `value`). Blocks: paragraph, H1–H3, bullet/numbered/checklist items (nested by `depth`), quote, code block (with a language), divider, attachment. Type to edit; ⌘/Ctrl+B/I/U, ⌘/Ctrl+⇧X and ⌘/Ctrl+E toggle bold/italic/underline, strike and inline code over a selection; Enter splits, Backspace/Delete merge. Opt-in `slashMenu` adds a `/` insert menu.
 
 ```tsx
 const [doc, setDoc] = useState(emptyDoc());
@@ -25,7 +25,7 @@ const [doc, setDoc] = useState(emptyDoc());
 | `readOnly` | `boolean` | no | Non-editable: renders the content read-only (prefer `<RichText>` for pure display). |
 | `placeholder` | `string` | no | Shown when the document is empty. |
 | `autoFocus` | `boolean` | no | Focus the editor on mount. |
-| `toolbar` | `false \| true \| 'auto'` | no | Render the built-in formatting toolbar above the editor — Undo/Redo buttons, mark toggle buttons (bold/italic/underline/strike), a block-type dropdown (paragraph/headings/quote/code), and bullet/numbered list toggles. The toolbar dispatches through the same commit path the keyboard uses and reflects the active marks + current block of the live selection. Default `false` (keyboard-only). When `readOnly`, the toolbar renders disabled. `'auto'` shows the toolbar only when the editor is **focused or non-empty**, and keeps it shown while the editor's own overlays (the link editor / mention menu) are open — so opening the link editor on a focused-but-empty composer doesn't collapse the bar. The editable is NOT remounted as the bar appears or hides (the bar toggles in a stable shell), so there's no focus/selection loss. Use it for a compact, focus-gated composer (e.g. a comment box) instead of hand-rolling the show-on-focus logic and working around overlay focus theft. |
+| `toolbar` | `false \| true \| 'auto'` | no | Render the built-in formatting toolbar above the editor — Undo/Redo buttons, mark toggle buttons (bold/italic/underline/strike/inline code), a block-type dropdown (paragraph/headings/quote/code/divider), and bullet/numbered/checklist list toggles. The toolbar dispatches through the same commit path the keyboard uses and reflects the active marks + current block of the live selection. Default `false` (keyboard-only). When `readOnly`, the toolbar renders disabled. `'auto'` shows the toolbar only when the editor is **focused or non-empty**, and keeps it shown while the editor's own overlays (the link editor / mention menu / slash menu) are open — so opening the link editor on a focused-but-empty composer doesn't collapse the bar. The editable is NOT remounted as the bar appears or hides (the bar toggles in a stable shell), so there's no focus/selection loss. Use it for a compact, focus-gated composer (e.g. a comment box) instead of hand-rolling the show-on-focus logic and working around overlay focus theft. |
 | `mentions` | `MentionsConfig` | no | Enable `@`-mention autocomplete. Supply `onQuery` to resolve candidates for the text typed after the trigger (default `@`); the editor renders a floating combobox and inserts a styled mention chip carrying the chosen item's `id`. Omit to disable mentions. See {@link MentionsConfig}. |
 | `slashMenu` | `boolean \| RichTextSlashMenuOption` | no | Enable the `/` insert menu: typing `/` at the start of a paragraph or heading (or after a space) opens a filterable list of blocks — paragraph, headings, quote, code, lists, checklist, divider, and image/file when `upload` is set. Arrow keys move, Enter picks, Escape closes and keeps the typed text. Picking an item (plus removing the typed `/query`) is one undo step. Pass `{ items: (defaults) => [...] }` to filter, reorder or add items (e.g. templates that call `api.insertBlocks`). Off by default; never opens in code blocks, read-only editors or during IME composition. See {@link SlashItem}. Default: `false`. |
 | `autolink` | `boolean` | no | Turn typed and pasted URLs into links automatically. While typing, a URL is linked when you type a space after it; on paste, plain-text URLs are linked (a single bare URL pasted over a selection links the selection). Default `true`. Set `false` to disable both the type rule and paste autolinking (the ⌘/Ctrl+K link tool still works). The href is sanitized — only safe schemes (http/https/`www.`) become links. |
@@ -53,9 +53,9 @@ const [doc, setDoc] = useState(emptyDoc());
 
 **`toolbar` prop** (`boolean | 'auto'`, default `false`): renders a formatting bar above the editor surface. `toolbar="auto"` shows the bar only when the editor is **focused or non-empty**, and keeps it shown while the editor's own overlays (link editor / mention menu) are open — so opening the link editor on a focused-but-empty composer doesn't collapse the bar. The editable is not remounted as the bar appears/hides (no focus/selection loss). Use `'auto'` for a compact, focus-gated composer (e.g. a comment box) instead of hand-rolling show-on-focus + overlay-focus handling. The toolbar contains:
 
-- **Mark buttons** — Bold, Italic, Underline, Strikethrough. Reflect `aria-pressed` based on the current selection (or pending marks at a collapsed caret). Clicking with a selection toggles the mark over it; clicking at a collapsed caret sets a "pending" mark applied to the next typed characters (then clears).
-- **Block-type dropdown** — Paragraph, Heading 1–3, Quote, Code block. Shows the current block type; mixed multi-block selections show "Mixed".
-- **List toggles** — Bullet list, Numbered list. Toggle between the list type and paragraph.
+- **Mark buttons** — Bold, Italic, Underline, Strikethrough, Inline code. Reflect `aria-pressed` based on the current selection (or pending marks at a collapsed caret). Clicking with a selection toggles the mark over it; clicking at a collapsed caret sets a "pending" mark applied to the next typed characters (then clears). Applying inline code strips bold/italic/underline/strike and text/highlight colour from the range (links stay); while the selection is entirely code those buttons are disabled. Existing stored documents are never normalised — a code+bold run already in a doc keeps rendering.
+- **Block-type dropdown** — Paragraph, Heading 1–3, Quote, Code block, plus a Divider item that inserts a divider (a divider is not a "Turn into" target — it holds no text). Shows the current block type; mixed multi-block selections show "Mixed".
+- **List toggles** — Bullet list, Numbered list, Checklist. Toggle between the list type and paragraph.
 - **Link button** — add/edit a link on the selection. Reflects `aria-pressed` when the caret is inside a link.
 - **Emoji insert** — opens a searchable `EmojiPickerPopover`; selecting an emoji inserts it at the caret.
 - **Color** — two separate pickers, **Text color** and **Highlight**, each its own toolbar button (and its own ⠿-menu submenu when `blockControls` is enabled). Each picker is a grid of small **named badges** (the Palette-demo chip look — subtle bg fill + strong fg text): the default brand colors first (gray + semantic red/green/amber/blue, backed by the `--color-fg-muted`/`--color-danger`/`--color-success`/`--color-warning`/`--color-accent` tokens), then the rest of the categorical palette (each palette extra uses its `-fg`/`-bg` token), led by a Default/clear badge. Applied to the selection from the toolbar, or to a whole block from the ⠿ menu. Colors round-trip through HTML and are dropped in Markdown.
@@ -63,8 +63,12 @@ const [doc, setDoc] = useState(emptyDoc());
 
 **List keys:**
 
-- `Enter` on an empty list item exits the list (converts to paragraph).
-- `Tab` / `Shift+Tab` indent and outdent list items (clamped at depth 0).
+- `Enter` on an empty list item exits the list (converts to paragraph). Enter on a checklist item starts an unchecked one.
+- `Tab` / `Shift+Tab` indent and outdent list items (clamped at depth 0). Checklist, bullet and numbered items nest under each other freely; at the same depth a switch to or from a checklist starts a new list (so a numbered run interrupted by a checklist restarts at 1, as GFM renders it).
+
+**Checklist:** each item has a native checkbox beside its text (named by the text; "Checklist item" when empty). Clicking it (or Space on it) toggles `checked` as one undo step (`onEdit` kind `'other'`) and keeps focus in the editor. The checkbox is disabled when `readOnly`.
+
+**Code blocks:** while the caret is in a code block, a compact language picker sits in a strip at the block's top-end corner — "Plain text" (no `language`) first, then JavaScript, TypeScript, JSON, PHP, Python, SQL, Bash, YAML, HTML, CSS, Markdown, Go, Kotlin, Java, C#, Rust. Changing it is one undo step. Code with a known language is syntax-highlighted; the highlighter (Prism) loads lazily on first use, so the first paint is plain text. Keys in a code block: `Tab` inserts two spaces at a caret (indents the selected lines with a selection), `Shift+Tab` outdents. **Escape, then Tab** leaves the editor (focus moves on to the language picker, then out) — the APG pattern for editors that capture Tab; Escape then Tab works the same way in lists. Inside a `Modal` / `Drawer`, the first Escape in a code block stays with the editor (it arms Tab-out); the next Escape closes the dialog.
 
 **Pending marks:** toggling a mark at a collapsed caret (via toolbar or ⌘B/I/U/⌘⇧X shortcut) queues it; the next inserted text gets that mark applied, then the queue clears. Moving the caret discards pending marks (with or without a toolbar).
 
@@ -89,7 +93,7 @@ const renderLink: RenderLink = ({ href }, fallback) => {
 <RichTextEditor value={doc} onChange={setDoc} toolbar renderLink={renderLink} />;
 ```
 
-**Import:** `fromHtml(html)` and `fromMarkdown(md)` parse a string into a `RichDoc` (e.g. to seed `value` from stored/legacy content). Pasting rich HTML into the editor imports it as formatted content (parsed + sanitized). Markdown import is via `fromMarkdown` only — pasted plain text (incl. Markdown source) inserts literally, except that bare URLs in pasted plain text autolink (see Autolink above). Both `from*` functions require a DOM environment (`DOMParser`); Markdown has no underline syntax and images/tables aren't modeled.
+**Import:** `fromHtml(html)` and `fromMarkdown(md)` parse a string into a `RichDoc` (e.g. to seed `value` from stored/legacy content). Pasting rich HTML into the editor imports it as formatted content (parsed + sanitized). Markdown import is via `fromMarkdown` only — pasted plain text (incl. Markdown source) inserts literally, except that bare URLs in pasted plain text autolink (see Autolink above). Both `from*` functions require a DOM environment (`DOMParser`); Markdown has no underline syntax and images/tables aren't modeled. Wave-2 blocks map both ways: divider ↔ `<hr>` / `---` (also `***`, `___` on import); checklist ↔ `<ul data-type="checklist"><li data-checked="true|false"><input type="checkbox" …>text</li></ul>` / `- [ ] text`, `- [x] text` (indent = depth; `fromHtml` also accepts GitHub-style `<li><input type="checkbox">` in any `<ul>`); code language ↔ `<pre><code class="language-x">` (`lang-x` is accepted on import) / the fence info string. Imported language names are normalised (see Stored format).
 
 **Export:** `toHtml(doc)` and `toMarkdown(doc)` serialize a `RichDoc` back to a string (the inverse of `fromHtml`/`fromMarkdown`) — e.g. for storage, email bodies, or display outside the editor. `toHtml` is lossless (`fromHtml(toHtml(doc))` round-trips); `toMarkdown` drops underline (no Markdown syntax — use `toHtml` for full fidelity). Both escape output and run hrefs through `safeHref`.
 
@@ -101,7 +105,54 @@ plain `@label` text in `toMarkdown`. Chips are inert references, not links.
 
 **Undo/redo:** built in — ⌘/Ctrl+Z undo, ⌘/Ctrl+Shift+Z (or ⌘/Ctrl+Y) redo, plus the toolbar Undo/Redo buttons. Typing coalesces into one step (short bursts), and replacing `value` from outside the editor clears the history.
 
-**Input rules:** typing a Markdown marker + space at the start of a paragraph auto-converts the block — `# `/`## `/`### ` → headings, `- `/`* `/`+ ` → bullet list, `1. ` → ordered list, `> ` → blockquote, a triple-backtick fence → code block. One Undo reverts the conversion.
+**Input rules:** typing a Markdown marker + space at the start of a paragraph auto-converts the block (text already after the caret stays in the converted block). One Undo reverts the conversion.
+
+<!-- prettier-ignore -->
+| Type | Result |
+|---|---|
+| `# ` / `## ` / `### ` | Heading 1 / 2 / 3 |
+| `- ` / `* ` / `+ ` | Bullet list item |
+| `1. ` (or `1) `) | Numbered list item |
+| `> ` | Quote |
+| ` ``` ` + space | Code block |
+| `[] ` / `[ ] ` | Checklist item, unchecked |
+| `[x] ` / `[X] ` | Checklist item, checked |
+| `---` + space, or `---` + Enter | Divider inserted before the block (Enter fires only when `---` is all the block holds) |
+| `` `text`` then a closing `` ` `` | Inline code over `text` (backticks dropped; one undo step). A lone or doubled backtick does nothing. Not inside code blocks. |
+
+**Shortcuts:** ⌘/Ctrl+B bold, I italic, U underline, ⇧X strike, E inline code, K link; ⌘/Ctrl+Z undo, ⌘/Ctrl+⇧Z or ⌘/Ctrl+Y redo. In lists, Tab / Shift+Tab indent and outdent; in code blocks they indent and outdent lines; Escape then Tab leaves the editor.
+
+**Slash menu** (`slashMenu`, off by default): typing `/` at the start of a paragraph or heading, or after whitespace, opens a filterable list grouped Text · Lists · Media · Advanced. It never opens in code blocks, during IME composition or when `readOnly`. Typing filters by label and `keywords`; Arrow keys move, Enter (or Tab) picks, Escape closes and leaves the typed `/text`; with no match a "No matches" row shows and Enter types normally. Defaults: Paragraph, Heading 1–3, Quote, Bullet list, Numbered list, Checklist, Code block, Divider — plus Image and File when `upload` is set (they open the upload picker). Picking an item, together with removing the typed `/query`, is one undo step (`onEdit` kind `'other'`). It shares the mention menu's ARIA (the textbox's `aria-controls` / `aria-activedescendant`, a `role="listbox"`). With `toolbar="auto"` the bar stays visible while the menu is open.
+
+Pass `{ items: (defaults) => SlashItem[] }` to filter, reorder or extend. A `SlashItem` is `{ id, group, label, hint?, icon?, keywords?, run }`; `run(api)` gets a `SlashApi`: `blockId` (the block that held the `/`, already stripped of `/query`), `turnInto({ type, level? })` (like the block menu's "Turn into"; void targets are refused), `insertBlocks(blocks)` (insert after that block, or replace it when it's empty; ids are reassigned through `createBlockId`; a trailing void gets a paragraph after it) and `openUpload('image' | 'file')`. `label` / `hint` are shown as given — pass translated strings.
+
+```tsx
+const slashMenu: RichTextSlashMenuOption = {
+  items: (defaults) => [
+    ...defaults.filter((i) => i.id !== 'quote'),
+    {
+      id: 'crm-record',
+      group: 'advanced',
+      label: t('wiki.linkRecord'), // "Link to a CRM record"
+      hint: t('wiki.linkRecordHint'),
+      keywords: ['deal', 'record'],
+      run: (api) =>
+        api.insertBlocks([
+          {
+            ...createBlock('paragraph'),
+            inlines: [
+              { text: 'Related deal: ', marks: [] },
+              { text: deal.name, marks: [{ type: 'link', href: `/deals/${deal.id}` }] },
+            ],
+          },
+        ]),
+    },
+  ],
+};
+<RichTextEditor value={doc} onChange={setDoc} toolbar slashMenu={slashMenu} />;
+```
+
+`run` is synchronous. Something that needs a fetch (a template from the server) is your own later edit: you hold `value`, so build the new doc when the data arrives and pass it in.
 
 Read-only display of an existing document: `<RichTextEditor value={doc} onChange={() => {}} readOnly />` (or use `<RichText>`). `@`-mentions: `<RichTextEditor value={doc} onChange={setDoc} mentions={{ onQuery: (q) => searchUsers(q) }} />`.
 
@@ -172,6 +223,29 @@ const change = (d: RichDoc) => {
 />;
 ```
 
+## Stored format
+
+The editor's `value` is the stored format: a `RichDoc` is `{ blocks: Block[] }`, an ordered, **flat** list (no block tree — lists nest by `depth`). Store it as JSON; `toHtml` / `toMarkdown` are exports, not the source of truth. **New in wave 2** rows are new stored shapes: a sync layer with its own schema (e.g. eocrm's Yjs mapping) must add them or it will drop them.
+
+<!-- prettier-ignore -->
+| Block `type` | Attributes (besides `id`, `type`, `inlines`) | Notes |
+|---|---|---|
+| `paragraph` | — | |
+| `heading` | `level`: `1 \| 2 \| 3` | |
+| `bullet_item` | `depth`: 0-based nesting | |
+| `ordered_item` | `depth` | Numbering is derived from position, not stored. |
+| `checklist_item` — **new in wave 2** | `depth`; `checked`: `boolean` (absent = unchecked) | |
+| `blockquote` | — | |
+| `code_block` | `language` — **new in wave 2**: absent = plain text | Inline marks inside it aren't rendered or serialized. |
+| `divider` — **new in wave 2** | — | Void: `inlines` is a single empty run. |
+| `attachment` | `src`, `name`, `mime`, `width`, `height`, `alt`, `align`: `'left' \| 'center' \| 'right'`; transient `status`: `'uploading' \| 'ready' \| 'error'` and `uploadError` | Void. `status`/`uploadError` exist only while an upload is in flight or failed; such blocks never serialize to HTML/Markdown. |
+
+`code_block.language` holds a canonical name: `javascript`, `typescript`, `json`, `php`, `python`, `sql`, `bash`, `yaml`, `html`, `css`, `markdown`, `go`, `kotlin`, `java`, `csharp`, `rust`. HTML/Markdown import lower-cases and normalises aliases — `js`, `jsx` → `javascript`; `ts`, `tsx` → `typescript`; `sh`, `shell`, `zsh` → `bash`; `py` → `python`; `yml` → `yaml`; `md` → `markdown`; `cs`, `c#` → `csharp`; `kt` → `kotlin`; `rs` → `rust`; `htm`, `xml` → `html` — and stores no attribute for `plain` / `text` / `plaintext`. Any other value is stored as-is (lower-cased), rendered plain and round-tripped unchanged.
+
+Each `inlines` entry is `{ text, marks }`. Marks: `bold`, `italic`, `underline`, `strike`, `code`, `link` (`href`), `mention` (`id`, `label`), `textColor` / `bgColor` (`color`: a palette key such as `'red'`, never a raw value). The inline `code` mark is not new to the model, but before wave 2 only paste/import produced it; now the editor creates it (⌘/Ctrl+E, the toolbar, the backtick rule), so a sync schema that skipped it must add it. Applying it strips the other formatting marks from the range at edit time; stored documents are never rewritten.
+
+UI state is not stored: the slash menu, the language picker, open menus, Escape-then-Tab, the caret. Nothing in the doc records whether something is open or focused.
+
 **Anti-patterns**
 
 - ❌ Treating it as uncontrolled — you MUST feed `onChange`'s doc back into `value`, or edits won't stick. Never mutate `value` in place.
@@ -192,5 +266,9 @@ const change = (d: RichDoc) => {
 - ❌ Persisting or submitting the doc while an upload is in flight — gate your submit on `upload.onUploadingChange` (transient attachment blocks are skipped by `toHtml`/`toMarkdown`, but the model still carries them until they settle).
 - ❌ Relying on the picker `accept` for validation — it is only a hint and paste bypasses it; enforce size/type inside `onUpload` and reject to show an error.
 - ❌ Expecting image alignment/width to survive a Markdown round-trip — they serialize to HTML only; the stored RichDoc JSON is lossless.
+- ❌ `slashMenu` together with `mentions={{ trigger: '/' }}` — both menus claim `/`. Keep mentions on `@` (the default) when the slash menu is on.
+- ❌ Async work inside `SlashItem.run` (`await fetch(...)` then `api.insertBlocks`) — `run` is synchronous and the API is only valid during that call. Insert a placeholder or nothing, fetch, then commit the result yourself through `value`.
+- ❌ Storing aliases or display names in `code_block.language` when you build docs by hand (`'ts'`, `'TypeScript'`) — store the canonical name (`'typescript'`); only import normalises.
+- ❌ Syncing the doc through a schema that only knows the pre-wave-2 block types — `divider`, `checklist_item` / `checked` and `code_block.language` are silently lost. Extend the schema (see Stored format).
 
 When NOT to use: read-only display → `<RichText>`. It's controlled — render `onChange`'s doc back into `value`, never mutate in place.

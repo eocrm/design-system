@@ -94,6 +94,7 @@
   }
 
   :where([data-type='checklist'] > li > :is(ul, ol)) {
+    // Places the prose's own nested list in the text column — internal, not outer layout.
     grid-column: 2;
   }
 

@@ -316,9 +316,10 @@ export function setColorMark(
 }
 
 /**
- * Pure/immutable. Patch the `type`, `level`, and/or `depth` of the block
- * identified by `blockId`. Cleans up irrelevant fields (`level` for non-headings,
- * `depth` for non-list blocks). Returns `{ doc, selection }` with the caret at
+ * Pure/immutable. Patch the `type`, `level`, `depth`, `checked` and/or `language`
+ * of the block identified by `blockId`. Cleans up fields the resulting type
+ * doesn't use: `level` unless a heading, `depth` unless a list item, `checked`
+ * unless a `checklist_item`, `language` unless a `code_block`. Returns `{ doc, selection }` with the caret at
  * offset 0 of the block. No-op (returns input) when `blockId` is not found, or
  * when the target is a void block (an attachment can't become a heading/list —
  * converting it would strip the figure rendering and silently lose the file).

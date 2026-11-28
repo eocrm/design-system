@@ -254,15 +254,16 @@ export interface RichTextEditorProps extends Omit<
   autoFocus?: boolean;
   /**
    * Render the built-in formatting toolbar above the editor — Undo/Redo buttons,
-   * mark toggle buttons (bold/italic/underline/strike), a block-type dropdown
-   * (paragraph/headings/quote/code), and bullet/numbered list toggles. The
+   * mark toggle buttons (bold/italic/underline/strike/inline code), a block-type
+   * dropdown (paragraph/headings/quote/code/divider), and bullet/numbered/checklist
+   * list toggles. The
    * toolbar dispatches through the same commit path the keyboard uses and
    * reflects the active marks + current block of the live selection. Default
    * `false` (keyboard-only). When `readOnly`, the toolbar renders disabled.
    *
    * `'auto'` shows the toolbar only when the editor is **focused or non-empty**,
    * and keeps it shown while the editor's own overlays (the link editor / mention
-   * menu) are open — so opening the link editor on a focused-but-empty composer
+   * menu / slash menu) are open — so opening the link editor on a focused-but-empty composer
    * doesn't collapse the bar. The editable is NOT remounted as the bar appears or
    * hides (the bar toggles in a stable shell), so there's no focus/selection loss.
    * Use it for a compact, focus-gated composer (e.g. a comment box) instead of

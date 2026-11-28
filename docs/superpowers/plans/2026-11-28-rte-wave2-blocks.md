@@ -34,11 +34,13 @@
 ### Task 1: Model and engine primitives
 
 **Files:**
+
 - Modify: `src/components/RichText/engine/model.ts`, `attachment.ts` (`isVoidBlock`), `listDepths.ts` (`isListItem`), `transforms.ts` (`splitBlock`, `setBlockType`)
 - Create: `src/components/RichText/engine/codeLanguage.ts`
 - Test: `src/components/RichText/engine/transforms.test.ts`, `codeLanguage.test.ts`
 
 **Interfaces:**
+
 - Produces: `BlockType` gains `'divider' | 'checklist_item'`; `Block.checked?: boolean`; `Block.language?: string`; `CreateBlockAttrs.checked?`, `.language?` copied by `createBlock`.
 - Produces: `isVoidBlock(b)` true for `attachment` and `divider`. `isListItem(b)` true for bullet, ordered, checklist.
 - Produces: `setBlockType(doc, id, patch)` where `patch: Partial<Pick<Block,'type'|'level'|'depth'|'checked'|'language'>>`; it keeps `depth` for all three list types, drops `checked` unless target is `checklist_item`, drops `language` unless target is `code_block`.
@@ -55,15 +57,17 @@
 ### Task 2: Serialization (HTML + Markdown, both ways)
 
 **Files:**
+
 - Modify: `src/components/RichText/engine/toHtml.ts`, `fromHtml.ts`, `toMarkdown.ts`, `mdToHtml.ts`
 - Test: `toHtml.test.ts`, `fromHtml.test.ts`, `toMarkdown.test.ts`, `fromMarkdown.test.ts` (create if absent; Node)
 
 **Interfaces:** Consumes Task 1. Exact output strings:
+
 - divider → `<hr>`; Markdown `---`.
 - checklist run → `<ul data-type="checklist"><li data-checked="true"><input type="checkbox" checked disabled>Buy milk</li><li data-checked="false"><input type="checkbox" disabled>Call</li></ul>`; Markdown `- [x] Buy milk` / `- [ ] Call`, nested by two spaces per depth like bullets. A type switch at the same depth closes the list.
 - code → `<pre><code class="language-typescript">…</code></pre>` (no class when plain); Markdown fence info string = canonical language.
 
-- [ ] **Step 1: Write failing tests** — one round-trip per format per block (`fromHtml(toHtml(doc))` and `fromMarkdown(toMarkdown(doc))` deep-equal ignoring ids), plus imports: `<hr/>`; `<ul><li><input type="checkbox" checked>Done</li></ul>` (GitHub shape, no `data-type`) → `checklist_item` checked; `<pre><code class="language-ts">` → `language: 'typescript'`; Markdown ```` ```py ```` → `python`; `***` and `___` → divider; `- [X] a` → checked. Mixed `- a` then `- [ ] b` at depth 0 → bullet then checklist.
+- [ ] **Step 1: Write failing tests** — one round-trip per format per block (`fromHtml(toHtml(doc))` and `fromMarkdown(toMarkdown(doc))` deep-equal ignoring ids), plus imports: `<hr/>`; `<ul><li><input type="checkbox" checked>Done</li></ul>` (GitHub shape, no `data-type`) → `checklist_item` checked; `<pre><code class="language-ts">` → `language: 'typescript'`; Markdown ` ```py ` → `python`; `***` and `___` → divider; `- [X] a` → checked. Mixed `- a` then `- [ ] b` at depth 0 → bullet then checklist.
 - [ ] **Step 2:** Run `npx vitest run src/components/RichText/engine` — FAIL.
 - [ ] **Step 3:** Implement. In `fromHtml`, the checkbox `<input>` inside an `<li>` sets `checked` and contributes no text; `HR` becomes a divider block instead of being flushed. Language read via `normalizeCodeLanguage` from the first `language-*`/`lang-*` class on `code` or `pre`.
 - [ ] **Step 4:** Re-run — PASS (existing serializer tests unchanged).
@@ -72,11 +76,13 @@
 ### Task 3: Read-only rendering and lazy highlighting
 
 **Files:**
+
 - Modify: `src/components/CodeBlock/highlight.ts` (add `php`, `sql`, `yaml`, `html`, `css`, `markdown` to `CodeBlockLanguage` + `LANGUAGE_LABELS`; register a small PHP grammar the way bash is registered), `src/components/RichText/engine/renderDoc.tsx`, `src/components/RichText/RichText.tsx`, `RichText.module.scss`/`_prose.scss`
 - Create: `src/components/RichText/useHighlight.ts`, `src/components/RichText/RichTextCodeBlock.tsx`
 - Test: `renderDoc.test.tsx`, `RichText.test.tsx`, `src/components/RichText/lazyHighlight.test.ts` (Node static scan), `src/components/CodeBlock/highlight.test.ts` (new languages tokenise)
 
 **Interfaces:**
+
 - Produces: `RenderDocOptions.onToggleCheck?: (blockId: string, checked: boolean) => void` and `RichTextProps.onToggleCheck` (same signature, JSDoc per Hard rule 7).
 - Produces: `useHighlight(code: string, language: string | undefined): CodeToken[][] | null` — `null` until the dynamic `import('../CodeBlock/highlight')` resolves or when language is absent/unknown or the import rejects; module-level cached promise.
 - Produces: `RichTextCodeBlock({ block, editable })` renders `<pre data-block-id?><code class="language-x">` with token spans (CodeBlock's token class names/CSS) and, when not editable, a Copy button reusing CodeBlock's copy strings (`t('codeBlock.copy')`-style keys — reuse whatever CodeBlock uses).
@@ -95,10 +101,12 @@
 ### Task 4: Editor — divider
 
 **Files:**
+
 - Modify: `src/components/RichTextEditor/inputRules.ts`, `RichTextEditor.tsx` (input-rule call site ~1203 and Enter handling), `selection.ts` (`figureBlock` callers that assume attachment), `RichTextToolbar.tsx` (block dropdown "Divider" item), `RichTextBlockMenu.tsx` ("Insert divider below"; divider rows show no "Turn into"), `commands.ts`
 - Test: `inputRules.test.ts`, `commands.test.ts`, `RichTextEditor.test.tsx`
 
 **Interfaces:**
+
 - Produces: `runInsertDivider(doc: RichDoc, range: Range): CommandResult` in `commands.ts` — same split/void/trailing-paragraph shape as `insertAttachmentBlock`; caret in the trailing paragraph; an empty current paragraph is replaced.
 - Produces: `matchBlockRule(sourceType, before, trigger)` accepts `trigger === 'Enter'` for `---` only; `---` + space also matches. Returns `{ change: { type: 'divider' }, markerLen: 3 }`; `applyBlockRule` for a divider change delegates to `runInsertDivider` semantics.
 
@@ -111,10 +119,12 @@
 ### Task 5: Editor — checklist
 
 **Files:**
+
 - Modify: `inputRules.ts`, `commands.ts` (`runToggleList` and `runIndent` accept `checklist_item`), `RichTextToolbar.tsx` (`onToggleList` type widens to `'bullet_item' | 'ordered_item' | 'checklist_item'`; third list button with a new checklist icon in `icons.tsx`), `RichTextBlockMenu.tsx` (Turn into → Checklist), `RichTextEditor.tsx` (`inList` checks at ~1691/1702 use `isListItem`; checkbox click handler)
 - Test: `inputRules.test.ts`, `commands.test.ts`, `RichTextEditor.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 3's editable checkbox markup.
 - Produces: `runToggleCheck(doc: RichDoc, blockId: string): RichDoc` in `commands.ts`.
 - Input rules: `[]`, `[ ]` → `{ type: 'checklist_item', depth: 0 }`; `[x]`, `[X]` → same plus `checked: true` (`BlockRuleChange` gains `checked?: boolean`).
@@ -128,11 +138,13 @@
 ### Task 6: Editor — code language, Tab handling, inline code
 
 **Files:**
+
 - Create: `src/components/RichTextEditor/RichTextCodeLanguagePicker.tsx`
 - Modify: `RichTextEditor.tsx`, `shortcuts.ts` (`shortcutMark`: Mod+E → `{ type: 'code' }`), `RichTextToolbar.tsx` (`MARKS` adds code after strike, new icon), `commands.ts`, `src/components/RichTextEditor/inlineCodeRule.ts` (create)
 - Test: `shortcuts.test.ts`, `commands.test.ts`, `inlineCodeRule.test.ts`, `RichTextEditor.test.tsx`
 
 **Interfaces:**
+
 - Produces: `runSetCodeLanguage(doc, blockId, language: string | undefined): RichDoc`.
 - Produces: `matchInlineCode(blockText: string, caretOffset: number): { start: number; end: number } | null` — called when the user types a backtick; matches `` `x…` `` where the opening backtick is at block start or after whitespace, content non-empty and not starting/ending with a space, no backtick inside. Applying removes both backticks and adds the code mark as ONE `'other'` commit.
 - Produces: `runToggleMark` with `code`: applying `code` strips bold/italic/underline/strike/textColor/bgColor in the range (link kept); `activeMarks`-driven toolbar disables those buttons when the whole selection is code, and `stageOrToggleMark` ignores them there.
@@ -148,11 +160,13 @@
 ### Task 7: Slash menu
 
 **Files:**
+
 - Create: `src/components/RichTextEditor/slashItems.tsx` (types + `defaultSlashItems`), `useSlashMenu.ts`, `RichTextSlashMenu.tsx`; extract shared listbox shell from `RichTextMentionMenu.tsx` / state from `useMention.ts` into `useTriggerMenu.ts` only if it removes duplication without changing mention tests
 - Modify: `RichTextEditor.tsx` (prop, selectionchange recompute, keydown routing, `aria-controls`/`aria-activedescendant` when slash is open), `index.ts` and `src/index.ts` (export `SlashItem`, `SlashApi`, `SlashGroup`, `RichTextSlashMenuOption` types), `src/publicApi.test.ts` expectations
 - Test: `slashItems.test.ts`, `useSlashMenu.test.tsx`, `RichTextEditor.test.tsx`
 
 **Interfaces:**
+
 - Produces: exactly the `SlashGroup` / `SlashItem` / `SlashApi` types in the spec; prop `slashMenu?: boolean | { items?: (defaults: SlashItem[]) => SlashItem[] }` on `RichTextEditorProps` with JSDoc.
 - Produces: `defaultSlashItems(opts: { t: Translate; hasUpload: boolean }): SlashItem[]` — ids `paragraph, heading1, heading2, heading3, quote, code, bullet, numbered, checklist, divider, image, file` (last two only with upload); groups per spec.
 - Produces: `filterSlashItems(items: SlashItem[], query: string): SlashItem[]` — case-insensitive prefix-or-substring on label and keywords, group order preserved.
@@ -167,6 +181,7 @@
 ### Task 8: Docs, playground, stored format, gates
 
 **Files:**
+
 - Modify: `docs/components/RichTextEditor.md`, `docs/components/RichText.md` (blocks list line 3, input rules, shortcuts, `slashMenu`, `onToggleCheck`, new **Stored format** section listing every block type + attribute with the new ones flagged), `AI-PRIMER.md` (only if the one-line summaries change), `packages/playground/src/pages/components/RichTextEditorDemo.tsx` (a "Wiki page" example with `slashMenu` and every new block in its seed doc) and `RichTextDemo.tsx` if present (checklist with `onToggleCheck`)
 - Test: gates only
 

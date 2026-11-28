@@ -53,8 +53,10 @@ so each one is documented in a new "Stored format" section.
   figure is an attachment; attachment-only paths (resize, alt, upload state)
   need a type guard. Inserting uses the
   `insertAttachmentBlock` pattern (split, void, trailing paragraph).
-- Input rule: `---` then space **or** Enter in an empty-but-for-marker
-  paragraph. (Enter is a new trigger; only `---` uses it.)
+- Input rule: `---` at the start of a paragraph, then space **or** Enter. The
+  space trigger also fires when text follows the caret (like `# `/`- `; the
+  divider lands before the block, which keeps that text); Enter fires only when
+  `---` is all the paragraph holds. (Enter is a new trigger; only `---` uses it.)
 - Inserted from the toolbar block dropdown, block menu, slash menu. Not a
   "Turn into" target (a void can't hold the text).
 - Read-only: `<hr>` (implicit `role="separator"`) styled with the DS Divider
@@ -145,8 +147,12 @@ so each one is documented in a new "Stored format" section.
   ```ts
   type SlashGroup = 'text' | 'lists' | 'media' | 'advanced';
   interface SlashItem {
-    id: string; group: SlashGroup; label: string; hint?: string;
-    icon?: ReactNode; keywords?: string[];
+    id: string;
+    group: SlashGroup;
+    label: string;
+    hint?: string;
+    icon?: ReactNode;
+    keywords?: string[];
     run: (api: SlashApi) => void;
   }
   interface SlashApi {

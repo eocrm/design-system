@@ -451,7 +451,9 @@ function renderListTree(tag: ListTag, items: ListItemNode[], opts: ResolvedOptio
  * lossy-free: depths are normalized gap-free first, so malformed depth jumps
  * never drop items). Inline runs render as nested mark tags in a deterministic
  * order (`link` outermost … `code` innermost). Block `id` is the React key. An
- * empty document renders nothing. `code_block` content is treated as plain text.
+ * empty document renders nothing. `code_block` content renders as plain text,
+ * then syntax-highlighted once the lazy highlighter loads when its `language`
+ * is a known one (unknown or absent = plain).
  *
  * Pass `{ editable: true }` to add `data-block-id` anchors on every block element
  * and render empty blocks with a `<br>` (required for contentEditable caret placement).

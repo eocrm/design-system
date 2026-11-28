@@ -2,7 +2,9 @@
 
 /**
  * All supported block-level content types. `heading` requires a `level`; list
- * types (`bullet_item`, `ordered_item`) accept a `depth` for nesting.
+ * types (`bullet_item`, `ordered_item`, `checklist_item`) accept a `depth` for
+ * nesting, and `checklist_item` also carries `checked`. `code_block` may carry a
+ * `language`. `attachment` and `divider` are void blocks (no editable text).
  */
 export type BlockType =
   | 'paragraph'
