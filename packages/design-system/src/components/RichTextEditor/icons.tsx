@@ -47,6 +47,14 @@ export function StrikeIcon() {
     </svg>
   );
 }
+export function CodeIcon() {
+  return (
+    <svg {...base}>
+      <polyline points="16 18 22 12 16 6" />
+      <polyline points="8 6 2 12 8 18" />
+    </svg>
+  );
+}
 export function BulletListIcon() {
   return (
     <svg {...base}>
@@ -67,6 +75,16 @@ export function OrderedListIcon() {
       <line x1="10" y1="18" x2="20" y2="18" />
       <path d="M4 6h1v3M4 9h2" strokeWidth="1.5" />
       <path d="M4 15h2v1l-2 2h2" strokeWidth="1.5" />
+    </svg>
+  );
+}
+export function ChecklistIcon() {
+  return (
+    <svg {...base}>
+      <rect x="3" y="4" width="5" height="5" rx="1" />
+      <path d="M3.5 17l1.5 1.5 3-3" />
+      <line x1="11" y1="6.5" x2="21" y2="6.5" />
+      <line x1="11" y1="17" x2="21" y2="17" />
     </svg>
   );
 }
@@ -142,6 +160,32 @@ export function HighlightIcon() {
       <path d="M14 4 9 9l-3 6 3 3 6-3 5-5z" />
       <path d="m9 9 6 6" />
       <rect x="4" y="20" width="16" height="2.5" rx="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function QuoteIcon() {
+  return (
+    <svg {...base}>
+      <line x1="5" y1="5" x2="5" y2="19" />
+      <line x1="10" y1="8" x2="20" y2="8" />
+      <line x1="10" y1="16" x2="17" y2="16" />
+    </svg>
+  );
+}
+export function DividerIcon() {
+  return (
+    <svg {...base}>
+      <line x1="3" y1="12" x2="21" y2="12" />
+    </svg>
+  );
+}
+export function ImageIcon() {
+  return (
+    <svg {...base}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="1.5" />
+      <path d="m21 16-5-5-9 9" />
     </svg>
   );
 }

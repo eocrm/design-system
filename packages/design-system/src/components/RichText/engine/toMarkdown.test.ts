@@ -170,3 +170,25 @@ describe('toMarkdown — attachments', () => {
     ).toBe('');
   });
 });
+
+describe('toMarkdown — wave-2 blocks', () => {
+  it('serializes divider, checklist, and fence info', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('divider'),
+        createBlock('checklist_item', 'Buy milk', { checked: true, depth: 0 }),
+        createBlock('checklist_item', 'Sub', { checked: false, depth: 1 }),
+        createBlock('code_block', 'x', { language: 'foo' }),
+      ],
+    };
+    expect(toMarkdown(doc)).toBe('---\n\n- [x] Buy milk\n  - [ ] Sub\n\n```foo\nx\n```');
+  });
+
+  it('clamps the fence info string to [\\w+#.-] (no backtick / newline escape)', () => {
+    const fence = (language: string) =>
+      toMarkdown({ blocks: [createBlock('code_block', 'x', { language })] });
+    expect(fence('c++')).toBe('```c++\nx\n```');
+    expect(fence('js```\n# pwn')).toBe('```js#pwn\nx\n```');
+    expect(fence('`\n ')).toBe('```\nx\n```');
+  });
+});

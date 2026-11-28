@@ -239,7 +239,10 @@
       "Tabs",
       "Tooltip"
     ],
-    "composedBy": []
+    "composedBy": [
+      "RichText",
+      "RichTextEditor"
+    ]
   },
   "ColorPicker": {
     "tier": "composition",
@@ -906,6 +909,7 @@
     "composes": [
       "Button",
       "CircularProgress",
+      "CodeBlock",
       "Tooltip"
     ],
     "composedBy": [
@@ -919,6 +923,7 @@
       "Avatar",
       "Button",
       "Cluster",
+      "CodeBlock",
       "DropdownMenu",
       "EmojiPicker",
       "Input",

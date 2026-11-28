@@ -1180,6 +1180,8 @@ export interface Messages {
     /** Function leaf — aria-label on an inline-image trigger (`onImageActivate`).
      * `name` is the image's alt, else its file name; may be empty. */
     openImage: (params: { name: string }) => string;
+    /** Accessible name of a checklist checkbox whose item text is empty. */
+    checklistItem: string;
   };
   richTextEditor: {
     /** Status indicator text: every change has reached the app's transport. */
@@ -1212,6 +1214,8 @@ export interface Messages {
     blockquote: string;
     /** Block-type menu item + trigger label for a code block. */
     codeBlock: string;
+    /** Block-type menu item that inserts a divider (horizontal rule) at the caret. */
+    divider: string;
     /** Block-type trigger label when the selection spans mixed block types. */
     mixed: string;
     /** aria-label on the bold mark toggle button. */
@@ -1222,10 +1226,18 @@ export interface Messages {
     underline: string;
     /** aria-label on the strikethrough mark toggle button. */
     strike: string;
+    /** aria-label on the inline-code mark toggle button. */
+    inlineCode: string;
+    /** aria-label of the language picker shown on a focused code block. */
+    codeLanguage: string;
+    /** Language-picker option for a code block with no language. */
+    plainText: string;
     /** aria-label on the bullet-list toggle button. */
     bulletList: string;
     /** aria-label on the numbered-list toggle button. */
     orderedList: string;
+    /** aria-label on the checklist toggle button; also the block menu's "Turn into" item. */
+    checklist: string;
     /** aria-label on the toolbar Link button. */
     link: string;
     /** Emoji-insert toolbar button. */
@@ -1248,8 +1260,50 @@ export interface Messages {
     mentionsLabel: string;
     /** Empty-state row when no mention candidates match. */
     mentionsEmpty: string;
+    /** Accessible name of the `/` insert-block menu (listbox). */
+    slashMenuLabel: string;
+    /** Slash-menu group heading: text blocks. */
+    slashGroupText: string;
+    /** Slash-menu group heading: lists. */
+    slashGroupLists: string;
+    /** Slash-menu group heading: images and files. */
+    slashGroupMedia: string;
+    /** Slash-menu group heading: code, divider and other blocks. */
+    slashGroupAdvanced: string;
+    /** Slash-menu disabled option shown when nothing matches the typed query. */
+    slashNoMatches: string;
+    /** Slash-menu item that opens the upload picker for an image. */
+    slashImage: string;
+    /** Slash-menu item that opens the upload picker for a file. */
+    slashFile: string;
+    /** Slash-menu hint under "Paragraph". */
+    slashParagraphHint: string;
+    /** Slash-menu hint under "Heading 1". */
+    slashHeading1Hint: string;
+    /** Slash-menu hint under "Heading 2". */
+    slashHeading2Hint: string;
+    /** Slash-menu hint under "Heading 3". */
+    slashHeading3Hint: string;
+    /** Slash-menu hint under "Quote". */
+    slashQuoteHint: string;
+    /** Slash-menu hint under "Code block". */
+    slashCodeHint: string;
+    /** Slash-menu hint under "Bullet list". */
+    slashBulletHint: string;
+    /** Slash-menu hint under "Numbered list". */
+    slashNumberedHint: string;
+    /** Slash-menu hint under "Checklist". */
+    slashChecklistHint: string;
+    /** Slash-menu hint under "Divider". */
+    slashDividerHint: string;
+    /** Slash-menu hint under "Image". */
+    slashImageHint: string;
+    /** Slash-menu hint under "File". */
+    slashFileHint: string;
     /** aria-label on the block "insert below" (＋) gutter button. */
     blockInsert: string;
+    /** ⠿ block-menu item that inserts a divider below the block. */
+    blockInsertDivider: string;
     /** aria-label on the block actions (⠿) gutter handle. */
     blockActions: string;
     /** "Turn into" submenu label in the block menu. */

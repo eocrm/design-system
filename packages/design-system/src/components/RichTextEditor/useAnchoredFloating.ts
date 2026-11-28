@@ -4,7 +4,14 @@
 // flip + shift, auto-updating on scroll/resize. This collapses that duplicated
 // scaffolding into one hook. Internal; NOT exported from the package.
 import { useMemo } from 'react';
-import { useFloating, autoUpdate, flip, shift, offset } from '@floating-ui/react-dom';
+import {
+  useFloating,
+  autoUpdate,
+  flip,
+  shift,
+  offset,
+  type Placement,
+} from '@floating-ui/react-dom';
 import type { Rect } from './selection';
 
 /** Expand a `Rect` (top/left/width/height) into the full DOMRect shape Floating UI reads. */
@@ -29,22 +36,27 @@ function rectToDomRect(r: Rect): DOMRect {
  * `getAnchorRect`, when provided, is re-read on every reposition so the overlay
  * tracks the selection line / figure on scroll (the static `anchorRect` is the
  * fallback for the initial frame / when the live rect is unavailable). `opts.offset`
- * sets the gap between anchor and overlay (defaults to 6).
+ * sets the gap between anchor and overlay (defaults to 6); `opts.placement` defaults
+ * to `'bottom-start'`; `opts.flip: false` keeps it on that side.
  */
 export function useAnchoredFloating(
   anchorRect: Rect,
   getAnchorRect: (() => Rect | null) | undefined,
-  opts: { offset?: number } = {},
+  opts: { offset?: number; placement?: Placement; flip?: boolean } = {},
 ) {
   const virtualRef = useMemo(
     () => ({ getBoundingClientRect: () => rectToDomRect(getAnchorRect?.() ?? anchorRect) }),
     [anchorRect, getAnchorRect],
   );
   return useFloating({
-    placement: 'bottom-start',
+    placement: opts.placement ?? 'bottom-start',
     strategy: 'fixed',
     whileElementsMounted: autoUpdate,
-    middleware: [offset(opts.offset ?? 6), flip(), shift({ padding: 4 })],
+    middleware: [
+      offset(opts.offset ?? 6),
+      opts.flip === false ? null : flip(),
+      shift({ padding: 4 }),
+    ],
     elements: { reference: virtualRef },
   });
 }

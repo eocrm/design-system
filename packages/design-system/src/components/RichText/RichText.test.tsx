@@ -225,3 +225,73 @@ describe('onImageActivate (#739)', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('RichText — code blocks and checklists (DS-99/104)', () => {
+  const codeDoc = (language?: string): RichDoc => ({
+    blocks: [createBlock('code_block', 'const a = 1;', { id: 'c1', language })],
+  });
+
+  it('a typescript code block eventually renders highlight token spans, same text', async () => {
+    const { container } = render(<RichText value={codeDoc('typescript')} />);
+    const code = container.querySelector('pre > code')!;
+    expect(code).toHaveClass('language-typescript');
+    expect(code.textContent).toBe('const a = 1;');
+    await vi.waitFor(() => expect(code.querySelector('[data-token="keyword"]')).not.toBeNull());
+    expect(code.textContent).toBe('const a = 1;');
+  });
+
+  it('read-only Copy button copies the raw code text', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    render(<RichText value={codeDoc()} />);
+    await user.click(screen.getByRole('button', { name: 'Copy code' }));
+    expect(writeText).toHaveBeenCalledWith('const a = 1;');
+  });
+
+  it('onToggleCheck makes checklist checkboxes operable', () => {
+    const onToggleCheck = vi.fn();
+    const doc: RichDoc = { blocks: [createBlock('checklist_item', 'Ship', { id: 'k1' })] };
+    render(<RichText value={doc} onToggleCheck={onToggleCheck} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Ship' }));
+    expect(onToggleCheck).toHaveBeenCalledWith('k1', true);
+  });
+
+  it('two documents with colliding block ids name each checkbox from its own text', () => {
+    const mk = (text: string): RichDoc => ({
+      blocks: [createBlock('checklist_item', text, { id: 'rt1' })],
+    });
+    const { container } = render(
+      <>
+        <RichText value={mk('First doc')} />
+        <RichText value={mk('Second doc')} />
+      </>,
+    );
+    const boxes = screen.getAllByRole('checkbox');
+    expect(boxes[0]).toHaveAccessibleName('First doc');
+    expect(boxes[1]).toHaveAccessibleName('Second doc');
+    const ids = [...container.querySelectorAll('[id]')].map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('Review Focus 5: a rejected highlight import leaves plain code and throws nothing', async () => {
+    vi.resetModules();
+    vi.doMock('../CodeBlock/highlight', () => {
+      throw new Error('chunk load failed');
+    });
+    try {
+      const { RichText: Fresh } = await import('./RichText');
+      const { useHighlight } = await import('./useHighlight');
+      const { container } = render(<Fresh value={codeDoc('typescript')} />);
+      // Let the import settle, then confirm nothing was highlighted.
+      await new Promise((r) => setTimeout(r, 50));
+      const code = container.querySelector('pre > code')!;
+      expect(code.textContent).toBe('const a = 1;');
+      expect(code.querySelector('[data-token]')).toBeNull();
+      expect(useHighlight).toBeTypeOf('function');
+    } finally {
+      vi.doUnmock('../CodeBlock/highlight');
+      vi.resetModules();
+    }
+  });
+});

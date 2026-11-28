@@ -8,6 +8,7 @@ import { nextId, emptyDoc } from './model';
 import { normalizeInlines } from './inlines';
 import { safeHref } from './safeHref';
 import { withMark } from './marks';
+import { normalizeCodeLanguage } from './codeLanguage';
 import { textColorKeyFrom, bgColorKeyFrom } from './colorMarks';
 
 const HEADING_LEVEL: Record<string, 1 | 2 | 3> = { H1: 1, H2: 2, H3: 3, H4: 3, H5: 3, H6: 3 };
@@ -220,6 +221,26 @@ function pushInlineBlocks(
 function emitListItem(li: HTMLElement, itemType: BlockType, out: Block[], depth: number): void {
   const segments: Inline[][] = [[]];
   const nested: HTMLElement[] = [];
+  // Checklist item when: `data-checked` on the <li> (ours, TipTap's taskItem), a
+  // checkbox <input> child (ours, GitHub's) or opening its first <p> (GitHub loose
+  // task list), or a `data-type="taskList"|"checklist"` parent. The input itself is
+  // in DROP_TAGS so it contributes no text.
+  const isBox = (c: Element | null | undefined) =>
+    c?.tagName === 'INPUT' && c.getAttribute('type') === 'checkbox';
+  const first = li.firstElementChild;
+  const box =
+    Array.from(li.children).find(isBox) ??
+    (first?.tagName === 'P' && isBox(first.firstElementChild) ? first.firstElementChild : null);
+  const flag = li.getAttribute('data-checked');
+  const listType = li.parentElement?.getAttribute('data-type');
+  const checklist =
+    flag === 'true' ||
+    flag === 'false' ||
+    !!box ||
+    listType === 'taskList' ||
+    listType === 'checklist';
+  const checked =
+    flag === 'true' || flag === 'false' ? flag === 'true' : !!box?.hasAttribute('checked');
   for (const child of Array.from(li.childNodes)) {
     if (isElement(child) && (child.tagName === 'UL' || child.tagName === 'OL')) nested.push(child);
     else walkInline(child, [], segments);
@@ -227,7 +248,9 @@ function emitListItem(li: HTMLElement, itemType: BlockType, out: Block[], depth:
   for (const seg of segments) {
     const inlines = normalizeInlines(trimSegment(seg));
     if (segments.length > 1 && isEmptySeg(inlines)) continue;
-    out.push({ id: nextId(), type: itemType, depth, inlines });
+    if (checklist) {
+      out.push({ id: nextId(), type: 'checklist_item', depth, checked, inlines });
+    } else out.push({ id: nextId(), type: itemType, depth, inlines });
   }
   for (const sub of nested) emitBlock(sub, out, depth + 1);
 }
@@ -243,7 +266,11 @@ function emitBlock(el: HTMLElement, out: Block[], listDepth: number): void {
     return;
   }
   if (tag === 'PRE') {
-    out.push(blockFrom('code_block', [{ text: el.textContent ?? '', marks: [] }]));
+    const block = blockFrom('code_block', [{ text: el.textContent ?? '', marks: [] }]);
+    const cls = `${el.querySelector('code')?.className ?? ''} ${el.className}`;
+    const lang = normalizeCodeLanguage(/(?:^|\s)(?:language|lang)-(\S+)/.exec(cls)?.[1]);
+    if (lang) block.language = lang;
+    out.push(block);
     return;
   }
   if (tag === 'BLOCKQUOTE') {
@@ -253,7 +280,7 @@ function emitBlock(el: HTMLElement, out: Block[], listDepth: number): void {
     // rather than coercing them to a text-less `{type:'blockquote', inlines:[]}`,
     // which would violate the "every text block holds ≥1 run" invariant.
     for (const b of inner) {
-      if (b.type === 'attachment') out.push(b);
+      if (b.type === 'attachment' || b.type === 'divider') out.push(b);
       else out.push({ id: nextId(), type: 'blockquote', inlines: b.inlines });
     }
     return;
@@ -320,6 +347,11 @@ function collectBlocks(parent: Node, out: Block[], listDepth: number): void {
         if (Number.isFinite(h) && h > 0) block.height = h;
         out.push(block);
       }
+      continue;
+    }
+    if (child.tagName === 'HR') {
+      flush();
+      out.push({ id: nextId(), type: 'divider', inlines: [{ text: '', marks: [] }] });
       continue;
     }
     if (DROP_TAGS.has(child.tagName)) continue;

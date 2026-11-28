@@ -7,6 +7,7 @@ import { RichTextBlockMenu } from './RichTextBlockMenu';
 function setup(props: Partial<React.ComponentProps<typeof RichTextBlockMenu>> = {}) {
   const onAction = vi.fn();
   const onTurnInto = vi.fn();
+  const onInsertDivider = vi.fn();
   render(
     <I18nProvider locale="en">
       <RichTextBlockMenu
@@ -14,11 +15,12 @@ function setup(props: Partial<React.ComponentProps<typeof RichTextBlockMenu>> = 
         onOpenChange={() => {}}
         onAction={onAction}
         onTurnInto={onTurnInto}
+        onInsertDivider={onInsertDivider}
         {...props}
       />
     </I18nProvider>,
   );
-  return { onAction, onTurnInto };
+  return { onAction, onTurnInto, onInsertDivider };
 }
 
 it('renders the handle with the block-actions aria-label', () => {
@@ -122,4 +124,15 @@ it('reopens the color submenu after a pick (close-on-pick does not latch it shut
   // Reopen the same submenu → the palette is back.
   await userEvent.click(screen.getByRole('menuitem', { name: 'Text color' }));
   expect(await screen.findByRole('button', { name: 'Green' })).toBeInTheDocument();
+});
+
+it('fires onInsertDivider for "Insert divider below"', async () => {
+  const { onInsertDivider } = setup();
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Insert divider below' }));
+  expect(onInsertDivider).toHaveBeenCalled();
+});
+
+it('hides Turn into for a divider block', () => {
+  setup({ blockType: 'divider' });
+  expect(screen.queryByRole('menuitem', { name: /turn into/i })).toBeNull();
 });

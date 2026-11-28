@@ -449,3 +449,83 @@ describe('void-aware merge/split', () => {
     expect(r.doc.blocks[0].inlines).toEqual([]);
   });
 });
+
+describe('wave-2 block types', () => {
+  it('splitBlock on a checked checklist_item yields an unchecked sibling at same depth', () => {
+    const d: RichDoc = {
+      blocks: [createBlock('checklist_item', 'todo', { id: 'c', depth: 1, checked: true })],
+    };
+    const r = splitBlock(d, { blockId: 'c', offset: 4 });
+    expect(r.doc.blocks[0].checked).toBe(true);
+    expect(r.doc.blocks[1]).toMatchObject({ type: 'checklist_item', depth: 1, checked: false });
+  });
+  it('setBlockType checklist_item → bullet_item keeps depth, drops checked', () => {
+    const d: RichDoc = {
+      blocks: [createBlock('checklist_item', 'x', { id: 'c', depth: 2, checked: true })],
+    };
+    const b = setBlockType(d, 'c', { type: 'bullet_item' }).doc.blocks[0];
+    expect(b.depth).toBe(2);
+    expect('checked' in b).toBe(false);
+  });
+  it('setBlockType code_block → paragraph drops language', () => {
+    const d: RichDoc = {
+      blocks: [createBlock('code_block', 'x', { id: 'k', language: 'ts' })],
+    };
+    expect('language' in setBlockType(d, 'k', { type: 'paragraph' }).doc.blocks[0]).toBe(false);
+  });
+  it('setBlockType on a divider is a no-op', () => {
+    const d: RichDoc = { blocks: [{ id: 'd', type: 'divider', inlines: [] }] };
+    expect(setBlockType(d, 'd', { type: 'paragraph' }).doc).toBe(d);
+  });
+});
+
+describe('insertFragment around void blocks', () => {
+  const hw = (): RichDoc => ({ blocks: [createBlock('paragraph', 'helloworld', { id: 'h' })] });
+  const caret = { anchor: { blockId: 'h', offset: 5 }, focus: { blockId: 'h', offset: 5 } };
+  const divider = (): Block => ({ id: 'dv', type: 'divider', inlines: [] });
+  const attachment = (): Block => ({
+    id: 'av',
+    type: 'attachment',
+    inlines: [],
+    src: '/f.png',
+    name: 'f.png',
+  });
+  const shape = (d: RichDoc) => d.blocks.map((b) => [b.type, runsText(b.inlines)]);
+  const voids = [
+    ['divider', divider],
+    ['attachment', attachment],
+  ] as const;
+
+  it.each(voids)('a fragment ending with a %s keeps the trailing text after it', (type, v) => {
+    const frag: RichDoc = { blocks: [createBlock('paragraph', 'A'), v()] };
+    const r = insertFragment(hw(), caret, frag);
+    expect(shape(r.doc)).toEqual([
+      ['paragraph', 'helloA'],
+      [type, ''],
+      ['paragraph', 'world'],
+    ]);
+    expect(r.selection.anchor).toEqual({ blockId: r.doc.blocks[2].id, offset: 0 });
+  });
+
+  it.each(voids)('a fragment starting with a %s splits at the caret', (type, v) => {
+    const frag: RichDoc = { blocks: [v(), createBlock('paragraph', 'B')] };
+    const r = insertFragment(hw(), caret, frag);
+    expect(shape(r.doc)).toEqual([
+      ['paragraph', 'hello'],
+      [type, ''],
+      ['paragraph', 'Bworld'],
+    ]);
+    expect(r.selection.anchor).toEqual({ blockId: r.doc.blocks[2].id, offset: 1 });
+  });
+
+  it.each(voids)('a fragment that is a single %s is inserted as its own block', (type, v) => {
+    const r = insertFragment(hw(), caret, { blocks: [v()] });
+    expect(shape(r.doc)).toEqual([
+      ['paragraph', 'hello'],
+      [type, ''],
+      ['paragraph', 'world'],
+    ]);
+    expect(r.selection.anchor).toEqual({ blockId: r.doc.blocks[2].id, offset: 0 });
+    expect(new Set(r.doc.blocks.map((b) => b.id)).size).toBe(3);
+  });
+});

@@ -29,11 +29,13 @@ function blockElementFor(root: HTMLElement, node: Node): HTMLElement | null {
 }
 
 /**
- * A void attachment block element (`<figure data-block-id>`), or null. The
- * `data-block-id` guard is load-bearing: callers rely on it to safely read the id.
- * In editable mode renderDoc emits `<figure>` ONLY for attachment blocks and always
- * stamps `data-block-id`, so every `data-block-id` figure in the editor is an
- * attachment — the tag + attribute check is sufficient.
+ * A void block element (`<figure data-block-id>`), or null. The `data-block-id`
+ * guard is load-bearing: callers rely on it to safely read the id. In editable
+ * mode renderDoc emits `<figure>` ONLY for void blocks — `attachment` and
+ * `divider` (`<figure><hr/></figure>`) — and always stamps `data-block-id`, so
+ * every `data-block-id` figure in the editor is a void. Callers here only do
+ * caret/void mapping, which is type-agnostic; attachment-only UI (resize,
+ * Configure, upload state) gates on the MODEL block's `type === 'attachment'`.
  */
 function figureBlock(node: Node | null | undefined): HTMLElement | null {
   return node instanceof HTMLElement &&

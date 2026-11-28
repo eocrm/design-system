@@ -13,8 +13,10 @@ import {
   ItalicIcon,
   UnderlineIcon,
   StrikeIcon,
+  CodeIcon,
   BulletListIcon,
   OrderedListIcon,
+  ChecklistIcon,
   LinkIcon,
   UndoIcon,
   RedoIcon,
@@ -24,6 +26,9 @@ import {
   HighlightIcon,
 } from './icons';
 import styles from './RichTextEditor.module.scss';
+
+/** The list block types the toolbar's list toggles switch between. */
+type ListType = 'bullet_item' | 'ordered_item' | 'checklist_item';
 
 /** The block type (+ optional heading level) the toolbar reflects/selects. */
 export type BlockChoice = { type: BlockType; level?: 1 | 2 | 3 };
@@ -43,8 +48,10 @@ export interface RichTextToolbarProps {
   onToggleMark: (type: MarkType) => void;
   /** Set the block type of every block in the selection. */
   onSetBlock: (choice: BlockChoice) => void;
-  /** Toggle the selected blocks into/out of a bullet or numbered list. */
-  onToggleList: (listType: 'bullet_item' | 'ordered_item') => void;
+  /** Insert a divider at the selection (the block dropdown's "Divider" item). */
+  onInsertDivider: () => void;
+  /** Toggle the selected blocks into/out of a bullet, numbered or checklist list. */
+  onToggleList: (listType: ListType) => void;
   /** Whether the current selection sits inside a link (drives the Link button's pressed state). */
   linkActive?: boolean;
   /** Open the link editor for the current selection. */
@@ -81,12 +88,13 @@ export interface RichTextToolbarProps {
 const MARKS: {
   type: MarkType;
   Icon: () => ReactElement;
-  key: 'bold' | 'italic' | 'underline' | 'strike';
+  key: 'bold' | 'italic' | 'underline' | 'strike' | 'inlineCode';
 }[] = [
   { type: 'bold', Icon: BoldIcon, key: 'bold' },
   { type: 'italic', Icon: ItalicIcon, key: 'italic' },
   { type: 'underline', Icon: UnderlineIcon, key: 'underline' },
   { type: 'strike', Icon: StrikeIcon, key: 'strike' },
+  { type: 'code', Icon: CodeIcon, key: 'inlineCode' },
 ];
 
 /**
@@ -113,6 +121,7 @@ function RichTextToolbarImpl({
   disabled,
   onToggleMark,
   onSetBlock,
+  onInsertDivider,
   onToggleList,
   linkActive = false,
   onOpenLink,
@@ -126,6 +135,9 @@ function RichTextToolbarImpl({
   trailing,
 }: RichTextToolbarProps) {
   const t = useTranslation();
+  // Inline code excludes the other formatting marks and colours (CODE_EXCLUDED_MARKS):
+  // where the selection is entirely code their buttons are no-ops, so disable them.
+  const inCode = activeMarks.includes('code');
 
   // Aggregate the open state of every popover in this bar into the single flag
   // the editor reads. Tracked as a set, not a counter, so a popover reporting
@@ -152,13 +164,14 @@ function RichTextToolbarImpl({
         return t('richTextEditor.codeBlock');
       case 'bullet_item':
       case 'ordered_item':
+      case 'checklist_item':
       case 'paragraph':
       default:
         return t('richTextEditor.paragraph');
     }
   })();
 
-  const isList = (lt: 'bullet_item' | 'ordered_item') => block?.type === lt;
+  const isList = (lt: ListType) => block?.type === lt;
 
   return (
     <div className={styles.toolbar} role="toolbar" aria-label={t('richTextEditor.toolbar')}>
@@ -217,6 +230,10 @@ function RichTextToolbarImpl({
           <DropdownMenu.Item onSelect={() => onSetBlock({ type: 'code_block' })}>
             {t('richTextEditor.codeBlock')}
           </DropdownMenu.Item>
+          <DropdownMenu.Separator />
+          <DropdownMenu.Item onSelect={onInsertDivider}>
+            {t('richTextEditor.divider')}
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu>
 
@@ -232,7 +249,7 @@ function RichTextToolbarImpl({
             iconOnly
             aria-label={t(`richTextEditor.${key}`)}
             aria-pressed={active}
-            disabled={disabled}
+            disabled={disabled || (inCode && type !== 'code')}
             onMouseDown={preventSelectionLoss}
             onClick={() => onToggleMark(type)}
           >
@@ -278,7 +295,7 @@ function RichTextToolbarImpl({
             variant="ghost"
             iconOnly
             aria-label={t('richTextEditor.textColor')}
-            disabled={disabled}
+            disabled={disabled || inCode}
             onMouseDown={preventSelectionLoss}
           >
             <TextColorIcon />
@@ -300,7 +317,7 @@ function RichTextToolbarImpl({
             variant="ghost"
             iconOnly
             aria-label={t('richTextEditor.highlight')}
-            disabled={disabled}
+            disabled={disabled || inCode}
             onMouseDown={preventSelectionLoss}
           >
             <HighlightIcon />
@@ -340,6 +357,18 @@ function RichTextToolbarImpl({
         onClick={() => onToggleList('ordered_item')}
       >
         <OrderedListIcon />
+      </Button>
+      <Button
+        size="sm"
+        variant={isList('checklist_item') ? 'secondary' : 'ghost'}
+        iconOnly
+        aria-label={t('richTextEditor.checklist')}
+        aria-pressed={isList('checklist_item')}
+        disabled={disabled}
+        onMouseDown={preventSelectionLoss}
+        onClick={() => onToggleList('checklist_item')}
+      >
+        <ChecklistIcon />
       </Button>
 
       {onPickFiles && (

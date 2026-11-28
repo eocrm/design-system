@@ -125,7 +125,7 @@ export function applyInput(
   }
 }
 
-/** Which side of a void block (attachment figure) the DOM caret sits on. */
+/** Which side of a void block (attachment / divider figure) the DOM caret sits on. */
 export type VoidSide = 'before' | 'after';
 
 /** voidDelete's result; `caretAfterVoid` = put the DOM caret AFTER the selection's

@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../../i18n';
 import { renderDoc } from './renderDoc';
 import type { RenderDocOptions } from './renderDoc';
@@ -708,5 +709,140 @@ describe('renderDoc per-block memoization', () => {
     const plainKey = colored[0].props.children[0].key;
     expect(plainKey).toBe('0:');
     expect(plainKey).not.toBe('0:bold');
+  });
+});
+
+describe('renderDoc — wave 2 blocks (DS-99/101/104)', () => {
+  it('divider: read-only <hr> (separator), editable void figure', () => {
+    const doc: RichDoc = { blocks: [createBlock('divider', '', { id: 'd1' })] };
+    const { container, getByRole, unmount } = render(<>{renderDoc(doc)}</>);
+    expect(getByRole('separator')).toBe(container.firstElementChild);
+    expect(container.innerHTML).toBe('<hr>');
+    unmount();
+    expect(render(<>{renderDoc(doc, { editable: true })}</>).container.innerHTML).toBe(
+      '<figure data-block-id="d1" contenteditable="false"><hr></figure>',
+    );
+  });
+
+  it('checklist checkbox: named by its text, reflects checked, disabled without a handler', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('checklist_item', 'Buy milk', { id: 'c1', checked: true }),
+        createBlock('checklist_item', 'Walk dog', { id: 'c2' }),
+      ],
+    };
+    const { getByRole, container } = render(<>{renderDoc(doc)}</>);
+    expect(container.querySelector('ul')).toHaveAttribute('data-type', 'checklist');
+    const milk = getByRole('checkbox', { name: 'Buy milk' });
+    expect(milk).toBeChecked();
+    expect(milk).toBeDisabled();
+    expect(getByRole('checkbox', { name: 'Walk dog' })).not.toBeChecked();
+  });
+
+  it.each([false, true])(
+    'checklist <ul> keeps list semantics (role="list", editable=%s)',
+    (editable) => {
+      const doc: RichDoc = { blocks: [createBlock('checklist_item', 'a', { id: 'c1' })] };
+      const { getByRole } = render(<>{renderDoc(doc, { editable })}</>);
+      expect(getByRole('list')).toHaveAttribute('data-type', 'checklist');
+      expect(getByRole('list').getAttribute('role')).toBe('list');
+    },
+  );
+
+  it('empty checklist item falls back to the i18n label', () => {
+    const doc: RichDoc = { blocks: [createBlock('checklist_item', '', { id: 'c1' })] };
+    const { getByRole } = render(<I18nProvider locale="en">{renderDoc(doc)}</I18nProvider>);
+    expect(getByRole('checkbox', { name: 'Checklist item' })).toBeInTheDocument();
+  });
+
+  it('clicking an operable checkbox calls onToggleCheck(id, !checked)', async () => {
+    const onToggleCheck = vi.fn();
+    const doc: RichDoc = {
+      blocks: [createBlock('checklist_item', 'Done', { id: 'id', checked: true })],
+    };
+    const { getByRole } = render(<>{renderDoc(doc, { onToggleCheck })}</>);
+    const box = getByRole('checkbox', { name: 'Done' });
+    expect(box).toBeEnabled();
+    await userEvent.click(box);
+    expect(onToggleCheck).toHaveBeenCalledWith('id', false);
+  });
+
+  it('editable checkbox sits in a non-editable widget outside the text span', () => {
+    const doc: RichDoc = { blocks: [createBlock('checklist_item', 'T', { id: 'c1' })] };
+    const { container } = render(<>{renderDoc(doc, { editable: true })}</>);
+    const li = container.querySelector('li[data-block-id="c1"]')!;
+    expect(li.querySelector('input')!.parentElement).toHaveAttribute('contenteditable', 'false');
+    expect(li.querySelector('#c1-label')).toHaveTextContent('T');
+  });
+
+  it('editable checkbox: disabled without a handler, enabled with one', () => {
+    const doc: RichDoc = { blocks: [createBlock('checklist_item', 'T', { id: 'c1' })] };
+    const bare = render(<>{renderDoc(doc, { editable: true })}</>);
+    expect(bare.getByRole('checkbox')).toBeDisabled();
+    bare.unmount();
+    const wired = render(<>{renderDoc(doc, { editable: true, onToggleCheck: () => {} })}</>);
+    expect(wired.getByRole('checkbox')).toBeEnabled();
+  });
+
+  it('a checklist between two ordered runs yields ol, ul, ol', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('ordered_item', 'a', { id: 'o1' }),
+        createBlock('checklist_item', 'b', { id: 'c1' }),
+        createBlock('ordered_item', 'c', { id: 'o2' }),
+      ],
+    };
+    const { container } = render(<>{renderDoc(doc)}</>);
+    expect([...container.children].map((el) => el.tagName)).toEqual(['OL', 'UL', 'OL']);
+  });
+
+  it('a type switch at a nested depth keeps both nested lists under their parent', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('bullet_item', 'p', { id: 'b1' }),
+        createBlock('bullet_item', 'x', { id: 'b2', depth: 1 }),
+        createBlock('checklist_item', 'y', { id: 'c1', depth: 1 }),
+      ],
+    };
+    const { container } = render(<>{renderDoc(doc)}</>);
+    const parent = container.querySelector('ul > li')!;
+    expect([...parent.children].map((el) => el.tagName)).toEqual(['UL', 'UL']);
+    expect(parent.children[1]).toHaveAttribute('data-type', 'checklist');
+  });
+
+  // Review Focus 3: literal innerHTML captured at 4567eda6 (before wave-2 rendering).
+  it('pre-existing block types render byte-identical to before wave 2', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: 'p1',
+          type: 'paragraph',
+          inlines: [
+            { text: 'a ', marks: [] },
+            { text: 'x', marks: [{ type: 'code' }, { type: 'bold' }] },
+          ],
+        },
+        createBlock('bullet_item', 'b', { id: 'l1', depth: 0 }),
+        createBlock('ordered_item', 'o', { id: 'l2', depth: 0 }),
+        createBlock('heading', 'H', { id: 'h1', level: 2 }),
+      ],
+    };
+    expect(html(doc)).toBe(
+      '<p>a <strong><code>x</code></strong></p><ul><li>b</li><li>o</li></ul><h2>H</h2>',
+    );
+    expect(render(<>{renderDoc(doc, { editable: true })}</>).container.innerHTML).toBe(
+      '<p data-block-id="p1">a <strong><code>x</code></strong></p><ul><li data-block-id="l1">b</li><li data-block-id="l2">o</li></ul><h2 data-block-id="h1">H</h2>',
+    );
+  });
+
+  it('a language-less code block keeps its <pre><code> (read-only only adds Copy)', () => {
+    const doc: RichDoc = { blocks: [createBlock('code_block', 'let a = 1;\nb', { id: 'c1' })] };
+    expect(render(<>{renderDoc(doc, { editable: true })}</>).container.innerHTML).toBe(
+      '<pre data-block-id="c1"><code>let a = 1;\nb</code></pre>',
+    );
+    const { container } = render(<>{renderDoc(doc)}</>);
+    expect(container.querySelector('pre')!.outerHTML).toBe('<pre><code>let a = 1;\nb</code></pre>');
+    expect(container.querySelectorAll('button')).toHaveLength(1);
+    expect(container.querySelector('[data-block-id]')).toBeNull();
   });
 });

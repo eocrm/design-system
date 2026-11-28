@@ -1,6 +1,6 @@
 # `<RichText>` — read-only rich-text renderer
 
-Renders a `RichDoc` (the in-house rich-text model) read-only: paragraphs, H1–H3, bullet/ordered lists, blockquotes, code blocks, and inline marks (bold/italic/underline/strike/code/link). No editor libraries. Build docs with the exported engine constructors/transforms.
+Renders a `RichDoc` (the in-house rich-text model) read-only: paragraphs, H1–H3, bullet/ordered lists, checklists, blockquotes, code blocks (syntax-highlighted, with a Copy button), dividers, image/file attachments, and inline marks (bold/italic/underline/strike/code/link/mention/colour). No editor libraries. Build docs with the exported engine constructors/transforms.
 
 ```tsx
 const doc = {
@@ -24,6 +24,7 @@ const doc = {
 | `renderMention` | `RenderMention` | no | Substitute how an `@`-mention renders. Called per mention with `{ id, label }` and the default mention span; return your own node (e.g. an interactive member chip / popover trigger) or the `defaultNode` to keep the standard non-interactive span. Render-time only — the document model is unchanged, so serialization still emits the mention mark. Composes with `renderLink`. |
 | `imageMaxHeight` | `number` | no | Maximum DISPLAYED height of image attachments, in px. Default: the `--size-rich-text-image-max-height` token (480px). A taller image shrinks (width follows, aspect preserved) — render-time only; stored `width`/`height` are unchanged, so existing documents need no migration. There is no "off": pass a large value to effectively remove the cap. |
 | `onImageActivate` | `RichTextImageActivateHandler` | no | Make inline images keyboard-operable triggers (e.g. to open a `Lightbox`). When set, each ready image attachment renders inside a native `<button type="button">` named "Open image: <alt or file name>"; click, Enter and Space focus the button, then call this with `{ src, alt }` and it — so an overlay that restores focus on close (e.g. `Lightbox`) returns there. Unset: the plain `<img>`, unchanged. Pass a stable reference (`useCallback`): a new function each render rebuilds every attachment block. |
+| `onToggleCheck` | `((blockId: string, checked: boolean) => void)` | no | Make checklist checkboxes operable. Called with the item's block id and its NEW checked state; update `value` yourself (RichText stays controlled-by-value, so the box snaps back if you don't). Unset: checkboxes are `disabled` — the state shows but can't be changed. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
@@ -49,7 +50,24 @@ const onImageActivate = useCallback<RichTextImageActivateHandler>((img) => setIm
 <Lightbox open={image !== null} onOpenChange={(o) => !o && setImage(null)} items={image ? [{ src: image.src, alt: image.alt || 'Attached image' }] : []} />;
 ```
 
+**Checklists** (`checklist_item` blocks) render as `<ul data-type="checklist" role="list">` (the role keeps list semantics in Safari/VoiceOver, which drop them for `list-style: none`) with a native checkbox per item, named by its text. Without `onToggleCheck` the boxes are `disabled` (state visible, not operable). With it, ticking calls `onToggleCheck(blockId, checked)` with the NEW state and you update `value` — e.g. with `setBlockType(doc, blockId, { checked }).doc`:
+
+```tsx
+const [doc, setDoc] = useState(initial);
+const onToggleCheck = useCallback(
+  (blockId: string, checked: boolean) => setDoc((d) => setBlockType(d, blockId, { checked }).doc),
+  [],
+);
+<RichText value={doc} onToggleCheck={onToggleCheck} />;
+```
+
+**Code blocks** render as `<pre><code class="language-x">` with a Copy button (CodeBlock's). A known `language` (see the Stored format section in `RichTextEditor.md`) is syntax-highlighted with CodeBlock's token colours; the highlighter loads lazily via a dynamic import on first use, so the **first paint is plain text** (same characters) and the colours arrive a moment later. Unknown or absent languages stay plain.
+
+**Dividers** render as `<hr>` (implicit `role="separator"`).
+
 When NOT to use: plain text → `Text`. For editing → `<RichTextEditor>`. The model is immutable; render the doc returned by a transform, never mutate in place.
 
 - ❌ Hand-writing HTML to display rich content — feed a `RichDoc` to `<RichText>`.
+- ❌ Expecting `onToggleCheck` to tick the box by itself — RichText is controlled by `value`; update the doc or the box snaps back.
+- ❌ Asserting highlighted token markup right after the first render (tests, SSR snapshots) — highlighting is lazy; wait for it, or assert on text.
 - ❌ A delegated `onClick` on the `<RichText>` root to open images — mouse/touch only: the `<img>` isn't focusable, has no button role and leaves nothing to return focus to. Use `onImageActivate`.

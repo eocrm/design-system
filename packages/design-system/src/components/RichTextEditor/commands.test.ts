@@ -7,6 +7,10 @@ import {
   runToggleList,
   runIndent,
   applyExactMarks,
+  runInsertDivider,
+  runToggleCheck,
+  runSetCodeLanguage,
+  runCodeIndent,
 } from './commands';
 import { createBlock } from '../RichText/engine/model';
 import type { RichDoc, Range, Inline } from '../RichText/engine/model';
@@ -208,6 +212,30 @@ describe('runners', () => {
     const clamped = runIndent(out.doc, span(at('a', 0), at('a', 1)), 'out');
     expect(clamped.doc.blocks[0].depth).toBe(0);
   });
+
+  it('runToggleList / runIndent handle checklist items', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'a', { id: 'a' })] };
+    const r = span(at('a', 0), at('a', 1));
+    const on = runToggleList(doc, r, 'checklist_item');
+    expect(on.doc.blocks[0]).toMatchObject({ type: 'checklist_item', depth: 0 });
+    expect(runIndent(on.doc, r, 'in').doc.blocks[0].depth).toBe(1);
+    const off = runToggleList(on.doc, r, 'checklist_item');
+    expect(off.doc.blocks[0].type).toBe('paragraph');
+  });
+
+  it('runToggleCheck flips checked on a checklist item; other blocks unchanged', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('checklist_item', 'a', { id: 'a', depth: 0 }),
+        createBlock('paragraph', 'b', { id: 'b' }),
+      ],
+    };
+    const on = runToggleCheck(doc, 'a');
+    expect(on.blocks[0].checked).toBe(true);
+    expect(runToggleCheck(on, 'a').blocks[0].checked).toBe(false);
+    expect(runToggleCheck(doc, 'b')).toBe(doc);
+    expect(runToggleCheck(doc, 'missing')).toBe(doc);
+  });
 });
 
 describe('applyExactMarks', () => {
@@ -253,5 +281,103 @@ describe('applyExactMarks', () => {
     };
     const next = applyExactMarks(doc, span(at('a', 0), at('a', 2)), []);
     expect(next.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);
+  });
+});
+
+describe('runInsertDivider', () => {
+  const text = (b: RichDoc['blocks'][number]) => b.inlines.map((i) => i.text).join('');
+  const caret = (blockId: string, offset: number) => span(at(blockId, offset), at(blockId, offset));
+
+  it('splits "ab|cd" into [p "ab", divider, p "cd"], caret at the start of "cd"', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'abcd', { id: 'a' })] };
+    const r = runInsertDivider(doc, caret('a', 2));
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['paragraph', 'divider', 'paragraph']);
+    expect(r.doc.blocks.map(text)).toEqual(['ab', '', 'cd']);
+    expect(r.selection).toEqual(caret(r.doc.blocks[2].id, 0));
+  });
+
+  it('replaces an empty paragraph: [divider, p], caret in the p', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', '', { id: 'a' })] };
+    const r = runInsertDivider(doc, caret('a', 0));
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['divider', 'paragraph']);
+    expect(r.selection).toEqual(caret(r.doc.blocks[1].id, 0));
+  });
+
+  it('at the end of a heading, the trailing block is an empty paragraph', () => {
+    const doc: RichDoc = { blocks: [createBlock('heading', 'Title', { id: 'h', level: 1 })] };
+    const r = runInsertDivider(doc, caret('h', 5));
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['heading', 'divider', 'paragraph']);
+    expect(r.selection).toEqual(caret(r.doc.blocks[2].id, 0));
+  });
+
+  it('deletes a non-collapsed selection first', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'abcd', { id: 'a' })] };
+    const r = runInsertDivider(doc, span(at('a', 1), at('a', 3)));
+    expect(r.doc.blocks.map(text)).toEqual(['a', '', 'd']);
+  });
+});
+
+describe('inline code exclusivity', () => {
+  it('applying code strips bold/italic/underline/strike/colors but keeps the link', () => {
+    const link = { type: 'link' as const, href: 'https://x.y' };
+    const doc: RichDoc = {
+      blocks: [
+        para('a', [
+          {
+            text: 'abc',
+            marks: [bold, { type: 'italic' }, { type: 'textColor', color: 'red' }, link],
+          },
+        ]),
+      ],
+    };
+    const r = runToggleMark(doc, span(at('a', 0), at('a', 3)), { type: 'code' });
+    expect(r.doc.blocks[0].inlines).toEqual([{ text: 'abc', marks: [link, { type: 'code' }] }]);
+  });
+
+  it('removing code leaves other marks alone', () => {
+    const doc: RichDoc = { blocks: [para('a', [{ text: 'ab', marks: [{ type: 'code' }] }])] };
+    const r = runToggleMark(doc, span(at('a', 0), at('a', 2)), { type: 'code' });
+    expect(r.doc.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);
+  });
+});
+
+describe('runSetCodeLanguage', () => {
+  const code = (language?: string): RichDoc => ({
+    blocks: [{ id: 'c', type: 'code_block', inlines: [{ text: 'x', marks: [] }], language }],
+  });
+  it('sets, clears (key removed) and no-ops', () => {
+    expect(runSetCodeLanguage(code(), 'c', 'python').blocks[0].language).toBe('python');
+    expect('language' in runSetCodeLanguage(code('go'), 'c', undefined).blocks[0]).toBe(false);
+    const same = code('go');
+    expect(runSetCodeLanguage(same, 'c', 'go')).toBe(same);
+    const para: RichDoc = docFromTextBlock();
+    expect(runSetCodeLanguage(para, 'p', 'go')).toBe(para);
+  });
+  function docFromTextBlock(): RichDoc {
+    return { blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: 'x', marks: [] }] }] };
+  }
+});
+
+describe('runCodeIndent', () => {
+  const code = (text: string): RichDoc => ({
+    blocks: [{ id: 'c', type: 'code_block', inlines: [{ text, marks: [] }] }],
+  });
+  const text = (d: RichDoc) => d.blocks[0].inlines.map((r) => r.text).join('');
+  it('indents every line the selection touches and shifts the selection', () => {
+    const r = runCodeIndent(code('ab\ncd\nef'), span(at('c', 1), at('c', 4)), 'in');
+    expect(text(r.doc)).toBe('  ab\n  cd\nef');
+    expect(r.selection).toEqual(span(at('c', 3), at('c', 8)));
+  });
+  it('outdents up to two leading spaces per line', () => {
+    const r = runCodeIndent(code('   ab\n cd\nef'), span(at('c', 4), at('c', 8)), 'out');
+    expect(text(r.doc)).toBe(' ab\ncd\nef');
+    expect(r.selection).toEqual(span(at('c', 2), at('c', 5)));
+  });
+  it('outdent with a collapsed caret affects only its line; nothing to remove = same doc', () => {
+    const r = runCodeIndent(code('ab\n  cd'), span(at('c', 5), at('c', 5)), 'out');
+    expect(text(r.doc)).toBe('ab\ncd');
+    expect(r.selection).toEqual(span(at('c', 3), at('c', 3)));
+    const flat = code('ab');
+    expect(runCodeIndent(flat, span(at('c', 1), at('c', 1)), 'out').doc).toBe(flat);
   });
 });

@@ -47,6 +47,8 @@ export interface RichTextBlockControlsProps {
   onInsertBelow: (blockId: string) => void;
   onAction: (blockId: string, action: BlockAction) => void;
   onTurnInto: (blockId: string, choice: BlockChoice) => void;
+  /** Insert a divider below the block (the ⠿ menu's "Insert divider below"). */
+  onInsertDivider: (blockId: string) => void;
   /**
    * Open the block's configuration affordance (e.g. attachment settings). When
    * set, a "Configure" item is added to the ⠿ block menu and fires with the
@@ -150,6 +152,7 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
   onInsertBelow,
   onAction,
   onTurnInto,
+  onInsertDivider,
   onConfigure,
   onColor,
   onReorder,
@@ -355,6 +358,7 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
           onOpenChange={onMenuOpenChange}
           onAction={(a) => onAction(activeBlockId, a)}
           onTurnInto={(c) => onTurnInto(activeBlockId, c)}
+          onInsertDivider={() => onInsertDivider(activeBlockId)}
           blockType={activeBlockType}
           onConfigure={onConfigure ? () => onConfigure(activeBlockId) : undefined}
           onColor={onColor ? (type, key) => onColor(activeBlockId, type, key) : undefined}

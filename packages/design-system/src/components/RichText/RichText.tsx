@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes } from 'react';
+import { forwardRef, useId, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import type { RichDoc } from './engine/model';
 import { renderDoc } from './engine/renderDoc';
@@ -56,16 +56,34 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
    * rebuilds every attachment block.
    */
   onImageActivate?: RichTextImageActivateHandler;
+  /**
+   * Make checklist checkboxes operable. Called with the item's block id and its
+   * NEW checked state; update `value` yourself (RichText stays controlled-by-value,
+   * so the box snaps back if you don't). Unset: checkboxes are `disabled` — the
+   * state shows but can't be changed.
+   */
+  onToggleCheck?: (blockId: string, checked: boolean) => void;
 }
 
 /**
- * Read-only renderer for a `RichDoc` (paragraphs, headings, lists, quotes, code blocks, inline marks) on the in-house engine.
+ * Read-only renderer for a `RichDoc` (paragraphs, headings, lists, checklists, quotes, code blocks, dividers, inline marks) on the in-house engine.
  * @see docs/components/RichText.md
  */
 export const RichText = forwardRef<HTMLDivElement, RichTextProps>(function RichText(
-  { value, renderLink, renderMention, onImageActivate, imageMaxHeight, className, style, ...props },
+  {
+    value,
+    renderLink,
+    renderMention,
+    onImageActivate,
+    onToggleCheck,
+    imageMaxHeight,
+    className,
+    style,
+    ...props
+  },
   ref,
 ) {
+  const idPrefix = useId();
   // {...props} last so the consumer can override anything except the composed
   // className and style (Pattern A — consumer wins).
   return (
@@ -75,7 +93,7 @@ export const RichText = forwardRef<HTMLDivElement, RichTextProps>(function RichT
       style={imageMaxHeightStyle(imageMaxHeight, style)}
       {...props}
     >
-      {renderDoc(value, { renderLink, renderMention, onImageActivate })}
+      {renderDoc(value, { renderLink, renderMention, onImageActivate, onToggleCheck, idPrefix })}
     </div>
   );
 });

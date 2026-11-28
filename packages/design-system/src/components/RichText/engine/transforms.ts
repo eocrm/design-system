@@ -1,7 +1,7 @@
 // transforms.ts — Layer D. Document transforms. Pure + immutable; each returns
 // { doc, selection } (the new doc + where the caret/selection should land).
 import type { RichDoc, Block, Point, Range, Mark, MarkType } from './model';
-import { createBlock, nextId } from './model';
+import { createBlock, nextId, rightHalf } from './model';
 import { normalizeInlines, sliceInlines, mapMarksOverRange, runsLength } from './inlines';
 import { withMark, withoutMark, hasMark } from './marks';
 import {
@@ -13,6 +13,7 @@ import {
   marksForTypedText,
 } from './position';
 import { isVoidBlock } from './attachment';
+import { isListItem } from './listDepths';
 
 function collapsed(point: Point): Range {
   return collapsedRange(point.blockId, point.offset);
@@ -161,10 +162,7 @@ export function splitBlock(doc: RichDoc, point: Point): { doc: RichDoc; selectio
   const rightInlines = normalizeInlines(
     sliceInlines(block.inlines, point.offset, blockLength(block)),
   );
-  const right: Block = {
-    ...createBlock(block.type, '', { level: block.level, depth: block.depth }),
-    inlines: rightInlines,
-  };
+  const right = rightHalf(block, rightInlines);
   const blocks = doc.blocks.slice();
   blocks.splice(idx, 1, left, right);
   return { doc: { blocks }, selection: collapsed({ blockId: right.id, offset: 0 }) };
@@ -310,9 +308,10 @@ export function setColorMark(
 }
 
 /**
- * Pure/immutable. Patch the `type`, `level`, and/or `depth` of the block
- * identified by `blockId`. Cleans up irrelevant fields (`level` for non-headings,
- * `depth` for non-list blocks). Returns `{ doc, selection }` with the caret at
+ * Pure/immutable. Patch the `type`, `level`, `depth`, `checked` and/or `language`
+ * of the block identified by `blockId`. Cleans up fields the resulting type
+ * doesn't use: `level` unless a heading, `depth` unless a list item, `checked`
+ * unless a `checklist_item`, `language` unless a `code_block`. Returns `{ doc, selection }` with the caret at
  * offset 0 of the block. No-op (returns input) when `blockId` is not found, or
  * when the target is a void block (an attachment can't become a heading/list —
  * converting it would strip the figure rendering and silently lose the file).
@@ -320,14 +319,16 @@ export function setColorMark(
 export function setBlockType(
   doc: RichDoc,
   blockId: string,
-  patch: Partial<Pick<Block, 'type' | 'level' | 'depth'>>,
+  patch: Partial<Pick<Block, 'type' | 'level' | 'depth' | 'checked' | 'language'>>,
 ): { doc: RichDoc; selection: Range } {
   const idx = findBlockIndex(doc, blockId);
   if (idx === -1) return { doc, selection: collapsed({ blockId, offset: 0 }) };
   if (isVoidBlock(doc.blocks[idx])) return { doc, selection: collapsed({ blockId, offset: 0 }) };
   const next: Block = { ...doc.blocks[idx], ...patch };
   if (next.type !== 'heading') delete next.level;
-  if (next.type !== 'bullet_item' && next.type !== 'ordered_item') delete next.depth;
+  if (!isListItem(next)) delete next.depth;
+  if (next.type !== 'checklist_item') delete next.checked;
+  if (next.type !== 'code_block') delete next.language;
   return { doc: replaceBlock(doc, idx, next), selection: collapsed({ blockId, offset: 0 }) };
 }
 
@@ -344,7 +345,8 @@ export function insertFragment(
   fragment: RichDoc,
 ): { doc: RichDoc; selection: Range } {
   const frag = fragment.blocks;
-  const fragEmpty = frag.length === 0 || (frag.length === 1 && blockLength(frag[0]) === 0);
+  const fragEmpty =
+    frag.length === 0 || (frag.length === 1 && !isVoidBlock(frag[0]) && blockLength(frag[0]) === 0);
 
   const base = isCollapsed(range) ? { doc, selection: range } : deleteRange(doc, range);
   const caret = base.selection.anchor;
@@ -369,29 +371,36 @@ export function insertFragment(
   const left = sliceInlines(B.inlines, 0, caret.offset);
   const right = sliceInlines(B.inlines, caret.offset, blockLength(B));
 
-  if (frag.length === 1) {
-    const merged = normalizeInlines([...left, ...frag[0].inlines, ...right]);
-    const offset = caret.offset + runsLength(frag[0].inlines);
+  const first = frag[0];
+  const last = frag[frag.length - 1];
+  // Text is never merged into a void: a leading void splits at the caret, a
+  // trailing void leaves the text after the caret as its own block after it.
+  const firstVoid = isVoidBlock(first);
+  const lastVoid = isVoidBlock(last);
+  if (frag.length === 1 && !firstVoid) {
+    const merged = normalizeInlines([...left, ...first.inlines, ...right]);
+    const offset = caret.offset + runsLength(first.inlines);
     return {
       doc: replaceBlock(base.doc, idx, { ...B, inlines: merged }),
       selection: collapsed({ blockId: B.id, offset }),
     };
   }
 
-  const first = frag[0];
-  const last = frag[frag.length - 1];
-  const middle = frag.slice(1, -1).map((b) => ({ ...b, id: nextId() }));
-  const bleft: Block = { ...B, inlines: normalizeInlines([...left, ...first.inlines]) };
-  const bright: Block = {
-    ...last,
-    id: nextId(),
-    inlines: normalizeInlines([...last.inlines, ...right]),
+  const middle = frag
+    .slice(firstVoid ? 0 : 1, lastVoid ? frag.length : -1)
+    .map((b) => ({ ...b, id: nextId() }));
+  const bleft: Block = {
+    ...B,
+    inlines: normalizeInlines(firstVoid ? left : [...left, ...first.inlines]),
   };
+  const bright: Block = lastVoid
+    ? rightHalf(B, normalizeInlines(right))
+    : { ...last, id: nextId(), inlines: normalizeInlines([...last.inlines, ...right]) };
   const blocks = base.doc.blocks.slice();
   blocks.splice(idx, 1, bleft, ...middle, bright);
   return {
     doc: { blocks },
-    selection: collapsed({ blockId: bright.id, offset: runsLength(last.inlines) }),
+    selection: collapsed({ blockId: bright.id, offset: lastVoid ? 0 : runsLength(last.inlines) }),
   };
 }
 

@@ -9,15 +9,26 @@ import type {
   Point,
   Range,
 } from '../RichText/engine/model';
-import { toggleMark, setBlockType, applyMark, removeMark } from '../RichText/engine/transforms';
+import { createBlock } from '../RichText/engine/model';
+import {
+  toggleMark,
+  setBlockType,
+  applyMark,
+  removeMark,
+  deleteRange,
+  insertText,
+} from '../RichText/engine/transforms';
+import { insertVoidBlock, isVoidBlock } from '../RichText/engine/attachment';
 import {
   orderedRange,
   findBlockIndex,
   blockLength,
   isCollapsed,
   marksBeforeCaret,
+  collapsedRange,
 } from '../RichText/engine/position';
 import { hasMark } from '../RichText/engine/marks';
+import { isListItem } from '../RichText/engine/listDepths';
 
 /** The `{ doc, selection }` pair returned by every command runner. */
 export type CommandResult = { doc: RichDoc; selection: Range };
@@ -201,13 +212,113 @@ export function currentBlock(
 }
 
 /**
+ * Marks inline code excludes: applying `code` strips them from the range, and
+ * toggling them is a no-op where the selection is entirely code. Links may wrap
+ * code. Only user actions enforce this — stored documents are never normalised.
+ */
+export const CODE_EXCLUDED_MARKS: readonly MarkType[] = [
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'textColor',
+  'bgColor',
+];
+
+/**
  * Toggle `mark` on/off over `range` using the engine's `toggleMark` transform.
+ * Applying `code` also strips {@link CODE_EXCLUDED_MARKS} from the range.
  *
  * @example
  * const { doc, selection } = runToggleMark(doc, range, { type: 'bold' });
  */
 export function runToggleMark(doc: RichDoc, range: Range, mark: Mark): CommandResult {
-  return toggleMark(doc, range, mark);
+  const r = toggleMark(doc, range, mark);
+  if (
+    mark.type !== 'code' ||
+    isCollapsed(range) ||
+    !activeMarks(r.doc, range, null).includes('code')
+  )
+    return r;
+  let d = r.doc;
+  for (const type of CODE_EXCLUDED_MARKS) d = removeMark(d, range, type).doc;
+  return { doc: d, selection: range };
+}
+
+/**
+ * Set (or clear, with `undefined`) a code block's `language`. Same-ref no-op when
+ * the block isn't a `code_block` or already has that language.
+ *
+ * @example
+ * const next = runSetCodeLanguage(doc, 'code-1', 'python');
+ */
+export function runSetCodeLanguage(
+  doc: RichDoc,
+  blockId: string,
+  language: string | undefined,
+): RichDoc {
+  const b = doc.blocks.find((x) => x.id === blockId);
+  const lang = language || undefined;
+  if (!b || b.type !== 'code_block' || b.language === lang) return doc;
+  // Rebuilt without the key so "plain" stores no `language: undefined`.
+  const { language: _old, ...rest } = b;
+  const next: Block = lang ? { ...rest, language: lang } : rest;
+  return { blocks: doc.blocks.map((x) => (x === b ? next : x)) };
+}
+
+/**
+ * Indent (`'in'`: two spaces before each line) or outdent (`'out'`: up to two
+ * leading spaces per line) every code-block line the selection touches. A
+ * collapsed caret touches its own line. Non-code blocks are skipped; the
+ * selection is shifted with the text. Same-ref doc when nothing changes.
+ *
+ * @example
+ * const { doc, selection } = runCodeIndent(doc, range, 'out');
+ */
+export function runCodeIndent(doc: RichDoc, range: Range, dir: 'in' | 'out'): CommandResult {
+  const { start, end } = orderedRange(doc, range);
+  const { si, ei } = blocksInRange(doc, range);
+  if (si === -1 || ei === -1) return { doc, selection: range };
+  let d = doc;
+  const shift = { anchor: range.anchor.offset, focus: range.focus.offset };
+  for (let i = si; i <= ei; i += 1) {
+    const block = doc.blocks[i];
+    if (block.type !== 'code_block') continue;
+    const text = block.inlines.map((r) => r.text).join('');
+    const from = i === si ? start.offset : 0;
+    let to = i === ei ? end.offset : text.length;
+    // A selection ending at a line start doesn't touch that line.
+    if (to > from && text[to - 1] === '\n') to -= 1;
+    const starts = [0];
+    for (let k = 0; k < text.length; k += 1) if (text[k] === '\n') starts.push(k + 1);
+    const lines = starts.filter((s, k) => s <= to && (starts[k + 1] ?? Infinity) > from);
+    // Last line first, so earlier offsets stay valid while editing.
+    for (const ls of [...lines].reverse()) {
+      const n = dir === 'in' ? 2 : (/^ {0,2}/.exec(text.slice(ls))?.[0].length ?? 0);
+      if (n === 0) continue;
+      const p = { blockId: block.id, offset: ls };
+      d =
+        dir === 'in'
+          ? insertText(d, p, '  ').doc
+          : deleteRange(d, { anchor: p, focus: { blockId: block.id, offset: ls + n } }).doc;
+      for (const k of ['anchor', 'focus'] as const) {
+        if (range[k].blockId !== block.id) continue;
+        const o = range[k].offset;
+        if (dir === 'in') {
+          if (o >= ls) shift[k] += 2;
+        } else if (o >= ls + n) shift[k] -= n;
+        else if (o > ls) shift[k] -= o - ls;
+      }
+    }
+  }
+  if (d === doc) return { doc, selection: range };
+  return {
+    doc: d,
+    selection: {
+      anchor: { ...range.anchor, offset: shift.anchor },
+      focus: { ...range.focus, offset: shift.focus },
+    },
+  };
 }
 
 /**
@@ -243,7 +354,7 @@ export function runSetBlock(
 export function runToggleList(
   doc: RichDoc,
   range: Range,
-  listType: 'bullet_item' | 'ordered_item',
+  listType: 'bullet_item' | 'ordered_item' | 'checklist_item',
 ): CommandResult {
   const { si, ei } = blocksInRange(doc, range);
   if (si === -1 || ei === -1) return { doc, selection: range };
@@ -255,6 +366,19 @@ export function runToggleList(
     }
   }
   return runSetBlock(doc, range, allList ? { type: 'paragraph' } : { type: listType, depth: 0 });
+}
+
+/**
+ * Flip `checked` on a checklist item. Any other (or missing) block returns the
+ * same doc reference (no-op).
+ *
+ * @example
+ * const next = runToggleCheck(doc, 'item-1');
+ */
+export function runToggleCheck(doc: RichDoc, blockId: string): RichDoc {
+  const b = doc.blocks.find((x) => x.id === blockId);
+  if (!b || b.type !== 'checklist_item') return doc;
+  return setBlockType(doc, blockId, { checked: b.checked !== true }).doc;
 }
 
 /**
@@ -272,7 +396,7 @@ export function runIndent(doc: RichDoc, range: Range, dir: 'in' | 'out'): Comman
   let d = doc;
   for (let i = si; i <= ei; i += 1) {
     const b = d.blocks[i];
-    if (b.type !== 'bullet_item' && b.type !== 'ordered_item') continue;
+    if (!isListItem(b)) continue;
     const depth = Math.max(0, (b.depth ?? 0) + (dir === 'in' ? 1 : -1));
     d = setBlockType(d, b.id, { depth }).doc;
   }
@@ -297,4 +421,35 @@ export function applyExactMarks(doc: RichDoc, range: Range, marks: Mark[]): Rich
     d = mark ? applyMark(d, range, mark).doc : removeMark(d, range, type).doc;
   }
   return d;
+}
+
+/**
+ * Insert a divider at the selection (a non-collapsed range is deleted first) and
+ * put the caret in the block after it. At a text block's start — incl. an empty
+ * paragraph, which it thereby replaces — the divider goes BEFORE the block, so no
+ * empty block is left above it; at a block's end the trailing block is a fresh
+ * paragraph; otherwise the block splits around it (the `insertAttachmentBlock`
+ * shape). Same-ref no-op if the caret's block isn't found.
+ */
+export function runInsertDivider(doc: RichDoc, range: Range): CommandResult {
+  const cleared = isCollapsed(range) ? { doc, selection: range } : deleteRange(doc, range);
+  const point = cleared.selection.anchor;
+  const d = cleared.doc;
+  const idx = findBlockIndex(d, point.blockId);
+  if (idx === -1) return { doc, selection: range };
+  const block = d.blocks[idx];
+  const divider = createBlock('divider');
+  const at = (i: number, ...ins: Block[]) => [
+    ...d.blocks.slice(0, i),
+    ...ins,
+    ...d.blocks.slice(i),
+  ];
+  if (!isVoidBlock(block) && point.offset === 0) {
+    return { doc: { blocks: at(idx, divider) }, selection: collapsedRange(block.id) };
+  }
+  if (!isVoidBlock(block) && point.offset >= blockLength(block)) {
+    const next = createBlock('paragraph');
+    return { doc: { blocks: at(idx + 1, divider, next) }, selection: collapsedRange(next.id) };
+  }
+  return insertVoidBlock(d, point, divider) ?? { doc, selection: range };
 }

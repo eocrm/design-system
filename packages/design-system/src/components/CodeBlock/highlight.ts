@@ -1,16 +1,8 @@
 import { Prism, normalizeTokens } from 'prism-react-renderer';
 
-export type CodeBlockLanguage =
-  | 'json'
-  | 'bash'
-  | 'javascript'
-  | 'typescript'
-  | 'python'
-  | 'go'
-  | 'kotlin'
-  | 'java'
-  | 'csharp'
-  | 'rust';
+import { CODE_LANGUAGE_LABELS, type CodeBlockLanguage } from './languages';
+
+export type { CodeBlockLanguage };
 
 export type SyntaxKey =
   | 'keyword'
@@ -27,18 +19,10 @@ export interface CodeToken {
   key: SyntaxKey;
 }
 
-export const LANGUAGE_LABELS: Record<CodeBlockLanguage, string> = {
-  json: 'JSON',
-  bash: 'Bash',
-  javascript: 'JavaScript',
-  typescript: 'TypeScript',
-  python: 'Python',
-  go: 'Go',
-  kotlin: 'Kotlin',
-  java: 'Java',
-  csharp: 'C#',
-  rust: 'Rust',
-};
+export const LANGUAGE_LABELS: Record<CodeBlockLanguage, string> = CODE_LANGUAGE_LABELS;
+
+// Every `CodeBlockLanguage`: Prism bundles all but bash/java/csharp/php (registered below); `html` is Prism's markup alias.
+const HIGHLIGHTABLE = new Set<string>(Object.keys(CODE_LANGUAGE_LABELS));
 
 // prism-react-renderer ships no bash grammar; register a small one once.
 // Prism is a shared singleton: any consumer of the same prism-react-renderer instance sees it.
@@ -107,6 +91,23 @@ if (!Prism.languages.csharp) {
   });
 }
 
+// Nor PHP: clike plus `$variables`, `#` comments and the `<?php` / `?>` delimiters.
+if (!Prism.languages.php) {
+  Prism.languages.php = Prism.languages.extend('clike', {
+    keyword:
+      /\b(?:abstract|and|array|as|break|callable|case|catch|class|clone|const|continue|declare|default|do|echo|else|elseif|empty|enum|extends|final|finally|fn|for|foreach|function|global|goto|if|implements|include|include_once|instanceof|insteadof|interface|isset|list|match|namespace|new|null|or|print|private|protected|public|readonly|require|require_once|return|static|switch|throw|trait|try|unset|use|var|while|xor|yield)\b/i,
+    comment: [
+      { pattern: /(^|[^\\])\/\*[\s\S]*?\*\//, lookbehind: true, greedy: true },
+      { pattern: /(^|[^\\:])(?:\/\/|#(?!\[)).*/, lookbehind: true, greedy: true },
+    ],
+    string: { pattern: /"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'/, greedy: true },
+  });
+  Prism.languages.insertBefore('php', 'keyword', {
+    delimiter: { pattern: /<\?(?:php|=)?|\?>/i, alias: 'important' },
+    variable: /\$+\w+/,
+  });
+}
+
 const ALIASES: Record<string, string> = {
   shell: 'bash',
   sh: 'bash',
@@ -145,7 +146,7 @@ export function tokenizeLines(code: string, language?: string): CodeToken[][] {
   const src = code.replace(/\r\n?/g, '\n').replace(/\n$/, '');
   const name = language && (Object.hasOwn(ALIASES, language) ? ALIASES[language] : language);
   // Allow-list: Prism bundles ~40 grammars (and helpers like `extend`) we don't style.
-  const grammar = name && Object.hasOwn(LANGUAGE_LABELS, name) && Prism.languages[name];
+  const grammar = name && HIGHLIGHTABLE.has(name) && Prism.languages[name];
   if (!grammar) return src.split('\n').map((l) => [{ content: l, key: 'plain' as const }]);
 
   return normalizeTokens(Prism.tokenize(src, grammar)).map((line) => {

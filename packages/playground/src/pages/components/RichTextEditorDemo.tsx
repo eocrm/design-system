@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import {
   RichTextEditor,
+  createBlock,
   docFromText,
   fromHtml,
   fromMarkdown,
@@ -17,6 +18,7 @@ import {
   type RichTextEditKind,
   type RichTextSyncStatus,
   type RichTextEditorProps,
+  type RichTextSlashMenuOption,
   type RenderLink,
   type RenderMention,
 } from '@eocrm/design-system';
@@ -70,6 +72,84 @@ type DemoEditorProps = Omit<RichTextEditorProps, 'value' | 'onChange'> & {
 function DemoEditor({ init, ...props }: DemoEditorProps) {
   const [doc, setDoc] = useState<RichDoc>(init);
   return <RichTextEditor value={doc} onChange={setDoc} {...props} />;
+}
+
+const WIKI_MD = `# Deploying the billing service
+
+The billing service ships from \`main\` through the **Release** workflow. Read this before your first on-call week.
+
+## Pre-flight
+
+- [x] Rotate the Stripe webhook secret
+- [x] Confirm \`BILLING_DB_URL\` points at the replica
+- [ ] Announce the window in #ops
+
+---
+
+## Retry policy
+
+\`\`\`ts
+export async function chargeWithRetry(invoice: Invoice, attempts = 3) {
+  for (let i = 1; i <= attempts; i++) {
+    const res = await stripe.charge(invoice);
+    if (res.ok) return res;
+    await sleep(2 ** i * 1000);
+  }
+  throw new BillingError('charge_failed', invoice.id);
+}
+\`\`\`
+
+## Find stuck invoices
+
+\`\`\`sql
+SELECT id, customer_id, amount_cents
+FROM invoices
+WHERE status = 'pending'
+  AND created_at < now() - interval '2 hours';
+\`\`\`
+
+1. Pause the retry worker
+2. Re-run the query above
+3. Escalate anything older than a day to finance
+`;
+
+// A consumer item for the slash menu: drops a link to a CRM record below the caret.
+const slashMenu: RichTextSlashMenuOption = {
+  items: (defaults) => [
+    ...defaults,
+    {
+      id: 'crm-record',
+      group: 'advanced',
+      label: 'Link to a CRM record',
+      hint: 'Deal #4821 · Northwind renewal',
+      keywords: ['deal', 'record', 'crm'],
+      run: (api) =>
+        api.insertBlocks([
+          {
+            ...createBlock('paragraph'),
+            inlines: [
+              { text: 'Related deal: ', marks: [] },
+              {
+                text: 'Northwind renewal (#4821)',
+                marks: [{ type: 'link', href: 'https://app.eocrm/deal/4821' }],
+              },
+            ],
+          },
+        ]),
+    },
+  ],
+};
+
+function WikiPageExample() {
+  const [doc, setDoc] = useState<RichDoc>(() => fromMarkdown(WIKI_MD));
+  return (
+    <Stack gap="sm">
+      <RichTextEditor value={doc} onChange={setDoc} toolbar blockControls slashMenu={slashMenu} />
+      <Text size="sm" tone="muted">
+        Markdown → <Code>{toMarkdown(doc).replace(/\n/g, '⏎')}</Code>
+      </Text>
+    </Stack>
+  );
 }
 
 function ToolbarExample() {
@@ -255,6 +335,65 @@ export function Demo() {
 }`}
       >
         <ToolbarExample />
+      </Example>
+
+      <Example
+        title="Wiki page (slash menu, checklist, divider, code)"
+        description='slashMenu turns on the "/" insert menu: type "/" at the start of a line (or after a space) and filter by name — Arrow keys move, Enter picks, Escape closes and keeps the typed text. The last entry is a consumer item that inserts a CRM record link via api.insertBlocks. Markdown shortcuts: "[ ] " or "[x] " start a checklist, "---" + Enter (or space) inserts a divider, a closing backtick after `text turns it into inline code (or ⌘/Ctrl+E). In a code block pick the language from the strip at the top; Tab / Shift+Tab indent, Escape then Tab leaves the editor. The ts fence in the seed is stored as "typescript".'
+        code={`import { useState } from 'react';
+import {
+  RichTextEditor,
+  createBlock,
+  fromMarkdown,
+  toMarkdown,
+  Code,
+  Text,
+  Stack,
+  type RichDoc,
+  type RichTextSlashMenuOption,
+} from '@eocrm/design-system';
+
+const slashMenu: RichTextSlashMenuOption = {
+  items: (defaults) => [
+    ...defaults,
+    {
+      id: 'crm-record',
+      group: 'advanced',
+      label: 'Link to a CRM record',
+      hint: 'Deal #4821 · Northwind renewal',
+      keywords: ['deal', 'record', 'crm'],
+      // Synchronous: picking the item + removing "/query" is one undo step.
+      run: (api) =>
+        api.insertBlocks([
+          {
+            ...createBlock('paragraph'),
+            inlines: [
+              { text: 'Related deal: ', marks: [] },
+              {
+                text: 'Northwind renewal (#4821)',
+                marks: [{ type: 'link', href: 'https://app.eocrm/deal/4821' }],
+              },
+            ],
+          },
+        ]),
+    },
+  ],
+};
+
+export function Demo() {
+  // WIKI_MD: headings, a checklist, a divider, ts + sql fences, inline code, a numbered list.
+  const [doc, setDoc] = useState<RichDoc>(() => fromMarkdown(WIKI_MD));
+  return (
+    <Stack gap="sm">
+      <RichTextEditor value={doc} onChange={setDoc} toolbar blockControls slashMenu={slashMenu} />
+      <Text size="sm" tone="muted">
+        Markdown → <Code>{toMarkdown(doc).replace(/\\n/g, '⏎')}</Code>
+      </Text>
+    </Stack>
+  );
+}`}
+      >
+        <WikiPageExample />
       </Example>
 
       <Example

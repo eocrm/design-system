@@ -2,7 +2,9 @@
 
 /**
  * All supported block-level content types. `heading` requires a `level`; list
- * types (`bullet_item`, `ordered_item`) accept a `depth` for nesting.
+ * types (`bullet_item`, `ordered_item`, `checklist_item`) accept a `depth` for
+ * nesting, and `checklist_item` also carries `checked`. `code_block` may carry a
+ * `language`. `attachment` and `divider` are void blocks (no editable text).
  */
 export type BlockType =
   | 'paragraph'
@@ -11,7 +13,9 @@ export type BlockType =
   | 'ordered_item'
   | 'blockquote'
   | 'code_block'
-  | 'attachment';
+  | 'attachment'
+  | 'divider'
+  | 'checklist_item';
 
 /**
  * All supported inline mark types. `link` carries `href`; `mention` carries `id` + `label`;
@@ -60,6 +64,10 @@ export interface Block {
   level?: 1 | 2 | 3;
   /** List nesting depth (0-based), only for list items. */
   depth?: number;
+  /** Checklist state, only for `type: 'checklist_item'`. */
+  checked?: boolean;
+  /** Canonical code language, only for `type: 'code_block'`. Absent = plain. */
+  language?: string;
   /** Inline content. An empty block holds a single empty run. */
   inlines: Inline[];
   /** Attachment block only (type === 'attachment'). The uploaded URL — absent while uploading. */
@@ -132,18 +140,38 @@ export interface CreateBlockAttrs {
   level?: 1 | 2 | 3;
   depth?: number;
   marks?: Mark[];
+  checked?: boolean;
+  language?: string;
   /** Pin the id (tests / deterministic construction). */
   id?: string;
 }
 
 /** Build a block. Empty `text` → a single empty run. */
 export function createBlock(type: BlockType, text = '', attrs: CreateBlockAttrs = {}): Block {
-  const { level, depth, marks = [], id } = attrs;
+  const { level, depth, marks = [], id, checked, language } = attrs;
   const inlines: Inline[] = text === '' ? [{ text: '', marks: [] }] : [{ text, marks }];
   const block: Block = { id: id ?? nextId(), type, inlines };
   if (level !== undefined) block.level = level;
   if (depth !== undefined) block.depth = depth;
+  if (checked !== undefined) block.checked = checked;
+  if (language !== undefined) block.language = language;
   return block;
+}
+
+/**
+ * INTERNAL. The right half of a split `block`: same type and attrs (level, depth,
+ * language), a fresh id, unchecked; holds `inlines`.
+ */
+export function rightHalf(block: Block, inlines: Inline[]): Block {
+  return {
+    ...createBlock(block.type, '', {
+      level: block.level,
+      depth: block.depth,
+      language: block.language,
+      ...(block.type === 'checklist_item' ? { checked: false } : {}),
+    }),
+    inlines,
+  };
 }
 
 /** A document with one empty paragraph. */

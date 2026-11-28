@@ -37,7 +37,7 @@ function usePersistedSample(storageKey: string) {
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `code` | `string` | no | Single-sample mode: the source. Ignored when `samples` is set. |
-| `language` | `(string & {}) \| CodeBlockLanguage` | no | Single-sample mode: grammar for highlighting — `'json'`, `'bash'`, `'javascript'`, `'typescript'`, `'python'`, `'go'`, `'kotlin'`, `'java'`, `'csharp'` or `'rust'` (aliases `sh`, `shell`, `js`, `ts`, `py`, `golang`, `kt`, `kts`, `cs`, `c#`, `rs`). Anything else renders as plain text. |
+| `language` | `(string & {}) \| CodeBlockLanguage` | no | Single-sample mode: grammar for highlighting — `'json'`, `'bash'`, `'javascript'`, `'typescript'`, `'python'`, `'go'`, `'kotlin'`, `'java'`, `'csharp'`, `'rust'`, `'php'`, `'sql'`, `'yaml'`, `'html'`, `'css'` or `'markdown'` (aliases `sh`, `shell`, `js`, `ts`, `py`, `golang`, `kt`, `kts`, `cs`, `c#`, `rs`). Anything else renders as plain text. |
 | `title` | `string` | no | Header label in single-sample mode. Defaults to a one-item `samples` entry's `label`, else the language name (`JSON`, `Bash`…), else "Plain text". Also names the body (single-sample) or the sample tabs (multi-sample). |
 | `samples` | `readonly CodeBlockSample[]` | no | Multi-sample mode: 2+ samples render as tabs. Wins over `code`/`language`. |
 | `activeSampleId` | `string` | no | Controlled active sample id. Wins over `syncKey` and the user's own pick. |

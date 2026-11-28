@@ -56,6 +56,31 @@ describe('matchBlockRule', () => {
     expect(matchBlockRule('paragraph', 'text', ' ')).toBeNull();
     expect(matchBlockRule('paragraph', '####', ' ')).toBeNull();
   });
+
+  it('matches --- as a divider on space or Enter (Enter is --- only)', () => {
+    const divider = { change: { type: 'divider' }, markerLen: 3 };
+    expect(matchBlockRule('paragraph', '---', ' ')).toEqual(divider);
+    expect(matchBlockRule('paragraph', '---', 'Enter')).toEqual(divider);
+    expect(matchBlockRule('paragraph', '--', ' ')).toBeNull();
+    expect(matchBlockRule('heading', '---', ' ')).toBeNull();
+    expect(matchBlockRule('paragraph', '#', 'Enter')).toBeNull();
+  });
+
+  it('matches checklist markers [] / [ ] (unchecked) and [x] / [X] (checked)', () => {
+    for (const m of ['[]', '[ ]']) {
+      expect(matchBlockRule('paragraph', m, ' ')).toEqual({
+        change: { type: 'checklist_item', depth: 0 },
+        markerLen: m.length,
+      });
+    }
+    for (const m of ['[x]', '[X]']) {
+      expect(matchBlockRule('paragraph', m, ' ')).toEqual({
+        change: { type: 'checklist_item', depth: 0, checked: true },
+        markerLen: 3,
+      });
+    }
+    expect(matchBlockRule('paragraph', '[y]', ' ')).toBeNull();
+  });
 });
 
 describe('applyBlockRule', () => {
@@ -85,5 +110,23 @@ describe('applyBlockRule', () => {
     const r = applyBlockRule(doc, 'a', { change: { type: 'bullet_item', depth: 0 }, markerLen: 1 });
     expect(r.doc.blocks[0].type).toBe('bullet_item');
     expect(r.doc.blocks[0].depth).toBe(0);
+  });
+
+  it('a divider rule replaces the marker paragraph: [divider, empty p], caret in the p', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', '---', { id: 'a' })] };
+    const r = applyBlockRule(doc, 'a', { change: { type: 'divider' }, markerLen: 3 });
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['divider', 'paragraph']);
+    expect(r.doc.blocks[1].id).toBe('a');
+    expect(r.doc.blocks[1].inlines.map((i) => i.text).join('')).toBe('');
+    expect(r.selection).toEqual(collapsed('a', 0));
+  });
+
+  it('a checked checklist rule sets checked: true', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', '[x]', { id: 'a' })] };
+    const r = applyBlockRule(doc, 'a', {
+      change: { type: 'checklist_item', depth: 0, checked: true },
+      markerLen: 3,
+    });
+    expect(r.doc.blocks[0]).toMatchObject({ type: 'checklist_item', depth: 0, checked: true });
   });
 });

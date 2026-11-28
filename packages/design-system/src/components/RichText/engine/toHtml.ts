@@ -67,6 +67,7 @@ const inlines = (block: Block): string => block.inlines.map(inlineRun).join('');
 /** Serialize a contiguous run of list items starting at `start` (its base depth). */
 function listHtml(blocks: Block[], start: number, eff: number[]): [string, number] {
   const base = eff[start];
+  const checklist = blocks[start].type === 'checklist_item';
   const tag = blocks[start].type === 'ordered_item' ? 'ol' : 'ul';
   const items: string[] = [];
   let i = start;
@@ -81,10 +82,17 @@ function listHtml(blocks: Block[], start: number, eff: number[]): [string, numbe
       i = next;
       continue;
     }
-    items.push(`<li>${inlines(blocks[i])}</li>`);
+    // A bullet/ordered ↔ checklist switch at the same depth closes this list.
+    if ((blocks[i].type === 'checklist_item') !== checklist) break;
+    items.push(
+      checklist
+        ? `<li data-checked="${blocks[i].checked === true}"><input type="checkbox"${blocks[i].checked === true ? ' checked' : ''} disabled>${inlines(blocks[i])}</li>`
+        : `<li>${inlines(blocks[i])}</li>`,
+    );
     i += 1;
   }
-  return [`<${tag}>${items.join('')}</${tag}>`, i];
+  const open = checklist ? '<ul data-type="checklist">' : `<${tag}>`;
+  return [`${open}${items.join('')}</${tag}>`, i];
 }
 
 function blockHtml(block: Block): string {
@@ -98,7 +106,9 @@ function blockHtml(block: Block): string {
     case 'blockquote':
       return `<blockquote>${inlines(block)}</blockquote>`;
     case 'code_block':
-      return `<pre><code>${escapeHtml(runsText(block.inlines))}</code></pre>`;
+      return `<pre><code${block.language ? ` class="language-${escapeAttr(block.language)}"` : ''}>${escapeHtml(runsText(block.inlines))}</code></pre>`;
+    case 'divider':
+      return '<hr>';
     case 'attachment': {
       // Only finalized (ready/absent-status) attachments serialize; in-flight or
       // failed uploads emit nothing.

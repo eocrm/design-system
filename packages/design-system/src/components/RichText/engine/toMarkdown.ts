@@ -40,7 +40,12 @@ function inlineRun(run: Inline): string {
 }
 
 function blockMd(block: Block, depth: number): string {
-  if (block.type === 'code_block') return '```\n' + runsText(block.inlines) + '\n```';
+  if (block.type === 'divider') return '---';
+  if (block.type === 'code_block') {
+    // Info string clamped to [\w+#.-]: a stored backtick/newline can't break the fence.
+    const info = (block.language ?? '').replace(/[^\w+#.-]/g, '');
+    return '```' + info + '\n' + runsText(block.inlines) + '\n```';
+  }
   if (block.type === 'attachment') {
     // Only finalized attachments serialize; in-flight/failed uploads emit nothing.
     if (block.status && block.status !== 'ready') return '';
@@ -62,6 +67,8 @@ function blockMd(block: Block, depth: number): string {
       return `${'  '.repeat(depth)}- ${inline}`;
     case 'ordered_item':
       return `${'  '.repeat(depth)}1. ${inline}`;
+    case 'checklist_item':
+      return `${'  '.repeat(depth)}- [${block.checked ? 'x' : ' '}] ${inline}`;
     case 'paragraph':
     default:
       return inline;
@@ -85,11 +92,15 @@ export function toMarkdown(doc: RichDoc): string {
   for (let i = 0; i < doc.blocks.length; i += 1) {
     const b = doc.blocks[i];
     if (i > 0) {
-      // Consecutive SAME-TYPE list items stay in one list (single newline). A
-      // bullet→ordered transition needs a blank line, or the Markdown parser would
-      // read both as one list and coerce the second to the first's type.
+      // Consecutive list items stay in one list (single newline) — a blank line
+      // ends the whole list, flattening any deeper item that follows. Only a
+      // bullet↔ordered switch INTO a top-level item gets a blank line (cosmetic: a marker-kind
+      // change starts a new list anyway; checklist items are `-` bullets).
       const prev = doc.blocks[i - 1];
-      out += isListItem(prev) && isListItem(b) && prev.type === b.type ? '\n' : '\n\n';
+      const ordered = (x: Block) => x.type === 'ordered_item';
+      const sameList =
+        isListItem(prev) && isListItem(b) && !(eff[i] === 0 && ordered(prev) !== ordered(b));
+      out += sameList ? '\n' : '\n\n';
     }
     out += blockMd(b, isListItem(b) ? eff[i] : 0);
   }

@@ -53,9 +53,9 @@ describe('fromHtml — blocks', () => {
     ]);
   });
 
-  it('drops script/style/table/hr', () => {
+  it('drops script/style/table', () => {
     const d = fromHtml(
-      '<p>a</p><script>bad()</script><style>x{}</style><table><tr><td>t</td></tr></table><hr><p>b</p>',
+      '<p>a</p><script>bad()</script><style>x{}</style><table><tr><td>t</td></tr></table><p>b</p>',
     );
     expect(d.blocks.map(text)).toEqual(['a', 'b']);
   });
@@ -299,5 +299,40 @@ describe('fromHtml — attachments', () => {
       '<figure style="text-align:justify"><img src="http://u/p.png" alt="C"></figure>',
     );
     expect(doc.blocks.find((b) => b.type === 'attachment')!.align).toBeUndefined();
+  });
+});
+
+describe('fromHtml — checklist shapes', () => {
+  const items = (html: string) =>
+    fromHtml(html).blocks.map((b) => [b.type, b.checked, b.inlines.map((r) => r.text).join('')]);
+
+  it('reads a checkbox that opens the first <p> of a loose GitHub task item', () => {
+    expect(items('<ul><li><p><input type="checkbox" checked> Done</p></li></ul>')).toEqual([
+      ['checklist_item', true, 'Done'],
+    ]);
+  });
+
+  it('reads TipTap task lists (data-type="taskItem" + data-checked)', () => {
+    const html =
+      '<ul data-type="taskList">' +
+      '<li data-type="taskItem" data-checked="true"><label><input type="checkbox" checked></label><div><p>A</p></div></li>' +
+      '<li data-type="taskItem" data-checked="false"><label><input type="checkbox"></label><div><p>B</p></div></li>' +
+      '</ul>';
+    expect(items(html)).toEqual([
+      ['checklist_item', true, 'A'],
+      ['checklist_item', false, 'B'],
+    ]);
+  });
+
+  it('reads data-checked on <li> without a checkbox (our own toHtml attribute)', () => {
+    expect(items('<ul data-type="checklist"><li data-checked="true">X</li></ul>')).toEqual([
+      ['checklist_item', true, 'X'],
+    ]);
+  });
+
+  it('treats every item of a <ul data-type="taskList"> as a checklist item', () => {
+    expect(items('<ul data-type="taskList"><li>Y</li></ul>')).toEqual([
+      ['checklist_item', false, 'Y'],
+    ]);
   });
 });

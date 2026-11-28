@@ -263,3 +263,20 @@ describe('toHtml — attachments', () => {
     expect(toHtml(doc)).toBe('<figure><img src="http://u/p.png" alt="C"></figure>');
   });
 });
+
+describe('toHtml — wave-2 blocks', () => {
+  it('serializes divider, checklist runs and code language', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('divider', '', { id: 'a' }),
+        createBlock('checklist_item', 'Buy milk', { id: 'b', checked: true, depth: 0 }),
+        createBlock('checklist_item', 'Call', { id: 'c', checked: false, depth: 0 }),
+        createBlock('bullet_item', 'x', { id: 'd', depth: 0 }),
+        createBlock('code_block', 'x', { id: 'e', language: 'typescript' }),
+      ],
+    };
+    expect(toHtml(doc)).toBe(
+      '<hr><ul data-type="checklist"><li data-checked="true"><input type="checkbox" checked disabled>Buy milk</li><li data-checked="false"><input type="checkbox" disabled>Call</li></ul><ul><li>x</li></ul><pre><code class="language-typescript">x</code></pre>',
+    );
+  });
+});

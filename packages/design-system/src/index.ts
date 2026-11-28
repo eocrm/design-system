@@ -534,6 +534,12 @@ export type {
   RichTextUploadOwner,
 } from './components/RichTextEditor';
 export type { MentionItem, MentionsConfig } from './components/RichTextEditor';
+export type {
+  SlashGroup,
+  SlashItem,
+  SlashApi,
+  RichTextSlashMenuOption,
+} from './components/RichTextEditor';
 export { UploadError } from './components/RichTextEditor';
 export type { UploadConfig, UploadResult } from './components/RichTextEditor';
 

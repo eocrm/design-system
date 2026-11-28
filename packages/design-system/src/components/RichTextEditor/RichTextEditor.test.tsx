@@ -1,4 +1,5 @@
 import { Field } from '../Field';
+import { Modal } from '../Modal';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { startTransition, useState } from 'react';
@@ -56,6 +57,19 @@ describe('RichTextEditor', () => {
   it('readOnly drops contentEditable', () => {
     renderEditor(<RichTextEditor value={docFromText('x')} onChange={() => {}} readOnly />);
     expect(screen.getByRole('textbox')).toHaveAttribute('contenteditable', 'false');
+  });
+
+  it('forwards consumer onFocus / onBlur on the editable', () => {
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    renderEditor(
+      <RichTextEditor value={emptyDoc()} onChange={() => {}} onFocus={onFocus} onBlur={onBlur} />,
+    );
+    const box = screen.getByRole('textbox');
+    fireEvent.focus(box);
+    fireEvent.blur(box);
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(onBlur).toHaveBeenCalledTimes(1);
   });
 
   it('forwards ref and merges className', () => {
@@ -2746,5 +2760,923 @@ describe('RichTextEditor in Field (#568)', () => {
     expect(box).toHaveAttribute('aria-invalid', 'true');
     expect(box).toHaveAttribute('aria-required', 'true');
     expect(container.querySelectorAll('[invalid], div[required]')).toHaveLength(0);
+  });
+});
+
+describe('RichTextEditor divider', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+  const caret = (blockId: string, offset: number) => ({
+    anchor: { blockId, offset },
+    focus: { blockId, offset },
+  });
+  function beforeInput(editor: HTMLElement, inputType: string, data: string | null = null) {
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: inputType });
+    Object.defineProperty(evt, 'data', { value: data });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    return evt;
+  }
+  function renderDoc(initial: RichDoc, props: Record<string, unknown> = {}) {
+    const docs: RichDoc[] = [];
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(initial);
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={(d) => {
+            docs.push(d);
+            setDoc(d);
+          }}
+          {...props}
+        />
+      );
+    }
+    renderEditor(<Harness />);
+    return { editor: screen.getByRole('textbox', { name: 'Rich text editor' }), docs };
+  }
+  const types = (d: RichDoc) => d.blocks.map((b) => b.type);
+  const para = (id: string, text: string) => ({
+    id,
+    type: 'paragraph' as const,
+    inlines: [{ text, marks: [] }],
+  });
+
+  it('"---" + Enter inserts a divider, caret in the following paragraph; Backspace removes it; undo restores', () => {
+    mockReadSelection.mockReturnValue(caret('k', 3));
+    const { editor, docs } = renderDoc({ blocks: [para('k', '---')] });
+    const evt = beforeInput(editor, 'insertParagraph');
+    expect(evt.defaultPrevented).toBe(true);
+    expect(types(docs.at(-1)!)).toEqual(['divider', 'paragraph']);
+    expect(editor.querySelector('figure hr')).not.toBeNull();
+    // One undo right after the rule restores the typed "---" paragraph.
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(docs.at(-1)!.blocks).toMatchObject([{ type: 'paragraph', inlines: [{ text: '---' }] }]);
+    fireEvent.keyDown(editor, { key: 'y', code: 'KeyY', ctrlKey: true });
+    expect(types(docs.at(-1)!)).toEqual(['divider', 'paragraph']);
+    const after = docs.at(-1)!.blocks[1];
+    // Backspace at the start of the following paragraph deletes the divider.
+    mockReadSelection.mockReturnValue(caret(after.id, 0));
+    beforeInput(editor, 'deleteContentBackward');
+    expect(types(docs.at(-1)!)).toEqual(['paragraph']);
+    expect(editor.querySelector('hr')).toBeNull();
+    // Undo restores it.
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(types(docs.at(-1)!)).toEqual(['divider', 'paragraph']);
+  });
+
+  it('"---" + space also inserts a divider', () => {
+    mockReadSelection.mockReturnValue(caret('k', 3));
+    const { editor, docs } = renderDoc({ blocks: [para('k', '---')] });
+    beforeInput(editor, 'insertText', ' ');
+    expect(types(docs.at(-1)!)).toEqual(['divider', 'paragraph']);
+  });
+
+  it('Enter after "---" with text following the caret splits normally (no divider)', () => {
+    mockReadSelection.mockReturnValue(caret('k', 3));
+    const { editor, docs } = renderDoc({ blocks: [para('k', '---x')] });
+    beforeInput(editor, 'insertParagraph');
+    expect(types(docs.at(-1)!)).toEqual(['paragraph', 'paragraph']);
+  });
+
+  it('the toolbar block dropdown inserts a divider at the caret', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(caret('k', 2));
+    const { docs } = renderDoc({ blocks: [para('k', 'abcd')] }, { toolbar: true });
+    await user.click(screen.getByRole('button', { name: 'Text style' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Divider' }));
+    expect(types(docs.at(-1)!)).toEqual(['paragraph', 'divider', 'paragraph']);
+  });
+
+  it('the block menu inserts a divider below the block', async () => {
+    const user = userEvent.setup();
+    const { editor, docs } = renderDoc(
+      { blocks: [para('a', 'one'), para('b', 'two')] },
+      { blockControls: true },
+    );
+    await user.hover(editor.querySelector('[data-block-id="a"]') as HTMLElement);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Insert divider below' }));
+    // [one, divider, empty p (the caret's home), two]
+    expect(types(docs.at(-1)!)).toEqual(['paragraph', 'divider', 'paragraph', 'paragraph']);
+    expect(docs.at(-1)!.blocks[3].id).toBe('b');
+  });
+
+  it('a divider never shows attachment UI (resize handle, Configure) or Turn into', async () => {
+    const user = userEvent.setup();
+    const { editor } = renderDoc(
+      {
+        blocks: [{ id: 'd', type: 'divider', inlines: [{ text: '', marks: [] }] }, para('p', 'x')],
+      },
+      {
+        blockControls: true,
+        upload: { onUpload: vi.fn().mockResolvedValue({ url: 'http://u/p.png' }) },
+      },
+    );
+    const fig = editor.querySelector('figure[data-block-id="d"]') as HTMLElement;
+    expect(fig).not.toBeNull();
+    await user.hover(fig);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await screen.findByRole('menuitem', { name: 'Insert divider below' });
+    expect(screen.queryByRole('menuitem', { name: 'Configure' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: /turn into/i })).toBeNull();
+    expect(document.querySelector('[data-rte-resize-handle]')).toBeNull();
+  });
+});
+
+describe('RichTextEditor checklist', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+  const caret = (blockId: string, offset: number) => ({
+    anchor: { blockId, offset },
+    focus: { blockId, offset },
+  });
+  function beforeInput(editor: HTMLElement, inputType: string, data: string | null = null) {
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: inputType });
+    Object.defineProperty(evt, 'data', { value: data });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    return evt;
+  }
+  function renderDoc(initial: RichDoc, props: Record<string, unknown> = {}) {
+    const docs: RichDoc[] = [];
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(initial);
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={(d) => {
+            docs.push(d);
+            setDoc(d);
+          }}
+          {...props}
+        />
+      );
+    }
+    renderEditor(<Harness />);
+    return { editor: screen.getByRole('textbox', { name: 'Rich text editor' }), docs };
+  }
+  const item = (id: string, text: string, extra: Partial<RichDoc['blocks'][number]> = {}) => ({
+    id,
+    type: 'checklist_item' as const,
+    depth: 0,
+    inlines: [{ text, marks: [] }],
+    ...extra,
+  });
+
+  it('"[x]" + space turns a paragraph into a checked checklist item', () => {
+    mockReadSelection.mockReturnValue(caret('k', 3));
+    const { editor, docs } = renderDoc({
+      blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: '[x]', marks: [] }] }],
+    });
+    beforeInput(editor, 'insertText', ' ');
+    expect(docs.at(-1)!.blocks[0]).toMatchObject({ type: 'checklist_item', checked: true });
+  });
+
+  it('the toolbar Checklist button toggles a paragraph to a checklist item and back', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(caret('k', 1));
+    const { docs } = renderDoc(
+      { blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'ab', marks: [] }] }] },
+      { toolbar: true },
+    );
+    await user.click(screen.getByRole('button', { name: 'Checklist' }));
+    expect(docs.at(-1)!.blocks[0]).toMatchObject({ type: 'checklist_item', depth: 0 });
+    expect(screen.getByRole('button', { name: 'Checklist' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await user.click(screen.getByRole('button', { name: 'Checklist' }));
+    expect(docs.at(-1)!.blocks[0].type).toBe('paragraph');
+  });
+
+  it('Turn into → Checklist sets a checklist item at depth 0', async () => {
+    const user = userEvent.setup();
+    const { editor, docs } = renderDoc(
+      { blocks: [{ id: 'a', type: 'paragraph', inlines: [{ text: 'one', marks: [] }] }] },
+      { blockControls: true },
+    );
+    await user.hover(editor.querySelector('[data-block-id="a"]') as HTMLElement);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Turn into' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Checklist' }));
+    expect(docs.at(-1)!.blocks[0]).toMatchObject({ type: 'checklist_item', depth: 0 });
+  });
+
+  it('Enter at the end of a checked item creates an unchecked one', () => {
+    mockReadSelection.mockReturnValue(caret('a', 3));
+    const { editor, docs } = renderDoc({ blocks: [item('a', 'one', { checked: true })] });
+    beforeInput(editor, 'insertParagraph');
+    const [first, second] = docs.at(-1)!.blocks;
+    expect(first).toMatchObject({ type: 'checklist_item', checked: true });
+    expect(second).toMatchObject({ type: 'checklist_item', checked: false });
+  });
+
+  it('Enter on an empty checklist item exits to a paragraph', () => {
+    mockReadSelection.mockReturnValue(caret('a', 0));
+    const { editor, docs } = renderDoc({ blocks: [item('a', '')] });
+    fireEvent.keyDown(editor, { key: 'Enter' });
+    expect(docs.at(-1)!.blocks[0].type).toBe('paragraph');
+  });
+
+  it('Tab / Shift+Tab change a checklist item depth', () => {
+    mockReadSelection.mockReturnValue(caret('b', 0));
+    const { editor, docs } = renderDoc({ blocks: [item('a', 'one'), item('b', 'two')] });
+    fireEvent.keyDown(editor, { key: 'Tab' });
+    expect(docs.at(-1)!.blocks[1].depth).toBe(1);
+    fireEvent.keyDown(editor, { key: 'Tab', shiftKey: true });
+    expect(docs.at(-1)!.blocks[1].depth).toBe(0);
+  });
+
+  it('clicking the checkbox flips checked once, keeps focus; Ctrl+Z restores, caret stays in the block', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(caret('b', 1));
+    const onChange = vi.fn();
+    const initial: RichDoc = { blocks: [item('a', 'one'), item('b', 'two')] };
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(initial);
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={(d) => {
+            onChange(d);
+            setDoc(d);
+          }}
+        />
+      );
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    act(() => editor.focus());
+    await user.click(screen.getByRole('checkbox', { name: 'one' }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0].blocks[0].checked).toBe(true);
+    expect(screen.getByRole('checkbox', { name: 'one' })).toBeChecked();
+    expect(document.activeElement).toBe(editor);
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(onChange.mock.calls[1][0]).toEqual(initial);
+    expect(screen.getByRole('checkbox', { name: 'one' })).not.toBeChecked();
+    const anchor = document.getSelection()!.anchorNode;
+    const li = editor.querySelector('[data-block-id="b"]')!;
+    expect(anchor && li.contains(anchor)).toBe(true);
+  });
+
+  it('a readOnly editor renders the checkbox disabled', () => {
+    renderDoc({ blocks: [item('a', 'one')] }, { readOnly: true });
+    expect(screen.getByRole('checkbox', { name: 'one' })).toBeDisabled();
+  });
+
+  it('Ctrl+Enter in a checklist item toggles it as one undoable edit', () => {
+    mockReadSelection.mockReturnValue(caret('a', 1));
+    const { editor, docs } = renderDoc({ blocks: [item('a', 'one')] });
+    fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+    expect(docs).toHaveLength(1);
+    expect(docs[0].blocks[0]).toMatchObject({ checked: true, inlines: [{ text: 'one' }] });
+    fireEvent.keyDown(editor, { key: 'Enter', metaKey: true });
+    expect(docs.at(-1)!.blocks[0].checked).toBe(false);
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(docs.at(-1)!.blocks[0].checked).toBe(true);
+  });
+
+  it('Ctrl+Enter over several items sets each to the inverse of the first', () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'a', offset: 1 },
+      focus: { blockId: 'c', offset: 1 },
+    });
+    const { editor, docs } = renderDoc({
+      blocks: [
+        item('a', 'one'),
+        { id: 'p', type: 'paragraph', inlines: [{ text: 'mid', marks: [] }] },
+        item('b', 'two', { checked: true }),
+        item('c', 'three'),
+      ],
+    });
+    fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+    expect(docs).toHaveLength(1);
+    expect(docs[0].blocks.map((b) => b.checked)).toEqual([true, undefined, true, true]);
+  });
+
+  it('Ctrl+Enter in a checklist item is not propagated to ancestor handlers', () => {
+    mockReadSelection.mockReturnValue(caret('a', 1));
+    const outer = vi.fn();
+    document.addEventListener('keydown', outer);
+    try {
+      const { editor, docs } = renderDoc({ blocks: [item('a', 'one')] });
+      fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+      expect(docs).toHaveLength(1);
+      expect(outer).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', outer);
+    }
+  });
+
+  it('Ctrl+Enter outside a checklist item passes through untouched and commits nothing', () => {
+    mockReadSelection.mockReturnValue(caret('p', 1));
+    const outer = vi.fn();
+    document.addEventListener('keydown', outer);
+    try {
+      const { editor, docs } = renderDoc({
+        blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: 'one', marks: [] }] }],
+      });
+      const notCancelled = fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+      expect(notCancelled).toBe(true);
+      expect(outer).toHaveBeenCalledTimes(1);
+      expect(docs).toEqual([]);
+    } finally {
+      document.removeEventListener('keydown', outer);
+    }
+  });
+
+  it('Ctrl+Enter in a readOnly editor changes nothing', () => {
+    mockReadSelection.mockReturnValue(caret('a', 1));
+    const ro = renderDoc({ blocks: [item('a', 'one')] }, { readOnly: true });
+    fireEvent.keyDown(ro.editor, { key: 'Enter', ctrlKey: true });
+    expect(ro.docs).toEqual([]);
+  });
+
+  it('Shift+Tab with the mention menu open does not pick an item', async () => {
+    mockReadSelection.mockReturnValue(caret('p', 2));
+    const onQuery = () => Promise.resolve([{ id: 'u1', label: 'Alice' }]);
+    const { editor, docs } = renderDoc(
+      { blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: '@a', marks: [] }] }] },
+      { mentions: { onQuery } },
+    );
+    await screen.findByRole('option', { name: /Alice/ });
+    fireEvent.keyDown(editor, { key: 'Tab', shiftKey: true });
+    expect(docs).toEqual([]);
+    expect(editor.querySelector('[data-mention-id]')).toBeNull();
+  });
+
+  it('Ctrl+Enter / Shift+Enter with the mention menu open neither toggle nor pick', async () => {
+    mockReadSelection.mockReturnValue(caret('a', 2));
+    const onQuery = () => Promise.resolve([{ id: 'u1', label: 'Alice' }]);
+    const { editor, docs } = renderDoc({ blocks: [item('a', '@a')] }, { mentions: { onQuery } });
+    await screen.findByRole('option', { name: /Alice/ });
+    fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+    fireEvent.keyDown(editor, { key: 'Enter', shiftKey: true });
+    expect(docs).toEqual([]);
+    expect(editor.querySelector('[data-mention-id]')).toBeNull();
+  });
+
+  it('Ctrl+Enter / Shift+Enter with the slash menu open do not pick an item', async () => {
+    mockReadSelection.mockReturnValue(caret('p', 1));
+    const { editor, docs } = renderDoc(
+      { blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: '/', marks: [] }] }] },
+      { slashMenu: true },
+    );
+    await screen.findByRole('listbox', { name: 'Insert block' });
+    fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+    fireEvent.keyDown(editor, { key: 'Enter', shiftKey: true });
+    expect(docs).toEqual([]);
+  });
+
+  it('two editors over the same doc get unique checklist label ids', () => {
+    const doc: RichDoc = { blocks: [item('a', 'one')] };
+    const { container } = renderEditor(
+      <>
+        <RichTextEditor value={doc} onChange={() => {}} />
+        <RichTextEditor value={doc} onChange={() => {}} />
+      </>,
+    );
+    const ids = [...container.querySelectorAll('[id]')].map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const box of screen.getAllByRole('checkbox')) expect(box).toHaveAccessibleName('one');
+  });
+
+  it('Space on the focused checkbox toggles it without inserting text', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(caret('a', 1));
+    const { docs } = renderDoc({ blocks: [item('a', 'one')] });
+    const box = screen.getByRole('checkbox', { name: 'one' });
+    act(() => box.focus());
+    await user.keyboard(' ');
+    expect(docs).toHaveLength(1);
+    expect(docs[0].blocks[0]).toMatchObject({ checked: true, inlines: [{ text: 'one' }] });
+  });
+});
+
+describe('RichTextEditor code (DS-104)', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+  const sel = (blockId: string, a: number, f = a) => ({
+    anchor: { blockId, offset: a },
+    focus: { blockId, offset: f },
+  });
+  const code = (text: string, language?: string): RichDoc => ({
+    blocks: [
+      { id: 'c', type: 'code_block', inlines: [{ text, marks: [] }], language },
+      { id: 'p', type: 'paragraph', inlines: [{ text: 'after', marks: [] }] },
+    ],
+  });
+  function renderDoc(initial: RichDoc, props: Record<string, unknown> = {}) {
+    const docs: RichDoc[] = [];
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(initial);
+      return (
+        <>
+          <RichTextEditor
+            value={doc}
+            onChange={(d) => {
+              docs.push(d);
+              setDoc(d);
+            }}
+            {...props}
+          />
+          <button type="button">outside</button>
+        </>
+      );
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    return { editor, docs };
+  }
+  const selectionChange = () => act(() => document.dispatchEvent(new Event('selectionchange')));
+  const text = (d: RichDoc, i = 0) => d.blocks[i].inlines.map((r) => r.text).join('');
+
+  it('mouse: the language menu sets the language in one undo step; focus returns to the editor', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 1));
+    const { editor, docs } = renderDoc(code('x = 1'));
+    act(() => editor.focus());
+    selectionChange();
+    const picker = screen.getByRole('button', { name: 'Code language: Plain text' });
+    expect(picker).toHaveTextContent('Plain text');
+    expect(picker).toHaveAttribute('aria-haspopup', 'menu');
+    await user.click(picker);
+    expect(await screen.findByRole('menuitemradio', { name: 'Plain text' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await user.click(screen.getByRole('menuitemradio', { name: 'Python' }));
+    expect(docs.at(-1)!.blocks[0].language).toBe('python');
+    expect(docs).toHaveLength(1);
+    await waitFor(() => expect(document.activeElement).toBe(editor));
+    expect(screen.queryByRole('menu')).toBeNull();
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(docs).toHaveLength(2);
+    expect(docs.at(-1)!.blocks[0].language).toBeUndefined();
+  });
+
+  it('keyboard: Escape, Tab, Enter, ArrowDown, Enter picks a language and refocuses the editor', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 1));
+    const { editor, docs } = renderDoc(code('x = 1', 'python'));
+    act(() => editor.focus());
+    selectionChange();
+    const picker = screen.getByRole('button', { name: 'Code language: Python' });
+    expect(picker).toHaveTextContent('Python');
+    await user.keyboard('{Escape}{Tab}');
+    expect(document.activeElement).toBe(picker);
+    await user.keyboard('{Enter}');
+    // The open menu keeps the picker mounted although focus is in the portaled menu.
+    const first = await screen.findByRole('menuitemradio', { name: 'Plain text' });
+    await waitFor(() => expect(document.activeElement).toBe(first));
+    expect(screen.getByRole('menuitemradio', { name: 'Python' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await user.keyboard('{ArrowDown}');
+    expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: 'JavaScript' }));
+    await user.keyboard('{Enter}');
+    expect(docs).toHaveLength(1);
+    expect(docs[0].blocks[0].language).toBe('javascript');
+    await waitFor(() => expect(document.activeElement).toBe(editor));
+  });
+
+  it('shows no picker outside a code block or in a readOnly editor', () => {
+    mockReadSelection.mockReturnValue(sel('p', 1));
+    const { editor } = renderDoc(code('x'));
+    act(() => editor.focus());
+    selectionChange();
+    expect(screen.queryByRole('button', { name: /^Code language/ })).toBeNull();
+  });
+
+  it('readOnly: no picker even with the caret in a code block', () => {
+    mockReadSelection.mockReturnValue(sel('c', 0));
+    renderDoc(code('x'), { readOnly: true });
+    selectionChange();
+    expect(screen.queryByRole('button', { name: /^Code language/ })).toBeNull();
+  });
+
+  it('Tab inserts two spaces, Shift+Tab outdents; Escape then Tab leaves the editor', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 1));
+    const { editor, docs } = renderDoc(code('ab'));
+    act(() => editor.focus());
+    await user.keyboard('{Tab}');
+    expect(text(docs.at(-1)!)).toBe('a  b');
+    expect(document.activeElement).toBe(editor);
+    mockReadSelection.mockReturnValue(sel('c', 0));
+    await user.keyboard('{Tab}');
+    expect(text(docs.at(-1)!)).toBe('  a  b');
+    mockReadSelection.mockReturnValue(sel('c', 4));
+    await user.keyboard('{Shift>}{Tab}{/Shift}');
+    expect(text(docs.at(-1)!)).toBe('a  b');
+    await user.keyboard('{Escape}{Tab}');
+    expect(docs).toHaveLength(3);
+    expect(document.activeElement).not.toBe(editor);
+  });
+
+  it('a Tab indent is its own undo step, not merged with the typing after it', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 1));
+    const { editor, docs } = renderDoc(code('ab'));
+    act(() => editor.focus());
+    await user.keyboard('{Tab}');
+    mockReadSelection.mockReturnValue(sel('c', 3));
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: 'x' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    expect(text(docs.at(-1)!)).toBe('a  xb');
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(text(docs.at(-1)!)).toBe('a  b');
+  });
+
+  it('a closing backtick converts `text` to inline code in one undo step', () => {
+    mockReadSelection.mockReturnValue(sel('p', 4));
+    const { editor, docs } = renderDoc({
+      blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: 'a `b', marks: [] }] }],
+    });
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: '`' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    expect(evt.defaultPrevented).toBe(true);
+    expect(docs.at(-1)!.blocks[0].inlines).toEqual([
+      { text: 'a ', marks: [] },
+      { text: 'b', marks: [{ type: 'code' }] },
+    ]);
+    expect(editor.querySelector('code')?.textContent).toBe('b');
+    // Typing right after the conversion continues OUTSIDE the code.
+    mockReadSelection.mockReturnValue(sel('p', 3));
+    const typed = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(typed, 'inputType', { value: 'insertText' });
+    Object.defineProperty(typed, 'data', { value: 'x' });
+    act(() => {
+      editor.dispatchEvent(typed);
+    });
+    expect(docs.at(-1)!.blocks[0].inlines.at(-1)).toEqual({ text: 'x', marks: [] });
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(text(docs.at(-1)!)).toBe('a `b');
+  });
+
+  it('toolbar Inline code toggles code; Bold is disabled and ⌘B ignored over code', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('p', 0, 2));
+    const { editor, docs } = renderDoc(
+      {
+        blocks: [
+          { id: 'p', type: 'paragraph', inlines: [{ text: 'ab', marks: [{ type: 'bold' }] }] },
+        ],
+      },
+      { toolbar: true },
+    );
+    act(() => editor.focus());
+    selectionChange();
+    await user.click(screen.getByRole('button', { name: 'Inline code' }));
+    expect(docs.at(-1)!.blocks[0].inlines).toEqual([{ text: 'ab', marks: [{ type: 'code' }] }]);
+    selectionChange();
+    expect(screen.getByRole('button', { name: 'Inline code' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: 'Bold' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Text color' })).toBeDisabled();
+    fireEvent.keyDown(editor, { key: 'b', code: 'KeyB', ctrlKey: true });
+    expect(docs).toHaveLength(1);
+    fireEvent.keyDown(editor, { key: 'e', code: 'KeyE', ctrlKey: true });
+    expect(docs.at(-1)!.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);
+  });
+});
+
+describe('RichTextEditor code block inside a Modal (DS-104)', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+  const sel = (blockId: string, o: number) => ({
+    anchor: { blockId, offset: o },
+    focus: { blockId, offset: o },
+  });
+
+  it('first Escape in a code block arms Tab-out; only the next Escape closes the Modal', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 0));
+    const onOpenChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [{ id: 'c', type: 'code_block', inlines: [{ text: 'ab', marks: [] }] }],
+    };
+    renderEditor(
+      <Modal open onOpenChange={onOpenChange} aria-label="Dialog">
+        <Modal.Body>
+          <RichTextEditor value={doc} onChange={() => {}} />
+        </Modal.Body>
+      </Modal>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    await act(async () => {}); // let the Modal's initial-focus microtask run first
+    act(() => editor.focus());
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await user.keyboard('{Tab}');
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: 'Code language: Plain text' }),
+    );
+    // Back in the editor: blur cleared the arm, so Escape is the editor's again.
+    act(() => editor.focus());
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('Escape inside the open language menu closes only the menu, not the Modal', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 0));
+    const onOpenChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [{ id: 'c', type: 'code_block', inlines: [{ text: 'ab', marks: [] }] }],
+    };
+    renderEditor(
+      <Modal open onOpenChange={onOpenChange} aria-label="Dialog">
+        <Modal.Body>
+          <RichTextEditor value={doc} onChange={() => {}} />
+        </Modal.Body>
+      </Modal>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    await act(async () => {});
+    act(() => editor.focus());
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    await user.keyboard('{Escape}{Tab}{Enter}');
+    await screen.findByRole('menu');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: 'Code language: Plain text' }),
+    );
+  });
+
+  it('in a list item too, the first Escape stays with the editor; the next closes the Modal', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('l', 0));
+    const onOpenChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [{ id: 'l', type: 'bullet_item', depth: 0, inlines: [{ text: 'ab', marks: [] }] }],
+    };
+    renderEditor(
+      <Modal open onOpenChange={onOpenChange} aria-label="Dialog">
+        <Modal.Body>
+          <RichTextEditor value={doc} onChange={() => {}} />
+        </Modal.Body>
+      </Modal>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    await act(async () => {});
+    act(() => editor.focus());
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('a mousedown clears the Escape arm, so the next Tab stays in the code block', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 0));
+    const docs: RichDoc[] = [];
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'c', type: 'code_block', inlines: [{ text: 'ab', marks: [] }] }],
+      });
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={(d) => {
+            docs.push(d);
+            setDoc(d);
+          }}
+        />
+      );
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    act(() => editor.focus());
+    await user.keyboard('{Escape}');
+    fireEvent.mouseDown(editor);
+    await user.keyboard('{Tab}');
+    expect(docs.at(-1)!.blocks[0].inlines[0].text).toBe('  ab');
+  });
+});
+
+describe('RichTextEditor slash menu (DS-103)', () => {
+  beforeEach(() => mockReadSelection.mockReset());
+  const caret = (blockId: string, o: number) => ({
+    anchor: { blockId, offset: o },
+    focus: { blockId, offset: o },
+  });
+
+  function renderSlash(
+    text: string,
+    props: Partial<React.ComponentProps<typeof RichTextEditor>> = { slashMenu: true },
+    block: Partial<RichDoc['blocks'][number]> = {},
+  ) {
+    mockReadSelection.mockReturnValue(caret('k', text.length));
+    const docs: RichDoc[] = [];
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text, marks: [] }], ...block }],
+      });
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={(d) => {
+            docs.push(d);
+            setDoc(d);
+          }}
+          {...props}
+        />
+      );
+    }
+    renderEditor(<Harness />);
+    return { editor: screen.getByRole('textbox', { name: 'Rich text editor' }), docs };
+  }
+
+  it('typing "/" opens the Insert block listbox, wired to the textbox', async () => {
+    const { editor } = renderSlash('');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    mockReadSelection.mockReturnValue(caret('k', 1));
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: '/' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    const listbox = await screen.findByRole('listbox', { name: 'Insert block' });
+    expect(editor).toHaveAttribute('aria-expanded', 'true');
+    expect(editor).toHaveAttribute('aria-controls', listbox.id);
+    await waitFor(() =>
+      expect(editor.getAttribute('aria-activedescendant')).toBe(
+        within(listbox).getAllByRole('option')[0].id,
+      ),
+    );
+  });
+
+  it('"/hea" filters; ArrowDown + Enter makes Heading 2 and strips the query; one undo restores it', async () => {
+    const user = userEvent.setup();
+    const { editor } = renderSlash('/hea');
+    const listbox = await screen.findByRole('listbox', { name: 'Insert block' });
+    await waitFor(() =>
+      expect(
+        within(listbox)
+          .getAllByRole('option')
+          .map((o) => o.textContent),
+      ).toEqual([
+        expect.stringContaining('Heading 1'),
+        expect.stringContaining('Heading 2'),
+        expect.stringContaining('Heading 3'),
+      ]),
+    );
+    act(() => editor.focus());
+    await user.keyboard('{ArrowDown}{Enter}');
+    const h2 = screen.getByRole('heading', { level: 2 });
+    expect(h2).toHaveTextContent('');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    await user.keyboard('{Control>}z{/Control}');
+    expect(screen.queryByRole('heading')).toBeNull();
+    expect(editor).toHaveTextContent('/hea');
+  });
+
+  it('Escape closes the menu and leaves the typed "/hea"', async () => {
+    const user = userEvent.setup();
+    const { editor, docs } = renderSlash('/hea');
+    await screen.findByRole('listbox');
+    act(() => editor.focus());
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(editor).toHaveTextContent('/hea');
+    expect(docs).toEqual([]);
+  });
+
+  it('shows a "No matches" option for "/zzz"', async () => {
+    const { editor } = renderSlash('/zzz');
+    const listbox = await screen.findByRole('listbox');
+    const empty = within(listbox).getByRole('option', { name: 'No matches' });
+    expect(empty).toHaveAttribute('aria-disabled', 'true');
+    expect(editor).toHaveAttribute('aria-activedescendant', empty.id);
+  });
+
+  it('"No matches" leaves ArrowUp/ArrowDown to the caret (not prevented)', async () => {
+    const { editor } = renderSlash('/zzz');
+    await screen.findByRole('listbox');
+    expect(fireEvent.keyDown(editor, { key: 'ArrowDown' })).toBe(true);
+    expect(fireEvent.keyDown(editor, { key: 'ArrowUp' })).toBe(true);
+  });
+
+  it.each([
+    ['mid-word "a/b"', 'a/b', undefined, {}],
+    ['a URL', 'http://x', undefined, {}],
+    ['no slashMenu prop', '/', {}, {}],
+    ['readOnly', '/', { slashMenu: true, readOnly: true }, {}],
+    ['a code block', '/', undefined, { type: 'code_block' as const }],
+  ])('opens nothing for %s', async (_name, text, props, block) => {
+    renderSlash(text, props, block);
+    await act(async () => {});
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('does not open while composing', async () => {
+    const { editor } = renderSlash('/');
+    await screen.findByRole('listbox');
+    fireEvent.compositionStart(editor, { data: '' });
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('a custom item inserts blocks through the api, with ids from createBlockId', async () => {
+    const user = userEvent.setup();
+    let n = 0;
+    const { editor, docs } = renderSlash('ab /tem', {
+      createBlockId: () => `new-${(n += 1)}`,
+      slashMenu: {
+        items: (defaults) => [
+          ...defaults,
+          {
+            id: 'template',
+            group: 'advanced',
+            label: 'Template',
+            run: (api) =>
+              api.insertBlocks([
+                { id: 'k', type: 'heading', level: 3, inlines: [{ text: 'Notes', marks: [] }] },
+              ]),
+          },
+        ],
+      },
+    });
+    await screen.findByRole('option', { name: /Template/ });
+    act(() => editor.focus());
+    await user.keyboard('{Enter}');
+    const blocks = docs.at(-1)!.blocks;
+    expect(blocks.map((b) => b.inlines[0].text)).toEqual(['ab ', 'Notes']);
+    expect(blocks[0].id).toBe('k');
+    expect(blocks[1].id).toMatch(/^new-/);
+  });
+
+  it('the Image item opens the upload picker', async () => {
+    const user = userEvent.setup();
+    const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
+    const { editor } = renderSlash('/ima', {
+      slashMenu: true,
+      upload: { onUpload: async () => ({ url: 'x' }) },
+    });
+    await screen.findByRole('option', { name: /Image/ });
+    act(() => editor.focus());
+    await user.keyboard('{Enter}');
+    expect(click).toHaveBeenCalled();
+    expect(click.mock.contexts.at(-1)).toHaveProperty('accept', 'image/*');
+    click.mockRestore();
+  });
+
+  it('inside a Modal, Escape closes only the menu', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(caret('k', 1));
+    const onOpenChange = vi.fn();
+    renderEditor(
+      <Modal open onOpenChange={onOpenChange} aria-label="Dialog">
+        <Modal.Body>
+          <RichTextEditor
+            value={{
+              blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: '/', marks: [] }] }],
+            }}
+            onChange={() => {}}
+            slashMenu
+          />
+        </Modal.Body>
+      </Modal>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    await act(async () => {});
+    act(() => editor.focus());
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    await screen.findByRole('listbox', { name: 'Insert block' });
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox', { name: 'Insert block' })).toBeNull();
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 });

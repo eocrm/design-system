@@ -23,13 +23,15 @@ export interface RichTextBlockMenuProps {
   onAction: (action: BlockAction) => void;
   /** Fired for a "Turn into" choice. */
   onTurnInto: (choice: BlockChoice) => void;
+  /** Fired for "Insert divider below". */
+  onInsertDivider: () => void;
   /** When set, a Configure item appears at the top of the menu (e.g. attachment
    *  settings). Omit for blocks with nothing to configure. */
   onConfigure?: () => void;
   /** When set, two color submenus (Text color + Highlight) for the whole block are added. */
   onColor?: (type: 'textColor' | 'bgColor', key: string | null) => void;
-  /** Type of the block the menu targets. "Turn into" is hidden for `attachment`
-   *  (a void block — converting an image to a heading is nonsense). */
+  /** Type of the block the menu targets. "Turn into" is hidden for void blocks
+   *  (`attachment`, `divider`) — they hold no text to convert. */
   blockType?: BlockType;
 }
 
@@ -37,11 +39,11 @@ export interface RichTextBlockMenuProps {
  * Internal: the `⠿` block-actions handle and its menu. The handle is the
  * DropdownMenu trigger and is `tabIndex={-1}` (not a tab stop — keyboard users
  * open it via Shift+F10 in the editor). "Turn into" reuses the block-type labels
- * and is omitted for void attachment blocks.
+ * and is omitted for void (attachment / divider) blocks.
  */
 export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenuProps>(
   function RichTextBlockMenu(
-    { open, onOpenChange, onAction, onTurnInto, onConfigure, onColor, blockType },
+    { open, onOpenChange, onAction, onTurnInto, onInsertDivider, onConfigure, onColor, blockType },
     ref,
   ) {
     const t = useTranslation();
@@ -110,7 +112,7 @@ export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenu
               </DropdownMenu.Sub>
             </>
           )}
-          {blockType !== 'attachment' && (
+          {blockType !== 'attachment' && blockType !== 'divider' && (
             <DropdownMenu.Sub>
               <DropdownMenu.SubTrigger>{t('richTextEditor.blockTurnInto')}</DropdownMenu.SubTrigger>
               <DropdownMenu.SubContent>
@@ -132,6 +134,9 @@ export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenu
                 <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'ordered_item' })}>
                   {t('richTextEditor.orderedList')}
                 </DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'checklist_item' })}>
+                  {t('richTextEditor.checklist')}
+                </DropdownMenu.Item>
                 <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'blockquote' })}>
                   {t('richTextEditor.blockquote')}
                 </DropdownMenu.Item>
@@ -141,6 +146,9 @@ export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenu
               </DropdownMenu.SubContent>
             </DropdownMenu.Sub>
           )}
+          <DropdownMenu.Item onSelect={onInsertDivider}>
+            {t('richTextEditor.blockInsertDivider')}
+          </DropdownMenu.Item>
           <DropdownMenu.Separator />
           <DropdownMenu.Item shortcut="⌘D" onSelect={() => onAction('duplicate')}>
             {t('richTextEditor.blockDuplicate')}

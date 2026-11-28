@@ -1,14 +1,16 @@
 // inputRules.ts — Markdown block input rules for <RichTextEditor>. Pure: match a
-// marker typed at the start of a paragraph (the trigger is always a space) and
-// apply the block conversion by composing existing engine transforms.
+// marker typed at the start of a paragraph (the trigger is a space, or Enter for
+// `---` only) and apply the block conversion by composing existing transforms.
 import type { RichDoc, BlockType, Range } from '../RichText/engine/model';
 import { deleteRange, setBlockType } from '../RichText/engine/transforms';
+import { runInsertDivider } from './commands';
 
 /** The block change a matched rule applies. */
 export interface BlockRuleChange {
   type: BlockType;
   level?: 1 | 2 | 3;
   depth?: number;
+  checked?: boolean;
 }
 export interface BlockRuleMatch {
   change: BlockRuleChange;
@@ -33,6 +35,14 @@ function changeFor(before: string): BlockRuleChange | null {
       return { type: 'blockquote' };
     case '```':
       return { type: 'code_block' };
+    case '---':
+      return { type: 'divider' };
+    case '[]':
+    case '[ ]':
+      return { type: 'checklist_item', depth: 0 };
+    case '[x]':
+    case '[X]':
+      return { type: 'checklist_item', depth: 0, checked: true };
     default:
       return /^\d+[.)]$/.test(before) ? { type: 'ordered_item', depth: 0 } : null;
   }
@@ -40,23 +50,26 @@ function changeFor(before: string): BlockRuleChange | null {
 
 /**
  * Match a block input rule. Fires only when `sourceType` is 'paragraph', the
- * `trigger` is a single space, and `before` (block start → caret) is exactly a
- * marker. Returns the block change + marker length, or null.
+ * `trigger` is a single space (or `'Enter'`, for the `---` divider marker only),
+ * and `before` (block start → caret) is exactly a marker. Returns the block
+ * change + marker length, or null.
  */
 export function matchBlockRule(
   sourceType: BlockType,
   before: string,
   trigger: string,
 ): BlockRuleMatch | null {
-  if (sourceType !== 'paragraph' || trigger !== ' ') return null;
+  if (sourceType !== 'paragraph') return null;
+  if (trigger !== ' ' && !(trigger === 'Enter' && before === '---')) return null;
   const change = changeFor(before);
   return change ? { change, markerLen: before.length } : null;
 }
 
 /**
  * Apply a matched rule to the block: strip the marker prefix, then set the block
- * type (composing `deleteRange` + `setBlockType`). Returns the `{ doc, selection }`
- * commit payload with the caret at the block start.
+ * type (composing `deleteRange` + `setBlockType`) — or, for a divider, insert one
+ * at the block start (`runInsertDivider`: the divider lands before the block).
+ * Returns the `{ doc, selection }` commit payload with the caret at the block start.
  */
 export function applyBlockRule(
   doc: RichDoc,
@@ -67,5 +80,6 @@ export function applyBlockRule(
     anchor: { blockId, offset: 0 },
     focus: { blockId, offset: match.markerLen },
   });
+  if (match.change.type === 'divider') return runInsertDivider(stripped.doc, stripped.selection);
   return setBlockType(stripped.doc, blockId, match.change);
 }

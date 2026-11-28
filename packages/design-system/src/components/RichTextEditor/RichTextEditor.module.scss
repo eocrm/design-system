@@ -33,6 +33,13 @@
   background: var(--color-bg-muted);
 }
 
+// DS-104: a permanent strip at the top of every editable code block holds the
+// language picker (offset --space-1 + Button sm height + the same gap below), so
+// the picker never covers code and nothing shifts as the caret enters or leaves.
+.root:not(.readOnly) pre {
+  padding-block-start: calc(var(--size-sm) + 2 * var(--space-1));
+}
+
 // #511: readOnly and placeholder are independent props (e.g. a read-only
 // notes field with no content), so the empty-state placeholder above can
 // land on readOnly's --color-bg-muted, where --color-fg-subtle fails AA.
@@ -232,6 +239,27 @@
   padding: var(--space-2);
 }
 
+// Slash menu (RichTextSlashMenu): reuses the mention listbox/option classes, plus
+// a group heading row and a fixed icon cell so labels line up.
+.slashGroupLabel {
+  padding: var(--space-1) var(--space-2) 0;
+}
+
+.slashIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--size-sm);
+  block-size: var(--size-sm);
+  color: var(--color-fg-muted);
+}
+
+.slashGlyph {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
 // Attachment blocks (RichTextAttachment): the void <figure> wrapper + its loading/
 // error/chip bodies. `margin: 0` resets the UA <figure> default (a reset, not
 // component layout). Tokens only.
@@ -299,4 +327,11 @@
   .reflowing [data-block-id] {
     transition: none;
   }
+}
+
+// The code-block language picker (RichTextCodeLanguagePicker). Positioned by
+// Floating UI's inline `floatingStyles` inside the block's top-end corner; the
+// wrapper hugs its trigger button (no sizing here).
+.codeLanguagePicker {
+  z-index: var(--z-overlay-floating);
 }

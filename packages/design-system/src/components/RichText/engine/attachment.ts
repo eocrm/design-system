@@ -1,6 +1,6 @@
 // attachment.ts — attachment (void) block helpers + transforms. Pure + immutable.
 import type { RichDoc, Block, Point, Range } from './model';
-import { createBlock, nextId } from './model';
+import { createBlock, nextId, rightHalf } from './model';
 import { findBlockIndex, blockLength, collapsedRange } from './position';
 import { sliceInlines, normalizeInlines } from './inlines';
 
@@ -35,7 +35,7 @@ export interface AttachmentAttrs {
 
 /** True for void blocks (no editable text; caret sits adjacent, never inside). */
 export function isVoidBlock(block: Block): boolean {
-  return block.type === 'attachment';
+  return block.type === 'attachment' || block.type === 'divider';
 }
 
 /**
@@ -77,29 +77,30 @@ function attachmentBlock(attrs: AttachmentAttrs): Block {
 }
 
 /**
- * Split the block at `point` and insert an attachment block between the halves.
- * Always leaves an editable paragraph AFTER the attachment (the caret's home);
- * the caret lands at offset 0 of that trailing block. If `point` is inside a void
- * block, inserts after it instead of splitting. Returns the new block's
- * `attachmentId` so callers needn't re-derive it from array position (`null` on
- * the no-op path when `point.blockId` isn't found).
+ * Split the block at `point` and insert the void `voidBlock` between the halves.
+ * Always leaves an editable block AFTER the void (the caret's home, offset 0). If
+ * `point` is inside a void block, inserts after it (plus a fresh paragraph)
+ * instead of splitting. `null` when `point.blockId` isn't found. Shared by
+ * attachment and divider insertion.
  */
-export function insertAttachmentBlock(
+export function insertVoidBlock(
   doc: RichDoc,
   point: Point,
-  attrs: AttachmentAttrs,
-): { doc: RichDoc; selection: Range; attachmentId: string | null } {
+  voidBlock: Block,
+): { doc: RichDoc; selection: Range } | null {
   const idx = findBlockIndex(doc, point.blockId);
-  if (idx === -1) {
-    return { doc, selection: collapsedRange(point.blockId, point.offset), attachmentId: null };
-  }
+  if (idx === -1) return null;
   const block = doc.blocks[idx];
-  const att = attachmentBlock(attrs);
 
   if (isVoidBlock(block)) {
     const after = createBlock('paragraph');
-    const blocks = [...doc.blocks.slice(0, idx + 1), att, after, ...doc.blocks.slice(idx + 1)];
-    return { doc: { blocks }, selection: collapsedRange(after.id), attachmentId: att.id };
+    const blocks = [
+      ...doc.blocks.slice(0, idx + 1),
+      voidBlock,
+      after,
+      ...doc.blocks.slice(idx + 1),
+    ];
+    return { doc: { blocks }, selection: collapsedRange(after.id) };
   }
 
   const left: Block = {
@@ -109,12 +110,33 @@ export function insertAttachmentBlock(
   const rightInlines = normalizeInlines(
     sliceInlines(block.inlines, point.offset, blockLength(block)),
   );
-  const right: Block = {
-    ...createBlock(block.type, '', { level: block.level, depth: block.depth }),
-    inlines: rightInlines,
-  };
-  const blocks = [...doc.blocks.slice(0, idx), left, att, right, ...doc.blocks.slice(idx + 1)];
-  return { doc: { blocks }, selection: collapsedRange(right.id), attachmentId: att.id };
+  const right = rightHalf(block, rightInlines);
+  const blocks = [
+    ...doc.blocks.slice(0, idx),
+    left,
+    voidBlock,
+    right,
+    ...doc.blocks.slice(idx + 1),
+  ];
+  return { doc: { blocks }, selection: collapsedRange(right.id) };
+}
+
+/**
+ * Split the block at `point` and insert an attachment block between the halves
+ * (see {@link insertVoidBlock}). Returns the new block's `attachmentId` so callers
+ * needn't re-derive it from array position (`null` on the no-op path when
+ * `point.blockId` isn't found).
+ */
+export function insertAttachmentBlock(
+  doc: RichDoc,
+  point: Point,
+  attrs: AttachmentAttrs,
+): { doc: RichDoc; selection: Range; attachmentId: string | null } {
+  const att = attachmentBlock(attrs);
+  const r = insertVoidBlock(doc, point, att);
+  return r
+    ? { ...r, attachmentId: att.id }
+    : { doc, selection: collapsedRange(point.blockId, point.offset), attachmentId: null };
 }
 
 /** Patch an attachment block's fields by id. Same-ref no-op if absent/not attachment. */
