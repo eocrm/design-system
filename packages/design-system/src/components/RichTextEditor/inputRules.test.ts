@@ -65,6 +65,22 @@ describe('matchBlockRule', () => {
     expect(matchBlockRule('heading', '---', ' ')).toBeNull();
     expect(matchBlockRule('paragraph', '#', 'Enter')).toBeNull();
   });
+
+  it('matches checklist markers [] / [ ] (unchecked) and [x] / [X] (checked)', () => {
+    for (const m of ['[]', '[ ]']) {
+      expect(matchBlockRule('paragraph', m, ' ')).toEqual({
+        change: { type: 'checklist_item', depth: 0 },
+        markerLen: m.length,
+      });
+    }
+    for (const m of ['[x]', '[X]']) {
+      expect(matchBlockRule('paragraph', m, ' ')).toEqual({
+        change: { type: 'checklist_item', depth: 0, checked: true },
+        markerLen: 3,
+      });
+    }
+    expect(matchBlockRule('paragraph', '[y]', ' ')).toBeNull();
+  });
 });
 
 describe('applyBlockRule', () => {
@@ -103,5 +119,14 @@ describe('applyBlockRule', () => {
     expect(r.doc.blocks[1].id).toBe('a');
     expect(r.doc.blocks[1].inlines.map((i) => i.text).join('')).toBe('');
     expect(r.selection).toEqual(collapsed('a', 0));
+  });
+
+  it('a checked checklist rule sets checked: true', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', '[x]', { id: 'a' })] };
+    const r = applyBlockRule(doc, 'a', {
+      change: { type: 'checklist_item', depth: 0, checked: true },
+      markerLen: 3,
+    });
+    expect(r.doc.blocks[0]).toMatchObject({ type: 'checklist_item', depth: 0, checked: true });
   });
 });

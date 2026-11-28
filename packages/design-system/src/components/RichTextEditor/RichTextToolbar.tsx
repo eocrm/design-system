@@ -15,6 +15,7 @@ import {
   StrikeIcon,
   BulletListIcon,
   OrderedListIcon,
+  ChecklistIcon,
   LinkIcon,
   UndoIcon,
   RedoIcon,
@@ -26,6 +27,8 @@ import {
 import styles from './RichTextEditor.module.scss';
 
 /** The block type (+ optional heading level) the toolbar reflects/selects. */
+type ListType = 'bullet_item' | 'ordered_item' | 'checklist_item';
+
 export type BlockChoice = { type: BlockType; level?: 1 | 2 | 3 };
 
 export interface RichTextToolbarProps {
@@ -46,7 +49,7 @@ export interface RichTextToolbarProps {
   /** Insert a divider at the selection (the block dropdown's "Divider" item). */
   onInsertDivider: () => void;
   /** Toggle the selected blocks into/out of a bullet or numbered list. */
-  onToggleList: (listType: 'bullet_item' | 'ordered_item') => void;
+  onToggleList: (listType: ListType) => void;
   /** Whether the current selection sits inside a link (drives the Link button's pressed state). */
   linkActive?: boolean;
   /** Open the link editor for the current selection. */
@@ -155,13 +158,14 @@ function RichTextToolbarImpl({
         return t('richTextEditor.codeBlock');
       case 'bullet_item':
       case 'ordered_item':
+      case 'checklist_item':
       case 'paragraph':
       default:
         return t('richTextEditor.paragraph');
     }
   })();
 
-  const isList = (lt: 'bullet_item' | 'ordered_item') => block?.type === lt;
+  const isList = (lt: ListType) => block?.type === lt;
 
   return (
     <div className={styles.toolbar} role="toolbar" aria-label={t('richTextEditor.toolbar')}>
@@ -347,6 +351,18 @@ function RichTextToolbarImpl({
         onClick={() => onToggleList('ordered_item')}
       >
         <OrderedListIcon />
+      </Button>
+      <Button
+        size="sm"
+        variant={isList('checklist_item') ? 'secondary' : 'ghost'}
+        iconOnly
+        aria-label={t('richTextEditor.checklist')}
+        aria-pressed={isList('checklist_item')}
+        disabled={disabled}
+        onMouseDown={preventSelectionLoss}
+        onClick={() => onToggleList('checklist_item')}
+      >
+        <ChecklistIcon />
       </Button>
 
       {onPickFiles && (

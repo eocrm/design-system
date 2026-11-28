@@ -134,6 +134,9 @@ export const RichTextBlockMenu = forwardRef<HTMLButtonElement, RichTextBlockMenu
                 <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'ordered_item' })}>
                   {t('richTextEditor.orderedList')}
                 </DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'checklist_item' })}>
+                  {t('richTextEditor.checklist')}
+                </DropdownMenu.Item>
                 <DropdownMenu.Item onSelect={() => onTurnInto({ type: 'blockquote' })}>
                   {t('richTextEditor.blockquote')}
                 </DropdownMenu.Item>

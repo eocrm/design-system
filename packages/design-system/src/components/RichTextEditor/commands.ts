@@ -27,6 +27,7 @@ import {
   collapsedRange,
 } from '../RichText/engine/position';
 import { hasMark } from '../RichText/engine/marks';
+import { isListItem } from '../RichText/engine/listDepths';
 
 /** The `{ doc, selection }` pair returned by every command runner. */
 export type CommandResult = { doc: RichDoc; selection: Range };
@@ -252,7 +253,7 @@ export function runSetBlock(
 export function runToggleList(
   doc: RichDoc,
   range: Range,
-  listType: 'bullet_item' | 'ordered_item',
+  listType: 'bullet_item' | 'ordered_item' | 'checklist_item',
 ): CommandResult {
   const { si, ei } = blocksInRange(doc, range);
   if (si === -1 || ei === -1) return { doc, selection: range };
@@ -264,6 +265,19 @@ export function runToggleList(
     }
   }
   return runSetBlock(doc, range, allList ? { type: 'paragraph' } : { type: listType, depth: 0 });
+}
+
+/**
+ * Flip `checked` on a checklist item. Any other (or missing) block returns the
+ * same doc reference (no-op).
+ *
+ * @example
+ * const next = runToggleCheck(doc, 'item-1');
+ */
+export function runToggleCheck(doc: RichDoc, blockId: string): RichDoc {
+  const b = doc.blocks.find((x) => x.id === blockId);
+  if (!b || b.type !== 'checklist_item') return doc;
+  return setBlockType(doc, blockId, { checked: b.checked !== true }).doc;
 }
 
 /**
@@ -281,7 +295,7 @@ export function runIndent(doc: RichDoc, range: Range, dir: 'in' | 'out'): Comman
   let d = doc;
   for (let i = si; i <= ei; i += 1) {
     const b = d.blocks[i];
-    if (b.type !== 'bullet_item' && b.type !== 'ordered_item') continue;
+    if (!isListItem(b)) continue;
     const depth = Math.max(0, (b.depth ?? 0) + (dir === 'in' ? 1 : -1));
     d = setBlockType(d, b.id, { depth }).doc;
   }

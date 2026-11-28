@@ -661,6 +661,7 @@ export const en: Messages = {
     strike: 'Strikethrough',
     bulletList: 'Bullet list',
     orderedList: 'Numbered list',
+    checklist: 'Checklist',
     link: 'Link',
     emoji: 'Emoji',
     linkUrl: 'Link URL',

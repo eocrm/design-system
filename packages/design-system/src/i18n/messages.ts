@@ -1230,6 +1230,8 @@ export interface Messages {
     bulletList: string;
     /** aria-label on the numbered-list toggle button. */
     orderedList: string;
+    /** aria-label on the checklist toggle button; also the block menu's "Turn into" item. */
+    checklist: string;
     /** aria-label on the toolbar Link button. */
     link: string;
     /** Emoji-insert toolbar button. */

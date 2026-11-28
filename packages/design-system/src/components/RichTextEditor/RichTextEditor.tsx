@@ -18,6 +18,7 @@ import { UploadOwnerContext } from '../RichText/RichTextAttachment';
 import { RichTextPresenceOverlay } from './RichTextPresence';
 import { RichTextSyncStatus as SyncStatusArea } from './RichTextSyncStatus';
 import { renderDoc } from '../RichText/engine/renderDoc';
+import { isListItem } from '../RichText/engine/listDepths';
 import type { RenderLink } from '../RichText/engine/renderLink';
 import type { RenderMention } from '../RichText/engine/renderMention';
 import {
@@ -58,6 +59,7 @@ import {
   runSetBlock,
   runInsertDivider,
   runToggleList,
+  runToggleCheck,
   runIndent,
   applyExactMarks,
 } from './commands';
@@ -1603,6 +1605,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           onRedo();
           return;
         }
+        // A focused checklist checkbox owns its keys (Space toggles it natively);
+        // never run editor key handling against the text caret behind it.
+        if (e.target instanceof HTMLInputElement) return;
         const range = readSelection(root);
         if (!range) return;
         if (controlsOn) {
@@ -1697,8 +1702,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           return;
         }
 
-        const blockType = deriveCurrentBlock(value, range)?.type;
-        const inList = blockType === 'bullet_item' || blockType === 'ordered_item';
+        const current = deriveCurrentBlock(value, range);
+        const inList = !!current && isListItem(current);
 
         // Tab / Shift+Tab indent/outdent — only inside a list, so Tab still
         // moves focus out of the editor everywhere else (keyboard a11y).
@@ -1867,7 +1872,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (range) commit(runInsertDivider(latest.current.value, range), 'other');
     }, [commit]);
     const onToolbarToggleList = useCallback(
-      (listType: 'bullet_item' | 'ordered_item') => {
+      (listType: 'bullet_item' | 'ordered_item' | 'checklist_item') => {
         const root = rootRef.current;
         const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
         if (range) commit(runToggleList(latest.current.value, range, listType));
@@ -1925,7 +1930,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // block — choosing the block's current type is a no-op, never a revert.
         // List types carry depth 0; runSetBlock routes both through setBlockType.
         const patch =
-          choice.type === 'bullet_item' || choice.type === 'ordered_item'
+          choice.type === 'bullet_item' ||
+          choice.type === 'ordered_item' ||
+          choice.type === 'checklist_item'
             ? { type: choice.type, depth: 0 }
             : choice;
         commit(runSetBlock(v, range, patch), 'other');
@@ -1998,12 +2005,27 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       else if (action === 'remove') uploaderRef.current.remove(id);
     }, []);
 
-    // The rendered doc tree is a pure fn of (value, renderLink, renderMention) — it
-    // does NOT depend on selection/hover/focus. Memoize so the whole element tree is
-    // not rebuilt on selection/hover/focus re-renders that leave the doc unchanged.
+    // Checklist checkbox → flip `checked` as one undoable edit, keeping the caret
+    // where it was (else at the item's start).
+    const onToggleCheck = useCallback(
+      (id: string) => {
+        if (latest.current.readOnly) return;
+        const root = rootRef.current;
+        const selection = (root ? readSelection(root) : null) ??
+          lastSelectionRef.current ?? {
+            anchor: { blockId: id, offset: 0 },
+            focus: { blockId: id, offset: 0 },
+          };
+        commit({ doc: runToggleCheck(latest.current.value, id), selection }, 'other');
+      },
+      [commit],
+    );
+    // The rendered doc tree is a pure fn of (value, renderLink, renderMention,
+    // onToggleCheck) — it does NOT depend on selection/hover/focus. Memoize so the
+    // whole element tree is not rebuilt on selection/hover/focus re-renders that leave the doc unchanged.
     const content = useMemo(
-      () => renderDoc(value, { editable: true, renderLink, renderMention }),
-      [value, renderLink, renderMention],
+      () => renderDoc(value, { editable: true, renderLink, renderMention, onToggleCheck }),
+      [value, renderLink, renderMention, onToggleCheck],
     );
     // Signature of block order. `value.blocks` is a new array on every edit, so this
     // recomputes per keystroke (a cheap join) — but the STRING is unchanged while

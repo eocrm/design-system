@@ -2867,3 +2867,156 @@ describe('RichTextEditor divider', () => {
     expect(document.querySelector('[data-rte-resize-handle]')).toBeNull();
   });
 });
+
+describe('RichTextEditor checklist', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+  const caret = (blockId: string, offset: number) => ({
+    anchor: { blockId, offset },
+    focus: { blockId, offset },
+  });
+  function beforeInput(editor: HTMLElement, inputType: string, data: string | null = null) {
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: inputType });
+    Object.defineProperty(evt, 'data', { value: data });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    return evt;
+  }
+  function renderDoc(initial: RichDoc, props: Record<string, unknown> = {}) {
+    const docs: RichDoc[] = [];
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(initial);
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={(d) => {
+            docs.push(d);
+            setDoc(d);
+          }}
+          {...props}
+        />
+      );
+    }
+    renderEditor(<Harness />);
+    return { editor: screen.getByRole('textbox', { name: 'Rich text editor' }), docs };
+  }
+  const item = (id: string, text: string, extra: Partial<RichDoc['blocks'][number]> = {}) => ({
+    id,
+    type: 'checklist_item' as const,
+    depth: 0,
+    inlines: [{ text, marks: [] }],
+    ...extra,
+  });
+
+  it('"[x]" + space turns a paragraph into a checked checklist item', () => {
+    mockReadSelection.mockReturnValue(caret('k', 3));
+    const { editor, docs } = renderDoc({
+      blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: '[x]', marks: [] }] }],
+    });
+    beforeInput(editor, 'insertText', ' ');
+    expect(docs.at(-1)!.blocks[0]).toMatchObject({ type: 'checklist_item', checked: true });
+  });
+
+  it('the toolbar Checklist button toggles a paragraph to a checklist item and back', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(caret('k', 1));
+    const { docs } = renderDoc(
+      { blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'ab', marks: [] }] }] },
+      { toolbar: true },
+    );
+    await user.click(screen.getByRole('button', { name: 'Checklist' }));
+    expect(docs.at(-1)!.blocks[0]).toMatchObject({ type: 'checklist_item', depth: 0 });
+    expect(screen.getByRole('button', { name: 'Checklist' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await user.click(screen.getByRole('button', { name: 'Checklist' }));
+    expect(docs.at(-1)!.blocks[0].type).toBe('paragraph');
+  });
+
+  it('Turn into → Checklist sets a checklist item at depth 0', async () => {
+    const user = userEvent.setup();
+    const { editor, docs } = renderDoc(
+      { blocks: [{ id: 'a', type: 'paragraph', inlines: [{ text: 'one', marks: [] }] }] },
+      { blockControls: true },
+    );
+    await user.hover(editor.querySelector('[data-block-id="a"]') as HTMLElement);
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Turn into' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Checklist' }));
+    expect(docs.at(-1)!.blocks[0]).toMatchObject({ type: 'checklist_item', depth: 0 });
+  });
+
+  it('Enter at the end of a checked item creates an unchecked one', () => {
+    mockReadSelection.mockReturnValue(caret('a', 3));
+    const { editor, docs } = renderDoc({ blocks: [item('a', 'one', { checked: true })] });
+    beforeInput(editor, 'insertParagraph');
+    const [first, second] = docs.at(-1)!.blocks;
+    expect(first).toMatchObject({ type: 'checklist_item', checked: true });
+    expect(second).toMatchObject({ type: 'checklist_item', checked: false });
+  });
+
+  it('Enter on an empty checklist item exits to a paragraph', () => {
+    mockReadSelection.mockReturnValue(caret('a', 0));
+    const { editor, docs } = renderDoc({ blocks: [item('a', '')] });
+    fireEvent.keyDown(editor, { key: 'Enter' });
+    expect(docs.at(-1)!.blocks[0].type).toBe('paragraph');
+  });
+
+  it('Tab / Shift+Tab change a checklist item depth', () => {
+    mockReadSelection.mockReturnValue(caret('b', 0));
+    const { editor, docs } = renderDoc({ blocks: [item('a', 'one'), item('b', 'two')] });
+    fireEvent.keyDown(editor, { key: 'Tab' });
+    expect(docs.at(-1)!.blocks[1].depth).toBe(1);
+    fireEvent.keyDown(editor, { key: 'Tab', shiftKey: true });
+    expect(docs.at(-1)!.blocks[1].depth).toBe(0);
+  });
+
+  it('clicking the checkbox flips checked once, keeps focus; Ctrl+Z restores, caret stays in the block', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(caret('b', 1));
+    const onChange = vi.fn();
+    const initial: RichDoc = { blocks: [item('a', 'one'), item('b', 'two')] };
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(initial);
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={(d) => {
+            onChange(d);
+            setDoc(d);
+          }}
+        />
+      );
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    act(() => editor.focus());
+    await user.click(screen.getByRole('checkbox', { name: 'one' }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0].blocks[0].checked).toBe(true);
+    expect(screen.getByRole('checkbox', { name: 'one' })).toBeChecked();
+    expect(document.activeElement).toBe(editor);
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(onChange.mock.calls[1][0]).toEqual(initial);
+    expect(screen.getByRole('checkbox', { name: 'one' })).not.toBeChecked();
+    const anchor = document.getSelection()!.anchorNode;
+    const li = editor.querySelector('[data-block-id="b"]')!;
+    expect(anchor && li.contains(anchor)).toBe(true);
+  });
+
+  it('Space on the focused checkbox toggles it without inserting text', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(caret('a', 1));
+    const { docs } = renderDoc({ blocks: [item('a', 'one')] });
+    const box = screen.getByRole('checkbox', { name: 'one' });
+    act(() => box.focus());
+    await user.keyboard(' ');
+    expect(docs).toHaveLength(1);
+    expect(docs[0].blocks[0]).toMatchObject({ checked: true, inlines: [{ text: 'one' }] });
+  });
+});

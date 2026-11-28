@@ -8,6 +8,7 @@ import {
   runIndent,
   applyExactMarks,
   runInsertDivider,
+  runToggleCheck,
 } from './commands';
 import { createBlock } from '../RichText/engine/model';
 import type { RichDoc, Range, Inline } from '../RichText/engine/model';
@@ -208,6 +209,30 @@ describe('runners', () => {
     expect(out.doc.blocks[0].depth).toBe(0);
     const clamped = runIndent(out.doc, span(at('a', 0), at('a', 1)), 'out');
     expect(clamped.doc.blocks[0].depth).toBe(0);
+  });
+
+  it('runToggleList / runIndent handle checklist items', () => {
+    const doc: RichDoc = { blocks: [createBlock('paragraph', 'a', { id: 'a' })] };
+    const r = span(at('a', 0), at('a', 1));
+    const on = runToggleList(doc, r, 'checklist_item');
+    expect(on.doc.blocks[0]).toMatchObject({ type: 'checklist_item', depth: 0 });
+    expect(runIndent(on.doc, r, 'in').doc.blocks[0].depth).toBe(1);
+    const off = runToggleList(on.doc, r, 'checklist_item');
+    expect(off.doc.blocks[0].type).toBe('paragraph');
+  });
+
+  it('runToggleCheck flips checked on a checklist item; other blocks unchanged', () => {
+    const doc: RichDoc = {
+      blocks: [
+        createBlock('checklist_item', 'a', { id: 'a', depth: 0 }),
+        createBlock('paragraph', 'b', { id: 'b' }),
+      ],
+    };
+    const on = runToggleCheck(doc, 'a');
+    expect(on.blocks[0].checked).toBe(true);
+    expect(runToggleCheck(on, 'a').blocks[0].checked).toBe(false);
+    expect(runToggleCheck(doc, 'b')).toBe(doc);
+    expect(runToggleCheck(doc, 'missing')).toBe(doc);
   });
 });
 

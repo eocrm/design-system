@@ -70,6 +70,16 @@ export function OrderedListIcon() {
     </svg>
   );
 }
+export function ChecklistIcon() {
+  return (
+    <svg {...base}>
+      <rect x="3" y="4" width="5" height="5" rx="1" />
+      <path d="M3.5 17l1.5 1.5 3-3" />
+      <line x1="11" y1="6.5" x2="21" y2="6.5" />
+      <line x1="11" y1="17" x2="21" y2="17" />
+    </svg>
+  );
+}
 export function LinkIcon() {
   return (
     <svg {...base}>

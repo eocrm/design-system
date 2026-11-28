@@ -673,6 +673,7 @@ export const ru: Messages = {
     strike: 'Зачёркнутый',
     bulletList: 'Маркированный список',
     orderedList: 'Нумерованный список',
+    checklist: 'Чек-лист',
     link: 'Ссылка',
     emoji: 'Эмодзи',
     linkUrl: 'URL ссылки',

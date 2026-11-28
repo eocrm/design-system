@@ -425,7 +425,14 @@ function renderListTree(tag: ListTag, items: ListItemNode[], opts: ResolvedOptio
         return (
           <li key={it.key} {...anchor(it)}>
             {/* Editable: a non-editable widget outside the text span, so caret offsets skip it. */}
-            {opts.editable ? <span contentEditable={false}>{box}</span> : box}
+            {/* pointerdown preventDefault: a click toggles without moving the editor's caret/focus. */}
+            {opts.editable ? (
+              <span contentEditable={false} onPointerDown={(e) => e.preventDefault()}>
+                {box}
+              </span>
+            ) : (
+              box
+            )}
             <span id={`${it.block.id}-label`}>{it.content}</span>
             {it.children}
           </li>

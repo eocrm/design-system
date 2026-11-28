@@ -10,6 +10,7 @@ export interface BlockRuleChange {
   type: BlockType;
   level?: 1 | 2 | 3;
   depth?: number;
+  checked?: boolean;
 }
 export interface BlockRuleMatch {
   change: BlockRuleChange;
@@ -36,6 +37,12 @@ function changeFor(before: string): BlockRuleChange | null {
       return { type: 'code_block' };
     case '---':
       return { type: 'divider' };
+    case '[]':
+    case '[ ]':
+      return { type: 'checklist_item', depth: 0 };
+    case '[x]':
+    case '[X]':
+      return { type: 'checklist_item', depth: 0, checked: true };
     default:
       return /^\d+[.)]$/.test(before) ? { type: 'ordered_item', depth: 0 } : null;
   }
