@@ -2,7 +2,7 @@
 // is flat; this reconstructs list nesting from `depth` at render time.
 import { Fragment, type ReactElement, type ReactNode } from 'react';
 import type { RichDoc, Block, Inline, Mark, MarkType } from './model';
-import { runsText, runsLength } from './inlines';
+import { runsLength } from './inlines';
 import { safeHref } from './safeHref';
 import { textColorVar, bgColorVar } from './colorMarks';
 import { isListItem, effectiveDepths } from './listDepths';
@@ -10,6 +10,8 @@ import { MARK_ORDER, marksSignature } from './marks';
 import type { RenderLink } from './renderLink';
 import type { RenderMention } from './renderMention';
 import { RichTextAttachment, type RichTextImageActivateHandler } from '../RichTextAttachment';
+import { RichTextCodeBlock } from '../RichTextCodeBlock';
+import { useTranslation } from '../../../i18n';
 
 export interface RenderDocOptions {
   /** Editable surface: add `data-block-id` anchors + render empty blocks with a `<br>`. */
@@ -36,6 +38,12 @@ export interface RenderDocOptions {
    * activation (read-only viewer). Unset: the plain `<img>`, unchanged.
    */
   onImageActivate?: RichTextImageActivateHandler;
+  /**
+   * Make read-only checklist checkboxes operable: called with the item's block id
+   * and its NEW checked state. The consumer updates the doc (render stays
+   * controlled-by-value). Unset: read-only checkboxes are `disabled`.
+   */
+  onToggleCheck?: (blockId: string, checked: boolean) => void;
 }
 
 // Resolved options threaded through the render call chain (never module state).
@@ -44,6 +52,7 @@ interface ResolvedOptions {
   renderLink?: RenderLink;
   renderMention?: RenderMention;
   onImageActivate?: RichTextImageActivateHandler;
+  onToggleCheck?: (blockId: string, checked: boolean) => void;
 }
 
 // Per-block element cache for CONTEXT-INDEPENDENT blocks only (paragraph, heading,
@@ -57,7 +66,7 @@ interface ResolvedOptions {
 // stored entry: a change to `editable`/`renderLink`/`renderMention`/`onImageActivate` correctly
 // misses the cache and rebuilds.
 //
-// LIST items (bullet_item/ordered_item) are NEVER cached here: their nested
+// LIST items (bullet/ordered/checklist) are NEVER cached here: their nested
 // <ul>/<ol>/<li> shape depends on NEIGHBORS (grouping + relative depth), so a
 // sibling change can alter a list item's output while its own reference is
 // unchanged. They render fresh every time via collectList/renderListTree.
@@ -269,12 +278,14 @@ function buildBlock(block: Block, opts: ResolvedOptions): ReactElement {
         </blockquote>
       );
     case 'code_block':
-      return (
-        <pre key={block.id} {...anchor}>
-          <code>
-            {opts.editable && runsLength(block.inlines) === 0 ? <br /> : runsText(block.inlines)}
-          </code>
-        </pre>
+      return <RichTextCodeBlock key={block.id} block={block} editable={opts.editable} />;
+    case 'divider':
+      return opts.editable ? (
+        <figure key={block.id} {...anchor} contentEditable={false}>
+          <hr />
+        </figure>
+      ) : (
+        <hr key={block.id} />
       );
     case 'attachment':
       return (
@@ -308,11 +319,43 @@ function renderBlock(block: Block, opts: ResolvedOptions): ReactElement {
   return cachedBlockEl(block, opts, () => buildBlock(block, opts));
 }
 
+type ListTag = 'ul' | 'ol' | 'checklist';
+
 interface ListItemNode {
   key: string;
-  blockId: string;
+  block: Block;
   content: ReactNode;
-  child: ReactNode | null;
+  // Usually one nested list; two or more when the nested run switches type
+  // to/from checklist at the same depth.
+  children: ReactNode[];
+}
+
+const isChecklist = (block: Block) => block.type === 'checklist_item';
+
+// The checklist checkbox: named by the item's text span (fallback: i18n label when
+// empty). Read-only without `onToggleCheck` it is disabled — visible, not operable.
+function ChecklistBox({
+  block,
+  labelled,
+  opts,
+}: {
+  block: Block;
+  labelled: boolean;
+  opts: ResolvedOptions;
+}) {
+  const t = useTranslation();
+  const checked = block.checked === true;
+  return (
+    <input
+      type="checkbox"
+      checked={checked}
+      disabled={!opts.editable && !opts.onToggleCheck}
+      onChange={() => opts.onToggleCheck?.(block.id, !checked)}
+      {...(labelled
+        ? { 'aria-labelledby': `${block.id}-label` }
+        : { 'aria-label': t('richText.checklistItem') })}
+    />
+  );
 }
 
 // Collect a list starting at `start`, at its base (effective) depth; items one
@@ -324,9 +367,10 @@ function collectList(
   start: number,
   eff: number[],
   opts: ResolvedOptions,
-): { tag: 'ul' | 'ol'; items: ListItemNode[]; next: number } {
+): { tag: ListTag; items: ListItemNode[]; next: number } {
   const baseDepth = eff[start];
-  const tag = blocks[start].type === 'ordered_item' ? 'ol' : 'ul';
+  const checklist = isChecklist(blocks[start]);
+  const tag = checklist ? 'checklist' : blocks[start].type === 'ordered_item' ? 'ol' : 'ul';
   const items: ListItemNode[] = [];
   let i = start;
   while (i < blocks.length && isListItem(blocks[i])) {
@@ -335,32 +379,59 @@ function collectList(
     if (d > baseDepth) {
       const sub = collectList(blocks, i, eff, opts);
       if (items.length > 0)
-        items[items.length - 1].child = renderListTree(sub.tag, sub.items, opts);
+        items[items.length - 1].children.push(
+          <Fragment key={blocks[i].id}>{renderListTree(sub.tag, sub.items, opts)}</Fragment>,
+        );
       i = sub.next;
       continue;
     }
+    // A switch to/from checklist at the base depth closes this list (GFM: an
+    // interrupted ordered run restarts at 1). Bullet/ordered mixing is unchanged.
+    if (isChecklist(blocks[i]) !== checklist) break;
     items.push({
       key: blocks[i].id,
-      blockId: blocks[i].id,
+      block: blocks[i],
       content: blockContent(blocks[i], opts),
-      child: null,
+      children: [],
     });
     i += 1;
   }
   return { tag, items, next: i };
 }
 
-function renderListTree(tag: 'ul' | 'ol', items: ListItemNode[], opts: ResolvedOptions): ReactNode {
-  const ListTag = tag;
+function renderListTree(tag: ListTag, items: ListItemNode[], opts: ResolvedOptions): ReactNode {
+  const anchor = (it: ListItemNode) => (opts.editable ? { 'data-block-id': it.block.id } : {});
+  if (tag !== 'checklist') {
+    const Tag = tag;
+    return (
+      <Tag>
+        {items.map((it) => (
+          <li key={it.key} {...anchor(it)}>
+            {it.content}
+            {it.children}
+          </li>
+        ))}
+      </Tag>
+    );
+  }
+  // The label id is `${blockId}-label`: unique within a document, but two surfaces
+  // rendering the SAME doc on one page share ids (same text, so the name still holds).
   return (
-    <ListTag>
-      {items.map((it) => (
-        <li key={it.key} {...(opts.editable ? { 'data-block-id': it.blockId } : {})}>
-          {it.content}
-          {it.child}
-        </li>
-      ))}
-    </ListTag>
+    <ul data-type="checklist">
+      {items.map((it) => {
+        const box = (
+          <ChecklistBox block={it.block} labelled={runsLength(it.block.inlines) > 0} opts={opts} />
+        );
+        return (
+          <li key={it.key} {...anchor(it)}>
+            {/* Editable: a non-editable widget outside the text span, so caret offsets skip it. */}
+            {opts.editable ? <span contentEditable={false}>{box}</span> : box}
+            <span id={`${it.block.id}-label`}>{it.content}</span>
+            {it.children}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -368,7 +439,7 @@ function renderListTree(tag: 'ul' | 'ol', items: ListItemNode[], opts: ResolvedO
  * Render a `RichDoc` to React nodes.
  *
  * Blocks map to semantic elements (`<p>`, `<h1|h2|h3>`, `<blockquote>`,
- * `<pre><code>`). Consecutive list-item blocks are grouped back into `<ul>`/`<ol>`
+ * `<pre><code>`, `<hr>`). Consecutive list-item blocks are grouped back into `<ul>`/`<ol>`
  * trees, with nesting reconstructed from each item's `depth` (the flat model is
  * lossy-free: depths are normalized gap-free first, so malformed depth jumps
  * never drop items). Inline runs render as nested mark tags in a deterministic
@@ -385,6 +456,7 @@ export function renderDoc(doc: RichDoc, options: RenderDocOptions = {}): ReactNo
     renderLink: options.renderLink,
     renderMention: options.renderMention,
     onImageActivate: options.onImageActivate,
+    onToggleCheck: options.onToggleCheck,
   };
   const eff = effectiveDepths(doc.blocks);
   const out: ReactNode[] = [];

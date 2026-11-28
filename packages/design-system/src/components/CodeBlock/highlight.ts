@@ -21,19 +21,8 @@ export interface CodeToken {
 
 export const LANGUAGE_LABELS: Record<CodeBlockLanguage, string> = CODE_LANGUAGE_LABELS;
 
-// ponytail: grammar allow-list stays the original 10 until Task 3 registers the new Prism grammars.
-const HIGHLIGHTABLE = new Set([
-  'json',
-  'bash',
-  'javascript',
-  'typescript',
-  'python',
-  'go',
-  'kotlin',
-  'java',
-  'csharp',
-  'rust',
-]);
+// Every `CodeBlockLanguage`: Prism bundles all but bash/java/csharp/php (registered below); `html` is Prism's markup alias.
+const HIGHLIGHTABLE = new Set<string>(Object.keys(CODE_LANGUAGE_LABELS));
 
 // prism-react-renderer ships no bash grammar; register a small one once.
 // Prism is a shared singleton: any consumer of the same prism-react-renderer instance sees it.
@@ -99,6 +88,23 @@ if (!Prism.languages.csharp) {
       greedy: true,
       alias: 'builtin',
     },
+  });
+}
+
+// Nor PHP: clike plus `$variables`, `#` comments and the `<?php` / `?>` delimiters.
+if (!Prism.languages.php) {
+  Prism.languages.php = Prism.languages.extend('clike', {
+    keyword:
+      /\b(?:abstract|and|array|as|break|callable|case|catch|class|clone|const|continue|declare|default|do|echo|else|elseif|empty|enum|extends|final|finally|fn|for|foreach|function|global|goto|if|implements|include|include_once|instanceof|insteadof|interface|isset|list|match|namespace|new|null|or|print|private|protected|public|readonly|require|require_once|return|static|switch|throw|trait|try|unset|use|var|while|xor|yield)\b/i,
+    comment: [
+      { pattern: /(^|[^\\])\/\*[\s\S]*?\*\//, lookbehind: true, greedy: true },
+      { pattern: /(^|[^\\:])(?:\/\/|#(?!\[)).*/, lookbehind: true, greedy: true },
+    ],
+    string: { pattern: /"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'/, greedy: true },
+  });
+  Prism.languages.insertBefore('php', 'keyword', {
+    delimiter: { pattern: /<\?(?:php|=)?|\?>/i, alias: 'important' },
+    variable: /\$+\w+/,
   });
 }
 

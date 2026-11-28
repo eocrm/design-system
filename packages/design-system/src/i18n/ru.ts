@@ -644,6 +644,7 @@ export const ru: Messages = {
   },
   richText: {
     openImage: ({ name }) => (name ? `Открыть изображение: ${name}` : 'Открыть изображение'),
+    checklistItem: 'Пункт чек-листа',
   },
   richTextEditor: {
     synced: 'Синхронизировано',

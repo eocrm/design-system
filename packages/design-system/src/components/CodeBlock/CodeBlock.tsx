@@ -1,17 +1,8 @@
-import {
-  Fragment,
-  forwardRef,
-  useEffect,
-  useId,
-  useMemo,
-  useState,
-  type HTMLAttributes,
-} from 'react';
+import { Fragment, forwardRef, useId, useMemo, useState, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
-import { Check, Copy, WrapText, X } from 'lucide-react';
+import { WrapText } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { Button } from '../Button';
-import { LiveRegion } from '../LiveRegion';
 import { Tabs } from '../Tabs';
 import { Tooltip } from '../Tooltip';
 import {
@@ -20,6 +11,7 @@ import {
   tokenizeLines,
   type CodeBlockLanguage,
 } from './highlight';
+import { CopyCodeButton } from './CopyCodeButton';
 import { resolveActiveSample, setSynced, useSyncedSample } from './sampleSync';
 import styles from './CodeBlock.module.scss';
 
@@ -49,7 +41,8 @@ export interface CodeBlockProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ti
   /**
    * Single-sample mode: grammar for highlighting — `'json'`, `'bash'`,
    * `'javascript'`, `'typescript'`, `'python'`, `'go'`, `'kotlin'`, `'java'`,
-   * `'csharp'` or `'rust'` (aliases `sh`, `shell`, `js`, `ts`, `py`, `golang`,
+   * `'csharp'`, `'rust'`, `'php'`, `'sql'`, `'yaml'`, `'html'`, `'css'` or
+   * `'markdown'` (aliases `sh`, `shell`, `js`, `ts`, `py`, `golang`,
    * `kt`, `kts`, `cs`, `c#`, `rs`). Anything else renders as plain text.
    */
   language?: CodeBlockLanguage | (string & {});
@@ -93,8 +86,6 @@ const MAX_HEIGHT_CLASS: Record<CodeBlockMaxHeight, string> = {
   xl: styles.maxXl,
 };
 
-const COPIED_MS = 1500;
-
 /**
  * Syntax-highlighted code sample with copy, wrap toggle and optional language tabs.
  * @see docs/components/CodeBlock.md
@@ -122,8 +113,6 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
   const prefix = useId().replace(/[^a-zA-Z0-9_-]/g, '_');
   const [localPick, setLocalPick] = useState<string>();
   const [wrap, setWrap] = useState(defaultWrap);
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
-  const [copyCount, setCopyCount] = useState(0);
   const synced = useSyncedSample(syncKey);
 
   const list: readonly CodeBlockSample[] = samples?.length
@@ -147,27 +136,6 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
     (lang && Object.hasOwn(LANGUAGE_LABELS, lang)
       ? LANGUAGE_LABELS[lang as CodeBlockLanguage]
       : t('codeBlock.plainText'));
-
-  // Keyed on copyCount so a re-click restarts the window; cleanup also clears on unmount.
-  useEffect(() => {
-    if (copyStatus === 'idle') return;
-    const id = setTimeout(() => setCopyStatus('idle'), COPIED_MS);
-    return () => clearTimeout(id);
-  }, [copyStatus, copyCount]);
-
-  const copy = async () => {
-    const text = active.code;
-    let ok = true;
-    try {
-      // Called synchronously inside the click so the user-activation gate holds;
-      // a missing `navigator.clipboard` throws here and lands in the catch.
-      await navigator.clipboard.writeText(text);
-    } catch {
-      ok = false;
-    }
-    setCopyStatus(ok ? 'copied' : 'failed');
-    setCopyCount((n) => n + 1);
-  };
 
   const pick = (id: string) => {
     setLocalPick(id);
@@ -207,35 +175,9 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
               <WrapText aria-hidden="true" />
             </Button>
           </Tooltip>
-          <Tooltip
-            content={copyStatus === 'failed' ? t('codeBlock.copyFailed') : t('codeBlock.copy')}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              iconOnly
-              aria-label={t('codeBlock.copy')}
-              onClick={copy}
-            >
-              {copyStatus === 'copied' ? (
-                <Check aria-hidden="true" />
-              ) : copyStatus === 'failed' ? (
-                <X aria-hidden="true" />
-              ) : (
-                <Copy aria-hidden="true" />
-              )}
-            </Button>
-          </Tooltip>
+          <CopyCodeButton text={active.code} />
         </div>
       </div>
-      {/* Always mounted (Rule 10): the copy outcome is announced, the button keeps its name. */}
-      <LiveRegion announceKey={copyCount}>
-        {copyStatus === 'copied'
-          ? t('codeBlock.copied')
-          : copyStatus === 'failed'
-            ? t('codeBlock.copyFailed')
-            : null}
-      </LiveRegion>
       <pre
         className={clsx(styles.body, wrap && styles.wrap, maxHeight && MAX_HEIGHT_CLASS[maxHeight])}
         // Always a tab stop: wrap-off lines overflow horizontally, and APG gives

@@ -1180,6 +1180,8 @@ export interface Messages {
     /** Function leaf — aria-label on an inline-image trigger (`onImageActivate`).
      * `name` is the image's alt, else its file name; may be empty. */
     openImage: (params: { name: string }) => string;
+    /** Accessible name of a checklist checkbox whose item text is empty. */
+    checklistItem: string;
   };
   richTextEditor: {
     /** Status indicator text: every change has reached the app's transport. */

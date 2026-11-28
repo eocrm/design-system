@@ -1,5 +1,9 @@
 // _prose.scss — shared rich-text prose styling. Applied via the `prose()` mixin
 // so <RichText> (read-only) and <RichTextEditor> render identically. Tokens only.
+// Divider and CodeBlock tokens are reused (their :root blocks emit here too).
+@use '../Divider/Divider.tokens';
+@use '../CodeBlock/CodeBlock.tokens';
+
 @mixin prose {
   display: flex;
   flex-direction: column;
@@ -45,6 +49,52 @@
     overflow-x: auto;
     font-family: var(--font-family-mono);
     font-size: var(--font-size-sm);
+  }
+
+  // Read-only code block: <pre> plus the Copy button in a top-end column.
+  :where([data-code-block]) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    padding-block-start: var(--space-1);
+    padding-inline-end: var(--space-1);
+    background: var(--color-bg-muted);
+    border-radius: var(--radius-md);
+  }
+
+  :where([data-code-block] > pre) {
+    padding-block-start: var(--space-2);
+    background: none;
+  }
+
+  // Lazy highlight tokens (useHighlight) — CodeBlock's syntax colours, AA on both themes.
+  @each $key in keyword, string, number, comment, function, property, punctuation {
+    :where([data-token='#{$key}']) {
+      color: var(--code-block-syntax-#{$key});
+    }
+  }
+
+  :where([data-token='comment']) {
+    font-style: italic;
+  }
+
+  :where(hr) {
+    border: 0;
+    border-block-start: var(--border-width) solid var(--divider-fg);
+  }
+
+  // Checkbox column + text column; a nested list sits under the text (internal
+  // grid placement of the prose's own children, not the component's outer layout).
+  :where([data-type='checklist'] > li) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--space-2);
+    align-items: baseline;
+    list-style: none;
+  }
+
+  :where([data-type='checklist'] > li > :is(ul, ol)) {
+    grid-column: 2;
   }
 
   :where(code) {

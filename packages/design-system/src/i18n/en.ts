@@ -634,6 +634,7 @@ export const en: Messages = {
   },
   richText: {
     openImage: ({ name }) => (name ? `Open image: ${name}` : 'Open image'),
+    checklistItem: 'Checklist item',
   },
   richTextEditor: {
     synced: 'Synced',

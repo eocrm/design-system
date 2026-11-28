@@ -39,7 +39,7 @@ it('highlightedLineSet normalises reversed ranges and ignores out-of-range', () 
   expect(highlightedLineSet(undefined, 6).size).toBe(0);
 });
 
-it.each(['ruby', 'sql', 'extend', 'constructor', '__proto__'])(
+it.each(['ruby', 'cobol', 'extend', 'constructor', '__proto__'])(
   'language %s is not on the allow-list → plain',
   (lang) => {
     expect(tokenizeLines('let a = 1;\nb', lang)).toEqual([
@@ -121,4 +121,25 @@ it('C# raw and @$ strings stay one string token', () => {
   expect(lines[1]).toEqual([{ content: '  { "a": 1 }', key: 'string' }]);
   const [v] = tokenizeLines('var p = @$"C:\\{dir}";', 'csharp');
   expect(v.find((t) => t.key === 'string')?.content).toBe('@$"C:\\{dir}"');
+});
+
+it.each([
+  ['php', '<?php $name = "hi"; echo $name;'],
+  ['sql', "SELECT id FROM users WHERE name = 'a';"],
+  ['yaml', 'name: "app"\nport: 8080'],
+  ['html', '<a href="/x">link</a>'],
+  ['css', '.a { color: red; }'],
+  ['markdown', '# Title\n\n**bold**'],
+])('%s is highlightable (DS-104)', (lang, src) => {
+  expect(
+    tokenizeLines(src, lang)
+      .flat()
+      .some((t) => t.key !== 'plain'),
+  ).toBe(true);
+});
+it('php: variables and strings get their own keys', () => {
+  const [line] = tokenizeLines('$a = "x"; // note', 'php');
+  expect(line.find((t) => t.content === '$a')?.key).toBe('property');
+  expect(line.some((t) => t.key === 'string')).toBe(true);
+  expect(line.some((t) => t.key === 'comment')).toBe(true);
 });
