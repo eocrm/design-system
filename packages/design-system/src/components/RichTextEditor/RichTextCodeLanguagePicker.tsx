@@ -1,9 +1,12 @@
-// RichTextCodeLanguagePicker.tsx — the compact language Select shown on the code
-// block holding the caret. Rendered right after the editable (not portaled) so
-// Escape → Tab out of the code block lands on it; Floating UI pins it inside the
-// block's top-end corner. Presentational; internal, not exported from the package.
+// RichTextCodeLanguagePicker.tsx — the compact language menu shown on the code
+// block holding the caret. Its trigger renders right after the editable (not
+// portaled) so Escape → Tab out of the code block lands on it; Floating UI pins it
+// inside the block's top-end corner. DropdownMenu (already in the editor bundle via
+// the toolbar) rather than Select keeps the bundle lean; radio items give
+// menuitemradio/aria-checked. Presentational; internal, not exported from the package.
 import { useLayoutEffect, useMemo } from 'react';
-import { Select } from '../Select';
+import { Button } from '../Button';
+import { DropdownMenu } from '../DropdownMenu';
 import { useTranslation } from '../../i18n';
 import { CODE_LANGUAGES } from '../RichText/engine/codeLanguage';
 import { CODE_LANGUAGE_LABELS } from '../CodeBlock/languages';
@@ -37,7 +40,7 @@ export function RichTextCodeLanguagePicker({
   const t = useTranslation();
   // Anchor to the block's TOP edge only and drop below it (never flipped): the
   // picker sits in the strip the editor reserves at the top of every editable
-  // code block (`.root:not(.readOnly) pre`, sized to this offset + Select sm), so
+  // code block (`.root:not(.readOnly) pre`, sized to this offset + Button sm), so
   // it never covers text and never moves while the block grows.
   const getAnchorRect = useMemo(
     () => () => {
@@ -64,6 +67,7 @@ export function RichTextCodeLanguagePicker({
     language && !options.some((o) => o.value === language)
       ? [...options, { value: language, label: language }]
       : options;
+  const current = all.find((o) => o.value === (language ?? ''))!;
   return (
     <div
       ref={refs.setFloating}
@@ -76,13 +80,27 @@ export function RichTextCodeLanguagePicker({
         if (!to || !e.currentTarget.contains(to)) onFocusLeave(to);
       }}
     >
-      <Select
-        size="sm"
-        options={all}
-        value={language ?? ''}
-        aria-label={t('richTextEditor.codeLanguage')}
-        onChange={(v) => onChange((v as string) || undefined)}
-      />
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button size="sm" variant="secondary" aria-label={t('richTextEditor.codeLanguage')}>
+            {current.label}
+          </Button>
+        </DropdownMenu.Trigger>
+        {/* Portaled: the marker keeps focus inside the open menu "in the picker"
+            (the editor would otherwise unmount it on focus leave). */}
+        <DropdownMenu.Content data-rte-code-language="" align="end">
+          <DropdownMenu.RadioGroup
+            value={language ?? ''}
+            onValueChange={(v) => onChange(v || undefined)}
+          >
+            {all.map((o) => (
+              <DropdownMenu.RadioItem key={o.value} value={o.value}>
+                {o.label}
+              </DropdownMenu.RadioItem>
+            ))}
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>
     </div>
   );
 }

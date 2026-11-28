@@ -42,7 +42,9 @@ function inlineRun(run: Inline): string {
 function blockMd(block: Block, depth: number): string {
   if (block.type === 'divider') return '---';
   if (block.type === 'code_block') {
-    return '```' + (block.language ?? '') + '\n' + runsText(block.inlines) + '\n```';
+    // Info string clamped to [\w+#.-]: a stored backtick/newline can't break the fence.
+    const info = (block.language ?? '').replace(/[^\w+#.-]/g, '');
+    return '```' + info + '\n' + runsText(block.inlines) + '\n```';
   }
   if (block.type === 'attachment') {
     // Only finalized attachments serialize; in-flight/failed uploads emit nothing.

@@ -1,4 +1,4 @@
-import { matchInlineCode, applyInlineCode } from './inlineCodeRule';
+import { matchInlineCode, applyInlineCode, matchInlineCodeAt } from './inlineCodeRule';
 import type { RichDoc } from '../RichText/engine/model';
 
 describe('matchInlineCode', () => {
@@ -42,5 +42,34 @@ describe('applyInlineCode', () => {
       anchor: { blockId: 'p', offset: 3 },
       focus: { blockId: 'p', offset: 3 },
     });
+  });
+});
+
+describe('matchInlineCodeAt', () => {
+  const para = (inlines: RichDoc['blocks'][number]['inlines']): RichDoc => ({
+    blocks: [{ id: 'p', type: 'paragraph', inlines }],
+  });
+  it('matches a plain `x being closed', () => {
+    expect(
+      matchInlineCodeAt(para([{ text: 'a `b', marks: [] }]), { blockId: 'p', offset: 4 }),
+    ).toEqual({ start: 2, end: 5 });
+  });
+  it('skips when the typed text would be code (caret inside a code run)', () => {
+    // "x `y z" all code: typing ` after "z" stays a literal backtick in the code.
+    const doc = para([{ text: 'x `y z', marks: [{ type: 'code' }] }]);
+    expect(matchInlineCodeAt(doc, { blockId: 'p', offset: 6 })).toBeNull();
+  });
+  it('skips when the opening backtick sits inside a code run', () => {
+    const doc = para([
+      { text: 'a `b', marks: [{ type: 'code' }] },
+      { text: ' c', marks: [] },
+    ]);
+    expect(matchInlineCodeAt(doc, { blockId: 'p', offset: 6 })).toBeNull();
+  });
+  it('ignores code blocks', () => {
+    const doc: RichDoc = {
+      blocks: [{ id: 'p', type: 'code_block', inlines: [{ text: 'a `b', marks: [] }] }],
+    };
+    expect(matchInlineCodeAt(doc, { blockId: 'p', offset: 4 })).toBeNull();
   });
 });

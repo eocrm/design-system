@@ -71,8 +71,8 @@ export function useMention<T extends { id: string } = MentionItem>(
 ): UseMentionResult<T> {
   const { enabled, rootRef, doc, trigger, onQuery, canOpen, onInsert } = params;
   const baseId = useId();
-  const listboxId = `${baseId}-mention-listbox`;
-  const getOptionId = useCallback((index: number) => `${baseId}-mention-opt-${index}`, [baseId]);
+  const listboxId = `${baseId}-listbox`;
+  const getOptionId = useCallback((index: number) => `${baseId}-opt-${index}`, [baseId]);
 
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<T[]>([]);

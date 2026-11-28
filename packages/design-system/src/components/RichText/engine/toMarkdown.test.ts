@@ -183,4 +183,12 @@ describe('toMarkdown — wave-2 blocks', () => {
     };
     expect(toMarkdown(doc)).toBe('---\n\n- [x] Buy milk\n  - [ ] Sub\n\n```foo\nx\n```');
   });
+
+  it('clamps the fence info string to [\\w+#.-] (no backtick / newline escape)', () => {
+    const fence = (language: string) =>
+      toMarkdown({ blocks: [createBlock('code_block', 'x', { language })] });
+    expect(fence('c++')).toBe('```c++\nx\n```');
+    expect(fence('js```\n# pwn')).toBe('```js#pwn\nx\n```');
+    expect(fence('`\n ')).toBe('```\nx\n```');
+  });
 });

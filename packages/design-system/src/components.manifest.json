@@ -930,7 +930,6 @@
       "LiveRegion",
       "Popover",
       "RichText",
-      "Select",
       "Slider",
       "Stack",
       "Text",
@@ -969,8 +968,7 @@
     "composedBy": [
       "CurrencySelect",
       "PhoneInput",
-      "RelativeDateInput",
-      "RichTextEditor"
+      "RelativeDateInput"
     ]
   },
   "SettingRow": {

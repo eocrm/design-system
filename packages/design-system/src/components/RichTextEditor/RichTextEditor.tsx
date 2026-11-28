@@ -2,6 +2,7 @@ import {
   forwardRef,
   useCallback,
   useEffect,
+  useId,
   useImperativeHandle,
   useLayoutEffect,
   useMemo,
@@ -58,7 +59,7 @@ import { useFloatingSurface } from '../_internal/overlay';
 import { readSelection, writeSelection, rangeRect, voidCaretSide, blockOwnText } from './selection';
 import { applyInput, voidDelete } from './input';
 import { matchBlockRule, applyBlockRule } from './inputRules';
-import { matchInlineCode, applyInlineCode } from './inlineCodeRule';
+import { matchInlineCodeAt, applyInlineCode } from './inlineCodeRule';
 import { RichTextCodeLanguagePicker } from './RichTextCodeLanguagePicker';
 import { runsText } from '../RichText/engine/inlines';
 import { isLetterKey } from '../_internal/letterKey';
@@ -642,10 +643,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       setEscapeArmedState(armed);
     }, []);
     const [editableFocused, setEditableFocused] = useState(false);
-    // While the focused caret sits in a code block (where Tab is captured), the
-    // first Escape is the editor's (it arms Tab-out), so register as a floating
-    // surface: a host Modal/Drawer yields that press and closes on the next one.
-    useFloatingSurface(editableFocused && codeBlockId != null && !escapeArmed && !readOnly);
+    const [caretInList, setCaretInList] = useState(false);
+    // While the focused caret sits in a code block or list item (where Tab is
+    // captured), the first Escape is the editor's (it arms Tab-out), so register as a
+    // floating surface: a host Modal/Drawer yields that press and closes on the next one.
+    useFloatingSurface(
+      editableFocused && (codeBlockId != null || caretInList) && !escapeArmed && !readOnly,
+    );
     const [blockMenuOpen, setBlockMenuOpen] = useState(false);
     // Mirror the open state into a ref so the hover listener can read it without
     // re-subscribing: while the menu is open, hovering another block must NOT move
@@ -1109,7 +1113,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     });
     const recomputeSlash = slash.recompute;
     const slashEmptyId = `${slash.listboxId}-empty`;
-    // The open menu (mention or slash — their trigger contexts never overlap).
+    // The open menu; slash wins. Both can open only with `mentions.trigger: '/'`
+    // plus `slashMenu` — unsupported, the docs anti-pattern covers it.
     const triggerAria = slash.open
       ? { controls: slash.listboxId, active: slash.activeOptionId ?? slashEmptyId }
       : mention.open
@@ -1332,19 +1337,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // Inline code: a closing backtick after `text converts it (backticks dropped)
         // as one undo step. Typing then continues outside the code.
         if (e.inputType === 'insertText' && e.data === '`' && isCollapsed(range)) {
-          const block = doc.blocks.find((b) => b.id === range.anchor.blockId);
-          if (block && block.type !== 'code_block' && block.inlines) {
-            const text = runsText(block.inlines);
-            const o = range.anchor.offset;
-            const m = matchInlineCode(`${text.slice(0, o)}\`${text.slice(o)}`, o + 1);
-            if (m) {
-              e.preventDefault();
-              const r = applyInlineCode(doc, range.anchor, m);
-              commit(r, 'other');
-              pendingAtRef.current = r.selection.anchor;
-              setPendingMarks(withoutMark(marksForTypedText(r.doc, r.selection.anchor), 'code'));
-              return;
-            }
+          const m = matchInlineCodeAt(doc, range.anchor);
+          if (m) {
+            e.preventDefault();
+            const r = applyInlineCode(doc, range.anchor, m);
+            commit(r, 'other');
+            pendingAtRef.current = r.selection.anchor;
+            setPendingMarks(withoutMark(marksForTypedText(r.doc, r.selection.anchor), 'code'));
+            return;
           }
         }
         // Autolink on type: typing a space after a URL links the URL AND inserts the
@@ -1553,6 +1553,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           const inCode = b?.type === 'code_block' && sel.anchor.blockId === sel.focus.blockId;
           if (inCode) codeSelRef.current = sel;
           setCodeBlockId(inCode ? b.id : null);
+          setCaretInList(!!b && isListItem(b));
         }
         if (toolbarOn) {
           setSelection(sel);
@@ -1813,7 +1814,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             slash.move(e.key === 'ArrowDown' ? 1 : -1);
             return;
           }
-          if ((e.key === 'Enter' || e.key === 'Tab') && slash.items.length > 0) {
+          // Plain Enter/Tab only: a modified Enter (Mod+Enter toggles a checklist item)
+          // must never pick an item.
+          const pick = (e.key === 'Enter' || e.key === 'Tab') && !mod && !e.shiftKey;
+          if (pick && slash.items.length > 0) {
             e.preventDefault();
             slash.commitActive();
             return;
@@ -1837,7 +1841,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             mention.move(-1);
             return;
           }
-          if (e.key === 'Enter' || e.key === 'Tab') {
+          if ((e.key === 'Enter' || e.key === 'Tab') && !mod && !e.shiftKey) {
             e.preventDefault();
             mention.commitActive();
             return;
@@ -1868,6 +1872,28 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
         const current = deriveCurrentBlock(value, range);
         const inList = !!current && isListItem(current);
+
+        // Mod+Enter toggles the checklist item(s) in the selection — the keyboard
+        // route (Tab indents, so the checkbox is never reached by Tab). Every item
+        // gets the same new state: the inverse of the first item's. Never while a
+        // menu is open (the menu owns Enter there).
+        if (mod && !e.shiftKey && !e.altKey && e.key === 'Enter' && !slash.open && !mention.open) {
+          const a = value.blocks.findIndex((b) => b.id === range.anchor.blockId);
+          const f = value.blocks.findIndex((b) => b.id === range.focus.blockId);
+          const items = value.blocks
+            .slice(Math.min(a, f), Math.max(a, f) + 1)
+            .filter((b) => b.type === 'checklist_item');
+          if (a !== -1 && f !== -1 && items.length > 0) {
+            e.preventDefault();
+            const target = items[0].checked !== true;
+            const doc = items.reduce(
+              (d, b) => ((b.checked === true) === target ? d : runToggleCheck(d, b.id)),
+              value,
+            );
+            commit({ doc, selection: range }, 'other');
+            return;
+          }
+        }
 
         // Tab in a code block: two spaces at a caret, else indent the selected
         // lines; Shift+Tab outdents. Escape → Tab (above) is the way out.
@@ -2206,7 +2232,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           { doc: runSetCodeLanguage(latest.current.value, codeBlockId, language), selection },
           'other',
         );
-        rootRef.current?.focus();
+        // After the menu's own close, which refocuses its trigger synchronously.
+        queueMicrotask(() => rootRef.current?.focus());
       },
       [commit, codeBlockId],
     );
@@ -2229,16 +2256,18 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // The rendered doc tree is a pure fn of (value, renderLink, renderMention,
     // onToggleCheck) — it does NOT depend on selection/hover/focus. Memoize so the
     // whole element tree is not rebuilt on selection/hover/focus re-renders that leave the doc unchanged.
+    const idPrefix = useId();
     const content = useMemo(
       () =>
         renderDoc(value, {
           editable: true,
+          idPrefix,
           renderLink,
           renderMention,
           // readOnly: no handler → the checkbox renders disabled (state visible, not operable).
           onToggleCheck: readOnly ? undefined : onToggleCheck,
         }),
-      [value, renderLink, renderMention, onToggleCheck, readOnly],
+      [value, renderLink, renderMention, onToggleCheck, readOnly, idPrefix],
     );
     // Signature of block order. `value.blocks` is a new array on every edit, so this
     // recomputes per keystroke (a cheap join) — but the STRING is unchanged while
@@ -2291,15 +2320,17 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // `focused` is only tracked for `toolbar="auto"` (gates the bar's visibility).
         // `editableFocused` gates the code-block Escape surface; blur also hides the
         // picker and, like a mousedown, drops a stale Escape arm.
-        onFocus={() => {
+        onFocus={(e) => {
           if (autoToolbar) setFocused(true);
           setEditableFocused(true);
+          rest.onFocus?.(e);
         }}
         onBlur={(e) => {
           if (autoToolbar) setFocused(false);
           setEditableFocused(false);
           setEscapeArmed(false);
           onCodeFocusLeave(e.relatedTarget as Element | null);
+          rest.onBlur?.(e);
         }}
         onMouseDown={(e) => {
           setEscapeArmed(false);

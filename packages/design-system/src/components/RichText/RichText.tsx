@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes } from 'react';
+import { forwardRef, useId, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import type { RichDoc } from './engine/model';
 import { renderDoc } from './engine/renderDoc';
@@ -83,6 +83,7 @@ export const RichText = forwardRef<HTMLDivElement, RichTextProps>(function RichT
   },
   ref,
 ) {
+  const idPrefix = useId();
   // {...props} last so the consumer can override anything except the composed
   // className and style (Pattern A — consumer wins).
   return (
@@ -92,7 +93,7 @@ export const RichText = forwardRef<HTMLDivElement, RichTextProps>(function RichT
       style={imageMaxHeightStyle(imageMaxHeight, style)}
       {...props}
     >
-      {renderDoc(value, { renderLink, renderMention, onImageActivate, onToggleCheck })}
+      {renderDoc(value, { renderLink, renderMention, onImageActivate, onToggleCheck, idPrefix })}
     </div>
   );
 });

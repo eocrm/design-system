@@ -257,6 +257,23 @@ describe('RichText — code blocks and checklists (DS-99/104)', () => {
     expect(onToggleCheck).toHaveBeenCalledWith('k1', true);
   });
 
+  it('two documents with colliding block ids name each checkbox from its own text', () => {
+    const mk = (text: string): RichDoc => ({
+      blocks: [createBlock('checklist_item', text, { id: 'rt1' })],
+    });
+    const { container } = render(
+      <>
+        <RichText value={mk('First doc')} />
+        <RichText value={mk('Second doc')} />
+      </>,
+    );
+    const boxes = screen.getAllByRole('checkbox');
+    expect(boxes[0]).toHaveAccessibleName('First doc');
+    expect(boxes[1]).toHaveAccessibleName('Second doc');
+    const ids = [...container.querySelectorAll('[id]')].map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
   it('Review Focus 5: a rejected highlight import leaves plain code and throws nothing', async () => {
     vi.resetModules();
     vi.doMock('../CodeBlock/highlight', () => {

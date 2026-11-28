@@ -59,6 +59,19 @@ describe('RichTextEditor', () => {
     expect(screen.getByRole('textbox')).toHaveAttribute('contenteditable', 'false');
   });
 
+  it('forwards consumer onFocus / onBlur on the editable', () => {
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    renderEditor(
+      <RichTextEditor value={emptyDoc()} onChange={() => {}} onFocus={onFocus} onBlur={onBlur} />,
+    );
+    const box = screen.getByRole('textbox');
+    fireEvent.focus(box);
+    fireEvent.blur(box);
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(onBlur).toHaveBeenCalledTimes(1);
+  });
+
   it('forwards ref and merges className', () => {
     const ref = { current: null as HTMLDivElement | null };
     const { container } = renderEditor(
@@ -2799,13 +2812,18 @@ describe('RichTextEditor divider', () => {
     expect(evt.defaultPrevented).toBe(true);
     expect(types(docs.at(-1)!)).toEqual(['divider', 'paragraph']);
     expect(editor.querySelector('figure hr')).not.toBeNull();
+    // One undo right after the rule restores the typed "---" paragraph.
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(docs.at(-1)!.blocks).toMatchObject([{ type: 'paragraph', inlines: [{ text: '---' }] }]);
+    fireEvent.keyDown(editor, { key: 'y', code: 'KeyY', ctrlKey: true });
+    expect(types(docs.at(-1)!)).toEqual(['divider', 'paragraph']);
     const after = docs.at(-1)!.blocks[1];
     // Backspace at the start of the following paragraph deletes the divider.
     mockReadSelection.mockReturnValue(caret(after.id, 0));
     beforeInput(editor, 'deleteContentBackward');
     expect(types(docs.at(-1)!)).toEqual(['paragraph']);
     expect(editor.querySelector('hr')).toBeNull();
-    // One undo restores it.
+    // Undo restores it.
     fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
     expect(types(docs.at(-1)!)).toEqual(['divider', 'paragraph']);
   });
@@ -3015,6 +3033,79 @@ describe('RichTextEditor checklist', () => {
     expect(screen.getByRole('checkbox', { name: 'one' })).toBeDisabled();
   });
 
+  it('Ctrl+Enter in a checklist item toggles it as one undoable edit', () => {
+    mockReadSelection.mockReturnValue(caret('a', 1));
+    const { editor, docs } = renderDoc({ blocks: [item('a', 'one')] });
+    fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+    expect(docs).toHaveLength(1);
+    expect(docs[0].blocks[0]).toMatchObject({ checked: true, inlines: [{ text: 'one' }] });
+    fireEvent.keyDown(editor, { key: 'Enter', metaKey: true });
+    expect(docs.at(-1)!.blocks[0].checked).toBe(false);
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(docs.at(-1)!.blocks[0].checked).toBe(true);
+  });
+
+  it('Ctrl+Enter over several items sets each to the inverse of the first', () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'a', offset: 1 },
+      focus: { blockId: 'c', offset: 1 },
+    });
+    const { editor, docs } = renderDoc({
+      blocks: [
+        item('a', 'one'),
+        { id: 'p', type: 'paragraph', inlines: [{ text: 'mid', marks: [] }] },
+        item('b', 'two', { checked: true }),
+        item('c', 'three'),
+      ],
+    });
+    fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+    expect(docs).toHaveLength(1);
+    expect(docs[0].blocks.map((b) => b.checked)).toEqual([true, undefined, true, true]);
+  });
+
+  it('Ctrl+Enter outside a checklist item, or in a readOnly editor, changes nothing', () => {
+    mockReadSelection.mockReturnValue(caret('a', 1));
+    const ro = renderDoc({ blocks: [item('a', 'one')] }, { readOnly: true });
+    fireEvent.keyDown(ro.editor, { key: 'Enter', ctrlKey: true });
+    expect(ro.docs).toEqual([]);
+  });
+
+  it('Ctrl+Enter / Shift+Enter with the mention menu open neither toggle nor pick', async () => {
+    mockReadSelection.mockReturnValue(caret('a', 2));
+    const onQuery = () => Promise.resolve([{ id: 'u1', label: 'Alice' }]);
+    const { editor, docs } = renderDoc({ blocks: [item('a', '@a')] }, { mentions: { onQuery } });
+    await screen.findByRole('option', { name: /Alice/ });
+    fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+    fireEvent.keyDown(editor, { key: 'Enter', shiftKey: true });
+    expect(docs).toEqual([]);
+    expect(editor.querySelector('[data-mention-id]')).toBeNull();
+  });
+
+  it('Ctrl+Enter / Shift+Enter with the slash menu open do not pick an item', async () => {
+    mockReadSelection.mockReturnValue(caret('p', 1));
+    const { editor, docs } = renderDoc(
+      { blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: '/', marks: [] }] }] },
+      { slashMenu: true },
+    );
+    await screen.findByRole('listbox', { name: 'Insert block' });
+    fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
+    fireEvent.keyDown(editor, { key: 'Enter', shiftKey: true });
+    expect(docs).toEqual([]);
+  });
+
+  it('two editors over the same doc get unique checklist label ids', () => {
+    const doc: RichDoc = { blocks: [item('a', 'one')] };
+    const { container } = renderEditor(
+      <>
+        <RichTextEditor value={doc} onChange={() => {}} />
+        <RichTextEditor value={doc} onChange={() => {}} />
+      </>,
+    );
+    const ids = [...container.querySelectorAll('[id]')].map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const box of screen.getAllByRole('checkbox')) expect(box).toHaveAccessibleName('one');
+  });
+
   it('Space on the focused checkbox toggles it without inserting text', async () => {
     const user = userEvent.setup();
     mockReadSelection.mockReturnValue(caret('a', 1));
@@ -3066,21 +3157,54 @@ describe('RichTextEditor code (DS-104)', () => {
   const selectionChange = () => act(() => document.dispatchEvent(new Event('selectionchange')));
   const text = (d: RichDoc, i = 0) => d.blocks[i].inlines.map((r) => r.text).join('');
 
-  it('the language picker sets the language in one undo step', async () => {
+  it('mouse: the language menu sets the language in one undo step; focus returns to the editor', async () => {
     const user = userEvent.setup();
     mockReadSelection.mockReturnValue(sel('c', 1));
     const { editor, docs } = renderDoc(code('x = 1'));
     act(() => editor.focus());
     selectionChange();
-    const picker = screen.getByRole('combobox', { name: 'Code language' });
+    const picker = screen.getByRole('button', { name: 'Code language' });
     expect(picker).toHaveTextContent('Plain text');
+    expect(picker).toHaveAttribute('aria-haspopup', 'menu');
     await user.click(picker);
-    await user.click(await screen.findByRole('option', { name: 'Python' }));
+    expect(await screen.findByRole('menuitemradio', { name: 'Plain text' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await user.click(screen.getByRole('menuitemradio', { name: 'Python' }));
     expect(docs.at(-1)!.blocks[0].language).toBe('python');
     expect(docs).toHaveLength(1);
+    await waitFor(() => expect(document.activeElement).toBe(editor));
+    expect(screen.queryByRole('menu')).toBeNull();
     fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
     expect(docs).toHaveLength(2);
     expect(docs.at(-1)!.blocks[0].language).toBeUndefined();
+  });
+
+  it('keyboard: Escape, Tab, Enter, ArrowDown, Enter picks a language and refocuses the editor', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 1));
+    const { editor, docs } = renderDoc(code('x = 1', 'python'));
+    act(() => editor.focus());
+    selectionChange();
+    const picker = screen.getByRole('button', { name: 'Code language' });
+    expect(picker).toHaveTextContent('Python');
+    await user.keyboard('{Escape}{Tab}');
+    expect(document.activeElement).toBe(picker);
+    await user.keyboard('{Enter}');
+    // The open menu keeps the picker mounted although focus is in the portaled menu.
+    const first = await screen.findByRole('menuitemradio', { name: 'Plain text' });
+    await waitFor(() => expect(document.activeElement).toBe(first));
+    expect(screen.getByRole('menuitemradio', { name: 'Python' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await user.keyboard('{ArrowDown}');
+    expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: 'JavaScript' }));
+    await user.keyboard('{Enter}');
+    expect(docs).toHaveLength(1);
+    expect(docs[0].blocks[0].language).toBe('javascript');
+    await waitFor(() => expect(document.activeElement).toBe(editor));
   });
 
   it('shows no picker outside a code block or in a readOnly editor', () => {
@@ -3088,14 +3212,14 @@ describe('RichTextEditor code (DS-104)', () => {
     const { editor } = renderDoc(code('x'));
     act(() => editor.focus());
     selectionChange();
-    expect(screen.queryByRole('combobox', { name: 'Code language' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Code language' })).toBeNull();
   });
 
   it('readOnly: no picker even with the caret in a code block', () => {
     mockReadSelection.mockReturnValue(sel('c', 0));
     renderDoc(code('x'), { readOnly: true });
     selectionChange();
-    expect(screen.queryByRole('combobox', { name: 'Code language' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Code language' })).toBeNull();
   });
 
   it('Tab inserts two spaces, Shift+Tab outdents; Escape then Tab leaves the editor', async () => {
@@ -3207,9 +3331,59 @@ describe('RichTextEditor code block inside a Modal (DS-104)', () => {
     await user.keyboard('{Escape}');
     expect(onOpenChange).not.toHaveBeenCalled();
     await user.keyboard('{Tab}');
-    expect(document.activeElement).toBe(screen.getByRole('combobox', { name: 'Code language' }));
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Code language' }));
     // Back in the editor: blur cleared the arm, so Escape is the editor's again.
     act(() => editor.focus());
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('Escape inside the open language menu closes only the menu, not the Modal', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 0));
+    const onOpenChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [{ id: 'c', type: 'code_block', inlines: [{ text: 'ab', marks: [] }] }],
+    };
+    renderEditor(
+      <Modal open onOpenChange={onOpenChange} aria-label="Dialog">
+        <Modal.Body>
+          <RichTextEditor value={doc} onChange={() => {}} />
+        </Modal.Body>
+      </Modal>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    await act(async () => {});
+    act(() => editor.focus());
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    await user.keyboard('{Escape}{Tab}{Enter}');
+    await screen.findByRole('menu');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Code language' }));
+  });
+
+  it('in a list item too, the first Escape stays with the editor; the next closes the Modal', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('l', 0));
+    const onOpenChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [{ id: 'l', type: 'bullet_item', depth: 0, inlines: [{ text: 'ab', marks: [] }] }],
+    };
+    renderEditor(
+      <Modal open onOpenChange={onOpenChange} aria-label="Dialog">
+        <Modal.Body>
+          <RichTextEditor value={doc} onChange={() => {}} />
+        </Modal.Body>
+      </Modal>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    await act(async () => {});
+    act(() => editor.focus());
+    act(() => document.dispatchEvent(new Event('selectionchange')));
     await user.keyboard('{Escape}');
     expect(onOpenChange).not.toHaveBeenCalled();
     await user.keyboard('{Escape}');

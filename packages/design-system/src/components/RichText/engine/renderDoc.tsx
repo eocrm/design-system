@@ -44,6 +44,13 @@ export interface RenderDocOptions {
    * controlled-by-value). Unset: checkboxes are `disabled` (read-only or editable).
    */
   onToggleCheck?: (blockId: string, checked: boolean) => void;
+  /**
+   * Prefix for the DOM ids this render generates (checklist label ids become
+   * `${idPrefix}-${blockId}-label`). Block ids repeat across documents, so a page
+   * rendering several docs passes a per-surface value (e.g. from `useId()`).
+   * Unset: `${blockId}-label`.
+   */
+  idPrefix?: string;
 }
 
 // Resolved options threaded through the render call chain (never module state).
@@ -53,7 +60,11 @@ interface ResolvedOptions {
   renderMention?: RenderMention;
   onImageActivate?: RichTextImageActivateHandler;
   onToggleCheck?: (blockId: string, checked: boolean) => void;
+  idPrefix?: string;
 }
+
+const labelId = (block: Block, opts: ResolvedOptions) =>
+  opts.idPrefix ? `${opts.idPrefix}-${block.id}-label` : `${block.id}-label`;
 
 // Per-block element cache for CONTEXT-INDEPENDENT blocks only (paragraph, heading,
 // blockquote, code_block, attachment). The model is immutable: a block keeps its
@@ -352,7 +363,7 @@ function ChecklistBox({
       disabled={!opts.onToggleCheck}
       onChange={() => opts.onToggleCheck?.(block.id, !checked)}
       {...(labelled
-        ? { 'aria-labelledby': `${block.id}-label` }
+        ? { 'aria-labelledby': labelId(block, opts) }
         : { 'aria-label': t('richText.checklistItem') })}
     />
   );
@@ -414,8 +425,7 @@ function renderListTree(tag: ListTag, items: ListItemNode[], opts: ResolvedOptio
       </Tag>
     );
   }
-  // The label id is `${blockId}-label`: unique within a document, but two surfaces
-  // rendering the SAME doc on one page share ids (same text, so the name still holds).
+  // Label ids are unique per document; `idPrefix` keeps them unique across surfaces.
   return (
     <ul data-type="checklist">
       {items.map((it) => {
@@ -433,7 +443,7 @@ function renderListTree(tag: ListTag, items: ListItemNode[], opts: ResolvedOptio
             ) : (
               box
             )}
-            <span id={`${it.block.id}-label`}>{it.content}</span>
+            <span id={labelId(it.block, opts)}>{it.content}</span>
             {it.children}
           </li>
         );
@@ -466,6 +476,7 @@ export function renderDoc(doc: RichDoc, options: RenderDocOptions = {}): ReactNo
     renderMention: options.renderMention,
     onImageActivate: options.onImageActivate,
     onToggleCheck: options.onToggleCheck,
+    idPrefix: options.idPrefix,
   };
   const eff = effectiveDepths(doc.blocks);
   const out: ReactNode[] = [];

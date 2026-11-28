@@ -1295,7 +1295,7 @@
           "type": "CodeBlockLanguage | (string & {})",
           "required": false,
           "default": "",
-          "description": "Single-sample mode: grammar for highlighting — `'json'`, `'bash'`,\n`'javascript'`, `'typescript'`, `'python'`, `'go'`, `'kotlin'`, `'java'`,\n`'csharp'` or `'rust'` (aliases `sh`, `shell`, `js`, `ts`, `py`, `golang`,\n`kt`, `kts`, `cs`, `c#`, `rs`). Anything else renders as plain text."
+          "description": "Single-sample mode: grammar for highlighting — `'json'`, `'bash'`,\n`'javascript'`, `'typescript'`, `'python'`, `'go'`, `'kotlin'`, `'java'`,\n`'csharp'`, `'rust'`, `'php'`, `'sql'`, `'yaml'`, `'html'`, `'css'` or\n`'markdown'` (aliases `sh`, `shell`, `js`, `ts`, `py`, `golang`,\n`kt`, `kts`, `cs`, `c#`, `rs`). Anything else renders as plain text."
         },
         {
           "name": "title",
@@ -6134,6 +6134,13 @@
           "required": false,
           "default": "",
           "description": "Make inline images keyboard-operable triggers (e.g. to open a `Lightbox`).\nWhen set, each ready image attachment renders inside a native\n`<button type=\"button\">` named \"Open image: <alt or file name>\"; click,\nEnter and Space focus the button, then call this with `{ src, alt }` and\nit — so an overlay that restores focus on close (e.g. `Lightbox`) returns there. Unset: the plain `<img>`, unchanged.\nPass a stable reference (`useCallback`): a new function each render\nrebuilds every attachment block."
+        },
+        {
+          "name": "onToggleCheck",
+          "type": "((blockId: string, checked: boolean) => void)",
+          "required": false,
+          "default": "",
+          "description": "Make checklist checkboxes operable. Called with the item's block id and its\nNEW checked state; update `value` yourself (RichText stays controlled-by-value,\nso the box snaps back if you don't). Unset: checkboxes are `disabled` — the\nstate shows but can't be changed."
         }
       ]
     },
@@ -6193,7 +6200,7 @@
           "type": "boolean | \"auto\"",
           "required": false,
           "default": "",
-          "description": "Render the built-in formatting toolbar above the editor — Undo/Redo buttons,\nmark toggle buttons (bold/italic/underline/strike), a block-type dropdown\n(paragraph/headings/quote/code), and bullet/numbered list toggles. The\ntoolbar dispatches through the same commit path the keyboard uses and\nreflects the active marks + current block of the live selection. Default\n`false` (keyboard-only). When `readOnly`, the toolbar renders disabled.\n\n`'auto'` shows the toolbar only when the editor is **focused or non-empty**,\nand keeps it shown while the editor's own overlays (the link editor / mention\nmenu) are open — so opening the link editor on a focused-but-empty composer\ndoesn't collapse the bar. The editable is NOT remounted as the bar appears or\nhides (the bar toggles in a stable shell), so there's no focus/selection loss.\nUse it for a compact, focus-gated composer (e.g. a comment box) instead of\nhand-rolling the show-on-focus logic and working around overlay focus theft."
+          "description": "Render the built-in formatting toolbar above the editor — Undo/Redo buttons,\nmark toggle buttons (bold/italic/underline/strike/inline code), a block-type\ndropdown (paragraph/headings/quote/code/divider), and bullet/numbered/checklist\nlist toggles. The\ntoolbar dispatches through the same commit path the keyboard uses and\nreflects the active marks + current block of the live selection. Default\n`false` (keyboard-only). When `readOnly`, the toolbar renders disabled.\n\n`'auto'` shows the toolbar only when the editor is **focused or non-empty**,\nand keeps it shown while the editor's own overlays (the link editor / mention\nmenu / slash menu) are open — so opening the link editor on a focused-but-empty composer\ndoesn't collapse the bar. The editable is NOT remounted as the bar appears or\nhides (the bar toggles in a stable shell), so there's no focus/selection loss.\nUse it for a compact, focus-gated composer (e.g. a comment box) instead of\nhand-rolling the show-on-focus logic and working around overlay focus theft."
         },
         {
           "name": "mentions",
@@ -6201,6 +6208,13 @@
           "required": false,
           "default": "",
           "description": "Enable `@`-mention autocomplete. Supply `onQuery` to resolve candidates for\nthe text typed after the trigger (default `@`); the editor renders a floating\ncombobox and inserts a styled mention chip carrying the chosen item's `id`.\nOmit to disable mentions. See {@link MentionsConfig}."
+        },
+        {
+          "name": "slashMenu",
+          "type": "boolean | RichTextSlashMenuOption",
+          "required": false,
+          "default": "false",
+          "description": "Enable the `/` insert menu: typing `/` at the start of a paragraph or heading\n(or after a space) opens a filterable list of blocks — paragraph, headings,\nquote, code, lists, checklist, divider, and image/file when `upload` is set.\nArrow keys move, Enter picks, Escape closes and keeps the typed text. Picking\nan item (plus removing the typed `/query`) is one undo step. Pass\n`{ items: (defaults) => [...] }` to filter, reorder or add items (e.g. templates\nthat call `api.insertBlocks`). Off by default; never opens in code blocks,\nread-only editors or during IME composition. See {@link SlashItem}."
         },
         {
           "name": "autolink",
@@ -6312,14 +6326,14 @@
           "type": "(() => void)",
           "required": false,
           "default": "",
-          "description": "Fires after the editor committed an IME composition: apply outside changes held during it."
+          "description": "Fires after the editor committed an IME composition (and its `onChange`): if remote changes\narrived during it, rebuild the doc once from your shared state now and pass it as `value`."
         },
         {
           "name": "presence",
           "type": "readonly RichTextPresence[]",
           "required": false,
           "default": "",
-          "description": "Other users in a shared doc: drawn as carets with a name flag and selection tints in each\nuser's colour (hidden from assistive tech), and named in the status area's accessible text\n(\"2 others editing: …\", one per `id`). Leave out the local user. Setting it (or `syncStatus`)\nwraps the editable in a root element that holds the overlay and status, so set it from the\nfirst render (`[]` while nobody else is there): switching it between `undefined` and set\nremounts the editable when neither `toolbar` nor `blockControls` already wraps it."
+          "description": "Other users in a shared doc: drawn as carets with a name flag and selection tints in each\nuser's colour (hidden from assistive tech), and named in the status area's accessible text\n(\"2 others editing: …\", one per `id` with a non-empty name; nameless peers are drawn but\nnot counted). Leave out the local user. Setting it (or `syncStatus`)\nwraps the editable in a root element that holds the overlay and status, so set it from the\nfirst render (`[]` while nobody else is there): switching it between `undefined` and set\nremounts the editable when neither `toolbar` nor `blockControls` already wraps it."
         },
         {
           "name": "syncStatus",
@@ -8425,6 +8439,7 @@
     "RichTextSyncStatus": "\"offline\" | \"synced\" | \"connecting\"",
     "RichTextUploadOwner": "\"mine\" | \"theirs\" | \"orphaned\"",
     "MentionsConfig": "{ onQuery: (query: string) => MentionItem[] | Promise<MentionItem[]>; trigger?: string }",
+    "RichTextSlashMenuOption": "{ items?: ((defaults: SlashItem[]) => SlashItem[]) }",
     "UploadConfig": "{ onUpload: (file: File) => Promise<UploadResult>; accept?: string; onUploadingChange?: ((uploading: boolean) => void) }",
     "FileEntry": "{ id: string; file: File; status: \"error\" | \"done\" | \"pending\" | \"uploading\"; progress?: number; error?: string }",
     "FileRejectReason": "\"invalid-type\" | \"too-large\" | \"too-many\" | \"duplicate\" | \"custom\"",
@@ -8462,7 +8477,7 @@
     "CodeBlockSample": "{ id: string; label: string; code: string; language?: CodeBlockLanguage | (string & {}) }",
     "CodeBlockHighlightLines": "readonly (number | readonly [number, number])[]",
     "CodeBlockMaxHeight": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\"",
-    "CodeBlockLanguage": "\"json\" | \"bash\" | \"javascript\" | \"typescript\" | \"python\" | \"go\" | \"kotlin\" | \"java\" | \"csharp\" | \"rust\"",
+    "CodeBlockLanguage": "\"html\" | \"json\" | \"bash\" | \"javascript\" | \"typescript\" | \"python\" | \"go\" | \"kotlin\" | \"java\" | \"csharp\" | \"rust\" | \"php\" | \"sql\" | \"yaml\" | \"css\" | \"markdown\"",
     "DiffViewMaxHeight": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\"",
     "HighlightRange": "{ start: number; length: number }",
     "RichTextImageActivateHandler": "(image: { src: string; alt?: string; }, trigger: HTMLElement) => void",

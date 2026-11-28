@@ -34,7 +34,7 @@
 }
 
 // DS-104: a permanent strip at the top of every editable code block holds the
-// language picker (offset --space-1 + Select sm height + the same gap below), so
+// language picker (offset --space-1 + Button sm height + the same gap below), so
 // the picker never covers code and nothing shifts as the caret enters or leaves.
 .root:not(.readOnly) pre {
   padding-block-start: calc(var(--size-sm) + 2 * var(--space-1));
@@ -334,5 +334,4 @@
 // Rule 4 note as `.linkBubble`: `min-width` sizes the overlay, not page layout.
 .codeLanguagePicker {
   z-index: var(--z-overlay-floating);
-  min-width: var(--size-dropdown-min-width);
 }
