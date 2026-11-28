@@ -164,6 +164,32 @@ export function HighlightIcon() {
   );
 }
 
+export function QuoteIcon() {
+  return (
+    <svg {...base}>
+      <line x1="5" y1="5" x2="5" y2="19" />
+      <line x1="10" y1="8" x2="20" y2="8" />
+      <line x1="10" y1="16" x2="17" y2="16" />
+    </svg>
+  );
+}
+export function DividerIcon() {
+  return (
+    <svg {...base}>
+      <line x1="3" y1="12" x2="21" y2="12" />
+    </svg>
+  );
+}
+export function ImageIcon() {
+  return (
+    <svg {...base}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="1.5" />
+      <path d="m21 16-5-5-9 9" />
+    </svg>
+  );
+}
+
 // Lives in RichText because RichTextAttachment — which renders in the read-only
 // viewer too — needs it, and RichText must not import from RichTextEditor
 // (#509). Re-exported here so the toolbar's import site is unchanged.

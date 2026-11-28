@@ -1,33 +1,36 @@
 // useMention.ts — menu-state hook for RichTextEditor @-mention autocomplete.
 // Owns context detection (driven by the editor's selection/content cycle), async
 // querying with stale-drop, and the active-index for keyboard navigation. DOM
-// glue only; the pure decision lives in mentionContext.ts.
+// glue only; the pure decision lives in mentionContext.ts. Generic over the item
+// type so the slash menu (useSlashMenu) reuses the same trigger/open/anchor state.
 import { useCallback, useId, useRef, useState } from 'react';
-import type { RichDoc, Range } from '../RichText/engine/model';
+import type { Block, RichDoc, Range } from '../RichText/engine/model';
 import { runsText } from '../RichText/engine/inlines';
 import { isCollapsed } from '../RichText/engine/position';
 import { selectionRect, type Rect } from './selection';
 import { getMentionContext } from './mentionContext';
 import type { MentionItem } from './mentions';
 
-export interface UseMentionParams {
+export interface UseMentionParams<T extends { id: string } = MentionItem> {
   enabled: boolean;
   rootRef: React.RefObject<HTMLElement | null>;
   doc: RichDoc;
   trigger: string;
-  onQuery?: (query: string) => MentionItem[] | Promise<MentionItem[]>;
+  onQuery?: (query: string) => T[] | Promise<T[]>;
+  /** Extra gate read on every recompute (block type, IME): false keeps the menu closed. */
+  canOpen?: (block: Block) => boolean;
   /** Perform the insertion (editor wires this to commit(insertMention(...))). */
   onInsert: (
     blockId: string,
     range: { from: number; to: number },
     trigger: string,
-    item: MentionItem,
+    item: T,
   ) => void;
 }
 
-export interface UseMentionResult {
+export interface UseMentionResult<T extends { id: string } = MentionItem> {
   open: boolean;
-  items: MentionItem[];
+  items: T[];
   activeIndex: number;
   anchorRect: Rect | null;
   /**
@@ -52,6 +55,8 @@ export interface UseMentionResult {
   selectIndex: (index: number) => void;
   commitActive: () => void;
   close: () => void;
+  /** Close and stay closed while the caret remains in this same trigger context (Escape). */
+  dismiss: () => void;
 }
 
 /** True when two Rect values are equal (avoids spurious re-renders). */
@@ -61,14 +66,16 @@ function rectEqual(a: Rect | null, b: Rect | null): boolean {
   return a.top === b.top && a.left === b.left && a.width === b.width && a.height === b.height;
 }
 
-export function useMention(params: UseMentionParams): UseMentionResult {
-  const { enabled, rootRef, doc, trigger, onQuery, onInsert } = params;
+export function useMention<T extends { id: string } = MentionItem>(
+  params: UseMentionParams<T>,
+): UseMentionResult<T> {
+  const { enabled, rootRef, doc, trigger, onQuery, canOpen, onInsert } = params;
   const baseId = useId();
   const listboxId = `${baseId}-mention-listbox`;
   const getOptionId = useCallback((index: number) => `${baseId}-mention-opt-${index}`, [baseId]);
 
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<MentionItem[]>([]);
+  const [items, setItems] = useState<T[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [anchorRect, setAnchorRect] = useState<Rect | null>(null);
 
@@ -87,6 +94,10 @@ export function useMention(params: UseMentionParams): UseMentionResult {
   const docRef = useRef(doc);
   const triggerRef = useRef(trigger);
   const onQueryRef = useRef(onQuery);
+  const canOpenRef = useRef(canOpen);
+  canOpenRef.current = canOpen;
+  // `blockId:triggerOffset` of a context the user dismissed (Escape).
+  const dismissedRef = useRef<string | null>(null);
   enabledRef.current = enabled;
   docRef.current = doc;
   triggerRef.current = trigger;
@@ -102,12 +113,25 @@ export function useMention(params: UseMentionParams): UseMentionResult {
     queryToken.current += 1; // invalidate any in-flight query
   }, []);
 
+  const dismiss = useCallback(() => {
+    const ctx = ctxRef.current;
+    dismissedRef.current = ctx && `${ctx.blockId}:${ctx.from}`;
+    close();
+  }, [close]);
+
   const runQuery = useCallback(
     (query: string) => {
       const qFn = onQueryRef.current;
       if (!qFn) return;
       const token = (queryToken.current += 1);
-      Promise.resolve(qFn(query)).then(
+      const out = qFn(query);
+      // A sync result applies now (no empty-menu flash for the slash menu's filter).
+      if (Array.isArray(out)) {
+        setItems(out);
+        setActiveIndex(0);
+        return;
+      }
+      Promise.resolve(out).then(
         (resolved) => {
           if (token !== queryToken.current) return; // stale
           setItems(resolved);
@@ -147,7 +171,9 @@ export function useMention(params: UseMentionParams): UseMentionResult {
       const text = runsText(block.inlines);
       const trig = triggerRef.current;
       const ctx = getMentionContext(text, sel.anchor.offset, trig);
-      if (!ctx) {
+      const key = ctx && `${block.id}:${ctx.triggerOffset}`;
+      if (key !== dismissedRef.current) dismissedRef.current = null;
+      if (!ctx || key === dismissedRef.current || canOpenRef.current?.(block) === false) {
         if (openRef.current) close();
         return;
       }
@@ -222,5 +248,6 @@ export function useMention(params: UseMentionParams): UseMentionResult {
     selectIndex,
     commitActive,
     close,
+    dismiss,
   };
 }

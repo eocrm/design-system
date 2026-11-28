@@ -42,6 +42,14 @@ import {
 import { linkifyRuns, findUrl } from '../RichText/engine/autolink';
 import { useMention } from './useMention';
 import { RichTextMentionMenu } from './RichTextMentionMenu';
+import { useSlashMenu } from './useSlashMenu';
+import { RichTextSlashMenu } from './RichTextSlashMenu';
+import {
+  applySlashItem,
+  defaultSlashItems,
+  type RichTextSlashMenuOption,
+  type SlashItem,
+} from './slashItems';
 import type { MentionItem, MentionsConfig } from './mentions';
 import { fromHtml } from '../RichText/engine/fromHtml';
 import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
@@ -269,6 +277,18 @@ export interface RichTextEditorProps extends Omit<
    */
   mentions?: MentionsConfig;
   /**
+   * Enable the `/` insert menu: typing `/` at the start of a paragraph or heading
+   * (or after a space) opens a filterable list of blocks — paragraph, headings,
+   * quote, code, lists, checklist, divider, and image/file when `upload` is set.
+   * Arrow keys move, Enter picks, Escape closes and keeps the typed text. Picking
+   * an item (plus removing the typed `/query`) is one undo step. Pass
+   * `{ items: (defaults) => [...] }` to filter, reorder or add items (e.g. templates
+   * that call `api.insertBlocks`). Off by default; never opens in code blocks,
+   * read-only editors or during IME composition. See {@link SlashItem}.
+   * @default false
+   */
+  slashMenu?: boolean | RichTextSlashMenuOption;
+  /**
    * Turn typed and pasted URLs into links automatically. While typing, a URL is
    * linked when you type a space after it; on paste, plain-text URLs are linked
    * (a single bare URL pasted over a selection links the selection). Default
@@ -455,6 +475,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       toolbar = false,
       blockControls = false,
       mentions,
+      slashMenu = false,
       autolink = true,
       renderLink,
       renderMention,
@@ -1048,6 +1069,52 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     });
     const recomputeMention = mention.recompute;
 
+    // `/` insert menu. Items rebuild when the prop/locale/upload change (cheap).
+    const slashOn = !!slashMenu && !readOnly;
+    const slashItems = useMemo(() => {
+      const defaults = defaultSlashItems({ t, hasUpload: !!upload });
+      return typeof slashMenu === 'object' && slashMenu.items
+        ? slashMenu.items(defaults)
+        : defaults;
+    }, [slashMenu, t, upload]);
+    // Open the upload picker; `image` narrows the dialog to images unless `upload.accept` is set.
+    const openPicker = useCallback((kind?: 'image' | 'file') => {
+      const input = uploadInputRef.current;
+      if (!input) return;
+      const accept = latest.current.upload?.accept;
+      input.accept = accept ?? (kind === 'image' ? 'image/*' : '');
+      input.click();
+    }, []);
+    const runSlashItem = useCallback(
+      (blockId: string, range: { from: number; to: number }, item: SlashItem) => {
+        const { result, upload: kind } = applySlashItem(
+          latest.current.value,
+          { blockId, ...range },
+          item,
+        );
+        commit(result, 'other');
+        clearPendingMarks();
+        if (kind) openPicker(kind);
+      },
+      [commit, clearPendingMarks, openPicker],
+    );
+    const slash = useSlashMenu({
+      enabled: slashOn,
+      rootRef,
+      doc: value,
+      items: slashItems,
+      isComposing: () => isComposingRef.current,
+      onRun: runSlashItem,
+    });
+    const recomputeSlash = slash.recompute;
+    const slashEmptyId = `${slash.listboxId}-empty`;
+    // The open menu (mention or slash — their trigger contexts never overlap).
+    const triggerAria = slash.open
+      ? { controls: slash.listboxId, active: slash.activeOptionId ?? slashEmptyId }
+      : mention.open
+        ? { controls: mention.listboxId, active: mention.activeOptionId }
+        : null;
+
     // Shared by the keyboard shortcut and the toolbar: with a collapsed caret,
     // stage a pending mark for the next typed text (remembering where); with a
     // selection, toggle the mark over it now.
@@ -1515,6 +1582,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           }
         }
         if (mentionsEnabled) recomputeMention(sel);
+        if (slashOn) recomputeSlash(sel);
       };
       document.addEventListener('selectionchange', onSelChange);
       return () => document.removeEventListener('selectionchange', onSelChange);
@@ -1523,8 +1591,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       readOnly,
       controlsOn,
       mentionsEnabled,
+      slashOn,
       blockIdFromNode,
       recomputeMention,
+      recomputeSlash,
       clearPendingMarks,
     ]);
 
@@ -1539,6 +1609,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       const root = rootRef.current;
       recomputeMention(root ? readSelection(root) : null);
     }, [mentionsEnabled, mentions?.trigger, recomputeMention]);
+    useEffect(() => {
+      if (!slashOn) return;
+      const root = rootRef.current;
+      recomputeSlash(root ? readSelection(root) : null);
+    }, [slashOn, recomputeSlash]);
 
     // Hover tracking (mouse). Listens on the SHELL (which wraps both the editable and
     // the gutter) so reaching from a block onto its controls keeps them alive:
@@ -1730,6 +1805,25 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             return;
           }
         }
+        // Slash menu navigation (Enter only picks a real item; with "No matches" it types).
+        if (slash.open) {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            slash.move(e.key === 'ArrowDown' ? 1 : -1);
+            return;
+          }
+          if ((e.key === 'Enter' || e.key === 'Tab') && slash.items.length > 0) {
+            e.preventDefault();
+            slash.commitActive();
+            return;
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            slash.dismiss();
+            return;
+          }
+        }
         // Mention menu navigation takes priority over editor keys when open.
         if (mention.open && mention.items.length > 0) {
           if (e.key === 'ArrowDown') {
@@ -1820,6 +1914,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onUndo,
         onRedo,
         mention,
+        slash,
         controlsOn,
         takePendingAt,
         applyVoidDelete,
@@ -1960,7 +2055,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [commit],
     );
 
-    const onPickFiles = useCallback(() => uploadInputRef.current?.click(), []);
+    const onPickFiles = useCallback(() => openPicker(), [openPicker]);
 
     const onBlockInsertBelow = useCallback(
       (id: string) => commit(insertEmptyBlockBelow(latest.current.value, id), 'other'),
@@ -2176,11 +2271,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // (ARIA combobox is single-line only; this editor is multiline), with
         // aria-autocomplete + aria-controls + aria-activedescendant describing the
         // popup. Gated so a readOnly or mention-less editor advertises no popup.
-        aria-haspopup={mentions && !readOnly ? 'listbox' : undefined}
-        aria-autocomplete={mentions && !readOnly ? 'list' : undefined}
-        aria-expanded={mentions && !readOnly ? mention.open : undefined}
-        aria-controls={mention.open ? mention.listboxId : undefined}
-        aria-activedescendant={mention.open ? mention.activeOptionId : undefined}
+        aria-haspopup={mentionsEnabled || slashOn ? 'listbox' : undefined}
+        aria-autocomplete={mentionsEnabled || slashOn ? 'list' : undefined}
+        aria-expanded={mentionsEnabled || slashOn ? triggerAria != null : undefined}
+        aria-controls={triggerAria?.controls}
+        aria-activedescendant={triggerAria?.active}
         aria-label={
           rest['aria-label'] ||
           (rest['aria-labelledby'] ? undefined : t('richTextEditor.editorLabel'))
@@ -2260,6 +2355,21 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           emptyLabel={t('richTextEditor.mentionsEmpty')}
           onSelect={mention.selectIndex}
           onHover={mention.setActiveIndex}
+        />
+      ) : null;
+
+    const slashMenuEl =
+      slash.open && slashOn && slash.anchorRect ? (
+        <RichTextSlashMenu
+          items={slash.items}
+          activeIndex={slash.activeIndex}
+          anchorRect={slash.anchorRect}
+          getAnchorRect={slash.getAnchorRect}
+          listboxId={slash.listboxId}
+          getOptionId={slash.getOptionId}
+          emptyOptionId={slashEmptyId}
+          onSelect={slash.selectIndex}
+          onHover={slash.setActiveIndex}
         />
       ) : null;
 
@@ -2385,7 +2495,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // one of the editor's own overlays is open (so opening the link editor on a
     // focused-but-empty composer keeps the bar up rather than collapsing it). The
     // overlay term is what survives the blur caused by the overlay stealing focus.
-    const overlayOpen = linkEditor != null || mention.open || toolbarOverlayOpen;
+    const overlayOpen = linkEditor != null || mention.open || slash.open || toolbarOverlayOpen;
     const showToolbar =
       toolbar === true || (autoToolbar && (focused || !isEmptyDoc(value) || overlayOpen));
     // `usesShell` (the stable `.shell` gate) is declared near the top so the
@@ -2467,8 +2577,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           {uploadStatus}
           {editable}
           {codePicker}
+          {uploadInput}
           {linkBubble}
           {mentionMenu}
+          {slashMenuEl}
         </>,
       );
     }
@@ -2490,6 +2602,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         {footer}
         {linkBubble}
         {mentionMenu}
+        {slashMenuEl}
         {blockControlsEl}
         {imageResizerEl}
         {configEl}

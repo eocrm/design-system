@@ -240,7 +240,8 @@
       "Tooltip"
     ],
     "composedBy": [
-      "RichText"
+      "RichText",
+      "RichTextEditor"
     ]
   },
   "ColorPicker": {
@@ -922,12 +923,14 @@
       "Avatar",
       "Button",
       "Cluster",
+      "CodeBlock",
       "DropdownMenu",
       "EmojiPicker",
       "Input",
       "LiveRegion",
       "Popover",
       "RichText",
+      "Select",
       "Slider",
       "Stack",
       "Text",
@@ -966,7 +969,8 @@
     "composedBy": [
       "CurrencySelect",
       "PhoneInput",
-      "RelativeDateInput"
+      "RelativeDateInput",
+      "RichTextEditor"
     ]
   },
   "SettingRow": {

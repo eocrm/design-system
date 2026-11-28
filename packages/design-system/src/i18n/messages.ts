@@ -1260,6 +1260,46 @@ export interface Messages {
     mentionsLabel: string;
     /** Empty-state row when no mention candidates match. */
     mentionsEmpty: string;
+    /** Accessible name of the `/` insert-block menu (listbox). */
+    slashMenuLabel: string;
+    /** Slash-menu group heading: text blocks. */
+    slashGroupText: string;
+    /** Slash-menu group heading: lists. */
+    slashGroupLists: string;
+    /** Slash-menu group heading: images and files. */
+    slashGroupMedia: string;
+    /** Slash-menu group heading: code, divider and other blocks. */
+    slashGroupAdvanced: string;
+    /** Slash-menu disabled option shown when nothing matches the typed query. */
+    slashNoMatches: string;
+    /** Slash-menu item that opens the upload picker for an image. */
+    slashImage: string;
+    /** Slash-menu item that opens the upload picker for a file. */
+    slashFile: string;
+    /** Slash-menu hint under "Paragraph". */
+    slashParagraphHint: string;
+    /** Slash-menu hint under "Heading 1". */
+    slashHeading1Hint: string;
+    /** Slash-menu hint under "Heading 2". */
+    slashHeading2Hint: string;
+    /** Slash-menu hint under "Heading 3". */
+    slashHeading3Hint: string;
+    /** Slash-menu hint under "Quote". */
+    slashQuoteHint: string;
+    /** Slash-menu hint under "Code block". */
+    slashCodeHint: string;
+    /** Slash-menu hint under "Bullet list". */
+    slashBulletHint: string;
+    /** Slash-menu hint under "Numbered list". */
+    slashNumberedHint: string;
+    /** Slash-menu hint under "Checklist". */
+    slashChecklistHint: string;
+    /** Slash-menu hint under "Divider". */
+    slashDividerHint: string;
+    /** Slash-menu hint under "Image". */
+    slashImageHint: string;
+    /** Slash-menu hint under "File". */
+    slashFileHint: string;
     /** aria-label on the block "insert below" (＋) gutter button. */
     blockInsert: string;
     /** ⠿ block-menu item that inserts a divider below the block. */

@@ -3243,3 +3243,193 @@ describe('RichTextEditor code block inside a Modal (DS-104)', () => {
     expect(docs.at(-1)!.blocks[0].inlines[0].text).toBe('  ab');
   });
 });
+
+describe('RichTextEditor slash menu (DS-103)', () => {
+  beforeEach(() => mockReadSelection.mockReset());
+  const caret = (blockId: string, o: number) => ({
+    anchor: { blockId, offset: o },
+    focus: { blockId, offset: o },
+  });
+
+  function renderSlash(
+    text: string,
+    props: Partial<React.ComponentProps<typeof RichTextEditor>> = { slashMenu: true },
+    block: Partial<RichDoc['blocks'][number]> = {},
+  ) {
+    mockReadSelection.mockReturnValue(caret('k', text.length));
+    const docs: RichDoc[] = [];
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text, marks: [] }], ...block }],
+      });
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={(d) => {
+            docs.push(d);
+            setDoc(d);
+          }}
+          {...props}
+        />
+      );
+    }
+    renderEditor(<Harness />);
+    return { editor: screen.getByRole('textbox', { name: 'Rich text editor' }), docs };
+  }
+
+  it('typing "/" opens the Insert block listbox, wired to the textbox', async () => {
+    const { editor } = renderSlash('');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    mockReadSelection.mockReturnValue(caret('k', 1));
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: '/' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    const listbox = await screen.findByRole('listbox', { name: 'Insert block' });
+    expect(editor).toHaveAttribute('aria-expanded', 'true');
+    expect(editor).toHaveAttribute('aria-controls', listbox.id);
+    await waitFor(() =>
+      expect(editor.getAttribute('aria-activedescendant')).toBe(
+        within(listbox).getAllByRole('option')[0].id,
+      ),
+    );
+  });
+
+  it('"/hea" filters; ArrowDown + Enter makes Heading 2 and strips the query; one undo restores it', async () => {
+    const user = userEvent.setup();
+    const { editor } = renderSlash('/hea');
+    const listbox = await screen.findByRole('listbox', { name: 'Insert block' });
+    await waitFor(() =>
+      expect(
+        within(listbox)
+          .getAllByRole('option')
+          .map((o) => o.textContent),
+      ).toEqual([
+        expect.stringContaining('Heading 1'),
+        expect.stringContaining('Heading 2'),
+        expect.stringContaining('Heading 3'),
+      ]),
+    );
+    act(() => editor.focus());
+    await user.keyboard('{ArrowDown}{Enter}');
+    const h2 = screen.getByRole('heading', { level: 2 });
+    expect(h2).toHaveTextContent('');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    await user.keyboard('{Control>}z{/Control}');
+    expect(screen.queryByRole('heading')).toBeNull();
+    expect(editor).toHaveTextContent('/hea');
+  });
+
+  it('Escape closes the menu and leaves the typed "/hea"', async () => {
+    const user = userEvent.setup();
+    const { editor, docs } = renderSlash('/hea');
+    await screen.findByRole('listbox');
+    act(() => editor.focus());
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(editor).toHaveTextContent('/hea');
+    expect(docs).toEqual([]);
+  });
+
+  it('shows a "No matches" option for "/zzz"', async () => {
+    const { editor } = renderSlash('/zzz');
+    const listbox = await screen.findByRole('listbox');
+    const empty = within(listbox).getByRole('option', { name: 'No matches' });
+    expect(empty).toHaveAttribute('aria-disabled', 'true');
+    expect(editor).toHaveAttribute('aria-activedescendant', empty.id);
+  });
+
+  it.each([
+    ['mid-word "a/b"', 'a/b', undefined, {}],
+    ['a URL', 'http://x', undefined, {}],
+    ['no slashMenu prop', '/', {}, {}],
+    ['readOnly', '/', { slashMenu: true, readOnly: true }, {}],
+    ['a code block', '/', undefined, { type: 'code_block' as const }],
+  ])('opens nothing for %s', async (_name, text, props, block) => {
+    renderSlash(text, props, block);
+    await act(async () => {});
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('does not open while composing', async () => {
+    const { editor } = renderSlash('/');
+    await screen.findByRole('listbox');
+    fireEvent.compositionStart(editor, { data: '' });
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('a custom item inserts blocks through the api, with ids from createBlockId', async () => {
+    const user = userEvent.setup();
+    let n = 0;
+    const { editor, docs } = renderSlash('ab /tem', {
+      createBlockId: () => `new-${(n += 1)}`,
+      slashMenu: {
+        items: (defaults) => [
+          ...defaults,
+          {
+            id: 'template',
+            group: 'advanced',
+            label: 'Template',
+            run: (api) =>
+              api.insertBlocks([
+                { id: 'k', type: 'heading', level: 3, inlines: [{ text: 'Notes', marks: [] }] },
+              ]),
+          },
+        ],
+      },
+    });
+    await screen.findByRole('option', { name: /Template/ });
+    act(() => editor.focus());
+    await user.keyboard('{Enter}');
+    const blocks = docs.at(-1)!.blocks;
+    expect(blocks.map((b) => b.inlines[0].text)).toEqual(['ab ', 'Notes']);
+    expect(blocks[0].id).toBe('k');
+    expect(blocks[1].id).toMatch(/^new-/);
+  });
+
+  it('the Image item opens the upload picker', async () => {
+    const user = userEvent.setup();
+    const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
+    const { editor } = renderSlash('/ima', {
+      slashMenu: true,
+      upload: { onUpload: async () => ({ url: 'x' }) },
+    });
+    await screen.findByRole('option', { name: /Image/ });
+    act(() => editor.focus());
+    await user.keyboard('{Enter}');
+    expect(click).toHaveBeenCalled();
+    expect(click.mock.contexts.at(-1)).toHaveProperty('accept', 'image/*');
+    click.mockRestore();
+  });
+
+  it('inside a Modal, Escape closes only the menu', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(caret('k', 1));
+    const onOpenChange = vi.fn();
+    renderEditor(
+      <Modal open onOpenChange={onOpenChange} aria-label="Dialog">
+        <Modal.Body>
+          <RichTextEditor
+            value={{
+              blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: '/', marks: [] }] }],
+            }}
+            onChange={() => {}}
+            slashMenu
+          />
+        </Modal.Body>
+      </Modal>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    await act(async () => {});
+    act(() => editor.focus());
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    await screen.findByRole('listbox', { name: 'Insert block' });
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox', { name: 'Insert block' })).toBeNull();
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});

@@ -239,6 +239,27 @@
   padding: var(--space-2);
 }
 
+// Slash menu (RichTextSlashMenu): reuses the mention listbox/option classes, plus
+// a group heading row and a fixed icon cell so labels line up.
+.slashGroupLabel {
+  padding: var(--space-1) var(--space-2) 0;
+}
+
+.slashIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--size-sm);
+  block-size: var(--size-sm);
+  color: var(--color-fg-muted);
+}
+
+.slashGlyph {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
 // Attachment blocks (RichTextAttachment): the void <figure> wrapper + its loading/
 // error/chip bodies. `margin: 0` resets the UA <figure> default (a reset, not
 // component layout). Tokens only.

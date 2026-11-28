@@ -3,6 +3,7 @@
 // items + active index + anchor rect; this renders a role="listbox" positioned at
 // the caret rect via a Floating UI virtual element (same portal+virtual-anchor
 // pattern as RichTextLinkEditor). Not exported from the package.
+import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useFloatingSurface } from '../_internal/overlay';
 import { Avatar } from '../Avatar';
@@ -45,20 +46,12 @@ export function RichTextMentionMenu({
   onSelect,
   onHover,
 }: RichTextMentionMenuProps) {
-  // #274: mounted only while open — register as a floating surface so
-  // Modal/Drawer/Lightbox yield Escape to us (our own Escape handling closes
-  // us; without registration one press would close the host too).
-  useFloatingSurface(true);
-  const { refs, floatingStyles } = useAnchoredFloating(anchorRect, getAnchorRect, { offset: 4 });
-
-  return createPortal(
-    <div
-      ref={refs.setFloating}
-      className={styles.mentionMenu}
-      style={floatingStyles}
-      role="listbox"
-      id={listboxId}
-      aria-label={label}
+  return (
+    <TriggerListbox
+      anchorRect={anchorRect}
+      getAnchorRect={getAnchorRect}
+      listboxId={listboxId}
+      label={label}
     >
       {items.length === 0 ? (
         <div className={styles.mentionEmpty} aria-disabled="true">
@@ -93,6 +86,38 @@ export function RichTextMentionMenu({
           </div>
         ))
       )}
+    </TriggerListbox>
+  );
+}
+
+/**
+ * The portaled, caret-anchored `role="listbox"` shell shared by the mention and
+ * slash menus. Mounted only while open.
+ */
+export function TriggerListbox({
+  anchorRect,
+  getAnchorRect,
+  listboxId,
+  label,
+  children,
+}: Pick<RichTextMentionMenuProps, 'anchorRect' | 'getAnchorRect' | 'listboxId' | 'label'> & {
+  children: ReactNode;
+}) {
+  // #274: mounted only while open — register as a floating surface so
+  // Modal/Drawer/Lightbox yield Escape to us (our own Escape handling closes
+  // us; without registration one press would close the host too).
+  useFloatingSurface(true);
+  const { refs, floatingStyles } = useAnchoredFloating(anchorRect, getAnchorRect, { offset: 4 });
+  return createPortal(
+    <div
+      ref={refs.setFloating}
+      className={styles.mentionMenu}
+      style={floatingStyles}
+      role="listbox"
+      id={listboxId}
+      aria-label={label}
+    >
+      {children}
     </div>,
     document.body,
   );
