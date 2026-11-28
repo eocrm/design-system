@@ -53,9 +53,9 @@ describe('fromHtml — blocks', () => {
     ]);
   });
 
-  it('drops script/style/table/hr', () => {
+  it('drops script/style/table', () => {
     const d = fromHtml(
-      '<p>a</p><script>bad()</script><style>x{}</style><table><tr><td>t</td></tr></table><hr><p>b</p>',
+      '<p>a</p><script>bad()</script><style>x{}</style><table><tr><td>t</td></tr></table><p>b</p>',
     );
     expect(d.blocks.map(text)).toEqual(['a', 'b']);
   });

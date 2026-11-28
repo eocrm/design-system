@@ -40,7 +40,10 @@ function inlineRun(run: Inline): string {
 }
 
 function blockMd(block: Block, depth: number): string {
-  if (block.type === 'code_block') return '```\n' + runsText(block.inlines) + '\n```';
+  if (block.type === 'divider') return '---';
+  if (block.type === 'code_block') {
+    return '```' + (block.language ?? '') + '\n' + runsText(block.inlines) + '\n```';
+  }
   if (block.type === 'attachment') {
     // Only finalized attachments serialize; in-flight/failed uploads emit nothing.
     if (block.status && block.status !== 'ready') return '';
@@ -62,6 +65,8 @@ function blockMd(block: Block, depth: number): string {
       return `${'  '.repeat(depth)}- ${inline}`;
     case 'ordered_item':
       return `${'  '.repeat(depth)}1. ${inline}`;
+    case 'checklist_item':
+      return `${'  '.repeat(depth)}- [${block.checked ? 'x' : ' '}] ${inline}`;
     case 'paragraph':
     default:
       return inline;

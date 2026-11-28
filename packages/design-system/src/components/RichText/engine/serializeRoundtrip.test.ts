@@ -83,3 +83,57 @@ describe('serialize round-trip', () => {
     expect(shape(fromMarkdown(toMarkdown(d)))).toEqual(shape(d));
   });
 });
+
+describe('wave-2 blocks: divider, checklist, code language', () => {
+  const strip = (d: RichDoc) =>
+    d.blocks.map(({ id: _id, ...rest }) => ({
+      ...rest,
+      inlines: rest.inlines.map((r) => ({ text: r.text, marks: sortMarks(r.marks) })),
+    }));
+  const blocksDoc: RichDoc = {
+    blocks: [
+      createBlock('paragraph', 'intro'),
+      createBlock('divider'),
+      createBlock('checklist_item', 'Buy milk', { checked: true, depth: 0 }),
+      createBlock('checklist_item', 'Whole', { checked: false, depth: 1 }),
+      createBlock('checklist_item', 'Call', { checked: false, depth: 0 }),
+      createBlock('code_block', 'let a = 1;', { language: 'typescript' }),
+      createBlock('code_block', 'plain'),
+    ],
+  };
+
+  it('round-trips through HTML', () => {
+    expect(strip(fromHtml(toHtml(blocksDoc)))).toEqual(strip(blocksDoc));
+  });
+
+  it('round-trips through Markdown', () => {
+    expect(strip(fromMarkdown(toMarkdown(blocksDoc)))).toEqual(strip(blocksDoc));
+  });
+
+  it('imports GitHub-shaped checkbox lists, <hr/> and lang classes', () => {
+    const d = fromHtml(
+      '<ul><li><input type="checkbox" checked>Done</li></ul><hr/><pre><code class="language-ts">x</code></pre>',
+    );
+    expect(d.blocks.map((b) => [b.type, b.checked, b.language])).toEqual([
+      ['checklist_item', true, undefined],
+      ['divider', undefined, undefined],
+      ['code_block', undefined, 'typescript'],
+    ]);
+  });
+
+  it('imports Markdown fences, rules and task items', () => {
+    const d = fromMarkdown('```py\nx\n```\n\n***\n\n___\n\n- [X] a\n- [ ] b');
+    expect(d.blocks.map((b) => [b.type, b.checked, b.language])).toEqual([
+      ['code_block', undefined, 'python'],
+      ['divider', undefined, undefined],
+      ['divider', undefined, undefined],
+      ['checklist_item', true, undefined],
+      ['checklist_item', false, undefined],
+    ]);
+  });
+
+  it('mixed bullet then task item at depth 0 stays bullet then checklist', () => {
+    const d = fromMarkdown('- a\n- [ ] b');
+    expect(d.blocks.map((b) => b.type)).toEqual(['bullet_item', 'checklist_item']);
+  });
+});

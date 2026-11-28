@@ -6,6 +6,8 @@
 import { escapeHtml, escapeAttr } from './escape';
 
 const LIST_RE = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
+const HR_RE = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/;
+const TASK_RE = /^\[([ xX])\](?:\s+(.*))?$/;
 
 /** Convert inline Markdown to HTML. Unbalanced markers degrade to literal text. */
 function inline(src: string): string {
@@ -99,7 +101,12 @@ function parseList(lines: string[], start: number, indent: number): [string, num
     const m = LIST_RE.exec(lines[i]);
     if (!m || m[1].length < indent) break;
     if (m[1].length > indent) break; // deeper line handled as nested below
-    let item = '<li>' + inline(m[3].trim());
+    const text = m[3].trim();
+    const task = TASK_RE.exec(text);
+    let item = task
+      ? `<li><input type="checkbox"${task[1] === ' ' ? '' : ' checked'}>` +
+        inline((task[2] ?? '').trim())
+      : '<li>' + inline(text);
     i += 1;
     while (i < lines.length) {
       const deeper = LIST_RE.exec(lines[i]);
@@ -126,7 +133,12 @@ export function mdToHtml(md: string): string {
       i += 1;
       continue;
     }
-    const fence = /^(```|~~~)/.exec(line);
+    if (HR_RE.test(line)) {
+      out.push('<hr>');
+      i += 1;
+      continue;
+    }
+    const fence = /^(```|~~~)[ \t]*([^\s`]*)/.exec(line);
     if (fence) {
       i += 1;
       const code: string[] = [];
@@ -135,7 +147,8 @@ export function mdToHtml(md: string): string {
         i += 1;
       }
       if (i < lines.length) i += 1; // skip closing fence
-      out.push('<pre><code>' + escapeHtml(code.join('\n')) + '</code></pre>');
+      const lang = fence[2] ? ` class="language-${escapeAttr(fence[2])}"` : '';
+      out.push(`<pre><code${lang}>` + escapeHtml(code.join('\n')) + '</code></pre>');
       continue;
     }
     const h = /^(#{1,6})\s+(.*)$/.exec(line);
@@ -165,6 +178,7 @@ export function mdToHtml(md: string): string {
       i < lines.length &&
       lines[i].trim() !== '' &&
       !/^(```|~~~)/.test(lines[i]) &&
+      !HR_RE.test(lines[i]) &&
       !/^#{1,6}\s/.test(lines[i]) &&
       !/^>\s?/.test(lines[i]) &&
       !LIST_RE.test(lines[i])
