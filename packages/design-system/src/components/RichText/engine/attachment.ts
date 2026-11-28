@@ -35,7 +35,7 @@ export interface AttachmentAttrs {
 
 /** True for void blocks (no editable text; caret sits adjacent, never inside). */
 export function isVoidBlock(block: Block): boolean {
-  return block.type === 'attachment';
+  return block.type === 'attachment' || block.type === 'divider';
 }
 
 /**

@@ -1,16 +1,8 @@
 import { Prism, normalizeTokens } from 'prism-react-renderer';
 
-export type CodeBlockLanguage =
-  | 'json'
-  | 'bash'
-  | 'javascript'
-  | 'typescript'
-  | 'python'
-  | 'go'
-  | 'kotlin'
-  | 'java'
-  | 'csharp'
-  | 'rust';
+import { CODE_LANGUAGE_LABELS, type CodeBlockLanguage } from './languages';
+
+export type { CodeBlockLanguage };
 
 export type SyntaxKey =
   | 'keyword'
@@ -27,18 +19,21 @@ export interface CodeToken {
   key: SyntaxKey;
 }
 
-export const LANGUAGE_LABELS: Record<CodeBlockLanguage, string> = {
-  json: 'JSON',
-  bash: 'Bash',
-  javascript: 'JavaScript',
-  typescript: 'TypeScript',
-  python: 'Python',
-  go: 'Go',
-  kotlin: 'Kotlin',
-  java: 'Java',
-  csharp: 'C#',
-  rust: 'Rust',
-};
+export const LANGUAGE_LABELS: Record<CodeBlockLanguage, string> = CODE_LANGUAGE_LABELS;
+
+// ponytail: grammar allow-list stays the original 10 until Task 3 registers the new Prism grammars.
+const HIGHLIGHTABLE = new Set([
+  'json',
+  'bash',
+  'javascript',
+  'typescript',
+  'python',
+  'go',
+  'kotlin',
+  'java',
+  'csharp',
+  'rust',
+]);
 
 // prism-react-renderer ships no bash grammar; register a small one once.
 // Prism is a shared singleton: any consumer of the same prism-react-renderer instance sees it.
@@ -145,7 +140,7 @@ export function tokenizeLines(code: string, language?: string): CodeToken[][] {
   const src = code.replace(/\r\n?/g, '\n').replace(/\n$/, '');
   const name = language && (Object.hasOwn(ALIASES, language) ? ALIASES[language] : language);
   // Allow-list: Prism bundles ~40 grammars (and helpers like `extend`) we don't style.
-  const grammar = name && Object.hasOwn(LANGUAGE_LABELS, name) && Prism.languages[name];
+  const grammar = name && HIGHLIGHTABLE.has(name) && Prism.languages[name];
   if (!grammar) return src.split('\n').map((l) => [{ content: l, key: 'plain' as const }]);
 
   return normalizeTokens(Prism.tokenize(src, grammar)).map((line) => {

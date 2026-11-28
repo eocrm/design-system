@@ -5,7 +5,9 @@ import type { Block } from './model';
 
 /** True for the flat list-item block types. */
 export function isListItem(block: Block): boolean {
-  return block.type === 'bullet_item' || block.type === 'ordered_item';
+  return (
+    block.type === 'bullet_item' || block.type === 'ordered_item' || block.type === 'checklist_item'
+  );
 }
 
 /**

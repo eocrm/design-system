@@ -13,6 +13,7 @@ import {
   marksForTypedText,
 } from './position';
 import { isVoidBlock } from './attachment';
+import { isListItem } from './listDepths';
 
 function collapsed(point: Point): Range {
   return collapsedRange(point.blockId, point.offset);
@@ -162,7 +163,12 @@ export function splitBlock(doc: RichDoc, point: Point): { doc: RichDoc; selectio
     sliceInlines(block.inlines, point.offset, blockLength(block)),
   );
   const right: Block = {
-    ...createBlock(block.type, '', { level: block.level, depth: block.depth }),
+    ...createBlock(block.type, '', {
+      level: block.level,
+      depth: block.depth,
+      language: block.language,
+      ...(block.type === 'checklist_item' ? { checked: false } : {}),
+    }),
     inlines: rightInlines,
   };
   const blocks = doc.blocks.slice();
@@ -320,14 +326,16 @@ export function setColorMark(
 export function setBlockType(
   doc: RichDoc,
   blockId: string,
-  patch: Partial<Pick<Block, 'type' | 'level' | 'depth'>>,
+  patch: Partial<Pick<Block, 'type' | 'level' | 'depth' | 'checked' | 'language'>>,
 ): { doc: RichDoc; selection: Range } {
   const idx = findBlockIndex(doc, blockId);
   if (idx === -1) return { doc, selection: collapsed({ blockId, offset: 0 }) };
   if (isVoidBlock(doc.blocks[idx])) return { doc, selection: collapsed({ blockId, offset: 0 }) };
   const next: Block = { ...doc.blocks[idx], ...patch };
   if (next.type !== 'heading') delete next.level;
-  if (next.type !== 'bullet_item' && next.type !== 'ordered_item') delete next.depth;
+  if (!isListItem(next)) delete next.depth;
+  if (next.type !== 'checklist_item') delete next.checked;
+  if (next.type !== 'code_block') delete next.language;
   return { doc: replaceBlock(doc, idx, next), selection: collapsed({ blockId, offset: 0 }) };
 }
 

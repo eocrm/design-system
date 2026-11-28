@@ -449,3 +449,32 @@ describe('void-aware merge/split', () => {
     expect(r.doc.blocks[0].inlines).toEqual([]);
   });
 });
+
+describe('wave-2 block types', () => {
+  it('splitBlock on a checked checklist_item yields an unchecked sibling at same depth', () => {
+    const d: RichDoc = {
+      blocks: [createBlock('checklist_item', 'todo', { id: 'c', depth: 1, checked: true })],
+    };
+    const r = splitBlock(d, { blockId: 'c', offset: 4 });
+    expect(r.doc.blocks[0].checked).toBe(true);
+    expect(r.doc.blocks[1]).toMatchObject({ type: 'checklist_item', depth: 1, checked: false });
+  });
+  it('setBlockType checklist_item → bullet_item keeps depth, drops checked', () => {
+    const d: RichDoc = {
+      blocks: [createBlock('checklist_item', 'x', { id: 'c', depth: 2, checked: true })],
+    };
+    const b = setBlockType(d, 'c', { type: 'bullet_item' }).doc.blocks[0];
+    expect(b.depth).toBe(2);
+    expect('checked' in b).toBe(false);
+  });
+  it('setBlockType code_block → paragraph drops language', () => {
+    const d: RichDoc = {
+      blocks: [createBlock('code_block', 'x', { id: 'k', language: 'ts' })],
+    };
+    expect('language' in setBlockType(d, 'k', { type: 'paragraph' }).doc.blocks[0]).toBe(false);
+  });
+  it('setBlockType on a divider is a no-op', () => {
+    const d: RichDoc = { blocks: [{ id: 'd', type: 'divider', inlines: [] }] };
+    expect(setBlockType(d, 'd', { type: 'paragraph' }).doc).toBe(d);
+  });
+});
