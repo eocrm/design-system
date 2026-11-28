@@ -2009,7 +2009,6 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // where it was (else at the item's start).
     const onToggleCheck = useCallback(
       (id: string) => {
-        if (latest.current.readOnly) return;
         const root = rootRef.current;
         const selection = (root ? readSelection(root) : null) ??
           lastSelectionRef.current ?? {
@@ -2024,8 +2023,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // onToggleCheck) — it does NOT depend on selection/hover/focus. Memoize so the
     // whole element tree is not rebuilt on selection/hover/focus re-renders that leave the doc unchanged.
     const content = useMemo(
-      () => renderDoc(value, { editable: true, renderLink, renderMention, onToggleCheck }),
-      [value, renderLink, renderMention, onToggleCheck],
+      () =>
+        renderDoc(value, {
+          editable: true,
+          renderLink,
+          renderMention,
+          // readOnly: no handler → the checkbox renders disabled (state visible, not operable).
+          onToggleCheck: readOnly ? undefined : onToggleCheck,
+        }),
+      [value, renderLink, renderMention, onToggleCheck, readOnly],
     );
     // Signature of block order. `value.blocks` is a new array on every edit, so this
     // recomputes per keystroke (a cheap join) — but the STRING is unchanged while

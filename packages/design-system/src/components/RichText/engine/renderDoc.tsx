@@ -39,9 +39,9 @@ export interface RenderDocOptions {
    */
   onImageActivate?: RichTextImageActivateHandler;
   /**
-   * Make read-only checklist checkboxes operable: called with the item's block id
-   * and its NEW checked state. The consumer updates the doc (render stays
-   * controlled-by-value). Unset: read-only checkboxes are `disabled`.
+   * Make checklist checkboxes operable: called with the item's block id and its
+   * NEW checked state. The consumer updates the doc (render stays
+   * controlled-by-value). Unset: checkboxes are `disabled` (read-only or editable).
    */
   onToggleCheck?: (blockId: string, checked: boolean) => void;
 }
@@ -333,7 +333,7 @@ interface ListItemNode {
 const isChecklist = (block: Block) => block.type === 'checklist_item';
 
 // The checklist checkbox: named by the item's text span (fallback: i18n label when
-// empty). Read-only without `onToggleCheck` it is disabled — visible, not operable.
+// empty). Without `onToggleCheck` (read-only or editable) it is disabled — visible, not operable.
 function ChecklistBox({
   block,
   labelled,
@@ -349,7 +349,7 @@ function ChecklistBox({
     <input
       type="checkbox"
       checked={checked}
-      disabled={!opts.editable && !opts.onToggleCheck}
+      disabled={!opts.onToggleCheck}
       onChange={() => opts.onToggleCheck?.(block.id, !checked)}
       {...(labelled
         ? { 'aria-labelledby': `${block.id}-label` }

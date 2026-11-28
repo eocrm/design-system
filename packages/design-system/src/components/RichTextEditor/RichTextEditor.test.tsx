@@ -3009,6 +3009,11 @@ describe('RichTextEditor checklist', () => {
     expect(anchor && li.contains(anchor)).toBe(true);
   });
 
+  it('a readOnly editor renders the checkbox disabled', () => {
+    renderDoc({ blocks: [item('a', 'one')] }, { readOnly: true });
+    expect(screen.getByRole('checkbox', { name: 'one' })).toBeDisabled();
+  });
+
   it('Space on the focused checkbox toggles it without inserting text', async () => {
     const user = userEvent.setup();
     mockReadSelection.mockReturnValue(caret('a', 1));

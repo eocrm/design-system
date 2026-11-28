@@ -765,6 +765,15 @@ describe('renderDoc — wave 2 blocks (DS-99/101/104)', () => {
     expect(li.querySelector('#c1-label')).toHaveTextContent('T');
   });
 
+  it('editable checkbox: disabled without a handler, enabled with one', () => {
+    const doc: RichDoc = { blocks: [createBlock('checklist_item', 'T', { id: 'c1' })] };
+    const bare = render(<>{renderDoc(doc, { editable: true })}</>);
+    expect(bare.getByRole('checkbox')).toBeDisabled();
+    bare.unmount();
+    const wired = render(<>{renderDoc(doc, { editable: true, onToggleCheck: () => {} })}</>);
+    expect(wired.getByRole('checkbox')).toBeEnabled();
+  });
+
   it('a checklist between two ordered runs yields ol, ul, ol', () => {
     const doc: RichDoc = {
       blocks: [
