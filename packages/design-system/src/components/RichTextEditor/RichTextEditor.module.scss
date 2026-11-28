@@ -33,6 +33,13 @@
   background: var(--color-bg-muted);
 }
 
+// DS-104: a permanent strip at the top of every editable code block holds the
+// language picker (offset --space-1 + Select sm height + the same gap below), so
+// the picker never covers code and nothing shifts as the caret enters or leaves.
+.root:not(.readOnly) pre {
+  padding-block-start: calc(var(--size-sm) + 2 * var(--space-1));
+}
+
 // #511: readOnly and placeholder are independent props (e.g. a read-only
 // notes field with no content), so the empty-state placeholder above can
 // land on readOnly's --color-bg-muted, where --color-fg-subtle fails AA.

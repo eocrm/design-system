@@ -37,12 +37,12 @@ function rectToDomRect(r: Rect): DOMRect {
  * tracks the selection line / figure on scroll (the static `anchorRect` is the
  * fallback for the initial frame / when the live rect is unavailable). `opts.offset`
  * sets the gap between anchor and overlay (defaults to 6); `opts.placement` defaults
- * to `'bottom-start'`.
+ * to `'bottom-start'`; `opts.flip: false` keeps it on that side.
  */
 export function useAnchoredFloating(
   anchorRect: Rect,
   getAnchorRect: (() => Rect | null) | undefined,
-  opts: { offset?: number; placement?: Placement } = {},
+  opts: { offset?: number; placement?: Placement; flip?: boolean } = {},
 ) {
   const virtualRef = useMemo(
     () => ({ getBoundingClientRect: () => rectToDomRect(getAnchorRect?.() ?? anchorRect) }),
@@ -52,7 +52,11 @@ export function useAnchoredFloating(
     placement: opts.placement ?? 'bottom-start',
     strategy: 'fixed',
     whileElementsMounted: autoUpdate,
-    middleware: [offset(opts.offset ?? 6), flip(), shift({ padding: 4 })],
+    middleware: [
+      offset(opts.offset ?? 6),
+      opts.flip === false ? null : flip(),
+      shift({ padding: 4 }),
+    ],
     elements: { reference: virtualRef },
   });
 }

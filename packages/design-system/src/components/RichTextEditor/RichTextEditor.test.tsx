@@ -1,4 +1,5 @@
 import { Field } from '../Field';
+import { Modal } from '../Modal';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { startTransition, useState } from 'react';
@@ -3173,5 +3174,72 @@ describe('RichTextEditor code (DS-104)', () => {
     expect(docs).toHaveLength(1);
     fireEvent.keyDown(editor, { key: 'e', code: 'KeyE', ctrlKey: true });
     expect(docs.at(-1)!.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);
+  });
+});
+
+describe('RichTextEditor code block inside a Modal (DS-104)', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+  const sel = (blockId: string, o: number) => ({
+    anchor: { blockId, offset: o },
+    focus: { blockId, offset: o },
+  });
+
+  it('first Escape in a code block arms Tab-out; only the next Escape closes the Modal', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 0));
+    const onOpenChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [{ id: 'c', type: 'code_block', inlines: [{ text: 'ab', marks: [] }] }],
+    };
+    renderEditor(
+      <Modal open onOpenChange={onOpenChange} aria-label="Dialog">
+        <Modal.Body>
+          <RichTextEditor value={doc} onChange={() => {}} />
+        </Modal.Body>
+      </Modal>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    await act(async () => {}); // let the Modal's initial-focus microtask run first
+    act(() => editor.focus());
+    act(() => document.dispatchEvent(new Event('selectionchange')));
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await user.keyboard('{Tab}');
+    expect(document.activeElement).toBe(screen.getByRole('combobox', { name: 'Code language' }));
+    // Back in the editor: blur cleared the arm, so Escape is the editor's again.
+    act(() => editor.focus());
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('a mousedown clears the Escape arm, so the next Tab stays in the code block', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 0));
+    const docs: RichDoc[] = [];
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'c', type: 'code_block', inlines: [{ text: 'ab', marks: [] }] }],
+      });
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={(d) => {
+            docs.push(d);
+            setDoc(d);
+          }}
+        />
+      );
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    act(() => editor.focus());
+    await user.keyboard('{Escape}');
+    fireEvent.mouseDown(editor);
+    await user.keyboard('{Tab}');
+    expect(docs.at(-1)!.blocks[0].inlines[0].text).toBe('  ab');
   });
 });

@@ -46,6 +46,7 @@ import type { MentionItem, MentionsConfig } from './mentions';
 import { fromHtml } from '../RichText/engine/fromHtml';
 import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
+import { useFloatingSurface } from '../_internal/overlay';
 import { readSelection, writeSelection, rangeRect, voidCaretSide, blockOwnText } from './selection';
 import { applyInput, voidDelete } from './input';
 import { matchBlockRule, applyBlockRule } from './inputRules';
@@ -611,7 +612,18 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const [codeBlockId, setCodeBlockId] = useState<string | null>(null);
     const codeSelRef = useRef<RichRange | null>(null);
     // Escape arms this; the next Tab is then left to the browser (focus moves out).
+    // Ref for the keydown handler, state for the floating-surface registration below.
     const escapeTabRef = useRef(false);
+    const [escapeArmed, setEscapeArmedState] = useState(false);
+    const setEscapeArmed = useCallback((armed: boolean) => {
+      escapeTabRef.current = armed;
+      setEscapeArmedState(armed);
+    }, []);
+    const [editableFocused, setEditableFocused] = useState(false);
+    // While the focused caret sits in a code block (where Tab is captured), the
+    // first Escape is the editor's (it arms Tab-out), so register as a floating
+    // surface: a host Modal/Drawer yields that press and closes on the next one.
+    useFloatingSurface(editableFocused && codeBlockId != null && !escapeArmed && !readOnly);
     const [blockMenuOpen, setBlockMenuOpen] = useState(false);
     // Mirror the open state into a ref so the hover listener can read it without
     // re-subscribing: while the menu is open, hovering another block must NOT move
@@ -1746,7 +1758,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // capture Tab): the flag survives only modifier presses.
         const escaped = escapeTabRef.current;
         if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) {
-          escapeTabRef.current = e.key === 'Escape';
+          setEscapeArmed(e.key === 'Escape');
         }
         if (e.key === 'Tab' && escaped) return;
         // ⌘/Ctrl+K opens the link editor (create or edit a link). Stop
@@ -1811,6 +1823,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         controlsOn,
         takePendingAt,
         applyVoidDelete,
+        setEscapeArmed,
       ],
     );
 
@@ -2179,13 +2192,22 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onClick={onEditableClick}
         onCompositionStart={onCompositionStart}
         onCompositionEnd={onCompositionEnd}
-        // Focus is only tracked for `toolbar="auto"` (gates the bar's visibility), so
-        // other modes never re-render on focus changes; blur also hides the picker
-        // (a no-op re-render-wise while it is already hidden).
-        onFocus={autoToolbar ? () => setFocused(true) : undefined}
+        // `focused` is only tracked for `toolbar="auto"` (gates the bar's visibility).
+        // `editableFocused` gates the code-block Escape surface; blur also hides the
+        // picker and, like a mousedown, drops a stale Escape arm.
+        onFocus={() => {
+          if (autoToolbar) setFocused(true);
+          setEditableFocused(true);
+        }}
         onBlur={(e) => {
           if (autoToolbar) setFocused(false);
+          setEditableFocused(false);
+          setEscapeArmed(false);
           onCodeFocusLeave(e.relatedTarget as Element | null);
+        }}
+        onMouseDown={(e) => {
+          setEscapeArmed(false);
+          rest.onMouseDown?.(e);
         }}
       >
         {content}

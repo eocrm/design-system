@@ -35,8 +35,10 @@ export function RichTextCodeLanguagePicker({
   onFocusLeave,
 }: RichTextCodeLanguagePickerProps) {
   const t = useTranslation();
-  // Anchor to the block's TOP edge only and drop below it: the picker sits inside
-  // the block's top-end corner and never moves while the block grows.
+  // Anchor to the block's TOP edge only and drop below it (never flipped): the
+  // picker sits in the strip the editor reserves at the top of every editable
+  // code block (`.root:not(.readOnly) pre`, sized to this offset + Select sm), so
+  // it never covers text and never moves while the block grows.
   const getAnchorRect = useMemo(
     () => () => {
       const r = getBlockRect();
@@ -45,8 +47,9 @@ export function RichTextCodeLanguagePicker({
     [getBlockRect],
   );
   const { refs, floatingStyles, update } = useAnchoredFloating(NO_RECT, getAnchorRect, {
-    offset: 4,
+    offset: 4, // = --space-1, the strip's top gap
     placement: 'bottom-end',
+    flip: false,
   });
   useLayoutEffect(() => update(), [update, layoutKey]);
   const options = useMemo(
