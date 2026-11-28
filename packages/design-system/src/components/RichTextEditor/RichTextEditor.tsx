@@ -26,6 +26,7 @@ import {
   isCollapsed,
   wholeBlockRange,
   marksForTypedText,
+  collapsedRange,
 } from '../RichText/engine/position';
 import { linkAt, setLink } from './links';
 import { applyTypeAutolink, atomicLinkDeleteRange } from './autolinkInput';
@@ -48,6 +49,8 @@ import { useTranslation } from '../../i18n';
 import { readSelection, writeSelection, rangeRect, voidCaretSide, blockOwnText } from './selection';
 import { applyInput, voidDelete } from './input';
 import { matchBlockRule, applyBlockRule } from './inputRules';
+import { matchInlineCode, applyInlineCode } from './inlineCodeRule';
+import { RichTextCodeLanguagePicker } from './RichTextCodeLanguagePicker';
 import { runsText } from '../RichText/engine/inlines';
 import { isLetterKey } from '../_internal/letterKey';
 import { shortcutMark } from './shortcuts';
@@ -61,6 +64,9 @@ import {
   runToggleList,
   runToggleCheck,
   runIndent,
+  runCodeIndent,
+  runSetCodeLanguage,
+  CODE_EXCLUDED_MARKS,
   applyExactMarks,
 } from './commands';
 import { RichTextToolbar, type BlockChoice } from './RichTextToolbar';
@@ -600,6 +606,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const [hoverBlockId, setHoverBlockId] = useState<string | null>(null);
     const [caretBlockId, setCaretBlockId] = useState<string | null>(null);
     const activeBlockId = hoverBlockId ?? caretBlockId;
+    // The code block holding the caret (drives the language picker), plus the last
+    // selection seen in it — restored when a pick commits (the picker holds focus).
+    const [codeBlockId, setCodeBlockId] = useState<string | null>(null);
+    const codeSelRef = useRef<RichRange | null>(null);
+    // Escape arms this; the next Tab is then left to the browser (focus moves out).
+    const escapeTabRef = useRef(false);
     const [blockMenuOpen, setBlockMenuOpen] = useState(false);
     // Mirror the open state into a ref so the hover listener can read it without
     // re-subscribing: while the menu is open, hovering another block must NOT move
@@ -1029,11 +1041,23 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // selection, toggle the mark over it now.
     const stageOrToggleMark = useCallback(
       (range: RichRange, mark: Mark) => {
+        // Inline code excludes these marks: a no-op where everything is code.
+        if (
+          CODE_EXCLUDED_MARKS.includes(mark.type) &&
+          deriveActiveMarks(latest.current.value, range, pendingMarksRef.current).includes('code')
+        )
+          return;
         if (isCollapsed(range)) {
           pendingAtRef.current = range.anchor;
-          setPendingMarks((prev) =>
-            toggleInList(prev ?? marksForTypedText(latest.current.value, range.anchor), mark),
-          );
+          setPendingMarks((prev) => {
+            const next = toggleInList(
+              prev ?? marksForTypedText(latest.current.value, range.anchor),
+              mark,
+            );
+            return mark.type === 'code' && hasMark(next, 'code')
+              ? next.filter((m) => !CODE_EXCLUDED_MARKS.includes(m.type))
+              : next;
+          });
         } else {
           commit(runToggleMark(latest.current.value, range, mark));
         }
@@ -1221,6 +1245,24 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
               e.preventDefault();
               clearPendingMarks();
               commit(applyBlockRule(doc, block.id, match), 'other');
+              return;
+            }
+          }
+        }
+        // Inline code: a closing backtick after `text converts it (backticks dropped)
+        // as one undo step. Typing then continues outside the code.
+        if (e.inputType === 'insertText' && e.data === '`' && isCollapsed(range)) {
+          const block = doc.blocks.find((b) => b.id === range.anchor.blockId);
+          if (block && block.type !== 'code_block' && block.inlines) {
+            const text = runsText(block.inlines);
+            const o = range.anchor.offset;
+            const m = matchInlineCode(`${text.slice(0, o)}\`${text.slice(o)}`, o + 1);
+            if (m) {
+              e.preventDefault();
+              const r = applyInlineCode(doc, range.anchor, m);
+              commit(r, 'other');
+              pendingAtRef.current = r.selection.anchor;
+              setPendingMarks(withoutMark(marksForTypedText(r.doc, r.selection.anchor), 'code'));
               return;
             }
           }
@@ -1414,16 +1456,24 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     }, [reportsSelection]);
 
     // ONE selectionchange subscription shared by the toolbar, block-controls caret
-    // tracking, and the mention menu. A caret move (incl. every keystroke, which
-    // moves the caret) reads the model selection ONCE here and fans it out, instead
-    // of three independent listeners each re-walking the DOM via their own
-    // readSelection. Only subscribed when at least one consumer needs it.
+    // tracking, the mention menu and the code-language picker. A caret move (incl.
+    // every keystroke, which moves the caret) reads the model selection ONCE here
+    // and fans it out, instead of independent listeners each re-walking the DOM via
+    // their own readSelection. The picker is always on, so every editable editor
+    // subscribes; read-only ones don't.
     useEffect(() => {
       const toolbarOn = toolbar && !readOnly;
-      if (!toolbarOn && !controlsOn && !mentionsEnabled) return;
+      // Every editable editor subscribes: the code-language picker needs the caret.
+      if (readOnly) return;
       const onSelChange = () => {
         const root = rootRef.current;
         const sel = root ? readSelection(root) : null;
+        if (sel) {
+          const b = latest.current.value.blocks.find((x) => x.id === sel.focus.blockId);
+          const inCode = b?.type === 'code_block' && sel.anchor.blockId === sel.focus.blockId;
+          if (inCode) codeSelRef.current = sel;
+          setCodeBlockId(inCode ? b.id : null);
+        }
         if (toolbarOn) {
           setSelection(sel);
           if (sel != null) lastSelectionRef.current = sel;
@@ -1692,6 +1742,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           mention.close();
           return;
         }
+        // Escape, then Tab, leaves the editor (APG guidance for editors that
+        // capture Tab): the flag survives only modifier presses.
+        const escaped = escapeTabRef.current;
+        if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) {
+          escapeTabRef.current = e.key === 'Escape';
+        }
+        if (e.key === 'Tab' && escaped) return;
         // ⌘/Ctrl+K opens the link editor (create or edit a link). Stop
         // propagation so the shortcut doesn't ALSO trigger a host app's global
         // ⌘K (command palette / search) while the editor is focused.
@@ -1704,6 +1761,16 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
         const current = deriveCurrentBlock(value, range);
         const inList = !!current && isListItem(current);
+
+        // Tab in a code block: two spaces at a caret, else indent the selected
+        // lines; Shift+Tab outdents. Escape → Tab (above) is the way out.
+        if (e.key === 'Tab' && current?.type === 'code_block') {
+          e.preventDefault();
+          if (!e.shiftKey && isCollapsed(range))
+            commit(insertText(value, range.anchor, '  '), 'type');
+          else commit(runCodeIndent(value, range, e.shiftKey ? 'out' : 'in'));
+          return;
+        }
 
         // Tab / Shift+Tab indent/outdent — only inside a list, so Tab still
         // moves focus out of the editor everywhere else (keyboard a11y).
@@ -2019,6 +2086,37 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       },
       [commit],
     );
+    // Code-language picker: one 'other' edit, caret back where it was in the block.
+    const onCodeLanguage = useCallback(
+      (language: string | undefined) => {
+        if (!codeBlockId) return;
+        const at = codeSelRef.current;
+        const selection =
+          at && at.anchor.blockId === codeBlockId ? at : collapsedRange(codeBlockId);
+        commit(
+          { doc: runSetCodeLanguage(latest.current.value, codeBlockId, language), selection },
+          'other',
+        );
+        rootRef.current?.focus();
+      },
+      [commit, codeBlockId],
+    );
+    const getCodeBlockRect = useCallback(() => {
+      const el = codeBlockId
+        ? rootRef.current?.querySelector<HTMLElement>(
+            `[data-block-id="${CSS.escape(codeBlockId)}"]`,
+          )
+        : null;
+      const r = el?.getBoundingClientRect();
+      return r ? { top: r.top, left: r.left, width: r.width, height: r.height } : null;
+    }, [codeBlockId]);
+    // Hide the picker once focus leaves both the editable and the picker.
+    const onCodeFocusLeave = useCallback((to: Element | null) => {
+      const root = rootRef.current;
+      const kept = to && (root?.contains(to) || to.closest('[data-rte-code-language]'));
+      if (!kept) setCodeBlockId(null);
+    }, []);
+
     // The rendered doc tree is a pure fn of (value, renderLink, renderMention,
     // onToggleCheck) — it does NOT depend on selection/hover/focus. Memoize so the
     // whole element tree is not rebuilt on selection/hover/focus re-renders that leave the doc unchanged.
@@ -2081,10 +2179,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onClick={onEditableClick}
         onCompositionStart={onCompositionStart}
         onCompositionEnd={onCompositionEnd}
-        // Only tracked for `toolbar="auto"` (gates the bar's visibility); omitted
-        // otherwise so other modes never re-render on focus changes.
+        // Focus is only tracked for `toolbar="auto"` (gates the bar's visibility), so
+        // other modes never re-render on focus changes; blur also hides the picker
+        // (a no-op re-render-wise while it is already hidden).
         onFocus={autoToolbar ? () => setFocused(true) : undefined}
-        onBlur={autoToolbar ? () => setFocused(false) : undefined}
+        onBlur={(e) => {
+          if (autoToolbar) setFocused(false);
+          onCodeFocusLeave(e.relatedTarget as Element | null);
+        }}
       >
         {content}
       </div>
@@ -2108,6 +2210,20 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           onCancel={onLinkCancel}
         />
       ) : null;
+
+    const codeBlock =
+      !readOnly && codeBlockId
+        ? value.blocks.find((b) => b.id === codeBlockId && b.type === 'code_block')
+        : undefined;
+    const codePicker = codeBlock ? (
+      <RichTextCodeLanguagePicker
+        language={codeBlock.language}
+        getBlockRect={getCodeBlockRect}
+        layoutKey={value}
+        onChange={onCodeLanguage}
+        onFocusLeave={onCodeFocusLeave}
+      />
+    ) : null;
 
     const mentionMenu =
       mention.open && !readOnly && mention.anchorRect ? (
@@ -2328,6 +2444,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         <>
           {uploadStatus}
           {editable}
+          {codePicker}
           {linkBubble}
           {mentionMenu}
         </>,
@@ -2346,6 +2463,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         {uploadInput}
         {uploadStatus}
         {editable}
+        {codePicker}
         {presence && <RichTextPresenceOverlay presence={presence} doc={value} />}
         {footer}
         {linkBubble}

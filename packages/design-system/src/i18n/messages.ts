@@ -1226,6 +1226,12 @@ export interface Messages {
     underline: string;
     /** aria-label on the strikethrough mark toggle button. */
     strike: string;
+    /** aria-label on the inline-code mark toggle button. */
+    inlineCode: string;
+    /** aria-label of the language picker shown on a focused code block. */
+    codeLanguage: string;
+    /** Language-picker option for a code block with no language. */
+    plainText: string;
     /** aria-label on the bullet-list toggle button. */
     bulletList: string;
     /** aria-label on the numbered-list toggle button. */

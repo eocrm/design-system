@@ -3025,3 +3025,153 @@ describe('RichTextEditor checklist', () => {
     expect(docs[0].blocks[0]).toMatchObject({ checked: true, inlines: [{ text: 'one' }] });
   });
 });
+
+describe('RichTextEditor code (DS-104)', () => {
+  beforeEach(() => {
+    mockReadSelection.mockReset();
+  });
+  const sel = (blockId: string, a: number, f = a) => ({
+    anchor: { blockId, offset: a },
+    focus: { blockId, offset: f },
+  });
+  const code = (text: string, language?: string): RichDoc => ({
+    blocks: [
+      { id: 'c', type: 'code_block', inlines: [{ text, marks: [] }], language },
+      { id: 'p', type: 'paragraph', inlines: [{ text: 'after', marks: [] }] },
+    ],
+  });
+  function renderDoc(initial: RichDoc, props: Record<string, unknown> = {}) {
+    const docs: RichDoc[] = [];
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(initial);
+      return (
+        <>
+          <RichTextEditor
+            value={doc}
+            onChange={(d) => {
+              docs.push(d);
+              setDoc(d);
+            }}
+            {...props}
+          />
+          <button type="button">outside</button>
+        </>
+      );
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    return { editor, docs };
+  }
+  const selectionChange = () => act(() => document.dispatchEvent(new Event('selectionchange')));
+  const text = (d: RichDoc, i = 0) => d.blocks[i].inlines.map((r) => r.text).join('');
+
+  it('the language picker sets the language in one undo step', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 1));
+    const { editor, docs } = renderDoc(code('x = 1'));
+    act(() => editor.focus());
+    selectionChange();
+    const picker = screen.getByRole('combobox', { name: 'Code language' });
+    expect(picker).toHaveTextContent('Plain text');
+    await user.click(picker);
+    await user.click(await screen.findByRole('option', { name: 'Python' }));
+    expect(docs.at(-1)!.blocks[0].language).toBe('python');
+    expect(docs).toHaveLength(1);
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(docs).toHaveLength(2);
+    expect(docs.at(-1)!.blocks[0].language).toBeUndefined();
+  });
+
+  it('shows no picker outside a code block or in a readOnly editor', () => {
+    mockReadSelection.mockReturnValue(sel('p', 1));
+    const { editor } = renderDoc(code('x'));
+    act(() => editor.focus());
+    selectionChange();
+    expect(screen.queryByRole('combobox', { name: 'Code language' })).toBeNull();
+  });
+
+  it('readOnly: no picker even with the caret in a code block', () => {
+    mockReadSelection.mockReturnValue(sel('c', 0));
+    renderDoc(code('x'), { readOnly: true });
+    selectionChange();
+    expect(screen.queryByRole('combobox', { name: 'Code language' })).toBeNull();
+  });
+
+  it('Tab inserts two spaces, Shift+Tab outdents; Escape then Tab leaves the editor', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('c', 1));
+    const { editor, docs } = renderDoc(code('ab'));
+    act(() => editor.focus());
+    await user.keyboard('{Tab}');
+    expect(text(docs.at(-1)!)).toBe('a  b');
+    expect(document.activeElement).toBe(editor);
+    mockReadSelection.mockReturnValue(sel('c', 0));
+    await user.keyboard('{Tab}');
+    expect(text(docs.at(-1)!)).toBe('  a  b');
+    mockReadSelection.mockReturnValue(sel('c', 4));
+    await user.keyboard('{Shift>}{Tab}{/Shift}');
+    expect(text(docs.at(-1)!)).toBe('a  b');
+    await user.keyboard('{Escape}{Tab}');
+    expect(docs).toHaveLength(3);
+    expect(document.activeElement).not.toBe(editor);
+  });
+
+  it('a closing backtick converts `text` to inline code in one undo step', () => {
+    mockReadSelection.mockReturnValue(sel('p', 4));
+    const { editor, docs } = renderDoc({
+      blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: 'a `b', marks: [] }] }],
+    });
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: '`' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    expect(evt.defaultPrevented).toBe(true);
+    expect(docs.at(-1)!.blocks[0].inlines).toEqual([
+      { text: 'a ', marks: [] },
+      { text: 'b', marks: [{ type: 'code' }] },
+    ]);
+    expect(editor.querySelector('code')?.textContent).toBe('b');
+    // Typing right after the conversion continues OUTSIDE the code.
+    mockReadSelection.mockReturnValue(sel('p', 3));
+    const typed = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(typed, 'inputType', { value: 'insertText' });
+    Object.defineProperty(typed, 'data', { value: 'x' });
+    act(() => {
+      editor.dispatchEvent(typed);
+    });
+    expect(docs.at(-1)!.blocks[0].inlines.at(-1)).toEqual({ text: 'x', marks: [] });
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(text(docs.at(-1)!)).toBe('a `b');
+  });
+
+  it('toolbar Inline code toggles code; Bold is disabled and ⌘B ignored over code', async () => {
+    const user = userEvent.setup();
+    mockReadSelection.mockReturnValue(sel('p', 0, 2));
+    const { editor, docs } = renderDoc(
+      {
+        blocks: [
+          { id: 'p', type: 'paragraph', inlines: [{ text: 'ab', marks: [{ type: 'bold' }] }] },
+        ],
+      },
+      { toolbar: true },
+    );
+    act(() => editor.focus());
+    selectionChange();
+    await user.click(screen.getByRole('button', { name: 'Inline code' }));
+    expect(docs.at(-1)!.blocks[0].inlines).toEqual([{ text: 'ab', marks: [{ type: 'code' }] }]);
+    selectionChange();
+    expect(screen.getByRole('button', { name: 'Inline code' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: 'Bold' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Text color' })).toBeDisabled();
+    fireEvent.keyDown(editor, { key: 'b', code: 'KeyB', ctrlKey: true });
+    expect(docs).toHaveLength(1);
+    fireEvent.keyDown(editor, { key: 'e', code: 'KeyE', ctrlKey: true });
+    expect(docs.at(-1)!.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);
+  });
+});

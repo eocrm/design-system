@@ -9,6 +9,8 @@ import {
   applyExactMarks,
   runInsertDivider,
   runToggleCheck,
+  runSetCodeLanguage,
+  runCodeIndent,
 } from './commands';
 import { createBlock } from '../RichText/engine/model';
 import type { RichDoc, Range, Inline } from '../RichText/engine/model';
@@ -312,5 +314,70 @@ describe('runInsertDivider', () => {
     const doc: RichDoc = { blocks: [createBlock('paragraph', 'abcd', { id: 'a' })] };
     const r = runInsertDivider(doc, span(at('a', 1), at('a', 3)));
     expect(r.doc.blocks.map(text)).toEqual(['a', '', 'd']);
+  });
+});
+
+describe('inline code exclusivity', () => {
+  it('applying code strips bold/italic/underline/strike/colors but keeps the link', () => {
+    const link = { type: 'link' as const, href: 'https://x.y' };
+    const doc: RichDoc = {
+      blocks: [
+        para('a', [
+          {
+            text: 'abc',
+            marks: [bold, { type: 'italic' }, { type: 'textColor', color: 'red' }, link],
+          },
+        ]),
+      ],
+    };
+    const r = runToggleMark(doc, span(at('a', 0), at('a', 3)), { type: 'code' });
+    expect(r.doc.blocks[0].inlines).toEqual([{ text: 'abc', marks: [link, { type: 'code' }] }]);
+  });
+
+  it('removing code leaves other marks alone', () => {
+    const doc: RichDoc = { blocks: [para('a', [{ text: 'ab', marks: [{ type: 'code' }] }])] };
+    const r = runToggleMark(doc, span(at('a', 0), at('a', 2)), { type: 'code' });
+    expect(r.doc.blocks[0].inlines).toEqual([{ text: 'ab', marks: [] }]);
+  });
+});
+
+describe('runSetCodeLanguage', () => {
+  const code = (language?: string): RichDoc => ({
+    blocks: [{ id: 'c', type: 'code_block', inlines: [{ text: 'x', marks: [] }], language }],
+  });
+  it('sets, clears (key removed) and no-ops', () => {
+    expect(runSetCodeLanguage(code(), 'c', 'python').blocks[0].language).toBe('python');
+    expect('language' in runSetCodeLanguage(code('go'), 'c', undefined).blocks[0]).toBe(false);
+    const same = code('go');
+    expect(runSetCodeLanguage(same, 'c', 'go')).toBe(same);
+    const para: RichDoc = docFromTextBlock();
+    expect(runSetCodeLanguage(para, 'p', 'go')).toBe(para);
+  });
+  function docFromTextBlock(): RichDoc {
+    return { blocks: [{ id: 'p', type: 'paragraph', inlines: [{ text: 'x', marks: [] }] }] };
+  }
+});
+
+describe('runCodeIndent', () => {
+  const code = (text: string): RichDoc => ({
+    blocks: [{ id: 'c', type: 'code_block', inlines: [{ text, marks: [] }] }],
+  });
+  const text = (d: RichDoc) => d.blocks[0].inlines.map((r) => r.text).join('');
+  it('indents every line the selection touches and shifts the selection', () => {
+    const r = runCodeIndent(code('ab\ncd\nef'), span(at('c', 1), at('c', 4)), 'in');
+    expect(text(r.doc)).toBe('  ab\n  cd\nef');
+    expect(r.selection).toEqual(span(at('c', 3), at('c', 8)));
+  });
+  it('outdents up to two leading spaces per line', () => {
+    const r = runCodeIndent(code('   ab\n cd\nef'), span(at('c', 4), at('c', 8)), 'out');
+    expect(text(r.doc)).toBe(' ab\ncd\nef');
+    expect(r.selection).toEqual(span(at('c', 2), at('c', 5)));
+  });
+  it('outdent with a collapsed caret affects only its line; nothing to remove = same doc', () => {
+    const r = runCodeIndent(code('ab\n  cd'), span(at('c', 5), at('c', 5)), 'out');
+    expect(text(r.doc)).toBe('ab\ncd');
+    expect(r.selection).toEqual(span(at('c', 3), at('c', 3)));
+    const flat = code('ab');
+    expect(runCodeIndent(flat, span(at('c', 1), at('c', 1)), 'out').doc).toBe(flat);
   });
 });

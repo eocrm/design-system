@@ -28,6 +28,7 @@ export interface ShortcutKey {
  * - ⌘/Ctrl+I → italic
  * - ⌘/Ctrl+U → underline
  * - ⌘/Ctrl+⇧X → strike
+ * - ⌘/Ctrl+E → inline code
  *
  * @example
  * const mark = shortcutMark(e);
@@ -40,5 +41,6 @@ export function shortcutMark(e: ShortcutKey): Mark | null {
   if (isLetterKey(e, 'i') && !e.shiftKey) return { type: 'italic' };
   if (isLetterKey(e, 'u') && !e.shiftKey) return { type: 'underline' };
   if (isLetterKey(e, 'x') && e.shiftKey) return { type: 'strike' };
+  if (isLetterKey(e, 'e') && !e.shiftKey) return { type: 'code' };
   return null;
 }

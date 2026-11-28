@@ -24,6 +24,8 @@ describe('shortcutMark', () => {
     expect(shortcutMark(key('i', { ctrlKey: true }))).toEqual({ type: 'italic' });
     expect(shortcutMark(key('u', { metaKey: true }))).toEqual({ type: 'underline' });
     expect(shortcutMark(key('x', { metaKey: true, shiftKey: true }))).toEqual({ type: 'strike' });
+    expect(shortcutMark(key('e', { ctrlKey: true }))).toEqual({ type: 'code' });
+    expect(shortcutMark(key('e', { metaKey: true, shiftKey: true }))).toBeNull();
   });
 
   it('uppercase key still matches', () => {

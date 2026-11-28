@@ -300,3 +300,11 @@
     transition: none;
   }
 }
+
+// The code-block language picker (RichTextCodeLanguagePicker). Positioned by
+// Floating UI's inline `floatingStyles` inside the block's top-end corner; same
+// Rule 4 note as `.linkBubble`: `min-width` sizes the overlay, not page layout.
+.codeLanguagePicker {
+  z-index: var(--z-overlay-floating);
+  min-width: var(--size-dropdown-min-width);
+}

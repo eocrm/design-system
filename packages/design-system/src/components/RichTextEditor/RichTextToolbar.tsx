@@ -13,6 +13,7 @@ import {
   ItalicIcon,
   UnderlineIcon,
   StrikeIcon,
+  CodeIcon,
   BulletListIcon,
   OrderedListIcon,
   ChecklistIcon,
@@ -86,12 +87,13 @@ export interface RichTextToolbarProps {
 const MARKS: {
   type: MarkType;
   Icon: () => ReactElement;
-  key: 'bold' | 'italic' | 'underline' | 'strike';
+  key: 'bold' | 'italic' | 'underline' | 'strike' | 'inlineCode';
 }[] = [
   { type: 'bold', Icon: BoldIcon, key: 'bold' },
   { type: 'italic', Icon: ItalicIcon, key: 'italic' },
   { type: 'underline', Icon: UnderlineIcon, key: 'underline' },
   { type: 'strike', Icon: StrikeIcon, key: 'strike' },
+  { type: 'code', Icon: CodeIcon, key: 'inlineCode' },
 ];
 
 /**
@@ -132,6 +134,9 @@ function RichTextToolbarImpl({
   trailing,
 }: RichTextToolbarProps) {
   const t = useTranslation();
+  // Inline code excludes the other formatting marks and colours (CODE_EXCLUDED_MARKS):
+  // where the selection is entirely code their buttons are no-ops, so disable them.
+  const inCode = activeMarks.includes('code');
 
   // Aggregate the open state of every popover in this bar into the single flag
   // the editor reads. Tracked as a set, not a counter, so a popover reporting
@@ -243,7 +248,7 @@ function RichTextToolbarImpl({
             iconOnly
             aria-label={t(`richTextEditor.${key}`)}
             aria-pressed={active}
-            disabled={disabled}
+            disabled={disabled || (inCode && type !== 'code')}
             onMouseDown={preventSelectionLoss}
             onClick={() => onToggleMark(type)}
           >
@@ -289,7 +294,7 @@ function RichTextToolbarImpl({
             variant="ghost"
             iconOnly
             aria-label={t('richTextEditor.textColor')}
-            disabled={disabled}
+            disabled={disabled || inCode}
             onMouseDown={preventSelectionLoss}
           >
             <TextColorIcon />
@@ -311,7 +316,7 @@ function RichTextToolbarImpl({
             variant="ghost"
             iconOnly
             aria-label={t('richTextEditor.highlight')}
-            disabled={disabled}
+            disabled={disabled || inCode}
             onMouseDown={preventSelectionLoss}
           >
             <HighlightIcon />

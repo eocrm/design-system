@@ -16,6 +16,7 @@ import {
   applyMark,
   removeMark,
   deleteRange,
+  insertText,
 } from '../RichText/engine/transforms';
 import { insertVoidBlock, isVoidBlock } from '../RichText/engine/attachment';
 import {
@@ -211,13 +212,113 @@ export function currentBlock(
 }
 
 /**
+ * Marks inline code excludes: applying `code` strips them from the range, and
+ * toggling them is a no-op where the selection is entirely code. Links may wrap
+ * code. Only user actions enforce this — stored documents are never normalised.
+ */
+export const CODE_EXCLUDED_MARKS: readonly MarkType[] = [
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'textColor',
+  'bgColor',
+];
+
+/**
  * Toggle `mark` on/off over `range` using the engine's `toggleMark` transform.
+ * Applying `code` also strips {@link CODE_EXCLUDED_MARKS} from the range.
  *
  * @example
  * const { doc, selection } = runToggleMark(doc, range, { type: 'bold' });
  */
 export function runToggleMark(doc: RichDoc, range: Range, mark: Mark): CommandResult {
-  return toggleMark(doc, range, mark);
+  const r = toggleMark(doc, range, mark);
+  if (
+    mark.type !== 'code' ||
+    isCollapsed(range) ||
+    !activeMarks(r.doc, range, null).includes('code')
+  )
+    return r;
+  let d = r.doc;
+  for (const type of CODE_EXCLUDED_MARKS) d = removeMark(d, range, type).doc;
+  return { doc: d, selection: range };
+}
+
+/**
+ * Set (or clear, with `undefined`) a code block's `language`. Same-ref no-op when
+ * the block isn't a `code_block` or already has that language.
+ *
+ * @example
+ * const next = runSetCodeLanguage(doc, 'code-1', 'python');
+ */
+export function runSetCodeLanguage(
+  doc: RichDoc,
+  blockId: string,
+  language: string | undefined,
+): RichDoc {
+  const b = doc.blocks.find((x) => x.id === blockId);
+  const lang = language || undefined;
+  if (!b || b.type !== 'code_block' || b.language === lang) return doc;
+  // Rebuilt without the key so "plain" stores no `language: undefined`.
+  const { language: _old, ...rest } = b;
+  const next: Block = lang ? { ...rest, language: lang } : rest;
+  return { blocks: doc.blocks.map((x) => (x === b ? next : x)) };
+}
+
+/**
+ * Indent (`'in'`: two spaces before each line) or outdent (`'out'`: up to two
+ * leading spaces per line) every code-block line the selection touches. A
+ * collapsed caret touches its own line. Non-code blocks are skipped; the
+ * selection is shifted with the text. Same-ref doc when nothing changes.
+ *
+ * @example
+ * const { doc, selection } = runCodeIndent(doc, range, 'out');
+ */
+export function runCodeIndent(doc: RichDoc, range: Range, dir: 'in' | 'out'): CommandResult {
+  const { start, end } = orderedRange(doc, range);
+  const { si, ei } = blocksInRange(doc, range);
+  if (si === -1 || ei === -1) return { doc, selection: range };
+  let d = doc;
+  const shift = { anchor: range.anchor.offset, focus: range.focus.offset };
+  for (let i = si; i <= ei; i += 1) {
+    const block = doc.blocks[i];
+    if (block.type !== 'code_block') continue;
+    const text = block.inlines.map((r) => r.text).join('');
+    const from = i === si ? start.offset : 0;
+    let to = i === ei ? end.offset : text.length;
+    // A selection ending at a line start doesn't touch that line.
+    if (to > from && text[to - 1] === '\n') to -= 1;
+    const starts = [0];
+    for (let k = 0; k < text.length; k += 1) if (text[k] === '\n') starts.push(k + 1);
+    const lines = starts.filter((s, k) => s <= to && (starts[k + 1] ?? Infinity) > from);
+    // Last line first, so earlier offsets stay valid while editing.
+    for (const ls of [...lines].reverse()) {
+      const n = dir === 'in' ? 2 : (/^ {0,2}/.exec(text.slice(ls))?.[0].length ?? 0);
+      if (n === 0) continue;
+      const p = { blockId: block.id, offset: ls };
+      d =
+        dir === 'in'
+          ? insertText(d, p, '  ').doc
+          : deleteRange(d, { anchor: p, focus: { blockId: block.id, offset: ls + n } }).doc;
+      for (const k of ['anchor', 'focus'] as const) {
+        if (range[k].blockId !== block.id) continue;
+        const o = range[k].offset;
+        if (dir === 'in') {
+          if (o >= ls) shift[k] += 2;
+        } else if (o >= ls + n) shift[k] -= n;
+        else if (o > ls) shift[k] -= o - ls;
+      }
+    }
+  }
+  if (d === doc) return { doc, selection: range };
+  return {
+    doc: d,
+    selection: {
+      anchor: { ...range.anchor, offset: shift.anchor },
+      focus: { ...range.focus, offset: shift.focus },
+    },
+  };
 }
 
 /**
