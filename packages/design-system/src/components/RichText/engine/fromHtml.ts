@@ -271,7 +271,7 @@ function emitBlock(el: HTMLElement, out: Block[], listDepth: number): void {
     // rather than coercing them to a text-less `{type:'blockquote', inlines:[]}`,
     // which would violate the "every text block holds ≥1 run" invariant.
     for (const b of inner) {
-      if (b.type === 'attachment') out.push(b);
+      if (b.type === 'attachment' || b.type === 'divider') out.push(b);
       else out.push({ id: nextId(), type: 'blockquote', inlines: b.inlines });
     }
     return;

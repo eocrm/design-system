@@ -136,4 +136,18 @@ describe('wave-2 blocks: divider, checklist, code language', () => {
     const d = fromMarkdown('- a\n- [ ] b');
     expect(d.blocks.map((b) => b.type)).toEqual(['bullet_item', 'checklist_item']);
   });
+
+  it('hoists an <hr> out of a blockquote as a divider', () => {
+    const d = fromHtml('<blockquote><p>a</p><hr><p>b</p></blockquote>');
+    expect(d.blocks.map((b) => [b.type, b.inlines[0]?.text])).toEqual([
+      ['blockquote', 'a'],
+      ['divider', ''],
+      ['blockquote', 'b'],
+    ]);
+  });
+
+  it('an <hr> inside a list item never becomes a text block', () => {
+    const d = fromHtml('<ul><li>a<hr>b</li></ul>');
+    expect(d.blocks.map((b) => b.type)).toEqual(['bullet_item']);
+  });
 });
